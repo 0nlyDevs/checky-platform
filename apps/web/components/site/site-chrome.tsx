@@ -64,7 +64,7 @@ function Bar({ pathname }: { pathname: string }) {
   const LINKS = links(s);
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background print:hidden">
-      <div className="mx-auto flex max-w-[88rem] items-center gap-6 px-4 py-3 lg:px-10">
+      <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:gap-x-6 lg:px-10">
         <Link href="/" className="shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Wordmark />
         </Link>
@@ -89,7 +89,7 @@ function Bar({ pathname }: { pathname: string }) {
             })}
           </ul>
         </nav>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1 sm:gap-2">
           <LanguageSwitch />
           <FontSizeControl />
           <ThemeButton />
