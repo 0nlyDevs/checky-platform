@@ -1354,6 +1354,8 @@ export interface components {
             assessment: "detected" | "none" | "inconclusive";
             /** Model */
             model?: string | null;
+            /** Score */
+            score?: number | null;
         };
         /** DictationOut */
         DictationOut: {

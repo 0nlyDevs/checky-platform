@@ -64,8 +64,10 @@ def test_no_markers_is_not_an_authenticity_claim(as_user, image_web):
     url = "https://images.example.test/photo.png"
     image_web[url] = (png(), "image/png")
     result = alice.post(f"/api/v1/workspaces/{ws}/image-check", json={"url": url}).json()
-    assert result["assessment"] == "none" and result["image"]["ai_markers"] == []
+    # Without a detector looking at the pixels, missing metadata says nothing: never "none".
+    assert result["assessment"] == "inconclusive" and result["image"]["ai_markers"] == []
     assert result["detector"]["assessment"] == "inconclusive"
+    assert result["detector"]["score"] is None
 
 
 def test_personal_metadata_is_not_returned(as_user, image_web, monkeypatch):
@@ -188,6 +190,7 @@ def test_validated_detector_is_a_separate_probabilistic_signal(
         "status": "assessed",
         "assessment": expected,
         "model": "test-model-v1",
+        "score": score,
     }
     assert "test-only-secret" not in str(result)
 
@@ -245,9 +248,9 @@ def test_sightengine_scores_are_a_separate_signal(as_user, image_web, monkeypatc
         "status": "assessed",
         "assessment": expected,
         "model": "sightengine-genai",
+        "score": score,
     }
     assert result["assessment"] == expected
-    assert "ai_score" not in str(result) and str(score) not in str(result)
     assert str(seen[0].url) == imagecheck.SIGHTENGINE_URL
     body = seen[0].content
     assert b'name="models"' in body and b"genai" in body and b'name="media"' in body
@@ -367,4 +370,5 @@ def test_custom_detector_tokens_rotate(as_user, image_web, monkeypatch):
         "status": "assessed",
         "assessment": "none",
         "model": "detector-v1",
+        "score": 0.02,
     }

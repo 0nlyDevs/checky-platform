@@ -74,6 +74,8 @@ class DetectorOut(BaseModel):
     status: Literal["not_configured", "not_validated", "unavailable", "assessed"]
     assessment: Assessment = "inconclusive"
     model: str | None = None
+    # The detector's own "AI-generated" score, 0..1, shown as is: a signal, not a probability of truth.
+    score: float | None = None
 
 
 class ImageFacts(BaseModel):
@@ -138,7 +140,12 @@ def _grade(answer: DetectorReply) -> DetectorOut:
         if answer.ai_score <= 0.1
         else "inconclusive"
     )
-    return DetectorOut(status="assessed", assessment=assessment, model=answer.model)
+    return DetectorOut(
+        status="assessed",
+        assessment=assessment,
+        model=answer.model,
+        score=round(answer.ai_score, 3),
+    )
 
 
 # A refused key (bad key, rate limit, used-up quota) hands over to the next one in turn; any other
@@ -314,13 +321,14 @@ async def examine(raw: bytes, *, url: str | None, allow_detector: bool = True) -
     detector = (
         await detect_pixels(raw, mime) if allow_detector else DetectorOut(status="not_configured")
     )
+    # "none" needs a detector that looked at the pixels and found nothing: metadata alone are
+    # stripped by WhatsApp, social networks, screenshots and image proxies, so their absence says nothing.
     assessment: Assessment = (
         "detected"
         if facts.ai_markers or detector.assessment == "detected"
-        else "inconclusive"
-        if detector.status in ("unavailable", "not_validated")
-        or (detector.status == "assessed" and detector.assessment == "inconclusive")
         else "none"
+        if detector.status == "assessed" and detector.assessment == "none"
+        else "inconclusive"
     )
     return ImageOut(
         url=url,

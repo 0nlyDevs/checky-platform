@@ -119,7 +119,9 @@ the website session through a credentialed `GET /api/auth/token`, with host perm
 to FANILO. Public results survive optional connection. Selected text is sent as `text` only,
 never silently combined with its entire source page; private failures never fall back publicly.
 `POST /workspaces/{ws}/image-check {url}` (`app/modules/imagecheck.py`; `…/image-check/file` for a raw image body) fetches a public raster
-image (5 MB, 20 MP max), returns metadata hints, cautious `detected|none|inconclusive` assessment,
+image (5 MB, 20 MP max), returns metadata hints, cautious `detected|none|inconclusive` assessment
+(`none` only when a detector assessed the pixels and scored low: stripped metadata alone give `inconclusive`;
+`detector.score` is the detector's raw 0..1 score, shown by the extension as the detector's score, not a probability),
 reverse-search links and a separate optional pixel detector result. No image or dossier is
 persisted by this endpoint. Content Credentials signatures are not verified; no markers never
 proves authenticity. `IMAGE_DETECTOR_URL`/`TOKEN` stay server-side and the detector is not contacted
