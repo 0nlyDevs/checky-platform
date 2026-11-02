@@ -25,6 +25,8 @@ export const fr = {
     email: "Adresse e-mail",
     password: "Mot de passe",
     passwordHint: "8 caractères minimum.",
+    showPassword: "Afficher le mot de passe",
+    hidePassword: "Masquer le mot de passe",
     signIn: "Se connecter",
     signUp: "Créer mon compte",
     toSignUp: "Pas encore de compte ?",

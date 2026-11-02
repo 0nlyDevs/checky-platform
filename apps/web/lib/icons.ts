@@ -23,6 +23,8 @@ import {
   Columns,
   Compass,
   Copy,
+  Eye,
+  EyeSlash,
   DotsThree,
   DotsThreeVertical,
   DownloadSimple,
@@ -115,6 +117,8 @@ export const IconLink = duo(Link);
 export const IconMagnifyingGlass = duo(MagnifyingGlass);
 export const IconMapPin = duo(MapPin);
 export const IconMicrophone = duo(Microphone);
+export const IconEye = duo(Eye);
+export const IconEyeSlash = duo(EyeSlash);
 export const IconMinus = duo(Minus);
 export const IconMinusCircle = duo(MinusCircle);
 export const IconMonitor = duo(Monitor);

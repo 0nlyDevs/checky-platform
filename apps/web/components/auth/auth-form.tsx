@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { IconCircleNotch } from "@/lib/icons";
+import { IconCircleNotch, IconEye, IconEyeSlash } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const next = useSearchParams().get("suite");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const isSignUp = mode === "signUp";
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -77,16 +78,28 @@ export function AuthForm({ mode }: { mode: Mode }) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">{t.auth.password}</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            autoComplete={isSignUp ? "new-password" : "current-password"}
-            minLength={8}
-            required
-            aria-describedby={isSignUp ? "password-hint" : undefined}
-            className="h-11"
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete={isSignUp ? "new-password" : "current-password"}
+              minLength={8}
+              required
+              aria-describedby={isSignUp ? "password-hint" : undefined}
+              className="h-11 pr-12"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? t.auth.hidePassword : t.auth.showPassword}
+              aria-pressed={showPassword}
+              aria-controls="password"
+              className="absolute inset-y-0 right-1 my-auto inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+            >
+              {showPassword ? <IconEyeSlash aria-hidden /> : <IconEye aria-hidden />}
+            </button>
+          </div>
           {isSignUp && (
             <p id="password-hint" className="text-sm text-muted-foreground">
               {t.auth.passwordHint}
