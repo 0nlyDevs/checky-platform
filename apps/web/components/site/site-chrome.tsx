@@ -6,15 +6,43 @@ import { Suspense } from "react";
 import { AssistantLauncher } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
 import { brand } from "@/lib/brand";
-import { t } from "@/lib/i18n/fr";
+import { LANGS, setLang, useDocumentLang, useLang, useT, type Messages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const s = t.site;
-const LINKS = [
-  { href: "/", label: s.pub.nav.check, match: (p: string) => p === "/" || p === "/accueil" },
-  { href: "/verifies", label: s.pub.nav.verified, match: (p: string) => p.startsWith("/verifies") },
-  { href: "/signaler", label: s.pub.nav.report, match: (p: string) => p.startsWith("/signaler") || p.startsWith("/suivi") },
-] as const;
+const links = (s: Messages["site"]) =>
+  [
+    { href: "/", label: s.pub.nav.check, match: (p: string) => p === "/" || p === "/accueil" },
+    { href: "/verifies", label: s.pub.nav.verified, match: (p: string) => p.startsWith("/verifies") || p.startsWith("/v/") },
+    { href: "/signaler", label: s.pub.nav.report, match: (p: string) => p.startsWith("/signaler") || p.startsWith("/suivi") },
+  ] as const;
+
+/** FR · MG · EN: the visitor's language, remembered on this device. French fills any gap. */
+export function LanguageSwitch({ className }: { className?: string }) {
+  const lang = useLang();
+  const l = useT().publicLayer.lang;
+  useDocumentLang();
+  return (
+    <div role="group" aria-label={l.label} className={cn("flex rounded-md border border-border bg-card p-0.5", className)}>
+      {LANGS.map((code) => (
+        <button
+          key={code}
+          type="button"
+          lang={code}
+          title={l.names[code]}
+          aria-label={l.names[code]}
+          aria-pressed={lang === code}
+          onClick={() => setLang(code)}
+          className={cn(
+            "h-8 min-w-9 rounded-sm px-2 font-display text-xs font-bold tracking-wide outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            lang === code ? "bg-foreground text-background" : "text-foreground hover:bg-accent",
+          )}
+        >
+          {l.short[code]}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 /** The public top bar: the name, three places a visitor goes, the assistant and the newsroom door. */
 export function SiteHeader() {
@@ -31,8 +59,10 @@ function LitBar() {
 }
 
 function Bar({ pathname }: { pathname: string }) {
+  const s = useT().site;
+  const LINKS = links(s);
   return (
-    <header className="sticky top-0 z-30 border-b border-border bg-background">
+    <header className="sticky top-0 z-30 border-b border-border bg-background print:hidden">
       <div className="mx-auto flex max-w-[88rem] items-center gap-6 px-4 py-3 lg:px-10">
         <Link href="/" className="shrink-0 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
           <Wordmark />
@@ -59,6 +89,7 @@ function Bar({ pathname }: { pathname: string }) {
           </ul>
         </nav>
         <div className="ml-auto flex items-center gap-2">
+          <LanguageSwitch />
           <AssistantLauncher variant="header" />
           <Link href="/connexion" className="hidden h-10 items-center rounded-md bg-foreground px-3.5 text-sm font-bold text-background outline-none hover:bg-foreground/85 hover:text-background focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex">
             {s.nav.newsroom}
@@ -92,8 +123,11 @@ function Bar({ pathname }: { pathname: string }) {
 }
 
 export function SiteFooter() {
+  const t = useT();
+  const s = t.site;
+  const LINKS = links(s);
   return (
-    <footer className="border-t border-border">
+    <footer className="border-t border-border print:hidden">
       <div className="mx-auto grid max-w-[88rem] gap-8 px-4 py-10 md:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(0,1fr))] lg:px-10">
         <div>
           <Wordmark />
@@ -109,6 +143,11 @@ export function SiteFooter() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link href="/flashs" className="underline-offset-4 hover:underline">
+                {t.publicLayer.footer.flashs}
+              </Link>
+            </li>
           </ul>
         </nav>
         <div className="space-y-2">
