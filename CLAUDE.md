@@ -79,6 +79,9 @@ unavailable, timed-out, empty and successful attempts. Unrecognized/challenged D
 are not cached as empty results. Similar source wording is only a possible reprise, never proof
 of independent corroboration. Private detector access is not enabled anonymously unless
 `PUBLIC_IMAGE_DETECTOR_ENABLED=true` as well as the existing validation gate.
+Direct search connections prefer IPv4 (`SEARCH_IPV4_ONLY`); configured environment proxies and
+TLS verification are preserved. An independent search service gets an early execution slot so
+one slow engine cannot consume the whole budget before other services are attempted.
 Public URL downloads pin a checked public IP for each redirect, preserving Host/TLS SNI, so
 the HTTP transport cannot re-resolve an attacker-controlled domain to an internal address.
 Connection is optional for saving a dossier or choosing newsroom analysis: the extension uses

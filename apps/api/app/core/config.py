@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Optional: Google Fact Check Tools (claim reviews by fact-checkers worldwide), a Google Cloud
     # API key with that API enabled.
     google_factcheck_api_key: str = ""
+    search_ipv4_only: bool = True
     # Empty means the gateway's default model for that provider.
     llm_model_groq: str = ""
     llm_model_gemini: str = ""

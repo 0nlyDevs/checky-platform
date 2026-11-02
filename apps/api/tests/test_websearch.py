@@ -166,3 +166,33 @@ def test_only_a_recognizable_no_results_page_is_an_empty_success(monkeypatch):
         ),
     )
     assert asyncio.run(websearch.web("unfindable claim")) == []
+
+
+def test_search_transport_can_prefer_ipv4_without_bypassing_environment_proxies(monkeypatch):
+    monkeypatch.setattr(websearch, "_transport", None)
+    monkeypatch.setattr(get_settings(), "search_ipv4_only", True)
+    for name in (
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    calls = []
+
+    def transport(**kwargs):
+        calls.append(kwargs)
+        return httpx.MockTransport(lambda _: httpx.Response(200))
+
+    monkeypatch.setattr(httpx, "AsyncHTTPTransport", transport)
+    client = websearch._client({})
+    assert calls[0]["local_address"] == "0.0.0.0"
+    asyncio.run(client.aclose())
+    calls.clear()
+    monkeypatch.setenv("HTTPS_PROXY", "http://operator-proxy.example:8080")
+    client = websearch._client({})
+    assert calls == []  # Leave transport/proxy construction to HTTPX in this case.
+    assert client.trust_env is True
+    asyncio.run(client.aclose())

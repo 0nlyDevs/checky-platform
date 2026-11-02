@@ -7,6 +7,7 @@ asking twice costs one request. Reading a found page is the agent's `fetch_url` 
 
 import asyncio
 import html
+import os
 import re
 import time
 from html.parser import HTMLParser
@@ -52,8 +53,24 @@ def _text(fragment: str) -> str:
 
 
 def _client(headers: dict[str, str]) -> httpx.AsyncClient:
+    transport = _transport
+    # Some hosting networks have unreliable IPv6 egress. Bind direct searches to IPv4,
+    # without disabling TLS verification or bypassing an operator-configured proxy.
+    proxy_configured = any(
+        os.environ.get(name)
+        for name in (
+            "HTTP_PROXY",
+            "HTTPS_PROXY",
+            "ALL_PROXY",
+            "http_proxy",
+            "https_proxy",
+            "all_proxy",
+        )
+    )
+    if transport is None and get_settings().search_ipv4_only and not proxy_configured:
+        transport = httpx.AsyncHTTPTransport(local_address="0.0.0.0")
     return httpx.AsyncClient(
-        transport=_transport, timeout=15, headers=headers, follow_redirects=True
+        transport=transport, timeout=15, headers=headers, follow_redirects=True
     )
 
 

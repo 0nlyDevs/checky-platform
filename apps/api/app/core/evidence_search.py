@@ -91,10 +91,14 @@ async def search(plan: Preparation, skip: str | None = None) -> SearchReport:
     queries = plan.queries[:3]
     if not queries:
         return SearchReport(status="empty", attempts=[], sources=[])
-    specs = [("web", q, websearch.web) for q in queries]
+    specs = [("web", queries[0], websearch.web)]
+    # Give an independent service a slot before spending the whole budget on one blocked engine.
+    specs += [
+        ("wikipedia", " ".join(plan.entities[:3])[:160] or queries[0], websearch.wikipedia),
+    ]
+    specs += [("web", q, websearch.web) for q in queries[1:]]
     specs += [
         ("fact-check", queries[0], websearch.fact_checks),
-        ("wikipedia", " ".join(plan.entities[:3])[:160] or queries[0], websearch.wikipedia),
     ]
     semaphore = asyncio.Semaphore(2)
 
