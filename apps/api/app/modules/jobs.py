@@ -29,7 +29,7 @@ async def retry_job(job_id: uuid.UUID, member: AnyMember, db: Db) -> dict:
     await db.execute(
         update(Job)
         .where(Job.id == job_id)
-        .values(status="queued", progress=0, error=None, finished_at=None)
+        .values(status="queued", progress=0, attempts=0, error=None, finished_at=None)
     )
     await db.commit()
     await db.refresh(job)

@@ -8,6 +8,11 @@ Add a job kind:
         return {"transcript_id": "..."}
 
 then `await enqueue(db, ws, user_id, "transcribe_audio", {...})` from a route.
+
+A running job beats (`job.updated_at`) every `JOB_HEARTBEAT_SECONDS`. On startup, and every minute
+in the worker loop, running jobs whose heartbeat is older than `JOB_STALE_SECONDS` (their process
+died) go back to the queue; a job already claimed `JOB_MAX_ATTEMPTS` times fails instead, with an
+error that says so. A failed job is never retried by itself; « Relancer » resets its attempts.
 """
 
 import asyncio
@@ -15,13 +20,15 @@ import logging
 import traceback
 import uuid
 from collections.abc import Awaitable, Callable
+from contextlib import suppress
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from sqlalchemy import select, text, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.models import Job
 from app.realtime.server import emit
@@ -29,6 +36,7 @@ from app.realtime.server import emit
 log = logging.getLogger("fanilo.jobs")
 
 POLL_SECONDS = 2.0
+SWEEP_SECONDS = 60.0
 _wake = asyncio.Event()
 
 
@@ -107,6 +115,7 @@ async def run_once() -> bool:
         ctx = JobContext(job.id, job.workspace_id, job.created_by, dict(job.input))
         kind = job.kind
 
+    beat = asyncio.create_task(_heartbeat(job_id))
     try:
         result = await HANDLERS[kind](ctx)
         values = {"status": "done", "progress": 100, "result": result or {}, "error": None}
@@ -116,6 +125,10 @@ async def run_once() -> bool:
         values = {"status": "failed", "error": f"{type(e).__name__}: {e}"}
         log.debug(traceback.format_exc())
         event = "job.failed"
+    finally:
+        beat.cancel()
+        with suppress(asyncio.CancelledError):
+            await beat
 
     async with SessionLocal() as db:
         await db.execute(
@@ -127,19 +140,63 @@ async def run_once() -> bool:
     return True
 
 
+async def _heartbeat(job_id: uuid.UUID) -> None:
+    """Refresh `updated_at` while the job runs, so no other process takes it back."""
+    every = get_settings().job_heartbeat_seconds
+    while True:
+        await asyncio.sleep(every)
+        try:
+            async with SessionLocal() as db:
+                await db.execute(
+                    update(Job)
+                    .where(Job.id == job_id, Job.status == "running")
+                    .values(updated_at=datetime.now(UTC))
+                )
+                await db.commit()
+        except Exception:  # noqa: BLE001 - a missed beat only makes the job look stale sooner
+            log.warning("heartbeat of job %s failed", job_id)
+
+
 async def requeue_interrupted() -> int:
-    """Jobs left `running` by a crash or a Render spin-down go back to the queue."""
+    """Running jobs whose heartbeat stopped (a crash, a Render spin-down) go back to the queue.
+
+    Jobs still beating belong to a live process and are left alone. One that has already been
+    claimed `JOB_MAX_ATTEMPTS` times fails with a clear error instead of being run again.
+    Returns how many were requeued.
+    """
+    s = get_settings()
+    stale = datetime.now(UTC) - timedelta(seconds=s.job_stale_seconds)
+    running = (Job.status == "running", Job.updated_at < stale)
     async with SessionLocal() as db:
+        await db.execute(
+            update(Job)
+            .where(*running, Job.attempts >= s.job_max_attempts)
+            .values(
+                status="failed",
+                error=f"Interrupted {s.job_max_attempts} times; not run again "
+                "(raise JOB_MAX_ATTEMPTS or retry it by hand)",
+                finished_at=datetime.now(UTC),
+            )
+        )
         res = await db.execute(
-            update(Job).where(Job.status == "running").values(status="queued", progress=0)
+            update(Job)
+            .where(*running, Job.attempts < s.job_max_attempts)
+            .values(status="queued", progress=0)
         )
         await db.commit()
+        if res.rowcount:
+            _wake.set()
         return res.rowcount
 
 
 async def worker_loop() -> None:
+    loop = asyncio.get_running_loop()
+    swept = loop.time()
     while True:
         try:
+            if loop.time() - swept > SWEEP_SECONDS:
+                swept = loop.time()
+                await requeue_interrupted()
             while await run_once():
                 pass
         except Exception:

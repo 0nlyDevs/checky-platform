@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     db_pool: bool = True
     # Number of in-process job workers; 0 disables them (tests run jobs explicitly).
     job_workers: int = 2
+    # A job is claimed at most this many times: one interrupted again and again (a crash, a
+    # spin-down) fails with a clear error instead of looping forever.
+    job_max_attempts: int = 3
+    # A running job's heartbeat (`job.updated_at`) is refreshed this often; another process only
+    # takes a running job back once its heartbeat is older than `job_stale_seconds`.
+    job_heartbeat_seconds: float = 15.0
+    job_stale_seconds: float = 90.0
 
     auth_jwks_url: str = "http://localhost:3000/api/auth/jwks"
     auth_issuer: str = "http://localhost:3000"
