@@ -46,7 +46,7 @@ export function CommandPalette() {
         setOpen(true);
         return;
       }
-      if (e.key !== "/" || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+      if (e.key !== "/" || document.querySelector('[role="dialog"], [role="alertdialog"]') || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
       const el = e.target as HTMLElement | null;
       if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return;
       e.preventDefault();
@@ -165,8 +165,8 @@ export function CommandPalette() {
           </div>
           <div ref={listRef} id={listId} role="listbox" aria-label={p.list} className="overflow-y-auto p-2">
             {groups.map((g) => (
-              <div key={g} role="presentation">
-                <p role="presentation" className="px-2.5 pt-2.5 pb-1 text-xs font-bold text-muted-foreground">
+              <div key={g} role="group" aria-labelledby={`${listId}-g-${g}`}>
+                <p id={`${listId}-g-${g}`} role="presentation" className="px-2.5 pt-2.5 pb-1 text-xs font-bold text-muted-foreground">
                   {p.groups[g]}
                 </p>
                 {shown.map((e, i) =>
@@ -196,7 +196,7 @@ export function CommandPalette() {
             ))}
             {!shown.length && (
               <p role="status" className="px-2.5 py-4 text-sm text-muted-foreground">
-                {isLoading ? p.loading : p.empty}
+                {isLoading || isValidating ? p.loading : p.empty}
               </p>
             )}
           </div>
