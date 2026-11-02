@@ -38,7 +38,7 @@ export function PosterView() {
   useEffect(() => {
     if (!poster) return;
     let live = true;
-    QRCode.toDataURL(poster.qr_url, { margin: 1, width: 560, errorCorrectionLevel: "M", color: { dark: "#171a18", light: "#ffffff" } })
+    QRCode.toDataURL(poster.qr_url, { margin: 1, width: 560, errorCorrectionLevel: "M", color: { dark: "#0a0a0b", light: "#ffffff" } })
       .then((url) => live && setQr(url))
       .catch(() => live && setQr(null));
     return () => {
@@ -72,9 +72,9 @@ export function PosterView() {
       {poster && m && Icon && (
         <article
           aria-label={`${p.checkedBy(poster.newsroom)} · ${poster.verdict_word}`}
-          className="poster-sheet mx-auto mt-6 flex aspect-[210/297] w-full max-w-[42rem] flex-col bg-white p-[6%] text-[#171a18] shadow-sm ring-1 ring-border"
+          className="poster-sheet mx-auto mt-6 flex aspect-[210/297] w-full max-w-[42rem] flex-col bg-white p-[6%] text-[#0a0a0b] shadow-sm ring-1 ring-border"
         >
-          <header className="flex items-baseline justify-between gap-4 border-b-2 border-[#171a18] pb-[3%] font-display">
+          <header className="flex items-baseline justify-between gap-4 border-b-2 border-[#0a0a0b] pb-[3%] font-display">
             <span className="text-[clamp(0.9rem,2.4vw,1.35rem)] font-extrabold">{p.checkedBy(poster.newsroom)}</span>
             {poster.ref && <span className="text-[clamp(0.8rem,2vw,1.1rem)] font-bold tabular">{poster.ref}</span>}
           </header>
@@ -92,7 +92,7 @@ export function PosterView() {
 
           <p className="mt-[5%] text-[clamp(0.9rem,2.3vw,1.3rem)] leading-snug text-pretty">{poster.reason}</p>
 
-          <footer className="mt-auto flex items-end justify-between gap-[5%] border-t-2 border-[#171a18] pt-[4%]">
+          <footer className="mt-auto flex items-end justify-between gap-[5%] border-t-2 border-[#0a0a0b] pt-[4%]">
             <div className="min-w-0">
               <p className="text-[clamp(0.85rem,2.2vw,1.2rem)] font-bold text-pretty">{p.scan}</p>
               {poster.short_link && <p className="mt-[3%] font-display text-[clamp(1rem,2.8vw,1.6rem)] font-extrabold break-all">{poster.short_link.replace(/^https?:\/\//, "")}</p>}
@@ -103,7 +103,7 @@ export function PosterView() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={qr} alt={poster.qr_url} className="aspect-square w-[32%] shrink-0" />
             ) : (
-              <span className="aspect-square w-[32%] shrink-0 bg-[#f1f2ec]" aria-hidden />
+              <span className="aspect-square w-[32%] shrink-0 bg-[#f3f2ee]" aria-hidden />
             )}
           </footer>
         </article>

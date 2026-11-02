@@ -1139,7 +1139,7 @@
 }
 @keyframes assistant-pulse {
   50% {
-    box-shadow: 0 0 0 6px rgb(157 56 46 / 0.2);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--verdict-false) 22%, transparent);
   }
 }
 .assistant-chip {
