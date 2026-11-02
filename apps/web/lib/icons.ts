@@ -45,6 +45,7 @@ import {
   Phone,
   Play,
   Plus,
+  Printer,
   Question,
   Radio,
   Robot,
@@ -150,3 +151,4 @@ export const IconNewspaper = duo(Newspaper);
 export const IconRadio = duo(Radio);
 export const IconStamp = duo(Stamp);
 export const IconPhone = duo(Phone);
+export const IconPrinter = duo(Printer);
