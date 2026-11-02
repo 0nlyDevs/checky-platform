@@ -21,7 +21,6 @@ newsroom that holds its own registry, figures and archives):
 The Contradicteur's quoted concerns each take 5 points off (15 at most). Pure function.
 """
 
-import re
 from datetime import date, datetime
 from typing import Any
 from urllib.parse import urlsplit
@@ -33,11 +32,32 @@ MAXIMA = {"agreement": 30, "official": 25, "dates": 15, "outside": 10, "attached
 CONCERN_PENALTY, CONCERN_MAX = 5, 15
 HIGH, MEDIUM = 70, 40
 
-# Official anywhere, by rule: a government second level under a country code (gov.mg, gouv.sn,
-# gob.mx, go.ke, govt.nz, gv.at…), plus .gov and .int. A newsroom's Annuaire and its country's
-# « Sources officielles » (app/modules/official.py) add the rest.
+# Official anywhere, by rule: the government second levels countries reserve (an explicit list,
+# never a pattern: « gov.xx » is not reserved under every country code), plus .gov and .int.
+# A newsroom's Annuaire and its country's « Sources officielles » (app/modules/official.py) add
+# the rest.
 OFFICIAL_SUFFIXES = (".gov", ".int")
-GOVERNMENT = re.compile(r"(?:^|\.)(?:gov|gouv|gob|go|govt|gv|gub)\.[a-z]{2}$")
+GOVERNMENT_SUFFIXES = frozenset(
+    {
+        # Africa and the Indian Ocean
+        "gov.mg", "gouv.mg", "gouv.sn", "gouv.ci", "gouv.bj", "gouv.tg", "gouv.ml", "gouv.bf",
+        "gouv.ne", "gouv.cm", "gouv.cd", "gouv.cg", "gouv.ga", "gouv.ht", "gouv.km", "gouv.dj",
+        "gov.km", "govmu.org", "gov.sc", "gov.za", "gov.ng", "go.ke", "go.tz", "go.ug",
+        "gov.rw", "gov.gh", "gov.et", "gov.zm", "gov.mw", "gov.mz", "gov.bw", "gov.na",
+        "gov.zw", "gov.ma", "gov.tn", "gov.dz", "gov.eg", "gov.sn",
+        # Europe, the Americas, Asia, Oceania
+        "gouv.fr", "gov.uk", "gob.es", "gov.it", "gv.at", "gouv.qc.ca", "gc.ca", "gov.br",
+        "gob.mx", "gob.ar", "gob.pe", "gob.cl", "gov.co", "gub.uy", "gov.in", "go.jp",
+        "go.kr", "go.th", "go.id", "gov.ph", "gov.sg", "gov.cn", "gov.au", "govt.nz",
+    }
+)  # fmt: skip
+
+
+def _government(host: str) -> bool:
+    parts = host.split(".")
+    return any(".".join(parts[i:]) in GOVERNMENT_SUFFIXES for i in range(len(parts)))
+
+
 # Official sites a rule cannot see (statistics institutes, central banks, international bodies).
 OFFICIAL_HOSTS = {
     "instat.mg", "banque-centrale.mg", "un.org", "worldbank.org", "imf.org", "unicef.org",
@@ -76,7 +96,7 @@ def is_official(url: str | None, official_hosts: set[str] | None = None) -> bool
         or host in OFFICIAL_HOSTS
         or any(host.endswith("." + h) for h in OFFICIAL_HOSTS)
         or host.endswith(OFFICIAL_SUFFIXES)
-        or bool(GOVERNMENT.search(host))
+        or _government(host)
     )
 
 

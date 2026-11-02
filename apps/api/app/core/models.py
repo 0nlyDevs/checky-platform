@@ -656,7 +656,7 @@ class OfficialSource(_Row):
     Shared with every newsroom of that country, but only counted from verified newsrooms."""
 
     __tablename__ = "official_source"
-    __table_args__ = (UniqueConstraint("country", "host"), {"schema": "app"})
+    __table_args__ = (UniqueConstraint("workspace_id", "host"), {"schema": "app"})
 
     country: Mapped[str] = mapped_column(String(80), index=True)  # as in workspace.settings
     host: Mapped[str] = mapped_column(String(253))
