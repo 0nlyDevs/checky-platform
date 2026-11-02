@@ -11,6 +11,7 @@ import { useT } from "@/lib/i18n";
 import { type Newsroom, myTips, publicApi, rememberTip } from "@/lib/public-api";
 import { cn } from "@/lib/utils";
 
+type Sent = { token: string; ref: string; newsroom?: { slug: string; name: string } | null; routed: string };
 const ORIGINS = ["whatsapp", "facebook", "tiktok", "radio", "press", "other"] as const;
 const field =
   "mt-1.5 w-full rounded-md border border-input bg-card px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15";
@@ -21,20 +22,19 @@ export function ReportView() {
   const r = t.site.pub.report;
   const params = useSearchParams();
   const [rooms, setRooms] = useState<Newsroom[] | null>(null);
+  // Empty: Checky routes the tip to the newsroom where the rumour circulates (else the nearest).
   const [room, setRoom] = useState("");
+  const [place, setPlace] = useState("");
   const [text, setText] = useState(params.get("texte") ?? "");
   const [url, setUrl] = useState("");
   const [origin, setOrigin] = useState<(typeof ORIGINS)[number]>("whatsapp");
-  const [state, setState] = useState<"idle" | "sending" | { token: string; ref: string } | { error: string }>("idle");
+  const [state, setState] = useState<"idle" | "sending" | Sent | { error: string }>("idle");
   // Read once on the client; the server renders none (this view only runs in the browser after Suspense).
   const [mine, setMine] = useState<ReturnType<typeof myTips>>(() => (typeof window === "undefined" ? [] : myTips()));
 
   useEffect(() => {
     publicApi<Newsroom[]>("/newsrooms")
-      .then((list) => {
-        setRooms(list);
-        if (list[0]) setRoom(list[0].slug);
-      })
+      .then((list) => setRooms(list))
       .catch(() => setRooms([]));
   }, []);
 
@@ -42,9 +42,9 @@ export function ReportView() {
     e.preventDefault();
     setState("sending");
     try {
-      const res = await publicApi<{ token: string; ref: string }>("/tips", {
+      const res = await publicApi<Sent>("/tips", {
         method: "POST",
-        body: JSON.stringify({ newsroom: room, text, url: url.trim() || null, origin }),
+        body: JSON.stringify({ newsroom: room || null, place: place.trim() || null, text, url: url.trim() || null, origin }),
       });
       rememberTip({ ...res, title: text.slice(0, 120) });
       setMine(myTips());
@@ -91,6 +91,7 @@ export function ReportView() {
             {r.doneTitle}
           </p>
           <p className="mt-4 text-lg leading-relaxed text-pretty">{r.done(done.ref)}</p>
+          {done.newsroom && <p className="mt-2 text-pretty">{(r.routed[done.routed] ?? r.routed.chosen)(done.newsroom.name)}</p>}
           <Button asChild variant="action" size="xl" className="mt-6">
             <Link href={`/suivi/${done.token}`}>
               {r.follow} <IconArrowRight aria-hidden />
@@ -146,11 +147,23 @@ export function ReportView() {
                   ))}
                 </div>
               </fieldset>
+              {!room && (
+                <div>
+                  <label htmlFor="tip-place" className="font-bold">
+                    {r.place}
+                  </label>
+                  <input id="tip-place" className={cn(field, "h-11")} value={place} onChange={(e) => setPlace(e.target.value)} maxLength={120} aria-describedby="tip-place-hint" />
+                  <p id="tip-place-hint" className="mt-1 text-sm text-muted-foreground">
+                    {r.placeHint}
+                  </p>
+                </div>
+              )}
               <div>
                 <label htmlFor="tip-room" className="font-bold">
                   {r.newsroom}
                 </label>
-                <select id="tip-room" className={cn(field, "h-11")} value={room} onChange={(e) => setRoom(e.target.value)} required>
+                <select id="tip-room" className={cn(field, "h-11")} value={room} onChange={(e) => setRoom(e.target.value)}>
+                  <option value="">{r.auto}</option>
                   {rooms?.map((n) => (
                     <option key={n.slug} value={n.slug}>
                       {n.name}
@@ -163,7 +176,7 @@ export function ReportView() {
                   {state.error}
                 </p>
               )}
-              <Button type="submit" variant="action" size="xl" className="w-full sm:w-auto" disabled={state === "sending" || !room}>
+              <Button type="submit" variant="action" size="xl" className="w-full sm:w-auto" disabled={state === "sending"}>
                 {state === "sending" ? <IconCircleNotch className="animate-spin" aria-hidden /> : null}
                 {state === "sending" ? r.sending : r.submit}
                 {state !== "sending" && <IconArrowRight aria-hidden />}
