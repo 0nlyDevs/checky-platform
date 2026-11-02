@@ -28,7 +28,8 @@ log = logging.getLogger("fanilo.sources")
 router = APIRouter(tags=["sources"])
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
-# What a journalist sends: photos and screenshots, documents, voice notes and interviews.
+# What a journalist sends: photos and screenshots, documents, voice notes, interviews and the
+# videos that circulate on WhatsApp, TikTok and Facebook.
 KIND_BY_MIME = {
     "image/jpeg": "image",
     "image/png": "image",
@@ -44,6 +45,10 @@ KIND_BY_MIME = {
     "audio/x-wav": "audio",
     "audio/webm": "audio",
     "audio/ogg": "audio",
+    "video/mp4": "video",
+    "video/webm": "video",
+    "video/quicktime": "video",
+    "video/3gpp": "video",
 }
 
 
@@ -354,35 +359,68 @@ async def get_source_text(source_id: uuid.UUID, member: AnyMember, db: Db) -> di
 
 
 class SourcePatch(BaseModel):
-    # The day the text or page was published; null when it is unknown.
-    published_at: date | None
+    """Send one field or both; a field left out keeps its value."""
+
+    # The day the text or page was published; null clears it (unknown).
+    published_at: date | None = None
+    # The claim to attach the source to, e.g. a video analysed on the phone and then followed.
+    item_id: uuid.UUID | None = None
+
+    @model_validator(mode="after")
+    def _something_to_change(self) -> "SourcePatch":
+        if not self.model_fields_set & {"published_at", "item_id"}:
+            raise ValueError("Send published_at, item_id or both")
+        if "item_id" in self.model_fields_set and self.item_id is None:
+            raise ValueError("item_id cannot be null")
+        return self
 
 
 @router.patch("/workspaces/{ws}/sources/{source_id}")
 async def update_source(
     source_id: uuid.UUID, body: SourcePatch, member: AnyMember, db: Db
 ) -> SourceOut:
-    """Set a source's publication date by hand (a pasted text, a page that does not say it)."""
+    """Set a source's publication date by hand (a pasted text, a page that does not say it), or
+    attach it to a claim (the phone app attaches the file it analysed to the claim it follows)."""
     s = await _get_source(db, member, source_id)
     if s.created_by != member.user.id and not member.at_least("editor"):
         raise ApiError(403, "forbidden", "Only who added it or an editor can change this source")
-    if body.published_at and body.published_at > dates.today():
+    set_date = "published_at" in body.model_fields_set
+    if set_date and body.published_at and body.published_at > dates.today():
         raise ApiError(422, "future_date", "A publication date cannot be in the future")
-    before = s.published_at
-    s.published_at = body.published_at.isoformat() if body.published_at else None
-    await record(
-        db,
-        member.workspace_id,
-        member.user.id,
-        "source",
-        source_id,
-        "update",
-        {"published_at": [before, s.published_at]},
-    )
+    await _check_item(db, member, body.item_id)
+
+    if set_date:
+        before_date = s.published_at
+        s.published_at = body.published_at.isoformat() if body.published_at else None
+        await record(
+            db,
+            member.workspace_id,
+            member.user.id,
+            "source",
+            source_id,
+            "update",
+            {"published_at": [before_date, s.published_at]},
+        )
+    before_item = s.item_id
+    if body.item_id is not None:
+        s.item_id = body.item_id
+        if before_item != body.item_id:
+            await record(
+                db,
+                member.workspace_id,
+                member.user.id,
+                "item",
+                body.item_id,
+                "source",
+                {"source_id": str(s.id), "kind": s.kind},
+            )
     await db.commit()
     await db.refresh(s)
     out = await _source_out(db, s)
     await broadcast(member.workspace_id, "source.updated", out.model_dump(mode="json"))
+    if body.item_id is not None:
+        for item_id in {before_item, body.item_id}:
+            await _sync_source_count(db, member.workspace_id, item_id)
     return out
 
 
@@ -454,8 +492,8 @@ async def retranscribe(
 ) -> SourceOut:
     """Run the transcription again, e.g. with `fr` or `mg` when detection picked the wrong one."""
     s = await _get_source(db, member, source_id)
-    if s.kind != "audio":
-        raise ApiError(409, "not_audio", "Only audio sources can be transcribed")
+    if s.kind not in ("audio", "video"):
+        raise ApiError(409, "not_audio", "Only audio and video sources can be transcribed")
     s.status, s.error = "queued", None
     await db.commit()
     await db.refresh(s)

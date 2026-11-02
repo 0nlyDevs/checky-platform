@@ -1,5 +1,6 @@
 import asyncio
 import io
+import uuid
 
 import httpx
 import pytest
@@ -337,6 +338,46 @@ def test_retranscribe_with_a_language_hint(as_user, whisper):
     )
 
 
+def test_a_video_is_transcribed_from_its_soundtrack(as_user, whisper, monkeypatch):
+    calls, _ = whisper
+    seen = []
+
+    async def fake_video(raw, mime):
+        seen.append((raw, mime))
+        meta = {"duration_s": 4.0, "ai_markers": ["OpenAI Sora"], "content_credentials": False}
+        return meta, b"fake-mp3", "audio.mp3", "audio/mpeg"
+
+    monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    src = _upload(alice, ws, "VID-2026.mp4", "video/mp4", b"fake-video").json()
+    assert src["kind"] == "video"
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}").json()
+    assert (src["status"], src["excerpt"]) == ("ready", "Bonjour, le prix du riz est stable.")
+    assert src["file"]["meta"]["ai_markers"] == ["OpenAI Sora"]
+    assert src["file"]["meta"]["language"] == "french"
+    assert seen == [(b"fake-video", "video/mp4")] and 'filename="audio.mp3"' in calls[0]
+    assert alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}/transcript").status_code == 200
+    r = alice.post(f"/api/v1/workspaces/{ws}/sources/{src['id']}/transcribe", json={})
+    assert r.status_code == 202
+
+
+def test_a_silent_video_is_ready_without_a_transcript(as_user, whisper, monkeypatch):
+    calls, _ = whisper
+
+    async def silent(raw, mime):
+        return {"duration_s": 2.0, "ai_markers": [], "content_credentials": False}, b"", "", ""
+
+    monkeypatch.setattr(ingest, "video_meta_and_audio", silent)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    src = _upload(alice, ws, "clip.mov", "video/quicktime", b"fake-video").json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}").json()
+    assert (src["status"], src["excerpt"], calls) == ("ready", "", [])
+
+
 def test_whisper_outage_marks_the_source_failed(as_user, whisper):
     _, replies = whisper
     replies.extend([httpx.Response(503), httpx.Response(503)])
@@ -367,3 +408,45 @@ def test_a_source_date_is_set_by_hand(as_user):
     assert as_user("mallory").patch(url, json={"published_at": None}).status_code == 404
     _join(alice, bob, ws, "journalist")
     assert bob.patch(url, json={"published_at": "2020-01-01"}).status_code == 403
+
+
+def test_a_source_is_attached_to_a_claim_later(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    src = alice.post(f"/api/v1/workspaces/{ws}/sources", json={"text": "Le pont est fermé."}).json()
+    item = _claim(alice, ws)
+    url = f"/api/v1/workspaces/{ws}/sources/{src['id']}"
+    r = alice.patch(url, json={"item_id": item})
+    assert (r.status_code, r.json()["item_id"]) == (200, item)
+    assert alice.get(f"/api/v1/workspaces/{ws}/items/{item}").json()["data"]["source_count"] == 1
+    actions = [
+        a["action"] for a in alice.get(f"/api/v1/workspaces/{ws}/activity?entity_id={item}").json()
+    ]
+    assert "source" in actions
+    other = _claim(alice, ws)
+    alice.patch(url, json={"item_id": other})
+    assert alice.get(f"/api/v1/workspaces/{ws}/items/{item}").json()["data"]["source_count"] == 0
+    assert alice.patch(url, json={"item_id": str(uuid.uuid4())}).status_code == 404
+    assert bob.patch(url, json={"item_id": item}).status_code == 404
+
+
+def test_a_source_patch_changes_only_what_it_is_sent(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    src = alice.post(f"/api/v1/workspaces/{ws}/sources", json={"text": "Le pont est fermé."}).json()
+    url = f"/api/v1/workspaces/{ws}/sources/{src['id']}"
+    alice.patch(url, json={"published_at": "2019-01-14"})
+    item = _claim(alice, ws)
+    r = alice.patch(url, json={"item_id": item})  # the phone sends only the claim
+    assert (r.json()["item_id"], r.json()["published_at"]) == (item, "2019-01-14")
+    r = alice.patch(url, json={"published_at": None})
+    assert (r.json()["item_id"], r.json()["published_at"]) == (item, None)
+    other = _claim(alice, ws)
+    r = alice.patch(url, json={"published_at": "2020-02-02", "item_id": other})
+    assert (r.json()["item_id"], r.json()["published_at"]) == (other, "2020-02-02")
+    assert alice.patch(url, json={}).status_code == 422
+    assert alice.patch(url, json={"item_id": None}).status_code == 422
+    # an unknown claim changes nothing, not even the date sent with it
+    r = alice.patch(url, json={"published_at": "2021-03-03", "item_id": str(uuid.uuid4())})
+    assert r.status_code == 404
+    assert alice.get(url).json()["published_at"] == "2020-02-02"

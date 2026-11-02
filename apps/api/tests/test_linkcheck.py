@@ -215,3 +215,51 @@ def test_an_old_post_is_dated_for_the_model_and_the_journalist(as_user, scripted
         assert "Aujourd'hui : " in call["messages"][0]["content"]
         assert "Contenu publié le 14 janvier 2019, il y a " in call["messages"][0]["content"]
         assert "Aujourd'hui" not in call["messages"][1]["content"]
+
+
+def test_a_shared_file_is_checked_on_its_transcript(as_user, scripted, web):
+    turns, seen = scripted
+    turns.extend(
+        [
+            _say(
+                {
+                    "summary": "La vidéo affirme que le pont d'Anosy est fermé.",
+                    "claims": ["Le pont d'Anosy est fermé"],
+                    "signals": [],
+                    "search": "pont Anosy fermé",
+                }
+            ),
+            _say({"verdict": "unverifiable", "reason": "r", "evidence": [], "missing": "m"}),
+        ]
+    )
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    item = alice.post(f"/api/v1/workspaces/{ws}/items", json={"title": "Pont"}).json()
+    said = "Attention, le pont d'Anosy est fermé depuis ce matin."
+    src = alice.post(
+        f"/api/v1/workspaces/{ws}/sources", json={"text": said, "item_id": item["id"]}
+    ).json()
+    url = f"/api/v1/workspaces/{ws}/link-check"
+    events = _events(alice.post(url, json={"source_id": src["id"]}).text)
+    out = next(d for e, d in events if e == "result")
+    assert out["kind"] == "text" and out["source_id"] == src["id"]
+    assert out["claims"] == ["Le pont d'Anosy est fermé"]
+    assert out["tracked"]["item_id"] == item["id"]
+    assert said in seen[0]["messages"][1]["content"]
+
+    pending = alice.post(f"/api/v1/workspaces/{ws}/sources", json={"url": "https://a.mg/x"}).json()
+    errors = [
+        d["code"]
+        for e, d in _events(alice.post(url, json={"source_id": pending["id"]}).text)
+        if e == "error"
+    ]
+    assert errors == ["source_not_ready"]
+    other = _workspace(bob)
+    errors = [
+        d["code"]
+        for e, d in _events(
+            bob.post(f"/api/v1/workspaces/{other}/link-check", json={"source_id": src["id"]}).text
+        )
+        if e == "error"
+    ]
+    assert errors == ["not_found"]

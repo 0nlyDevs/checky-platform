@@ -398,7 +398,8 @@ export interface paths {
         head?: never;
         /**
          * Update Source
-         * @description Set a source's publication date by hand (a pasted text, a page that does not say it).
+         * @description Set a source's publication date by hand (a pasted text, a page that does not say it), or
+         *     attach it to a claim (the phone app attaches the file it analysed to the claim it follows).
          */
         patch: operations["update_source_api_v1_workspaces__ws__sources__source_id__patch"];
         trace?: never;
@@ -1141,6 +1142,8 @@ export interface components {
             url?: string | null;
             /** Text */
             text?: string | null;
+            /** Source Id */
+            source_id?: string | null;
         };
         /** MatchIn */
         MatchIn: {
@@ -1341,10 +1344,15 @@ export interface components {
              */
             duplicates: number;
         };
-        /** SourcePatch */
+        /**
+         * SourcePatch
+         * @description Send one field or both; a field left out keeps its value.
+         */
         SourcePatch: {
             /** Published At */
-            published_at: string | null;
+            published_at?: string | null;
+            /** Item Id */
+            item_id?: string | null;
         };
         /** SpeakIn */
         SpeakIn: {

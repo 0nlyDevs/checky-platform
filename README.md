@@ -38,6 +38,10 @@ How the pieces talk:
   Wikipedia and fact-checkers without any key (`apps/api/app/core/websearch.py`).
 - **In production:** web on Vercel, API on Render, database and file storage on **Neon**
   (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
+- **Phone app:** [`0nlyDevs/fanilo-mobile`](https://github.com/0nlyDevs/fanilo-mobile) (Expo,
+  React Native). A video, photo or link shared to FANILO from WhatsApp, Facebook or TikTok is
+  uploaded, transcribed and checked through the same API. It signs in through Better Auth's Expo
+  plugin (`apps/web/lib/auth.ts`, trusted scheme `fanilo://`).
 
 ## Access you need
 
@@ -60,6 +64,8 @@ until at least one AI key is set.
 - **Node 26** and **npm** (npm only: never `pnpm`, `yarn` or `bun` in this repo)
 - **[uv](https://docs.astral.sh/uv/)** for Python (it installs Python 3.13 for you)
 - **PostgreSQL 17 or 18**, running locally
+- **ffmpeg** (reads the soundtrack and tags of uploaded videos; without it only mp4/webm videos
+  are transcribed, sent whole to Whisper). The API's Docker image needs it too.
 - `git`, and the [GitHub CLI](https://cli.github.com/) (`gh auth login`) to clone the private repo
 
 ### 2. Clone and install
@@ -223,6 +229,10 @@ Uploads never pass through the API: `lib/upload.ts` asks `…/files/upload-url` 
 URL, PUTs the file to Neon storage, then calls `…/files/{id}/complete`, which creates a source and
 queues `ingest_file`. In the UI, drop `<SourcesPanel ws={ws} itemId={id} />` anywhere to get
 add-link, upload and the live list. Server side, read a file with `storage.read(key)`.
+Videos (`mp4`, `webm`, `quicktime`, `3gpp`) become `video` sources: ffmpeg pulls out the soundtrack
+for Whisper and `ffprobe` reads the tags, which are scanned for AI generators (Sora, Veo…).
+`PATCH …/sources/{id} {item_id}` attaches a source to a claim later; `link-check {source_id}`
+checks an uploaded file on its transcript (the phone app's share flow).
 
 ### A slow task (transcription, ingestion…)
 

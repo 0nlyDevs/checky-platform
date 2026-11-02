@@ -22,6 +22,7 @@ import {
   Sparkles,
   TriangleAlert,
   Type,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -36,8 +37,8 @@ import { t } from "@/lib/i18n/fr";
 import { uploadFile, type Source } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
-const KIND_ICON: Record<string, LucideIcon> = { url: Link2, pdf: FileText, image: ImageIcon, audio: AudioLines, text: Type };
-const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,application/pdf,audio/*";
+const KIND_ICON: Record<string, LucideIcon> = { url: Link2, pdf: FileText, image: ImageIcon, audio: AudioLines, video: Video, text: Type };
+const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,application/pdf,audio/*,video/mp4,video/webm,video/quicktime,video/3gpp";
 
 const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
 const sizeFmt = (bytes: number) =>
@@ -234,9 +235,9 @@ function HighlightsBlock({ ws, source, highlights, play, onRefresh }: { ws: stri
 
 function AudioFacts({ ws, source }: { ws: string; source: Source }) {
   const [open, setOpen] = useState(false);
-  const audio = useRef<HTMLAudioElement>(null);
+  const audio = useRef<HTMLMediaElement>(null);
   const { data: tr, mutate: refreshTranscript } = useSWR<Transcript>(open ? `/workspaces/${ws}/sources/${source.id}/transcript` : null, fetcher);
-  const meta = (source.file?.meta ?? {}) as { language?: string };
+  const meta = (source.file?.meta ?? {}) as { language?: string; ai_markers?: string[] };
 
   function play(from: number) {
     const el = audio.current;
@@ -257,8 +258,17 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
 
   return (
     <div className="mt-2 space-y-2">
-      {source.file?.download_url && (
-        <audio ref={audio} controls preload="none" src={source.file.download_url} className="h-9 w-full max-w-md" />
+      {source.file?.download_url &&
+        (source.kind === "video" ? (
+          <video ref={(el) => { audio.current = el; }} controls preload="metadata" src={source.file.download_url} className="max-h-72 w-full max-w-md rounded-md bg-foreground" />
+        ) : (
+          <audio ref={(el) => { audio.current = el; }} controls preload="none" src={source.file.download_url} className="h-9 w-full max-w-md" />
+        ))}
+      {!!meta.ai_markers?.length && (
+        <p className="flex items-start gap-1.5 text-sm font-medium text-verdict-misleading-ink">
+          <Sparkles className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          {t.sources.aiMarkers(meta.ai_markers.join(", "))}
+        </p>
       )}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <button
@@ -440,7 +450,7 @@ function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRem
         {source.status === "queued" && (
           <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground" role="status">
             <LoaderCircle className="size-3.5 animate-spin" aria-hidden />
-            {source.kind === "audio" ? t.sources.transcribing : t.sources.analysing}
+            {source.kind === "audio" || source.kind === "video" ? t.sources.transcribing : t.sources.analysing}
           </p>
         )}
         {source.status === "failed" && (
@@ -452,8 +462,8 @@ function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRem
           </p>
         )}
         {source.status === "ready" && source.kind === "image" && <ImageFacts source={source} />}
-        {source.kind === "audio" && source.status !== "queued" && <AudioFacts ws={ws} source={source} />}
-        {source.status === "ready" && source.kind !== "audio" && source.excerpt && (
+        {(source.kind === "audio" || source.kind === "video") && source.status !== "queued" && <AudioFacts ws={ws} source={source} />}
+        {source.status === "ready" && source.kind !== "audio" && source.kind !== "video" && source.excerpt && (
           <p className="mt-2 line-clamp-3 max-w-[70ch] text-sm text-pretty">{source.excerpt}</p>
         )}
         {source.status === "ready" && source.error && (

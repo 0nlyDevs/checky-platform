@@ -4,16 +4,19 @@ verdict with its evidence. The AI suggests; a journalist confirms on the claim, 
 Dates come from code, not the model: both calls get today's date and the content's publication
 date, and the result carries `days_old` so an old post that circulates again is flagged.
 
-`POST /workspaces/{ws}/link-check {url?, text?}` SSE: `step` ({key, status, summary}) for read →
+`POST /workspaces/{ws}/link-check {url?, text?, source_id?}` SSE: `step` ({key, status, summary}) for read →
 claims → search → verdict, then `result`, then `done`, or `error`. Two model calls in all.
 Every quote (warning sign or evidence) must be found in the text it cites, otherwise it is
-dropped; with no backed evidence the verdict is `unverifiable`. Nothing is written: "Suivre dans
+dropped; with no backed evidence the verdict is `unverifiable`. `source_id` reads a ready
+source instead of a link: a video or voice note shared from the phone is checked on its
+transcript, an image on its EXIF and AI traces. Nothing is written: "Suivre dans
 le desk" in the UI creates the claim and attaches the chosen sources through the copilot route.
 """
 
 import json
 import re
 import unicodedata
+import uuid
 from collections import defaultdict, deque
 from collections.abc import AsyncIterable
 from typing import Any
@@ -24,11 +27,11 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import or_, select
 
-from app.core import ai, dates, websearch
+from app.core import ai, dates, storage, websearch
 from app.core.access import AnyMember
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
-from app.core.models import Item, Source
+from app.core.models import File, Item, Source
 from app.modules.public import _allow
 from app.workers import ingest
 
@@ -90,11 +93,13 @@ class LinkIn(BaseModel):
     url: str | None = Field(default=None, max_length=2000)
     # The post's text, pasted, when the link cannot be read without an account (Facebook…).
     text: str | None = Field(default=None, max_length=6000)
+    # An uploaded file (video, voice note, photo) already ingested as a source.
+    source_id: uuid.UUID | None = None
 
     @model_validator(mode="after")
     def something(self):
-        if not (self.url or "").strip() and not (self.text or "").strip():
-            raise ValueError("a link or a text is needed")
+        if not (self.url or "").strip() and not (self.text or "").strip() and not self.source_id:
+            raise ValueError("a link, a text or a source is needed")
         return self
 
 
@@ -185,9 +190,38 @@ async def read_link(url: str) -> dict[str, Any]:
     }
 
 
-async def _tracked(ws, url: str | None, claim: str | None) -> dict[str, Any] | None:
-    """A claim the newsroom already follows with this link, or with the same wording."""
+async def read_source(ws: uuid.UUID, source_id: uuid.UUID) -> dict[str, Any]:
+    """What an uploaded source holds: its transcript or text, and the file's facts."""
     async with SessionLocal() as db:
+        source = await db.get(Source, source_id)
+        if source is None or source.workspace_id != ws:
+            raise ApiError(404, "not_found", "Source not found")
+        if source.status != "ready":
+            raise ApiError(409, "source_not_ready", "The source is still being read")
+        file = await db.get(File, source.file_id) if source.file_id else None
+    out: dict[str, Any] = {
+        "kind": source.kind,
+        "final_url": source.url,
+        "title": source.title,
+        "text": source.text,
+        "source_id": str(source.id),
+        "item_id": str(source.item_id) if source.item_id else None,
+    }
+    if file:
+        out["file"] = {"filename": file.filename, "mime": file.mime, "meta": file.meta or {}}
+        if source.kind == "image":
+            out["image"] = file.meta or {}
+            out["image_url"] = storage.presign_download(file.storage_key, file.filename)
+    return out
+
+
+async def _tracked(
+    ws, url: str | None, claim: str | None, item_id: str | None = None
+) -> dict[str, Any] | None:
+    """A claim the newsroom already follows with this link or file, or with the same wording."""
+    async with SessionLocal() as db:
+        if item_id and (hit := await db.get(Item, uuid.UUID(item_id))):
+            return {"item_id": str(hit.id), "ref": hit.data.get("ref"), "title": hit.title}
         if url:
             hit = await db.scalar(
                 select(Item)
@@ -288,12 +322,15 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
     url = (body.url or "").strip() or None
     pasted = (body.text or "").strip()
     out: dict[str, Any] = {"url": url, "platform": _platform(url) if url else None}
+    upload = None
     try:
         # 1. read
         yield _step("read", "running")
         note = None
         page: dict[str, Any] = {"kind": "text", "text": ""}
-        if url:
+        if body.source_id:
+            page = upload = await read_source(member.workspace_id, body.source_id)
+        elif url:
             try:
                 page = await read_link(url)
             except ValueError as e:
@@ -317,10 +354,12 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
             f"{dates.today_line()} {when}"
         )
         if page.get("kind") == "image":
-            out["reverse_search"] = reverse_search(page["final_url"])
+            out["reverse_search"] = reverse_search(page.get("image_url") or page["final_url"])
         elif page.get("image_url"):
             out["reverse_search"] = reverse_search(page["image_url"])
         if not text and page.get("kind") != "image":
+            if upload:  # a silent video or an empty transcript: nothing to read the claims from
+                note = "no_speech"
             out["read_error"] = note or "empty"
             yield _step("read", "failed", note or "aucun texte")
             yield ServerSentEvent(data={**out, "needs_text": True}, event="result")
@@ -359,7 +398,12 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
         else:
             query = ""
             out.update({"claims": [], "signals": [], "summary": ""})
-        out["tracked"] = await _tracked(member.workspace_id, url, claims[0] if claims else None)
+        out["tracked"] = await _tracked(
+            member.workspace_id,
+            url,
+            claims[0] if claims else None,
+            upload.get("item_id") if upload else None,
+        )
 
         # 3. what the web and fact-checkers already say
         results: list[dict[str, Any]] = []
@@ -402,6 +446,8 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
         yield ServerSentEvent(
             data={"code": "ai_unavailable", "message": str(e)[:300]}, event="error"
         )
+    except ApiError as e:  # an unknown source, or one still being read
+        yield ServerSentEvent(data={"code": e.code, "message": e.detail}, event="error")
     except Exception as e:  # noqa: BLE001 - never end the stream without telling the client
         yield ServerSentEvent(
             data={"code": "link_check_failed", "message": type(e).__name__}, event="error"

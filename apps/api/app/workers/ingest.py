@@ -1,6 +1,7 @@
 """Ingest jobs: turn an uploaded file or a URL into a ready source.
 
-`ingest_file`: hash the object, read EXIF (images) or text (PDFs).
+`ingest_file`: hash the object, read EXIF (images) or text (PDFs), transcribe audio and the
+soundtrack of videos (ffmpeg pulls it out when installed; Whisper reads mp4/webm as they are).
 `ingest_url`:  fetch the page (public addresses only) and extract its main text.
 """
 
@@ -8,11 +9,15 @@ import asyncio
 import hashlib
 import io
 import ipaddress
+import json
 import re
+import shutil
 import socket
+import tempfile
 import uuid
 from datetime import timedelta
 from html import unescape as html_unescape
+from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
@@ -155,6 +160,14 @@ AI_MARKERS = [
     ("imagen", "Google Imagen", False),
     ("grok", "Grok", False),
     ("flux", "FLUX", False),
+    # Video generators, only trusted in the container's metadata tags.
+    ("sora", "OpenAI Sora", False),
+    ("veo", "Google Veo", False),
+    ("runway", "Runway", False),
+    ("kling", "Kling", False),
+    ("pika", "Pika", False),
+    ("hailuo", "Hailuo", False),
+    ("luma", "Luma", False),
 ]
 C2PA_MARKERS = (b"c2pa", b"jumbf")
 
@@ -196,6 +209,96 @@ def image_meta(raw: bytes) -> dict[str, Any]:
     texts = [str(v) for v in tags.values() if isinstance(v, (str, bytes))] + chunks
     meta.update(ai_signals(raw, texts))
     return meta
+
+
+# Whisper takes these containers as they are; anything else needs ffmpeg.
+WHISPER_VIDEO = {"video/mp4": "mp4", "video/webm": "webm"}
+
+
+async def _run(*cmd: str) -> bytes:
+    proc = await asyncio.create_subprocess_exec(
+        *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+    )
+    out, err = await asyncio.wait_for(proc.communicate(), timeout=120)
+    if proc.returncode:
+        raise ValueError(f"{Path(cmd[0]).name} failed: {err.decode(errors='replace')[-200:]}")
+    return out
+
+
+async def video_meta_and_audio(raw: bytes, mime: str) -> tuple[dict[str, Any], bytes, str, str]:
+    """The container's facts (duration, size, encoder tags, AI traces) and its soundtrack as a
+    small mono mp3. Without ffmpeg, mp4/webm go to Whisper whole and the facts are the AI traces.
+    Tests swap this out."""
+    if not (ffmpeg := shutil.which("ffmpeg")):
+        if mime not in WHISPER_VIDEO:
+            raise ValueError("ffmpeg is needed to read this video format")
+        return ai_signals(raw, []), raw, f"video.{WHISPER_VIDEO[mime]}", mime
+    with tempfile.TemporaryDirectory() as tmp:
+        src, mp3 = Path(tmp) / "in", Path(tmp) / "audio.mp3"
+        src.write_bytes(raw)
+        meta: dict[str, Any] = {}
+        texts: list[str] = []
+        if ffprobe := shutil.which("ffprobe"):
+            probe = json.loads(
+                await _run(
+                    ffprobe,
+                    "-v",
+                    "quiet",
+                    "-print_format",
+                    "json",
+                    "-show_format",
+                    "-show_streams",
+                    str(src),
+                )
+            )
+            fmt = probe.get("format") or {}
+            video = next(
+                (x for x in probe.get("streams") or [] if x.get("codec_type") == "video"), {}
+            )
+            tags = {**(fmt.get("tags") or {}), **(video.get("tags") or {})}
+            texts = [f"{k} {v}" for k, v in tags.items()]
+            if fmt.get("duration"):
+                meta["duration_s"] = round(float(fmt["duration"]), 2)
+            if video.get("width"):
+                meta.update(width=video["width"], height=video.get("height"))
+            picked = {
+                k: str(v)[:200]
+                for k, v in tags.items()
+                if k.lower()
+                in (
+                    "encoder",
+                    "creation_time",
+                    "com.apple.quicktime.make",
+                    "com.apple.quicktime.model",
+                    "com.apple.quicktime.software",
+                    "handler_name",
+                    "comment",
+                    "artist",
+                )
+            }
+            if picked:
+                meta["tags"] = picked
+            if not any(x.get("codec_type") == "audio" for x in probe.get("streams") or []):
+                meta.update(ai_signals(raw, texts))
+                return meta, b"", "", ""
+        meta.update(ai_signals(raw, texts))
+        await _run(
+            ffmpeg,
+            "-v",
+            "error",
+            "-i",
+            str(src),
+            "-vn",
+            "-ac",
+            "1",
+            "-ar",
+            "16000",
+            "-b:a",
+            "48k",
+            "-y",
+            str(mp3),
+        )
+        return meta, mp3.read_bytes(), "audio.mp3", "audio/mpeg"
 
 
 def pdf_text(raw: bytes) -> tuple[dict[str, Any], str, str]:
@@ -250,6 +353,19 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
             text = result["text"]
             meta = {"duration_s": result["duration_s"], "language": result["language"]}
             await _save_transcript(source_id, result)
+        elif mime.startswith("video/"):
+            meta, audio, audio_name, audio_mime = await video_meta_and_audio(raw, mime)
+            await ctx.progress(50)
+            if audio:
+                result = await stt.transcribe(
+                    audio, audio_name, audio_mime, ctx.input.get("language")
+                )
+                text = result["text"]
+                meta.update(
+                    duration_s=meta.get("duration_s") or result["duration_s"],
+                    language=result["language"],
+                )
+                await _save_transcript(source_id, result)
         async with SessionLocal() as db:
             await db.execute(
                 update(File)

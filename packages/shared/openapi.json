@@ -1743,7 +1743,7 @@
           "sources"
         ],
         "summary": "Update Source",
-        "description": "Set a source's publication date by hand (a pasted text, a page that does not say it).",
+        "description": "Set a source's publication date by hand (a pasted text, a page that does not say it), or\nattach it to a claim (the phone app attaches the file it analysed to the claim it follows).",
         "operationId": "update_source_api_v1_workspaces__ws__sources__source_id__patch",
         "security": [
           {
@@ -4012,6 +4012,18 @@
               }
             ],
             "title": "Text"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
           }
         },
         "type": "object",
@@ -4615,13 +4627,23 @@
               }
             ],
             "title": "Published At"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
           }
         },
         "type": "object",
-        "required": [
-          "published_at"
-        ],
-        "title": "SourcePatch"
+        "title": "SourcePatch",
+        "description": "Send one field or both; a field left out keeps its value."
       },
       "SpeakIn": {
         "properties": {
