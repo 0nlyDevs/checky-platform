@@ -13,25 +13,34 @@ each angle must rest on numbered facts and is shown dashed: the AI suggests, a j
 import logging
 import re
 import uuid
-from typing import Literal
+from datetime import UTC, date, datetime, timedelta
+from typing import Any, Literal
 
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.access import Anyone, Db, Member
+from app.core import dates, seasons
+from app.core.access import AnyMember, Anyone, Db, Member
 from app.core.models import (
     DEFAULT_BEATS,
+    Contact,
+    Figure,
+    Item,
     MemberPref,
     Workspace,
 )
 from app.core.places import MG_REGIONS, fold
+from app.modules.items import ItemOut
 
 log = logging.getLogger("checky.rubrique")
 router = APIRouter(tags=["rubrique"])
 
+WEEKDAYS = ("lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche")
+CIRCULATING_HOURS = 48
+FIGURE_OLD_DAYS = 730
 # Words that put a text in a beat when nobody tagged it (French, Malagasy, a little English).
 # Beats are the newsroom's; a beat with no entry here matches on its own name only.
 BEAT_WORDS: dict[str, tuple[str, ...]] = {
@@ -164,6 +173,447 @@ async def put_prefs(body: PrefsIn, member: Anyone, db: Db) -> PrefsOut:
 
 
 # -------------------------------------------------------------------------------- the page
+class Circulating(BaseModel):
+    id: str
+    kind: Literal["item", "tip", "sms", "clip", "press"]
+    title: str
+    at: datetime
+    place: dict[str, Any] | None
+    station: str | None = None
+    url: str | None = None
+    beats: list[str]
+    item: ItemOut | None = None  # a dossier: the page draws its numbered line
+    item_id: uuid.UUID | None = None
+    already_checked: dict[str, Any] | None = None
+    seasons: list[str] = []
+    demo: bool = False
+
+
+class ContactCard(BaseModel):
+    id: uuid.UUID
+    name: str
+    role: str
+    institution: str
+    topics: list[str]
+    phone: str | None
+    whatsapp: str | None
+    email: str | None
+    website: str | None
+    region: str | None
+    verified: bool
+    is_demo: bool
+
+
+class FigureCard(BaseModel):
+    id: uuid.UUID
+    topic: str
+    label: str
+    value: str
+    unit: str | None
+    as_of: str | None
+    source_name: str
+    source_url: str | None
+    age_days: int | None
+    old: bool
+    is_demo: bool
+
+
+class AngleCard(BaseModel):
+    title: str
+    why: str
+    rests_on: list[dict[str, Any]] = []
+    missing_figure: str | None = None
+    item_id: uuid.UUID | None = None
+    ref: str | None = None
+    # kept: a journalist kept it on a dossier; piste: drawn by code from the season and the desk
+    kind: Literal["kept", "piste"]
+
+
+class RubriqueOut(BaseModel):
+    today: str
+    today_label: str
+    beats: list[str]
+    regions: list[str]
+    prefs: PrefsOut
+    circulating: list[Circulating]
+    mine: list[ItemOut]
+    to_sign: list[ItemOut]
+    contacts: list[ContactCard]
+    figures: list[FigureCard]
+    angles: list[AngleCard]
+    meteo: dict[str, Any]
+    antenne: list[dict[str, Any]]
+
+
+def today_label(day: date | None = None) -> str:
+    """« lundi 2 novembre 2026 », in Madagascar time."""
+    day = day or dates.today()
+    return f"{WEEKDAYS[day.weekday()]} {dates.fr(day)}"
+
+
+def _region_keys(regions: list[str]) -> set[str]:
+    from app.modules.veille import canonical_region
+
+    return {fold(canonical_region(r) or r) for r in regions}
+
+
+def _score(beats_hit: list[str], region: str | None, beats: list[str], regions: set[str]) -> int:
+    """2 when an entry is on my beat and in my place, 1 for either, 0 for neither. With no
+    preference at all everything counts."""
+    if not beats and not regions:
+        return 1
+    on_beat = bool(beats) and any(_same(b, m) for b in beats_hit for m in beats)
+    in_place = bool(regions) and bool(region) and fold(region) in regions
+    return int(on_beat) + int(in_place)
+
+
+async def circulating(
+    db: AsyncSession,
+    workspace: Workspace,
+    beats: list[str],
+    regions: list[str],
+    weather: dict[str, Any] | None = None,
+    limit: int = 12,
+) -> list[Circulating]:
+    """What circulates on my beats and places in the last 48 hours: the desk's open claims (tips
+    included) and the SMS questions, radio clips and press items not yet in a dossier."""
+    from app.modules.veille import _place_out, feed_entries, item_location
+
+    offered = offered_beats(workspace)
+    since = datetime.now(UTC) - timedelta(hours=CIRCULATING_HOURS)
+    keys = _region_keys(regions)
+    weather_now = (weather or await seasons.meteo(db, workspace, beats=beats))["seasons"]
+    scored: list[tuple[int, Circulating]] = []
+    followed: set[uuid.UUID] = set()
+    for item in await db.scalars(
+        select(Item).where(
+            Item.workspace_id == workspace.id, Item.type == "claim", Item.created_at >= since
+        )
+    ):
+        d = item.data or {}
+        at = dates.parse_moment(d.get("first_seen_at")) or item.created_at
+        if at < since:
+            continue
+        place = _place_out(item_location(item))
+        hit = sorted(
+            {t for t in item.tags or [] if any(_same(t, o) for o in offered)}
+            | set(beats_for(f"{item.title} {item.body}", offered))
+        )
+        score = _score(hit, (place or {}).get("region"), beats, keys)
+        followed.add(item.id)
+        if score:
+            text = f"{item.title} {item.body}"
+            scored.append(
+                (
+                    score,
+                    Circulating(
+                        id=f"item:{item.id}",
+                        kind="tip" if d.get("public_tip") else "item",
+                        title=item.title,
+                        at=at,
+                        place=place,
+                        url=d.get("tip_url"),
+                        beats=hit,
+                        item=ItemOut.model_validate(item),
+                        item_id=item.id,
+                        seasons=seasons.matching(weather_now, text),
+                        demo=bool(d.get("demo")),
+                    ),
+                )
+            )
+    for e in await feed_entries(db, workspace, days=2):
+        if e.kind == "tip" or (e.item_id and e.item_id in followed) or e.at < since:
+            continue
+        score = _score(e.beats, (e.place or {}).get("region"), beats, keys)
+        if score:
+            scored.append(
+                (
+                    score,
+                    Circulating(
+                        id=e.id,
+                        kind=e.kind,
+                        title=e.title,
+                        at=e.at,
+                        place=e.place,
+                        station=e.station,
+                        url=e.url,
+                        beats=e.beats,
+                        item_id=e.item_id,
+                        already_checked=e.already_checked.model_dump(mode="json")
+                        if e.already_checked
+                        else None,
+                        seasons=seasons.matching(weather_now, f"{e.title} {e.text}"),
+                        demo=e.demo,
+                    ),
+                )
+            )
+    scored.sort(key=lambda r: (r[0], r[1].at), reverse=True)
+    return [c for _, c in scored[:limit]]
+
+
+async def _contacts(
+    db: AsyncSession, workspace_id: uuid.UUID, beats: list[str], regions: list[str]
+) -> list[ContactCard]:
+    """Who to call for my beats: the Annuaire's best matches (topics, then place)."""
+    try:
+        from app.modules import directory
+
+        top = getattr(directory, "top_contacts", None)
+        if top is not None:
+            return [ContactCard(**c) for c in await top(db, workspace_id, beats, regions, 3)]
+    except Exception:  # noqa: BLE001 - the Annuaire is another shelf; the page goes on without it
+        log.warning("directory.top_contacts failed; falling back to the Contact table")
+    rows = await db.scalars(
+        select(Contact).where(or_(Contact.workspace_id == workspace_id, Contact.shared.is_(True)))
+    )
+    keys = _region_keys(regions)
+    scored = []
+    for c in rows:
+        topics = [fold(t) for t in c.topics or []]
+        on_beat = any(fold(b) in topics for b in beats)
+        region = (c.location or {}).get("region")
+        in_place = bool(region) and fold(region) in keys
+        score = 2 * on_beat + in_place + 0.5 * bool(c.verified_at)
+        if beats and not on_beat:
+            continue
+        scored.append((score, c))
+    scored.sort(key=lambda r: (r[0], (r[1].stats or {}).get("answered", 0)), reverse=True)
+    return [
+        ContactCard(
+            id=c.id,
+            name=c.name,
+            role=c.role or "",
+            institution=c.institution or "",
+            topics=list(c.topics or []),
+            phone=c.phone,
+            whatsapp=c.whatsapp,
+            email=c.email,
+            website=c.website,
+            region=(c.location or {}).get("region"),
+            verified=bool(c.verified_at),
+            is_demo=bool(c.is_demo),
+        )
+        for _, c in scored[:3]
+    ]
+
+
+def _as_of(value: str | None) -> date | None:
+    if not value:
+        return None
+    if re.fullmatch(r"\d{4}", value):
+        return date(int(value), 12, 31)
+    return dates.parse(value)
+
+
+async def _figures(db: AsyncSession, workspace_id: uuid.UUID, beats: list[str]) -> list[FigureCard]:
+    """The latest official figures on my beats, with their age (old past two years)."""
+    rows = await db.scalars(
+        select(Figure).where(
+            or_(Figure.workspace_id == workspace_id, Figure.workspace_id.is_(None))
+        )
+    )
+    today = dates.today()
+    picked = []
+    for f in rows:
+        hay = {fold(f.topic), *(fold(k) for k in f.keywords or [])}
+        if beats and not any(fold(b) in hay for b in beats):
+            continue
+        seen = _as_of(f.as_of)
+        age = (today - seen).days if seen else None
+        picked.append(
+            FigureCard(
+                id=f.id,
+                topic=f.topic,
+                label=f.label,
+                value=f.value,
+                unit=f.unit,
+                as_of=f.as_of,
+                source_name=f.source_name,
+                source_url=f.source_url,
+                age_days=max(age, 0) if age is not None else None,
+                old=age is not None and age > FIGURE_OLD_DAYS,
+                is_demo=bool(f.is_demo),
+            )
+        )
+    picked.sort(key=lambda f: (f.age_days is None, f.age_days or 0))
+    return picked[:4]
+
+
+async def _angles(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    beats: list[str],
+    weather: dict[str, Any],
+    offered: list[str],
+) -> list[AngleCard]:
+    """Three angles: those journalists kept on dossiers of my beats, then pistes drawn by code
+    from the season and « Ça revient » (no model call on a page load)."""
+    out: list[AngleCard] = []
+    rows = await db.scalars(
+        select(Item)
+        .where(Item.workspace_id == workspace_id, Item.data.has_key("angles"))
+        .order_by(Item.updated_at.desc())
+        .limit(30)
+    )
+    for item in rows:
+        hit = set(item.tags or []) | set(beats_for(item.title, offered))
+        if beats and not any(_same(b, h) for b in beats for h in hit):
+            continue
+        for kept in reversed((item.data or {}).get("angles") or []):
+            if isinstance(kept, dict) and kept.get("title"):
+                out.append(
+                    AngleCard(
+                        title=str(kept["title"])[:200],
+                        why=str(kept.get("why") or "")[:500],
+                        rests_on=[r for r in kept.get("rests_on") or [] if isinstance(r, dict)],
+                        missing_figure=kept.get("missing_figure"),
+                        item_id=item.id,
+                        ref=(item.data or {}).get("ref"),
+                        kind="kept",
+                    )
+                )
+    for season in weather.get("seasons") or []:
+        out.append(
+            AngleCard(
+                title=f"{season['name']} : les rumeurs qui reviennent chaque année",
+                why=season["note"],
+                rests_on=[{"kind": "season", "label": season["name"]}],
+                kind="piste",
+            )
+        )
+    for back in weather.get("returning") or []:
+        out.append(
+            AngleCard(
+                title=f"Ce qui avait circulé à la même période en {back['year']}",
+                why=f"« {back['title']} » : la rumeur peut revenir avec la saison.",
+                rests_on=[{"kind": "verdict", "label": back["title"], "item_id": back["id"]}],
+                kind="piste",
+            )
+        )
+    return out[:3]
+
+
+async def _dossiers(
+    db: AsyncSession, member: Member, beats: list[str], offered: list[str]
+) -> tuple[list[ItemOut], list[ItemOut]]:
+    rows = list(
+        await db.scalars(
+            select(Item)
+            .where(
+                Item.workspace_id == member.workspace_id,
+                Item.type == "claim",
+                Item.status != "published",
+            )
+            .order_by(Item.updated_at.desc())
+            .limit(300)
+        )
+    )
+    mine = [
+        i
+        for i in rows
+        if (i.data or {}).get("assignee_id") == member.user.id
+        and i.status in ("to_check", "in_progress")
+    ]
+
+    def on_beat(i: Item) -> bool:
+        hit = set(i.tags or []) | set(beats_for(i.title, offered))
+        return any(_same(b, h) for b in beats for h in hit)
+
+    to_sign = [
+        i
+        for i in rows
+        if (i.data or {}).get("verdict_suggested") and not (i.data or {}).get("verdict")
+    ]
+    to_sign.sort(key=lambda i: not on_beat(i))
+    return (
+        [ItemOut.model_validate(i) for i in mine[:5]],
+        [ItemOut.model_validate(i) for i in to_sign[:5]],
+    )
+
+
+def _pick(override: str | None, saved: list[str]) -> list[str]:
+    """An explicit `?beat=` replaces my saved beats; `*` shows every beat."""
+    if override is None or not override.strip():
+        return saved
+    return [] if override.strip() == "*" else [override.strip()]
+
+
+@router.get("/workspaces/{ws}/rubrique")
+async def rubrique(
+    member: AnyMember, db: Db, beat: str | None = None, region: str | None = None
+) -> RubriqueOut:
+    from app.modules.veille import antenne_rows
+
+    workspace = await db.get(Workspace, member.workspace_id)
+    pref = await load_prefs(db, member)
+    prefs = _prefs_out(pref, workspace)
+    beats = _pick(beat, prefs.beats)
+    regions = _pick(region, prefs.regions)
+    offered = offered_beats(workspace)
+    weather = await seasons.meteo(db, workspace, regions[0] if regions else None, beats)
+    mine, to_sign = await _dossiers(db, member, beats, offered)
+    keys = _region_keys(regions)
+    antenne = []
+    for row in await antenne_rows(db, member.workspace_id):
+        hit = beats_for(f"{row.claim} {row.latest.heard_text}", offered)
+        if _score(hit, (row.regions_24h or [None])[0], beats, keys):
+            antenne.append(row.model_dump(mode="json"))
+    return RubriqueOut(
+        today=dates.today().isoformat(),
+        today_label=today_label(),
+        beats=beats,
+        regions=regions,
+        prefs=prefs,
+        circulating=await circulating(db, workspace, beats, regions, weather),
+        mine=mine,
+        to_sign=to_sign,
+        contacts=await _contacts(db, member.workspace_id, beats, regions),
+        figures=await _figures(db, member.workspace_id, beats),
+        angles=await _angles(db, member.workspace_id, beats, weather, offered),
+        meteo=weather,
+        antenne=antenne[:3],
+    )
+
+
+VERDICT_WORDS = {
+    "true": "Vrai",
+    "misleading": "Trompeur",
+    "false": "Faux",
+    "unverifiable": "Invérifiable",
+}
+
+
+@router.get("/workspaces/{ws}/rubrique/brief")
+async def brief(
+    member: AnyMember, db: Db, beat: str | None = None, region: str | None = None
+) -> dict[str, str]:
+    """The morning page as a short text, for WhatsApp or an SMS. Facts only, no AI."""
+    page = await rubrique(member, db, beat, region)
+    head = " · ".join([*page.beats, *page.regions]) or "Toutes les rubriques"
+    lines = [f"Checky · Ma rubrique · {page.today_label}", head, ""]
+    if page.circulating:
+        lines.append("Ce qui circule :")
+        for c in page.circulating[:5]:
+            where = (c.place or {}).get("name") or (c.place or {}).get("region")
+            suffix = f" ({where})" if where else ""
+            checked = c.already_checked or {}
+            if checked.get("verdict") in VERDICT_WORDS:
+                suffix += f" · déjà vérifié : {VERDICT_WORDS[checked['verdict']]}"
+            elif c.item and (c.item.data or {}).get("verdict") in VERDICT_WORDS:
+                suffix += f" · {VERDICT_WORDS[c.item.data['verdict']]}"
+            lines.append(f"- {c.title}{suffix}")
+    else:
+        lines.append("Rien de nouveau sur vos rubriques depuis 48 h.")
+    if page.meteo.get("seasons"):
+        names = ", ".join(s["name"].lower() for s in page.meteo["seasons"][:3])
+        lines += ["", f"Météo des rumeurs : {names}."]
+    if page.to_sign:
+        n = len(page.to_sign)
+        lines.append(f"À signer : {n} dossier{'s' if n > 1 else ''}.")
+    if page.mine:
+        n = len(page.mine)
+        lines.append(f"Pour vous : {n} dossier{'s' if n > 1 else ''} en cours.")
+    return {"text": "\n".join(lines).strip()}
 
 
 # ----------------------------------------------------------------------------------- angles
