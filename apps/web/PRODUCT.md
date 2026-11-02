@@ -15,9 +15,9 @@ web
 
 ## Product Purpose
 
-FANILO is a fact-checking and information-resilience tool for media professionals in Madagascar, made for the FANILO Hackathon (IFM and the French Embassy press service, Antananarivo, 2–4 November 2026). It is built from general modules (workspaces, items, files, realtime, jobs, AI: model gateway, RAG with citations, speech-to-text, agent) and five features that can be reshaped quickly: claim checker, verification board, interview to quotes, image check, verdict card.
+FANILO is a fact-checking and information-resilience tool for media professionals in Madagascar, made for the FANILO Hackathon (IFM and the French Embassy press service, Antananarivo, 2–4 November 2026). Journalists check claims, track their verification together, extract quotes from interviews, inspect images and share confirmed verdicts. Evidence, citations and verification progress stay together in the newsroom's workspace.
 
-Success: a new feature goes from idea to deployed and demoable in under two hours, and the claim checker and verification board work end to end on seed data.
+Success: a newsroom can take a rumour from its first appearance to a sourced, journalist-confirmed verdict, and the claim checker and verification board work end to end on seed data.
 
 ## Positioning
 
@@ -55,7 +55,7 @@ Built for the local newsroom reality: French and Malagasy content, field conditi
 1. The journalist decides: AI suggests with evidence; a person confirms every verdict.
 2. Show the evidence: every answer cites its source and passage.
 3. Works in the field: fast on a weak phone connection, recovers from drops.
-4. Generic underneath, specific on top: features are thin layers that can be reshaped in an hour.
+4. One shared workflow: claims, evidence and confirmed verdicts stay connected.
 5. Never fail in the demo: fallbacks over features.
 
 ## Accessibility & Inclusion

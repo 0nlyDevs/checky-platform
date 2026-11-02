@@ -111,7 +111,7 @@ The browser talks to both services; files go straight from the browser to Neon O
 
 ## Functional requirements
 
-Each capability below is a building block the features rely on.
+The requirements below describe how FANILO handles newsroom access, claims, sources and verification.
 
 ### M1. Authentication and roles
 
@@ -128,7 +128,7 @@ Each capability below is a building block the features rely on.
 - List, change role, remove members.
 - Every domain record belongs to one workspace; every query filters by workspace.
 
-### M3. Generic items
+### M3. Claims and newsroom records
 
 One flexible model, `item`, for the domain objects (a claim, a story, a rumor, a source).
 
@@ -203,7 +203,7 @@ One flexible model, `item`, for the domain objects (a claim, a story, a rumor, a
 
 ## Features
 
-Five features answer the journalist's main tasks. Each one is a thin layer over the capabilities above.
+Five features cover the journalist's main verification tasks, from checking a claim to sharing its confirmed verdict.
 
 | Feature | What the journalist does | Built on |
 | --- | --- | --- |
@@ -324,7 +324,7 @@ Better Auth manages its own tables (`user`, `session`, `account`, `verification`
 | `workspace` | id, name, slug |  |
 | `membership` | workspace\_id, user\_id, role | Unique on (workspace\_id, user\_id); role in `admin`, `editor`, `journalist` |
 | `invitation` | workspace\_id, token, role, expires\_at, used\_at | Link-based invites |
-| `item` | workspace\_id, author\_id, type, title, body, status, tags (text\[\]), data (JSONB) | The generic domain object; GIN index on tags and data |
+| `item` | workspace\_id, author\_id, type, title, body, status, tags (text\[\]), data (JSONB) | Claims and newsroom records; GIN index on tags and data |
 | `comment` | item\_id, author\_id, body |  |
 | `activity` | workspace\_id, actor\_id, entity, entity\_id, action, diff (JSONB) | Written on every create, update, delete |
 | `file` | workspace\_id, item\_id?, storage\_key, mime, size\_bytes, sha256, meta (JSONB) | Object in the Neon bucket; EXIF and other metadata in meta |

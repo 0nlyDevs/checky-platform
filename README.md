@@ -4,8 +4,8 @@ An app for newsrooms in Madagascar to verify claims, track misinformation and sp
 content, made for the **FANILO Hackathon** (IFM + French Embassy press service, Antananarivo).
 
 The hackathon problem is presented on **Mon 2 Nov 2026, 08:00**. Hand-in is **Tue 3 Nov, 20:00**
-and the pitch is on **Wed 4 Nov**. A new feature should go from idea to deployed demo in under
-2 hours.
+and the pitch is on **Wed 4 Nov**. Journalists follow each rumour from its first appearance to
+a sourced, confirmed verdict in one shared workspace.
 
 - Product requirements: [`docs/PRD.md`](docs/PRD.md), a copy of the [PRD Claude Doc](https://claude.ai/artifact/XFypCd4WmGLBm6pMbGMwrv) (keep both in sync)
 - Design rules: [`apps/web/DESIGN.md`](apps/web/DESIGN.md) and [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md)
