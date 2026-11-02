@@ -12,8 +12,10 @@ import hmac
 import re
 from typing import Literal
 
+import phonenumbers
 from cryptography.fernet import Fernet, InvalidToken
 
+from app.core import countries
 from app.core.config import get_settings
 from app.core.errors import ApiError
 
@@ -34,9 +36,10 @@ def configured() -> bool:
     return bool(get_settings().seal_secret)
 
 
-def normalise(contact: str) -> tuple[Kind, str]:
+def normalise(contact: str, country: str = countries.DEFAULT) -> tuple[Kind, str]:
     """('phone', '+261340000012') or ('email', 'name@example.org'); ValueError otherwise.
-    A Malagasy mobile number written the national way (034 00 000 12) gets its +261."""
+    A number written the national way is read in `country` (ISO code, Madagascar by default:
+    034 00 000 12 gets its +261) through `phonenumbers`, so any country's numbers work."""
     value = (contact or "").strip()
     if "@" in value:
         if not EMAIL.match(value):
@@ -45,11 +48,14 @@ def normalise(contact: str) -> tuple[Kind, str]:
     digits = re.sub(r"[\s.\-()/]", "", value)
     if digits.startswith("00"):
         digits = "+" + digits[2:]
+    if e164 := countries.phone(digits, country):
+        return "phone", e164
     if re.fullmatch(r"03[2-9]\d{7}", digits):
         digits = "+261" + digits[1:]
-    if not re.fullmatch(r"\+?\d{8,15}", digits):
+    # A national number the country does not know is unreadable; an international one is kept.
+    if not re.fullmatch(r"\+\d{8,15}", digits):
         raise ValueError("not a phone number")
-    return "phone", digits if digits.startswith("+") else "+" + digits
+    return "phone", digits
 
 
 def digest(kind: Kind, value: str) -> str:
@@ -63,7 +69,12 @@ def mask(kind: Kind, value: str) -> str:
         return f"{name[:1]}•••@{domain}"
     if value.startswith("+261") and len(value) == 13:
         return f"+261 {value[4:6]} •• ••• {value[-2:]}"
-    return f"{value[:4]} •• ••• {value[-2:]}"
+    try:
+        parsed = phonenumbers.parse(value)
+        national = str(parsed.national_number)
+        return f"+{parsed.country_code} {national[:2]} •• ••• {national[-2:]}"
+    except phonenumbers.NumberParseException:
+        return f"{value[:4]} •• ••• {value[-2:]}"
 
 
 def _fernet() -> Fernet:
