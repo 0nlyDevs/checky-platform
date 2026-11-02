@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { IconArrowRight } from "@/lib/icons";
 import { VerdictWord } from "@/components/site/public/public-verdict";
 import { useDay, useT } from "@/lib/i18n";
-import { type PublicVerdict, publicApi } from "@/lib/public-api";
+import { type PublicVerdict, publicApi, visitorCountry } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
 
@@ -59,7 +59,7 @@ export function VerdictList({ limit: first = 3, filter = false, compact = false 
 
   useEffect(() => {
     const id = setTimeout(() => {
-      publicApi<{ items: PublicVerdict[]; total: number }>(`/verdicts?limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}`)
+      publicApi<{ items: PublicVerdict[]; total: number }>(`/verdicts?limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}${visitorCountry() ? `&country=${visitorCountry()}` : ""}`)
         .then(setPage)
         .catch(() => setPage({ items: [], total: 0 }));
     }, 250);

@@ -212,10 +212,15 @@ def _claim_words(item: Item) -> list[set[str]]:
 
 
 def _local(ws: Workspace, country: str | None) -> bool:
-    """The newsroom is in the visitor's country (its verdict comes first among equals)."""
-    return bool(country) and fold((ws.settings or {}).get("country") or "Madagascar") == fold(
-        country or ""
-    )
+    """The newsroom is in the visitor's country (a name or an ISO code such as "MG"); its verdict
+    comes first among equals."""
+    if not country:
+        return False
+    from app.core import countries
+
+    home = (ws.settings or {}).get("country") or "Madagascar"
+    a, b = countries.code_for(home), countries.code_for(country)
+    return (a == b) if a and b else fold(home) == fold(country)
 
 
 async def best_published(

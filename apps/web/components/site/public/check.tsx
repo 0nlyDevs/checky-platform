@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { useDay, useLang, useMoment, useT } from "@/lib/i18n";
 import { IconArrowRight, IconArrowSquareOut, IconCircleNotch, IconInfo, IconPaperPlaneTilt, IconSealCheck } from "@/lib/icons";
-import { publicApi } from "@/lib/public-api";
+import { publicApi, visitorCountry } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
 type Review = { publisher: string; url: string; rating: string | null; date: string | null; title: string };
@@ -52,7 +52,7 @@ export function CheckForm({ id = "check", className }: { id?: string; className?
     setResult(null);
     try {
       const body = LONE_URL.test(value) ? { url: value } : { text: value.slice(0, 6000) };
-      setResult(await publicApi<Verify>("/verify", { method: "POST", body: JSON.stringify(body) }));
+      setResult(await publicApi<Verify>("/verify", { method: "POST", body: JSON.stringify({ ...body, country: visitorCountry() }) }));
       setAsked(value);
     } catch (err) {
       const status = err instanceof ApiError ? err.status : 0;

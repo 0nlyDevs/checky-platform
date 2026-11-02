@@ -53,3 +53,14 @@ export function myTips(): { token: string; ref: string; title: string }[] {
     return [];
   }
 }
+
+/** The visitor's country as an ISO code, read from the browser's languages (« fr-MG » → MG), or
+ * null. Public searches cover every newsroom and put this country's first among equal answers. */
+export function visitorCountry(): string | null {
+  if (typeof navigator === "undefined") return null;
+  for (const tag of navigator.languages ?? [navigator.language]) {
+    const region = tag?.split("-")[1];
+    if (region && /^[A-Za-z]{2}$/.test(region)) return region.toUpperCase();
+  }
+  return null;
+}
