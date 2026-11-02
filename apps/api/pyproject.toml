@@ -15,6 +15,7 @@ dependencies = [
     "fastapi>=0.162.0",
     "feedparser>=6.0.14",
     "httpx>=0.28.1",
+    "opencv-python-headless>=4.14.0.94,<5",
     "pgvector>=0.5.1",
     "phonenumbers>=9.0.42",
     "pillow>=13.0.0",
