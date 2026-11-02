@@ -154,7 +154,7 @@ async def _fields(
         if key in values:
             values[key] = [v.strip()[:60] for v in values[key] if v and v.strip()]
     if "official_pages" in values:
-        country = await _country_code(db, ws)
+        country = await country_code(db, ws)
         pages = []
         for p in values["official_pages"] or []:
             p = {"kind": "site", **p}
@@ -168,7 +168,7 @@ async def _fields(
     return values
 
 
-async def _country_code(db: AsyncSession, ws: uuid.UUID) -> str:
+async def country_code(db: AsyncSession, ws: uuid.UUID) -> str:
     """The newsroom's country as an ISO code: a number written the national way is read there."""
     from app.modules.workspaces import newsroom_settings
 

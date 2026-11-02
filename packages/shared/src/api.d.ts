@@ -2453,6 +2453,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/gestures": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check Gestures
+         * @description Attribution, official page, number and press article for a message (no model).
+         */
+        post: operations["check_gestures_api_v1_workspaces__ws__gestures_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -3908,6 +3928,28 @@ export interface components {
             };
             /** Rumour Stop Id */
             rumour_stop_id: string | null;
+        };
+        /** GestureOut */
+        GestureOut: {
+            /** Kind */
+            kind: string;
+            /** Status */
+            status: string;
+            /** Text */
+            text: string;
+            /** Subject */
+            subject: string;
+            /** Proof */
+            proof: {
+                [key: string]: unknown;
+            };
+        };
+        /** GesturesIn */
+        GesturesIn: {
+            /** Text */
+            text?: string | null;
+            /** Url */
+            url?: string | null;
         };
         /** GuideIn */
         GuideIn: {
@@ -10893,6 +10935,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AlertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_gestures_api_v1_workspaces__ws__gestures_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GesturesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GestureOut"][];
                 };
             };
             /** @description Validation Error */

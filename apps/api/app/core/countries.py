@@ -48,3 +48,28 @@ def phone(raw: str, country: str = DEFAULT) -> str | None:
     if not phonenumbers.is_valid_number(parsed):
         return None
     return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164)
+
+
+def phones_in(text: str, country: str = DEFAULT, limit: int = 6) -> list[tuple[str, str]]:
+    """The valid phone numbers a text gives, as (as written, E.164), in order, without repeats.
+    Years, amounts and communiqué numbers (« N° 2026-118 », « 1 200 000 Ar ») are not numbers."""
+    out: list[tuple[str, str]] = []
+    matcher = phonenumbers.PhoneNumberMatcher(
+        text or "", country.upper(), leniency=phonenumbers.Leniency.STRICT_GROUPING
+    )
+    for match in matcher:
+        e164 = phonenumbers.format_number(match.number, phonenumbers.PhoneNumberFormat.E164)
+        if e164 not in [e for _, e in out]:
+            out.append((match.raw_string, e164))
+        if len(out) >= limit:
+            break
+    return out
+
+
+def display(e164: str) -> str:
+    """« +261341234567 » → « +261 34 12 345 67 », the way the country writes it abroad."""
+    try:
+        parsed = phonenumbers.parse(e164)
+    except phonenumbers.NumberParseException:
+        return e164
+    return phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.INTERNATIONAL)

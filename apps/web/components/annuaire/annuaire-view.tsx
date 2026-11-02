@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
+import { GesturesCheck } from "@/components/annuaire/gestures-check";
 import type { Contact } from "@/components/dossier/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -341,6 +342,8 @@ export function AnnuaireView() {
           />
         </div>
       )}
+
+      <GesturesCheck ws={ws} />
 
       <div className="mt-6 flex flex-wrap items-end gap-3">
         <div className="relative min-w-60 flex-1">

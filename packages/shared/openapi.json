@@ -9094,6 +9094,69 @@
           }
         }
       }
+    },
+    "/api/v1/workspaces/{ws}/gestures": {
+      "post": {
+        "tags": [
+          "gestures"
+        ],
+        "summary": "Check Gestures",
+        "description": "Attribution, official page, number and press article for a message (no model).",
+        "operationId": "check_gestures_api_v1_workspaces__ws__gestures_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GesturesIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GestureOut"
+                  },
+                  "title": "Response Check Gestures Api V1 Workspaces  Ws  Gestures Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -13436,6 +13499,71 @@
           "rumour_stop_id"
         ],
         "title": "GapOut"
+      },
+      "GestureOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject"
+          },
+          "proof": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Proof"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "status",
+          "text",
+          "subject",
+          "proof"
+        ],
+        "title": "GestureOut"
+      },
+      "GesturesIn": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 6000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "GesturesIn"
       },
       "GuideIn": {
         "properties": {
