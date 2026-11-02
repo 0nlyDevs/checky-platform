@@ -69,7 +69,10 @@ The hard limits come from the hackathon rules, the free tiers we rely on, and th
 - Work prepared before the event is allowed (confirmed with the IFM contact). We still say in the pitch what was pre-built and what was built during the 48 hours.
 - Every third-party component (libraries, runtimes, algorithms, APIs) must be listed with its version and license (Article 6). We keep `THIRD_PARTY.md` updated as we go.
 - Hard deadline Tuesday 3 November at 20:00; no extension (Article 4).
-- Pitch of 3 minutes maximum on Wednesday 4 November, 8:00 to 13:00 at IFM Analakely.
+- Pitch of 3 minutes maximum on Wednesday 4 November, 8:00 to 13:00 at IFM Analakely. It must let the jury understand the need, the solution and how it works, the value for media professionals, and the potential (Article 4).
+- The jury scores relevance to the need, usability, contribution to information resilience, technical quality and functionality, development potential, and the quality of the pitch (Article 5). Its decisions are final; prizes are announced before the event.
+- Teams of exactly four; registration through the form by **28 October 2026** (Article 3). The rules end with a team sheet (team name, four names, date, acceptance).
+- The rules say nothing about pre-built work: the IFM contact's confirmation is oral, so a written confirmation is worth asking for (contact: christelle.ramanandraitsiory@institutfrancais-madagascar.com).
 - We keep ownership of our code; organizers may publicize screenshots and slides with our names (Article 6).
 - Participants are responsible for their own equipment and data (Article 8).
 
@@ -461,10 +464,12 @@ We test the paths the demo will walk, not coverage numbers.
 - Mock problem: "A viral Facebook post claims X; help a journalist verify it."
 - 2 hours, all 4 members, on the deployed base. Note every blocker; fix the base, not the mock feature.
 
-**Pitch kit**
+**Pitch kit** (built 27 October, `docs/pitch/`)
 
-- Slide template: problem, solution, live demo, impact, what was pre-built vs built during the event.
-- Demo script with seed data loaded and a backup screen recording in case the network fails.
+- Deck generated from one content file (`deck/content.js` → `fanilo-pitch.pptx`, 8 slides + 2 in reserve, importable into Google Slides with its fonts): need, the refused temptation, the method, demo, value for journalists, potential, end. One idea per slide, few words on screen, the rest in the speaker notes; the slides and the video show the product, not the pre-built base. Every open point is a `{{hole}}` the build lists.
+- Timed script (`script.md`, generated from the speaker notes, 3:00 split slide by slide) and the storyboard of the demo video.
+- Demo video filmed by `scripts/pitch_video.py` from `video/scenes.json` on the real app with the demo data (chapter cards, visible cursor, captions; silent, commented live; re-shot on the deployed app on Tuesday evening as the backup if the network fails).
+- `checklist.md`: Monday 8:30, Tuesday 18:00–20:00 freeze, Wednesday morning (wake Render and Neon, demo reset, tabs, plan B).
 
 ## Milestones
 

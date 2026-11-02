@@ -23,3 +23,6 @@ apps/web/.impeccable/*.local.json
 
 # downloaded map data for scripts/site_rova.py
 scripts/.cache/
+
+# pitch kit: filmed demo and rendered cards
+docs/pitch/video/out/

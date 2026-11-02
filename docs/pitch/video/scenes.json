@@ -1,0 +1,188 @@
+{
+  "_": "The demo video, scene by scene. Each scene = a chapter card (chapter, title, caption), then steps played in the real app. Steps: goto (path, {ws} = the workspace; ready: a selector to wait for before going on, clicking « Réessayer » if the page failed to load), click / hover (Playwright selector), type ([selector, text]), press (key), scroll (pixels), wait (ms), wait_for (selector, timeout ms), optional: true to skip a step whose element is missing. hold = ms kept on screen at the end. Anything in {{double braces}} is to fill on Monday. Film with: uv run --with playwright python -I scripts/pitch_video.py",
+  "footer": "FANILO · démo · exemple fictif",
+  "title": {
+    "tab": "Démo",
+    "title": "Chaque rumeur a son dossier.",
+    "caption": "{{Le besoin en une phrase, tel que la vidéo l'a posé.}} Toute rumeur montrée est fictive.",
+    "seconds": 2.4
+  },
+  "scenes": [
+    {
+      "id": "grille",
+      "chapter": "La grille du jour",
+      "title": "Ce qui circule depuis le plus longtemps",
+      "caption": "Chaque affirmation est un bloc, de sa première apparition à maintenant. Le desk voit d'un coup d'œil ce qui traîne.",
+      "steps": [
+        {
+          "goto": "/w/{ws}/affirmations",
+          "ready": "text=FAN-",
+          "settle": 800
+        },
+        {
+          "hover": "text=prix du riz"
+        },
+        {
+          "wait": 1200
+        },
+        {
+          "hover": "text=Mangasoavina"
+        }
+      ],
+      "hold": 2200
+    },
+    {
+      "id": "dossier",
+      "chapter": "Le dossier",
+      "title": "Son heure, ses sources, ce que l'IA propose",
+      "caption": "Le dossier garde l'origine, l'heure, les preuves jointes et le verdict suggéré par l'IA, citation par citation.",
+      "steps": [
+        {
+          "goto": "/w/{ws}/affirmations",
+          "ready": "text=FAN-",
+          "settle": 800
+        },
+        {
+          "click": "a:has-text(\"prix du riz\")"
+        },
+        {
+          "wait_for": "text=Ce que disent les sources",
+          "timeout": 30000,
+          "optional": true
+        },
+        {
+          "wait": 1800
+        },
+        {
+          "scroll": 500
+        },
+        {
+          "wait": 1000
+        },
+        {
+          "scroll": 500
+        }
+      ],
+      "hold": 2200
+    },
+    {
+      "id": "verdict",
+      "chapter": "Un journaliste signe",
+      "title": "Rien ne part sans une personne",
+      "caption": "L'IA suggère « trompeur ». Le journaliste lit les citations, puis confirme ou corrige. Aucun verdict ne part sans lui.",
+      "steps": [
+        {
+          "goto": "/w/{ws}/affirmations",
+          "ready": "text=FAN-",
+          "settle": 800
+        },
+        {
+          "click": "a:has-text(\"prix du riz\")"
+        },
+        {
+          "wait_for": "text=Ce que disent les sources",
+          "timeout": 30000,
+          "optional": true
+        },
+        {
+          "wait": 1200
+        },
+        {
+          "hover": "text=Suggestion IA"
+        },
+        {
+          "wait": 900
+        },
+        {
+          "click": "text=Examiner"
+        },
+        {
+          "wait": 1400
+        },
+        {
+          "click": "text=Confirmer «"
+        },
+        {
+          "wait": 1800
+        }
+      ],
+      "hold": 2500
+    },
+    {
+      "id": "verifier",
+      "chapter": "Vérifier",
+      "title": "Une question à toutes les sources",
+      "caption": "La réponse ne s'appuie que sur les sources de la rédaction et cite chaque passage. Sans source, elle le dit.",
+      "steps": [
+        {
+          "goto": "/w/{ws}/verifier",
+          "ready": "textarea",
+          "settle": 800
+        },
+        {
+          "type": [
+            "textarea",
+            "Le prix du riz a-t-il doublé à Antananarivo ?"
+          ]
+        },
+        {
+          "wait": 600
+        },
+        {
+          "click": "[aria-label=\"Demander\"]"
+        },
+        {
+          "wait_for": "text=Passages cités",
+          "timeout": 90000
+        },
+        {
+          "wait": 2500
+        },
+        {
+          "scroll": 300
+        }
+      ],
+      "hold": 3000
+    },
+    {
+      "id": "public",
+      "chapter": "Pour le public",
+      "title": "Est-ce déjà vérifié ?",
+      "caption": "Sans compte, n'importe qui colle le message reçu : l'assistant répond uniquement à partir des verdicts publiés, et cite les dossiers.",
+      "steps": [
+        {
+          "goto": "/verifies",
+          "ready": "textarea",
+          "settle": 800
+        },
+        {
+          "type": [
+            "textarea",
+            "Analakely sous l'eau ce matin, partagez !"
+          ]
+        },
+        {
+          "wait": 600
+        },
+        {
+          "click": "text=Demander à l'assistant"
+        },
+        {
+          "wait_for": "text=Réponse de l'assistant",
+          "timeout": 90000,
+          "optional": true
+        },
+        {
+          "wait": 2500
+        }
+      ],
+      "hold": 3000
+    }
+  ],
+  "end": {
+    "tab": "Fin",
+    "title": "FANILO",
+    "caption": "{{adresse de l'app}} · 0nlyDevs · Hackathon FANILO, novembre 2026",
+    "seconds": 2.5
+  }
+}

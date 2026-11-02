@@ -10,6 +10,7 @@ demo in under 2 hours.
 
 - Product requirements: [`docs/PRD.md`](docs/PRD.md), a copy of the [PRD Claude Doc](https://claude.ai/artifact/XFypCd4WmGLBm6pMbGMwrv) (keep both in sync)
 - Design rules: [`apps/web/DESIGN.md`](apps/web/DESIGN.md) and [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md)
+- Pitch kit (deck, timed script, demo video, day-of checklist): [`docs/pitch/README.md`](docs/pitch/README.md)
 - Full technical reference (architecture, API, status, next steps): [`CLAUDE.md`](CLAUDE.md).
   It is also what Claude Code reads, so keep it up to date when something changes.
 
