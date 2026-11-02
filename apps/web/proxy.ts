@@ -22,5 +22,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Skip API routes, Next internals and static files.
-  matcher: ["/((?!api|_next/static|_next/image|icon.svg|logo.svg|manifest.webmanifest).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|icons/|icon.svg|apple-icon.png|logo.svg|manifest.webmanifest).*)"],
 };

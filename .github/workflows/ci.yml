@@ -63,8 +63,8 @@ jobs:
       - run: npx eslint .
         working-directory: apps/web
 
-  api-types:
-    name: API types up to date
+  generated:
+    name: Generated files up to date
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -82,3 +82,8 @@ jobs:
         run: |
           git diff --exit-code packages/shared \
             || (echo "::error::Run 'npm run gen:api' and commit packages/shared" && exit 1)
+      - run: npm run third-party
+      - name: Fail if THIRD_PARTY.md is stale (hackathon rules, article 6)
+        run: |
+          git diff --exit-code THIRD_PARTY.md \
+            || (echo "::error::Run 'npm run third-party' and commit THIRD_PARTY.md" && exit 1)
