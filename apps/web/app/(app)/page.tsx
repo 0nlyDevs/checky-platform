@@ -3,6 +3,7 @@
 import type { Me, Workspace } from "@fanilo/shared";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
+import { toast } from "sonner";
 import useSWR, { mutate as globalMutate } from "swr";
 import { IconCircleNotch } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,14 @@ function Onboarding() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draft] = useState(readDraft);
+
+  // No newsroom yet: say why this screen comes first, once, as a toast.
+  useEffect(() => {
+    const id = toast(t.onboarding.nameFirst, { description: t.onboarding.nameFirstHint, id: "name-first" });
+    return () => {
+      toast.dismiss(id);
+    };
+  }, []);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -75,9 +84,7 @@ function Onboarding() {
           <input type="checkbox" name="demo" defaultChecked={draft ? draft.demo : true} className="mt-0.5 size-4 accent-primary" />
           <span>
             <span className="font-medium">{t.common.demoData}</span>
-            <span className="block text-muted-foreground">
-              Ajouter quelques affirmations d&apos;exemple pour découvrir l&apos;outil.
-            </span>
+            <span className="block text-muted-foreground">{t.onboarding.demoHint}</span>
           </span>
         </label>
         {error && (

@@ -83,6 +83,9 @@ export const fr = {
     nameLabel: "Nom de l'espace",
     namePlaceholder: "Desk Vérif — Rédaction",
     create: "Créer l'espace",
+    nameFirst: "Donnez d'abord un nom à votre rédaction",
+    nameFirstHint: "Votre espace se crée dès que la rédaction a un nom.",
+    demoHint: "Ajouter quelques affirmations d'exemple pour découvrir l'outil.",
   },
   claims: {
     title: "Dossiers",
