@@ -1,10 +1,12 @@
-# FANILO – PRD
+# Checky – PRD (FANILO until 2 Nov 2026)
 
 @coco
 
 ## Overview
 
-FANILO is a verification tool for newsrooms in Madagascar. Every rumour gets a case file, from its first appearance to a sourced verdict: the desk tracks claims live, gathers the sources, gets an AI suggestion whose quotes are checked against those sources, and a journalist confirms the verdict before anything leaves the newsroom. Published verdicts are open to the public.
+Checky (named FANILO until 2 Nov 2026; the repos keep the old name) is a verification tool for newsrooms, Madagascar first and world-ready. Every rumour gets a dossier, from its first appearance to a signed verdict: the desk tracks claims live, gathers the sources, a crew of checks states the facts at once and an AI reading whose quotes are checked against the sources is suggested, and a journalist signs the verdict before anything leaves the newsroom under its name. Published verdicts are open to the public, and Checky sends them back down the road the rumour took (WhatsApp, Facebook, radio, SMS, a printed poster).
+
+**Checky, the product rules (2 Nov).** Knowing is not publishing: facts (a video's first appearance, a registry diff against the original communiqué, an official figure, a fact-checker's published review) show at once and solid; the AI reading « Lecture de Checky » is dashed and reserved to the newsroom; « Signer et publier » is a byline, the public never sees the reading or a percentage. A check runs as a crew: Lecteur (one model call), then Provenance, Registre, Chiffres, Fact-checkers, Web, Archives, Fiabilité and Ton in parallel without a model, then Synthèse and Contradicteur (one call each), then a confidence score computed in code; « Mode sans IA » keeps the facts when the model is off. Roles follow the rumour's road: admin, editor, journalist, veilleur (partner radio), issuer (institution), plus token links and SMS for partners and citizens; optional double signature. Madagascar first, world-ready: structured places geocoded by OpenStreetMap, beats per newsroom, worldwide fact-checkers through Google Fact Check Tools, figures per country. Assembled from the best existing tools (NewsGuard's transparency grid, The Factual's source diversity and tone, Aletheia's cited explanations, FauxLens' per-signal image breakdown, Logically's AI plus humans, Check-It's multi-signal pipeline, Snopes/PolitiFact/FactCheck.org/AFP Factuel relayed as theirs), then one step further: the road (Le trajet), the signed and attested verdict, the registry of originals with an offline seal, the radio and SMS return path. The full product thinking is in the Claude Doc « FANILO Hackathon — The brief, decoded, and how we win » (tabs Winning idea, Functionality, Stack, Pitch).
 
 **The event.** The FANILO Hackathon is organized by the Institut français de Madagascar (IFM) and the press service of the French Embassy, hosted at 42 Antananarivo in Andraharo. Teams of 4 build a working web or mobile app that meets a real need of journalists and media professionals around information resilience: verifying information, misinformation and AI-generated content.
 
@@ -213,6 +215,19 @@ Five features cover the journalist's main verification tasks, from checking a cl
 | F3. Interview to quotes | Record or upload audio; get a transcript, the key quotes and the claims to check, each with its timestamp | M9, M7 |
 | F4. Image check | Upload an image; see its metadata, duplicates already seen in the workspace, and reverse image search links | M4 |
 | F5. Verdict card | Turn a verified claim into a shareable image card and a short post in French or Malagasy | M3, M7 |
+
+Checky (2 Nov) adds the newsroom's shelves and the road back, on the same base:
+
+| Feature | What it does | Built on |
+| --- | --- | --- |
+| C1. The crew (Vérifier) | Paste a message, a link or a file: eight fact checks race in parallel (provenance, registry, figures, fact-checkers, web, archives, source credibility, tone), then a dashed reading, a contradictor and a confidence score computed from the evidence; « Mode sans IA » keeps the facts | `graph.py`, `crew.py`, `confidence.py`, `tone.py`, `credibility.py` |
+| C2. Sign and publish | « Signer et publier » turns the verdict solid under the newsroom's byline; batch sign; « Reprendre ce verdict » from a fact-checker's review; optional double signature; carnet de diligence and an Ed25519 attestation | `signing.py`, `attest.py` |
+| C3. Qui peut le prouver | The one person who can prove the missing point, with their official page and a ready question sent by WhatsApp, mail or SMS; the answer becomes a dated source | `directory.py`, `/reponse/[token]` |
+| C4. Registre and sceau | Originals registered by institutions, a quoted communiqué compared word by word (Authentique, Modifié, Introuvable, Incohérent), an Ed25519 seal verified offline from a QR, the public « Fil officiel » | `registry.py`, `seal.py`, `/sceau/[id]`, `/officiel` |
+| C5. Chiffres | Every number in a claim against the official figure, its source, date and age; World Bank refresh | `figures.py`, `numbers.py` |
+| C6. Ma rubrique, Veille, À l'antenne | A journalist's morning page by beats and places; the feed of what circulates (tips, SMS, press, radio clips) with a map; veilleurs record what a radio said; watched words; the rumour weather by season; story angles | `rubrique.py`, `veille.py`, `seasons.py` |
+| C7. Trajet and Diffuser | The rumour's stops and the truth's, the gaps, and one button to send the verdict back: card, radio line, flash, SMS, poster with QR | `trajet.py` |
+| C8. Public layer and SMS | A citizen's check answers with a signed verdict, a fact-checker's review or the facts alone; « Me prévenir »; an SMS line with keywords, hashed numbers and an outbox; flashs of the day; short links | `verify_public.py`, `sms.py`, `/flashs`, `/v/[ref]` |
 
 ### F1. Claim checker
 
