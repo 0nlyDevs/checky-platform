@@ -178,8 +178,8 @@ export type FeedEntry = {
 
 export type FeedOut = { entries: FeedEntry[]; counts: Partial<Record<FeedEntry["kind"], number>>; since: string; feeds_configured: boolean; streams_configured: boolean };
 
-export type RegionCount = { region: string; lat: number | null; lng: number | null; last_24h: number; last_7d: number; high_risk: number; kinds: Record<string, number> };
-export type MapOut = { regions: RegionCount[]; unplaced: number; total: number };
+export type RegionCount = { region: string; country?: string | null; lat: number | null; lng: number | null; last_24h: number; last_7d: number; high_risk: number; kinds: Record<string, number> };
+export type MapOut = { regions: RegionCount[]; unplaced: number; total: number; country: string; home: string; countries: { country: string; last_7d: number }[] };
 
 export type Served = { item_id: string; ref: string | null; title: string; status: string; verdict: Verdict | null; signed_at: string | null; truth_routes: number };
 

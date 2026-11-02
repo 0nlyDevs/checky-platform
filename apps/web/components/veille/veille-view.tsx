@@ -6,7 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { IconArrowSquareOut, IconArrowsClockwise, IconCircleNotch, IconMapPin, IconRadio, IconWarning, IconX } from "@/lib/icons";
+import { IconArrowSquareOut, IconArrowsClockwise, IconCircleNotch, IconGlobe, IconMapPin, IconRadio, IconWarning, IconX } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -100,16 +100,21 @@ function DeskVeille({ ws }: { ws: string }) {
   const tab: Tab = (KINDS as readonly string[]).includes(raw ?? "") ? (raw as Tab) : "all";
   const region = params.get("region");
   const beat = params.get("theme");
+  const country = params.get("pays");
   const [refreshing, setRefreshing] = useState(false);
 
   const go = (next: Record<string, string | null>) => {
-    const merged = { type: tab === "all" ? null : tab, region, theme: beat, ...next };
+    const merged = { type: tab === "all" ? null : tab, region, theme: beat, pays: country, ...next };
     router.replace(`${pathname}${qs(merged)}` as never, { scroll: false });
   };
 
   const feedKey = `/workspaces/${ws}/veille${qs({ region, beat, kind: tab === "all" ? null : tab })}`;
   const feed = useSWR<FeedOut>(feedKey, fetcher, { keepPreviousData: true, refreshInterval: 60_000 });
-  const map = useSWR<MapOut>(`/workspaces/${ws}/veille/map${qs({ beat })}`, fetcher, { keepPreviousData: true });
+  const map = useSWR<MapOut>(`/workspaces/${ws}/veille/map${qs({ beat, country })}`, fetcher, { keepPreviousData: true });
+  // The menu above the map: the newsroom's country first, then where something circulated, then the world.
+  const shown = map.data?.country ?? country ?? "";
+  const countryChoices = map.data ? [...new Set([map.data.home, ...map.data.countries.map((c) => c.country)])] : [];
+  const countOf = (c: string) => map.data?.countries.find((x) => x.country === c)?.last_7d ?? 0;
   const antenne = useSWR<AntenneRow[]>(`/workspaces/${ws}/antenne`, fetcher);
   const meteo = useSWR<Meteo>(`/workspaces/${ws}/meteo${qs({ region })}`, fetcher, { keepPreviousData: true });
   const prefs = useSWR<Prefs>(`/workspaces/${ws}/me/prefs`, fetcher);
@@ -225,14 +230,36 @@ function DeskVeille({ ws }: { ws: string }) {
       <div className="grid gap-x-10 gap-y-10 px-4 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-8">
           <section aria-labelledby="carte" className="overflow-hidden rounded-md border border-border bg-card">
-            <div className="px-4 pt-3 pb-3">
-              <h2 id="carte" className="font-display text-lg font-bold">
-                {v.mapTitle}
-              </h2>
-              <p className="text-sm text-muted-foreground">{v.mapLead}</p>
+            <div className="flex flex-wrap items-start justify-between gap-3 px-4 pt-3 pb-3">
+              <div className="min-w-0">
+                <h2 id="carte" className="font-display text-lg font-bold">
+                  {v.mapTitle}
+                </h2>
+                <p className="text-sm text-muted-foreground">{v.mapLead}</p>
+              </div>
+              {map.data && (
+                <Select value={shown} onValueChange={(x) => go({ pays: x === map.data?.home ? null : x, region: null })}>
+                  <SelectTrigger aria-label={v.country} className="h-10 w-auto min-w-40 bg-background font-bold">
+                    <IconGlobe className="size-4" aria-hidden />
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryChoices.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                        {v.countryCount(countOf(c))}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="monde">
+                      {v.world}
+                      {v.countryCount(map.data.countries.reduce((n, c) => n + c.last_7d, 0))}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
             <div className="isolate h-72 border-y border-border sm:h-[26rem]">
-              <VeilleMap regions={map.data?.regions ?? []} selected={region} onSelect={(r) => go({ region: r })} />
+              <VeilleMap regions={map.data?.regions ?? []} selected={region} onSelect={(r) => go({ region: r })} country={shown} />
             </div>
             <div className="px-4 py-3">
               {regions.length > 0 && (
