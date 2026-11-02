@@ -11,7 +11,7 @@ import pytest
 from app.core import ai
 from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import Contact, Figure, PublicQuestion
+from app.core.models import Communique, Contact, Figure, PublicQuestion
 from app.modules import rubrique
 from tests.test_workspaces import _join, _workspace
 
@@ -247,3 +247,38 @@ def test_angles_rest_on_numbered_facts_and_invent_nothing(as_user, model):
 
 async def _add(db, row):
     db.add(row)
+
+
+def test_documents_are_the_sources_that_name_a_document(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    for title, text in (
+        ("Communiqué de la JIRAMA sur le délestage", "Délestage de 4 heures par quartier."),
+        (
+            "Démo · Décret n° 2026-12 relatif aux examens (exemple fictif)",
+            "Le bac commence le 24 novembre.",
+        ),
+        ("Notes de terrain", "Vu au marché."),
+        ("Rapport annuel de l'INSTAT", "Population et prix."),
+    ):
+        assert alice.post(base + "/sources", json={"title": title, "text": text}).status_code == 201
+    docs = alice.get(base + "/documents").json()
+    assert sorted(d["doc_type"] for d in docs) == ["communiqué", "décret", "rapport"]
+    jirama = next(d for d in docs if d["doc_type"] == "communiqué")
+    assert jirama["issuer"] == "JIRAMA" and jirama["beats"] == ["énergie"] and not jirama["demo"]
+    assert next(d for d in docs if d["doc_type"] == "décret")["demo"]
+    assert [d["doc_type"] for d in alice.get(base + "/documents?topic=énergie").json()] == [
+        "communiqué"
+    ]
+    assert [d["doc_type"] for d in alice.get(base + "/documents?q=population").json()] == [
+        "rapport"
+    ]
+    assert bob.get(base + "/documents").status_code == 404
+    assert _db(lambda db: _count(db)) == 0
+
+
+async def _count(db):
+    from sqlalchemy import func, select
+
+    return await db.scalar(select(func.count()).select_from(Communique))

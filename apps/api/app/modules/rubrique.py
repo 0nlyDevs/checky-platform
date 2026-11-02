@@ -29,11 +29,13 @@ from app.core.activity import broadcast, record
 from app.core.errors import ApiError
 from app.core.models import (
     DEFAULT_BEATS,
+    Communique,
     Contact,
     Figure,
     Item,
     MemberPref,
     PublicQuestion,
+    Source,
     Workspace,
 )
 from app.core.places import MG_REGIONS, fold
@@ -73,6 +75,11 @@ BEAT_WORDS: dict[str, tuple[str, ...]] = {
     "international": ("international", "onu", "oms", "union africaine", "france", "chine",
                       "comores", "maurice"),
 }  # fmt: skip
+DOCUMENT_WORDS = (
+    "loi", "décret", "arrêté", "ordonnance", "circulaire", "décision", "rapport", "budget",
+    "communiqué", "recensement", "enquête", "note", "relevé", "calendrier", "programme",
+    "plan", "convention", "statuts", "bulletin officiel", "journal officiel",
+)  # fmt: skip
 
 
 # ----------------------------------------------------------------------------------- beats
@@ -867,6 +874,111 @@ async def keep_angle(item_id: uuid.UUID, body: KeepIn, member: AnyMember, db: Db
 
 
 # -------------------------------------------------------------------------------- documents
+class CommuniqueRef(BaseModel):
+    id: uuid.UUID
+    issuer: str
+    number: str | None
+    issued_on: str | None
+
+
+class DocumentOut(BaseModel):
+    id: uuid.UUID
+    title: str
+    kind: str
+    status: str
+    doc_type: str
+    issuer: str | None
+    url: str | None
+    published_at: str | None
+    created_at: datetime
+    item_id: uuid.UUID | None
+    excerpt: str
+    beats: list[str]
+    communique: CommuniqueRef | None
+    demo: bool
+
+
+_DEMO_PREFIX = re.compile(r"^\s*d[ée]mo\s*[·:-]\s*", re.IGNORECASE)
+_ISSUER = re.compile(r"\b(?:de la|de l'|du|des|de)\s+(.{3,80}?)(?:\s*\(|$| à | sur | pour )")
+
+
+def document_type(title: str) -> str | None:
+    """The document word a title starts with (« Communiqué du ministère… » → communiqué)."""
+    head = fold(_DEMO_PREFIX.sub("", title or ""))
+    for word in DOCUMENT_WORDS:
+        if re.match(rf"{re.escape(fold(word))}(?![a-z0-9])", head):
+            return word
+    return None
+
+
+def _issuer(title: str) -> str | None:
+    rest = _DEMO_PREFIX.sub("", title or "")
+    m = _ISSUER.search(rest)
+    return m.group(1).strip(" .,") if m else None
+
+
+@router.get("/workspaces/{ws}/documents")
+async def documents(
+    member: AnyMember, db: Db, topic: str | None = None, q: str | None = None
+) -> list[DocumentOut]:
+    """The newsroom's reference documents: sources whose title names a document (loi, décret,
+    communiqué, rapport…) and the files of the Registre's originals, newest first."""
+    workspace = await db.get(Workspace, member.workspace_id)
+    offered = offered_beats(workspace)
+    originals = {
+        c.file_id: c
+        for c in await db.scalars(
+            select(Communique).where(
+                Communique.workspace_id == member.workspace_id, Communique.file_id.is_not(None)
+            )
+        )
+    }
+    stmt = select(Source).where(
+        Source.workspace_id == member.workspace_id, Source.kind.in_(["pdf", "text", "url"])
+    )
+    if q and q.strip():
+        like = f"%{q.strip()}%"
+        stmt = stmt.where(or_(Source.title.ilike(like), Source.text.ilike(like)))
+    out = []
+    for s in await db.scalars(stmt.order_by(Source.created_at.desc()).limit(500)):
+        original = originals.get(s.file_id) if s.file_id else None
+        kind = document_type(s.title) or ("communiqué" if original else None)
+        if not kind:
+            continue
+        text = f"{s.title} {s.text[:3000]}"
+        hit = beats_for(text, offered)
+        if (
+            topic
+            and topic.strip()
+            and not (any(_same(topic, b) for b in hit) or words(topic) & words(text))
+        ):
+            continue
+        out.append(
+            DocumentOut(
+                id=s.id,
+                title=s.title,
+                kind=s.kind,
+                status=s.status,
+                doc_type=kind,
+                issuer=original.issuer if original else _issuer(s.title),
+                url=s.url,
+                published_at=s.published_at,
+                created_at=s.created_at,
+                item_id=s.item_id,
+                excerpt=re.sub(r"\s+", " ", s.text[:280]).strip(),
+                beats=hit,
+                communique=CommuniqueRef(
+                    id=original.id,
+                    issuer=original.issuer,
+                    number=original.number,
+                    issued_on=original.issued_on,
+                )
+                if original
+                else None,
+                demo=bool(_DEMO_PREFIX.match(s.title or "")) or "exemple fictif" in s.title,
+            )
+        )
+    return out
 
 
 # ------------------------------------------------------------------------------- demo seed
