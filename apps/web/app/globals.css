@@ -793,6 +793,9 @@
 /* Toasts never sit under the corners: bottom-centre between the dock and Checky on a computer,
    above the ink bar and the Checky button on a phone. */
 @media (max-width: 640px) {
+  [data-sonner-toaster][data-y-position="bottom"] {
+    bottom: calc(var(--corner-y) + 56px + 12px) !important;
+  }
   :root:has([data-app-shell]) [data-sonner-toaster][data-y-position="bottom"] {
     bottom: calc(66px + 84px + env(safe-area-inset-bottom)) !important;
   }
