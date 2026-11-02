@@ -249,7 +249,7 @@ No third face. Monospace only for `kbd` hints and IDs.
 - **Toast with undo:** ink pill, 6 s bar, « Annuler »; replaces confirmation dialogs for reversible acts.
 
 ### Interaction states
-Each interactive component lists rest, hover, focus-visible, pressed, selected/current and disabled with both colours. Hover on a light row = `raised` with unchanged text; hover on an ink control = `#1f1f22` (dark `#2a2a2e`) with unchanged label. Icons inherit `currentColor`. Disabled keeps 4.5:1 (`muted-foreground`, no opacity on text). Focus is a 2 px ring in the text colour with 3 px offset.
+Each interactive component lists rest, hover, focus-visible, pressed, selected/current and disabled with both colours. Hover on a light row = `raised` with unchanged text; hover on an ink control = `#1f1f22` with unchanged label; in dark the primary is a paper fill and its hover is `#e2e1da` (`primary-hover`), label still ink; the nav island's hover is `#1f1f22` / dark `#2a2a2e`. Icons inherit `currentColor`. Disabled keeps 4.5:1 (`muted-foreground`, no opacity on text). Focus is a 2 px ring in the text colour with 3 px offset.
 
 ## Do's and Don'ts
 

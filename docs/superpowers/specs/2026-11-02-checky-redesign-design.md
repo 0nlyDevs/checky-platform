@@ -195,7 +195,9 @@ theme's text colour (1:1, invisible). Rules that prevent this class of bug every
   without `hover:text-primary-foreground`).
 - **Each interactive component lists its states with both colours**: rest, hover, focus-visible,
   pressed, selected/current, disabled. Hover on a light row = `raised` bg with unchanged `text`;
-  hover on an ink control = slightly lighter ink (`#1f1f22` / dark `#2a2a2e`) with unchanged label.
+  hover on an ink control = slightly lighter ink `#1f1f22` with unchanged label; in dark the primary
+  is a paper fill, so its hover is a slightly darker paper `#e2e1da` (`--primary-hover`), label still ink;
+  the nav island's own hover stays `#1f1f22` / dark `#2a2a2e`.
 - **Icons inherit `currentColor`** (Phosphor duotone included: its 20 % layer follows the label), so a
   state that changes the label changes the icon.
 - **Disabled** keeps 4.5:1 on its text (uses `muted-foreground`, no opacity on text).
