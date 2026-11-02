@@ -189,18 +189,65 @@ async def followed(db: Db, text: str) -> tuple[Item, Workspace] | None:
     return best
 
 
-async def newsroom_for(db: Db, where: dict[str, Any] | None) -> Workspace | None:
-    """Where a question or an SMS with no claim yet goes: the public newsroom whose home region
-    (`settings.region`) is the message's, else the first public newsroom."""
+Routed = Literal["region", "country", "nearest", "first"]
+
+
+def _coords(where: dict[str, Any] | None) -> tuple[float, float] | None:
+    where = where or {}
+    if where.get("lat") is not None and where.get("lng") is not None:
+        return float(where["lat"]), float(where["lng"])
+    region = places.region_of(where)
+    hit = next(
+        (
+            v
+            for k, v in places.MG_REGIONS.items()
+            if region and places.fold(k) == places.fold(region)
+        ),
+        None,
+    )
+    return (hit[1], hit[2]) if hit else None
+
+
+async def route_newsroom(
+    db: Db, where: dict[str, Any] | None, country: str | None = None
+) -> tuple[Workspace | None, Routed | None]:
+    """Where something from the public with no claim yet goes, and why: the verified public
+    newsroom whose home region (`settings.region`) is where the rumour circulates, else one of
+    its country, else the nearest newsroom with a known home, else the first one."""
     rooms = await public.public_newsrooms(db)
+    if not rooms:
+        return None, None
     region = places.region_of(where)
     if region:
         wanted = places.fold(region)
         for ws in rooms:
             home = (ws.settings or {}).get("region")
             if isinstance(home, str) and places.fold(home) == wanted:
-                return ws
-    return rooms[0] if rooms else None
+                return ws, "region"
+    land = country or (where or {}).get("country")
+    same = [
+        ws
+        for ws in rooms
+        if land
+        and places.fold((ws.settings or {}).get("country") or "Madagascar") == places.fold(land)
+    ]
+    here = _coords(where)
+    for pool in (same, rooms) if here else ():
+        known = [
+            (ws, c) for ws in pool if (c := _coords({"region": (ws.settings or {}).get("region")}))
+        ]
+        if known:
+            near = min(known, key=lambda x: (x[1][0] - here[0]) ** 2 + (x[1][1] - here[1]) ** 2)
+            return near[0], "nearest"
+        if pool is same and same:
+            return same[0], "country"
+    if same:
+        return same[0], "country"
+    return rooms[0], "first"
+
+
+async def newsroom_for(db: Db, where: dict[str, Any] | None) -> Workspace | None:
+    return (await route_newsroom(db, where))[0]
 
 
 def since_hour(moment: datetime) -> datetime:

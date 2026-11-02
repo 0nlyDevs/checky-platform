@@ -1163,7 +1163,8 @@ export interface paths {
         put?: never;
         /**
          * Refresh
-         * @description Seed the shared figures if they are missing, then fetch the World Bank's latest values.
+         * @description Seed the shared figures if they are missing, then fetch the World Bank's latest values for
+         *     the default countries and the newsroom's own (any country the World Bank knows).
          */
         post: operations["refresh_api_v1_workspaces__ws__figures_refresh_post"];
         delete?: never;
@@ -5116,7 +5117,7 @@ export interface components {
         /** TipIn */
         TipIn: {
             /** Newsroom */
-            newsroom: string;
+            newsroom?: string | null;
             /** Text */
             text: string;
             /** Url */
@@ -5127,6 +5128,10 @@ export interface components {
              * @enum {string}
              */
             origin: "facebook" | "whatsapp" | "tiktok" | "radio" | "press" | "other";
+            /** Place */
+            place?: string | null;
+            /** Country */
+            country?: string | null;
         };
         /** TipOut */
         TipOut: {
@@ -5134,6 +5139,12 @@ export interface components {
             token: string;
             /** Ref */
             ref: string;
+            newsroom?: components["schemas"]["NewsroomOut"] | null;
+            /**
+             * Routed
+             * @default chosen
+             */
+            routed: string;
         };
         /** TipStatusOut */
         TipStatusOut: {

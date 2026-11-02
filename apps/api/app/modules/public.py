@@ -74,15 +74,22 @@ class MatchOut(BaseModel):
 
 
 class TipIn(BaseModel):
-    newsroom: str = Field(min_length=1, max_length=140)
+    # Empty: Checky picks the newsroom where the rumour circulates (see `route_newsroom`).
+    newsroom: str | None = Field(default=None, max_length=140)
     text: str = Field(min_length=5, max_length=4000)
     url: HttpUrl | None = None
     origin: Origin = "other"
+    # Where the visitor is or saw it (a town or region), and their country, both optional.
+    place: str | None = Field(default=None, max_length=120)
+    country: str | None = Field(default=None, max_length=80)
 
 
 class TipOut(BaseModel):
     token: str
     ref: str
+    newsroom: NewsroomOut | None = None
+    # How the newsroom was chosen, told to the visitor: chosen | region | country | nearest | first
+    routed: str = "chosen"
 
 
 class TipStatusOut(BaseModel):
@@ -293,12 +300,21 @@ async def _next_ref(db: Db, ws: uuid.UUID) -> str:
 async def create_tip(body: TipIn, request: Request, db: Db) -> TipOut:
     if not _allow_tip(request.client.host if request.client else "unknown"):
         raise ApiError(429, "too_many_tips", "Too many tips, try again in a few minutes")
-    ws = await db.scalar(
-        select(Workspace).where(Workspace.slug == body.newsroom, Workspace.publishes)
-    )
+    text = body.text.strip()
+    routed = "chosen"
+    if body.newsroom:
+        ws = await db.scalar(
+            select(Workspace).where(Workspace.slug == body.newsroom, Workspace.publishes)
+        )
+    else:
+        from app.modules.verify_public import place_in, route_newsroom
+
+        where = (place_in(body.place) if body.place else {}) or place_in(text)
+        if body.place and not where:
+            where = {"name": body.place, "region": body.place}
+        ws, routed = await route_newsroom(db, where, body.country)
     if ws is None:
         raise ApiError(404, "not_found", "Newsroom not found")
-    text = body.text.strip()
     token = secrets.token_urlsafe(18)
     ref = await _next_ref(db, ws.id)
     item = Item(
@@ -338,7 +354,9 @@ async def create_tip(body: TipIn, request: Request, db: Db) -> TipOut:
     from app.modules.items import _out  # the desk's live grid shows the tip at once
 
     await broadcast(ws.id, "item.created", _out(item))
-    return TipOut(token=token, ref=ref)
+    return TipOut(
+        token=token, ref=ref, newsroom=NewsroomOut(slug=ws.slug, name=ws.name), routed=routed
+    )
 
 
 @router.get("/tips/{token}")

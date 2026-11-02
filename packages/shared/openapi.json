@@ -4535,7 +4535,7 @@
           "figures"
         ],
         "summary": "Refresh",
-        "description": "Seed the shared figures if they are missing, then fetch the World Bank's latest values.",
+        "description": "Seed the shared figures if they are missing, then fetch the World Bank's latest values for\nthe default countries and the newsroom's own (any country the World Bank knows).",
         "operationId": "refresh_api_v1_workspaces__ws__figures_refresh_post",
         "security": [
           {
@@ -16610,9 +16610,15 @@
       "TipIn": {
         "properties": {
           "newsroom": {
-            "type": "string",
-            "maxLength": 140,
-            "minLength": 1,
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 140
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Newsroom"
           },
           "text": {
@@ -16647,11 +16653,34 @@
             ],
             "title": "Origin",
             "default": "other"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
           }
         },
         "type": "object",
         "required": [
-          "newsroom",
           "text"
         ],
         "title": "TipIn"
@@ -16665,6 +16694,21 @@
           "ref": {
             "type": "string",
             "title": "Ref"
+          },
+          "newsroom": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewsroomOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "routed": {
+            "type": "string",
+            "title": "Routed",
+            "default": "chosen"
           }
         },
         "type": "object",

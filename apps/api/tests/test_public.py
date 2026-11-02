@@ -260,3 +260,31 @@ def test_flashes_of_the_day_and_short_links(as_user, monkeypatch):
     assert anon.get("/api/v1/public/v/142").json()["id"] == first
     assert anon.get("/api/v1/public/v/FAN-0142").json()["id"] == first
     assert anon.get("/api/v1/public/v/143").status_code == 404
+
+
+def test_a_tip_with_no_newsroom_goes_where_the_rumour_circulates(as_user, client):
+    from tests.test_workspaces import _verify, _workspace
+
+    rooms = {}
+    for user, name, settings in (
+        ("tana", "Tana", {"region": "Analamanga"}),
+        ("tama", "Toamasina", {"region": "Atsinanana"}),
+        ("dakar", "Dakar", {"country": "Sénégal", "region": "Dakar"}),
+    ):
+        c = as_user(user)
+        ws = _workspace(c, name)
+        c.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True, "settings": settings})
+        _verify(ws)
+        rooms[name] = ws
+
+    def tip(**body):
+        r = client.post("/api/v1/public/tips", json={"text": "Une rumeur circule", **body})
+        assert r.status_code == 201, r.text
+        return r.json()["newsroom"]["name"], r.json()["routed"]
+
+    assert tip(text="Délestage de 72 heures à Toamasina") == ("Toamasina", "region")
+    assert tip(place="Tamatave") == ("Toamasina", "region")
+    assert tip(country="Sénégal") == ("Dakar", "country")
+    # Mahajanga (Boeny) has no newsroom of its own: the nearest one takes it.
+    assert tip(place="Mahajanga") == ("Tana", "nearest")
+    assert tip()[1] in {"first", "country"}
