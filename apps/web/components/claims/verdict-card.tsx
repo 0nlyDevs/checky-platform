@@ -19,12 +19,12 @@ import { cn } from "@/lib/utils";
 type Lang = "fr" | "mg";
 
 // The card is a shared artefact: fixed palette from DESIGN.md, the same in light and dark mode.
-const C = { band: "#171a18", ground: "#f1f2ec", ink: "#171a18", muted: "#565c55", rule: "#d3d6cc" };
+const C = { band: "#0a0a0b", ground: "#f3f2ee", ink: "#0a0a0b", muted: "#55544e", rule: "#dcdbd5" };
 const FILL: Record<Verdict, { fill: string; on: string }> = {
-  true: { fill: "#286044", on: "#ffffff" },
-  misleading: { fill: "#e0a12a", on: "#171a18" },
-  false: { fill: "#9d382e", on: "#ffffff" },
-  unverifiable: { fill: "#656b63", on: "#ffffff" },
+  true: { fill: "#0b6b3a", on: "#ffffff" },
+  misleading: { fill: "#8a5700", on: "#ffffff" },
+  false: { fill: "#b3231a", on: "#ffffff" },
+  unverifiable: { fill: "#1d58c4", on: "#ffffff" },
 };
 
 function host(url: string) {
@@ -44,7 +44,7 @@ function Card({ item, verdict, reason, sources, lang, desk }: { item: Item; verd
   const names = sources.map((s) => (s.url ? host(s.url) : s.title)).filter((v, i, a) => a.indexOf(v) === i).slice(0, 3);
   return (
     <div style={{ width: 540, height: 540, background: C.ground, color: C.ink, display: "flex", flexDirection: "column" }} className="font-sans">
-      <div style={{ background: C.band, color: "#f1f2ec", padding: "18px 28px", display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ background: C.band, color: "#f3f2ee", padding: "18px 28px", display: "flex", alignItems: "center", gap: 10 }}>
         <LogoMark className="size-6" />
         <span className="font-display text-xl font-extrabold">{brand.name}</span>
         <span style={{ marginLeft: "auto", opacity: 0.85 }} className="text-sm">
@@ -60,7 +60,7 @@ function Card({ item, verdict, reason, sources, lang, desk }: { item: Item; verd
           <p style={{ color: C.muted }} className="text-sm">
             {words.claim}
           </p>
-          <p className="mt-1 font-display text-2xl leading-snug font-bold text-pretty">« {item.title} »</p>
+          <p className="quote mt-1 text-2xl leading-snug text-pretty">« {item.title} »</p>
         </div>
         {reason && <p className="text-lg leading-relaxed text-pretty">{reason}</p>}
         {names.length > 0 && (

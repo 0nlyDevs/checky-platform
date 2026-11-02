@@ -4,13 +4,13 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* « Le signal clair »: civic signage for rumours. Chalk ground, green-black ink, one citron for the
-   action and the active step (never a verdict), verdicts as icon plus word. Archivo for titles,
-   numbers and verdict words; Atkinson Hyperlegible Next for everything read. See DESIGN.md. */
+/* Checky: ink and paper. Colour only on verdicts, each with its own ink, wash and fill. Bricolage
+   Grotesque for everything, Cormorant Garamond italic for verbatim quotations. See DESIGN.md. */
 @theme inline {
-  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-archivo), var(--font-atkinson), sans-serif;
-  --font-heading: var(--font-archivo), var(--font-atkinson), sans-serif;
+  --font-sans: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-quote: var(--font-cormorant), Georgia, serif;
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -40,18 +40,31 @@
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* The citron: the one action of a screen, the active step, a lit phrase. Never a verdict. */
+  /* The ink island and its paper pill, the raised fill, the inverted tag. Each fill has its own
+     foreground and they are always used together. */
+  --color-nav: var(--nav);
+  --color-nav-foreground: var(--nav-foreground);
+  --color-nav-hover: var(--nav-hover);
+  --color-nav-active: var(--nav-active);
+  --color-nav-active-foreground: var(--nav-active-foreground);
+  --color-raised: var(--raised);
+  --color-tag-inverted: var(--tag-inverted);
+  --color-tag-inverted-foreground: var(--tag-inverted-foreground);
+  --color-toast: var(--toast);
+  --color-toast-foreground: var(--toast-foreground);
+
+  /* Kept so existing classes keep working: the one action is the ink primary. */
   --color-action: var(--action);
   --color-action-foreground: var(--action-foreground);
   --color-action-ink: var(--action-ink);
-  /* The ink panel where FANILO's work shows live. */
+  /* The panel where Checky's work shows live: ink in light, raised in dark. */
   --color-live: var(--live);
   --color-live-foreground: var(--live-foreground);
   --color-live-muted: var(--live-muted);
   --color-live-border: var(--live-border);
   --color-rule: var(--rule);
 
-  /* Verdicts: fill for blocks, soft for badge grounds, ink for text on light grounds. */
+  /* Verdicts: fill for blocks, soft for badge grounds, ink for text on the page. */
   --color-verdict-true: var(--verdict-true);
   --color-verdict-true-on: var(--verdict-true-on);
   --color-verdict-true-soft: var(--verdict-true-soft);
@@ -81,119 +94,137 @@
 }
 
 :root {
-  --radius: 0.25rem;
+  --radius: 1.25rem;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-theme: cubic-bezier(0.65, 0, 0.35, 1);
 
-  --background: #f1f2ec;
-  --foreground: #171a18;
-  --card: #ffffff;
-  --card-foreground: #171a18;
-  --popover: #ffffff;
-  --popover-foreground: #171a18;
-  --primary: #171a18;
-  --primary-foreground: #f1f2ec;
-  --secondary: #e4e6de;
-  --secondary-foreground: #171a18;
-  --muted: #e8eae3;
-  --muted-foreground: #565c55;
-  --accent: #e6e9df;
-  --accent-foreground: #171a18;
-  --destructive: #9d382e;
-  --border: #d3d6cc;
-  --input: #8a9086;
-  --ring: #171a18;
+  --background: #f3f2ee;
+  --foreground: #0a0a0b;
+  --card: #fbfaf7;
+  --card-foreground: #0a0a0b;
+  --popover: #fbfaf7;
+  --popover-foreground: #0a0a0b;
+  --primary: #0a0a0b;
+  --primary-foreground: #f3f2ee;
+  --raised: #e9e8e2;
+  --active: #e2e1da;
+  --secondary: var(--raised);
+  --secondary-foreground: #0a0a0b;
+  --muted: var(--raised);
+  --muted-foreground: #55544e;
+  --accent: var(--active);
+  --accent-foreground: #0a0a0b;
+  --destructive: #b3231a;
+  --border: rgba(10, 10, 11, 0.1);
+  --input: rgba(10, 10, 11, 0.24);
+  --ring: #0a0a0b;
+  --rule: rgba(10, 10, 11, 0.07);
 
-  --sidebar: #e9ebe3;
-  --sidebar-foreground: #171a18;
-  --sidebar-muted: #565c55;
-  --sidebar-accent: #dcdfd4;
-  --sidebar-accent-foreground: #171a18;
-  --sidebar-border: #d3d6cc;
-  --sidebar-primary: #d7f45b;
-  --sidebar-primary-foreground: #171a18;
-  --sidebar-ring: #171a18;
+  --nav: #0a0a0b;
+  --nav-foreground: #b9b8b2;
+  --nav-hover: #1f1f22;
+  --nav-active: #f3f2ee;
+  --nav-active-foreground: #0a0a0b;
+  --tag-inverted: #0a0a0b;
+  --tag-inverted-foreground: #f3f2ee;
+  --toast: #0a0a0b;
+  --toast-foreground: #f3f2ee;
+  --shadow-float: 0 1px 2px rgba(10, 10, 11, 0.1), 0 10px 30px -12px rgba(10, 10, 11, 0.3);
 
-  --action: #d7f45b;
-  --action-foreground: #171a18;
-  --action-ink: #4b5c00;
-  --live: #171a18;
-  --live-foreground: #f1f2ec;
-  --live-muted: #b2b8ad;
-  --live-border: #30352f;
-  --rule: #d3d6cc;
+  --sidebar: var(--nav);
+  --sidebar-foreground: var(--nav-foreground);
+  --sidebar-muted: var(--nav-foreground);
+  --sidebar-accent: var(--nav-hover);
+  --sidebar-accent-foreground: var(--nav-foreground);
+  --sidebar-border: rgba(243, 242, 238, 0.12);
+  --sidebar-primary: var(--nav-active);
+  --sidebar-primary-foreground: var(--nav-active-foreground);
+  --sidebar-ring: #f3f2ee;
 
-  --verdict-true: #286044;
+  /* The citron is gone: the one action is the ink primary; « live » is ink. */
+  --action: var(--primary);
+  --action-foreground: var(--primary-foreground);
+  --action-ink: var(--foreground);
+  --live: #0a0a0b;
+  --live-foreground: #f3f2ee;
+  --live-muted: #b9b8b2;
+  --live-border: #2a2a2e;
+
+  --verdict-true: #0b6b3a;
   --verdict-true-on: #ffffff;
-  --verdict-true-soft: #e0ece3;
-  --verdict-true-ink: #1f5238;
-  --verdict-misleading: #e0a12a;
-  --verdict-misleading-on: #171a18;
-  --verdict-misleading-soft: #f8ebcf;
-  --verdict-misleading-ink: #6f4600;
-  --verdict-false: #9d382e;
+  --verdict-true-soft: #e1f3e8;
+  --verdict-true-ink: #0b6b3a;
+  --verdict-misleading: #8a5700;
+  --verdict-misleading-on: #ffffff;
+  --verdict-misleading-soft: #f9ecd2;
+  --verdict-misleading-ink: #8a5700;
+  --verdict-false: #b3231a;
   --verdict-false-on: #ffffff;
-  --verdict-false-soft: #f4dfda;
-  --verdict-false-ink: #872e25;
-  --verdict-unverifiable: #656b63;
+  --verdict-false-soft: #fbe3e0;
+  --verdict-false-ink: #b3231a;
+  --verdict-unverifiable: #1d58c4;
   --verdict-unverifiable-on: #ffffff;
-  --verdict-unverifiable-soft: #e3e5df;
-  --verdict-unverifiable-ink: #474c45;
+  --verdict-unverifiable-soft: #e0eafb;
+  --verdict-unverifiable-ink: #1d58c4;
 }
 
 .dark {
-  --background: #121412;
-  --foreground: #eceee6;
-  --card: #1a1d1a;
-  --card-foreground: #eceee6;
-  --popover: #1e221e;
-  --popover-foreground: #eceee6;
-  --primary: #eceee6;
-  --primary-foreground: #121412;
-  --secondary: #252924;
-  --secondary-foreground: #eceee6;
-  --muted: #212520;
-  --muted-foreground: #a5ab9f;
-  --accent: #272c26;
-  --accent-foreground: #eceee6;
-  --destructive: #e07a6c;
-  --border: #30352f;
-  --input: #6c7268;
-  --ring: #d7f45b;
+  --background: #0a0a0b;
+  --foreground: #f3f2ee;
+  --card: #111113;
+  --card-foreground: #f3f2ee;
+  --popover: #111113;
+  --popover-foreground: #f3f2ee;
+  --primary: #f3f2ee;
+  --primary-foreground: #0a0a0b;
+  --raised: #19191c;
+  --active: #232327;
+  --secondary: var(--raised);
+  --secondary-foreground: #f3f2ee;
+  --muted: var(--raised);
+  --muted-foreground: #a6a5a0;
+  --accent: var(--active);
+  --accent-foreground: #f3f2ee;
+  --destructive: #ff6a5f;
+  --border: rgba(243, 242, 238, 0.1);
+  --input: rgba(243, 242, 238, 0.26);
+  --ring: #f3f2ee;
+  --rule: rgba(243, 242, 238, 0.07);
 
-  --sidebar: #161916;
-  --sidebar-foreground: #eceee6;
-  --sidebar-muted: #a5ab9f;
-  --sidebar-accent: #252924;
-  --sidebar-accent-foreground: #eceee6;
-  --sidebar-border: #2a2f29;
-  --sidebar-primary: #d7f45b;
-  --sidebar-primary-foreground: #171a18;
-  --sidebar-ring: #d7f45b;
+  --nav: #1c1c1f;
+  --nav-foreground: #b4b3ad;
+  --nav-hover: #2a2a2e;
+  --nav-active: #f3f2ee;
+  --nav-active-foreground: #0a0a0b;
+  --tag-inverted: #f3f2ee;
+  --tag-inverted-foreground: #0a0a0b;
+  --toast: #f3f2ee;
+  --toast-foreground: #0a0a0b;
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 30px -12px rgba(0, 0, 0, 0.7);
 
-  --action: #d7f45b;
-  --action-foreground: #171a18;
-  --action-ink: #d7f45b;
-  --live: #0b0d0b;
-  --live-foreground: #eceee6;
-  --live-muted: #a5ab9f;
-  --live-border: #2a2f29;
-  --rule: #30352f;
+  --sidebar-ring: #f3f2ee;
 
-  --verdict-true: #4fa36f;
-  --verdict-true-on: #0f1410;
-  --verdict-true-soft: #17301f;
-  --verdict-true-ink: #8fd3a6;
-  --verdict-misleading: #e8b04a;
-  --verdict-misleading-on: #121412;
-  --verdict-misleading-soft: #33280f;
-  --verdict-misleading-ink: #f0c97a;
-  --verdict-false: #d96a5c;
-  --verdict-false-on: #121412;
-  --verdict-false-soft: #3a1a16;
-  --verdict-false-ink: #f2a69b;
-  --verdict-unverifiable: #959b91;
-  --verdict-unverifiable-on: #121412;
-  --verdict-unverifiable-soft: #262a25;
-  --verdict-unverifiable-ink: #c3c8bf;
+  --live: #19191c;
+  --live-foreground: #f3f2ee;
+  --live-muted: #a6a5a0;
+  --live-border: #232327;
+
+  --verdict-true: #3ddc84;
+  --verdict-true-on: #0a0a0b;
+  --verdict-true-soft: #0f2219;
+  --verdict-true-ink: #3ddc84;
+  --verdict-misleading: #ffb224;
+  --verdict-misleading-on: #0a0a0b;
+  --verdict-misleading-soft: #29200c;
+  --verdict-misleading-ink: #ffb224;
+  --verdict-false: #ff6a5f;
+  --verdict-false-on: #0a0a0b;
+  --verdict-false-soft: #2a1311;
+  --verdict-false-ink: #ff6a5f;
+  --verdict-unverifiable: #6aa8ff;
+  --verdict-unverifiable-on: #0a0a0b;
+  --verdict-unverifiable-soft: #101a2b;
+  --verdict-unverifiable-ink: #6aa8ff;
 }
 
 @layer base {
@@ -216,12 +247,22 @@
   textarea {
     caret-color: var(--foreground);
   }
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: var(--primary);
+  }
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
   a {
     text-underline-offset: 3px;
+  }
+  /* The browser's yellow highlight is a colour outside the verdicts. */
+  mark {
+    background: transparent;
+    color: inherit;
   }
   /* Times, counts and FAN references line up in columns. */
   time,
@@ -235,33 +276,28 @@
   }
 }
 
-/* Page titles: Archivo, heavy and tight, the signage voice. */
+/* Page titles: Bricolage Grotesque, heavy and tight. */
 .page-title {
-  font-family: var(--font-archivo), sans-serif;
+  font-family: var(--font-bricolage), sans-serif;
   font-weight: 800;
   font-size: clamp(2rem, 1.5rem + 1.6vw, 2.9rem);
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
-/* A phrase of the message FANILO flagged: lit in citron, one after the other, like a highlighter. */
+/* A phrase of the message Checky flagged: underlined in the text colour, 2 px, 3 px below. */
 .signal-mark {
   color: inherit;
-  padding: 0 0.12em;
-  border-radius: 2px;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  background: linear-gradient(var(--action), var(--action)) no-repeat 0 0 / 100% 100%;
-  animation: mark-light 0.9s var(--ease-out-expo) both;
-  animation-delay: calc(var(--i, 0) * 220ms + 150ms);
+  text-decoration: underline;
+  text-decoration-color: var(--foreground);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
-.dark .signal-mark {
-  color: var(--action-foreground);
-}
-@keyframes mark-light {
-  from {
-    background-size: 0% 100%;
-  }
+
+/* Verbatim quotations (the verdict quote, source quotes): Cormorant Garamond italic. */
+.quote {
+  font-family: var(--font-quote);
+  font-style: italic;
 }
 
 /* The live line: the step being worked on breathes, the others hold still. */
@@ -307,8 +343,8 @@
   inset: auto 0 0 0;
   height: min(64dvh, 36rem);
   border-top: 1px solid var(--border);
-  border-radius: 12px 12px 0 0;
-  box-shadow: 0 -18px 40px -24px rgb(23 26 24 / 0.45);
+  border-radius: 20px 20px 0 0;
+  box-shadow: var(--shadow-float);
   padding-bottom: env(safe-area-inset-bottom);
 }
 @media (min-width: 1024px) {
@@ -331,7 +367,7 @@
   color: var(--live-foreground);
 }
 .assistant-head h2 {
-  font-family: var(--font-archivo), sans-serif;
+  font-family: var(--font-bricolage), sans-serif;
   font-weight: 800;
   font-size: 18px;
   letter-spacing: -0.01em;
@@ -345,7 +381,7 @@
   border-radius: var(--radius);
 }
 .assistant-head .assistant-icon:hover {
-  background: rgb(241 242 236 / 0.12);
+  background: rgb(243 242 238 / 0.12);
 }
 .assistant-form .assistant-icon:hover {
   background: var(--muted);
@@ -441,7 +477,7 @@
 }
 .assistant-mic.is-on {
   background: var(--verdict-false);
-  color: #fff;
+  color: var(--verdict-false-on);
   border-color: var(--verdict-false);
   animation: assistant-pulse 1.2s ease-in-out infinite;
 }
@@ -516,7 +552,7 @@
   gap: 7px;
   height: 34px;
   padding: 0 12px;
-  border: 1px solid rgb(241 242 236 / 0.5);
+  border: 1px solid rgb(243 242 238 / 0.5);
   border-radius: 999px;
   font-size: 13px;
   font-weight: 700;
@@ -525,12 +561,12 @@
   white-space: nowrap;
 }
 .assistant-voice-toggle:hover {
-  background: rgb(241 242 236 / 0.12);
+  background: rgb(243 242 238 / 0.12);
 }
 .assistant-voice-toggle[aria-pressed="true"] {
-  background: var(--action);
-  color: var(--action-foreground);
-  border-color: var(--action);
+  background: var(--live-foreground);
+  color: var(--live);
+  border-color: var(--live-foreground);
 }
 .assistant-dot {
   width: 9px;
@@ -574,7 +610,7 @@
   transition: height 80ms linear;
 }
 .assistant-stage[data-phase="listening"] .assistant-meter i {
-  background: var(--action);
+  background: var(--verdict-false);
 }
 .assistant-stage[data-phase="speaking"] .assistant-meter i {
   animation: assistant-talk 0.45s ease-in-out infinite alternate;
@@ -594,7 +630,7 @@
   height: 6px;
 }
 .assistant-stage-label {
-  font-family: var(--font-archivo), sans-serif;
+  font-family: var(--font-bricolage), sans-serif;
   font-weight: 800;
   font-size: 22px;
   line-height: 1.05;
@@ -617,15 +653,15 @@
   color: var(--live);
 }
 .assistant-stage-btn:hover {
-  background: var(--action);
-  color: var(--action-foreground);
+  background: var(--active);
+  color: var(--foreground);
 }
 .assistant-stage-btn:disabled {
   opacity: 0.6;
 }
 .assistant-stage[data-phase="listening"] .assistant-stage-btn {
   background: var(--verdict-false);
-  color: #fff;
+  color: var(--verdict-false-on);
   animation: assistant-pulse 1.2s ease-in-out infinite;
 }
 .assistant-stage-foot {
@@ -637,7 +673,7 @@
 .assistant-stage .assistant-lang {
   background: transparent;
   color: var(--live-foreground);
-  border-color: rgb(241 242 236 / 0.5);
+  border-color: rgb(243 242 238 / 0.5);
 }
 .assistant-stage .assistant-lang option {
   background: var(--live);
@@ -651,7 +687,7 @@
 }
 .assistant-stage :focus-visible,
 .assistant-head :focus-visible {
-  outline: 2px solid var(--action);
+  outline: 2px solid var(--live-foreground);
   outline-offset: 2px;
 }
 

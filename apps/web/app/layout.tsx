@@ -1,22 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Bricolage_Grotesque, Cormorant_Garamond } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/lib/brand";
 import "./globals.css";
 
-// Everything a person reads: drawn by the Braille Institute for legibility, which a cracked phone
-// screen in full sun needs.
-const atkinson = Atkinson_Hyperlegible_Next({
-  variable: "--font-atkinson",
+// Everything: titles at 700-800 with tight tracking, text at 400-500, tabular figures in tables.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin", "latin-ext"],
+  axes: ["opsz"],
 });
 
-// Titles, numbers, references and verdict words: the signage voice.
-const archivo = Archivo({
-  variable: "--font-archivo",
+// Verbatim quotations only (the verdict quote, source quotes) and the wordmark dot.
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
   subsets: ["latin", "latin-ext"],
-  weight: ["500", "600", "700", "800"],
+  weight: "500",
+  style: "italic",
 });
 
 export const metadata: Metadata = {
@@ -27,14 +28,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f1f2ec" },
-    { media: "(prefers-color-scheme: dark)", color: "#121412" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f2ee" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" suppressHydrationWarning className={`${atkinson.variable} ${archivo.variable} h-full antialiased`}>
+    <html lang="fr" suppressHydrationWarning className={`${bricolage.variable} ${cormorant.variable} h-full antialiased`}>
       <body className="min-h-full">
         <ThemeProvider>
           {children}

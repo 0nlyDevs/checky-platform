@@ -1,1096 +1,416 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-29T13:02:10+00:00",
-  "title": "Design System: FANILO",
+  "generatedAt": "2026-11-02T00:00:00+00:00",
+  "title": "Design System: Checky",
   "extensions": {
     "colorMeta": {
       "chalk": {
         "role": "neutral",
         "displayName": "Chalk",
-        "canonical": "#f1f2ec",
-        "oklch": "oklch(95.9% 0.008 114.2)",
-        "tonalRamp": [
-          "#0b0c08",
-          "#252621",
-          "#42423e",
-          "#61625d",
-          "#82837e",
-          "#a5a6a0",
-          "#c9cac4",
-          "#eeefe9"
-        ]
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
       },
       "ink": {
         "role": "neutral",
         "displayName": "Ink",
-        "canonical": "#171a18",
-        "oklch": "oklch(21.4% 0.006 156.7)",
-        "tonalRamp": [
-          "#090c0a",
-          "#232624",
-          "#3f4341",
-          "#5f6260",
-          "#808381",
-          "#a2a6a3",
-          "#c6cac7",
-          "#ebf0ed"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "card": {
         "role": "neutral",
         "displayName": "Card White",
-        "canonical": "#ffffff",
-        "oklch": "oklch(100.0% 0.000 89.9)",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
+        "canonical": "#fbfaf7",
+        "oklch": "oklch(98.5% 0.004 91.4)"
       },
       "secondary": {
         "role": "neutral",
         "displayName": "Secondary Chalk",
-        "canonical": "#e4e6de",
-        "oklch": "oklch(92.1% 0.011 118.0)",
-        "tonalRamp": [
-          "#0b0c07",
-          "#242620",
-          "#41433c",
-          "#60625b",
-          "#81837c",
-          "#a4a69e",
-          "#c8cac2",
-          "#eef0e7"
-        ]
+        "canonical": "#e9e8e2",
+        "oklch": "oklch(93.0% 0.008 98.9)"
       },
       "muted": {
         "role": "neutral",
         "displayName": "Muted Chalk",
-        "canonical": "#e8eae3",
-        "oklch": "oklch(93.4% 0.010 119.6)",
-        "tonalRamp": [
-          "#0b0c07",
-          "#242621",
-          "#41433d",
-          "#60625c",
-          "#81837d",
-          "#a4a69f",
-          "#c8cac3",
-          "#edefe8"
-        ]
+        "canonical": "#e9e8e2",
+        "oklch": "oklch(93.0% 0.008 98.9)"
       },
       "muted-foreground": {
         "role": "neutral",
         "displayName": "Muted Ink",
-        "canonical": "#565c55",
-        "oklch": "oklch(46.7% 0.013 141.2)",
-        "tonalRamp": [
-          "#080d08",
-          "#222721",
-          "#3e443d",
-          "#5d635c",
-          "#7e847d",
-          "#a1a79f",
-          "#c4cbc3",
-          "#eaf1e9"
-        ]
+        "canonical": "#55544e",
+        "oklch": "oklch(44.5% 0.010 99.1)"
       },
       "accent": {
         "role": "neutral",
         "displayName": "Accent Chalk",
-        "canonical": "#e6e9df",
-        "oklch": "oklch(92.9% 0.014 120.3)",
-        "tonalRamp": [
-          "#0a0c06",
-          "#24261f",
-          "#41433b",
-          "#60625a",
-          "#81847b",
-          "#a4a69d",
-          "#c8cbc1",
-          "#edf0e6"
-        ]
+        "canonical": "#e2e1da",
+        "oklch": "oklch(90.9% 0.009 100.0)"
       },
       "border": {
         "role": "neutral",
         "displayName": "Hairline",
-        "canonical": "#d3d6cc",
-        "oklch": "oklch(87.1% 0.014 120.3)",
-        "tonalRamp": [
-          "#0a0c06",
-          "#24261f",
-          "#41433b",
-          "#60625a",
-          "#81847b",
-          "#a4a69d",
-          "#c8cbc1",
-          "#edf0e6"
-        ]
+        "canonical": "#dcdbd7",
+        "oklch": "oklch(89.1% 0.006 95.1)"
       },
       "rule": {
         "role": "neutral",
         "displayName": "Rule",
-        "canonical": "#d3d6cc",
-        "oklch": "oklch(87.1% 0.014 120.3)",
-        "tonalRamp": [
-          "#0a0c06",
-          "#24261f",
-          "#41433b",
-          "#60625a",
-          "#81847b",
-          "#a4a69d",
-          "#c8cbc1",
-          "#edf0e6"
-        ]
+        "canonical": "#e2e1de",
+        "oklch": "oklch(91.0% 0.004 91.4)"
       },
       "input": {
         "role": "neutral",
         "displayName": "Field Edge",
-        "canonical": "#8a9086",
-        "oklch": "oklch(64.5% 0.016 132.5)",
-        "tonalRamp": [
-          "#090d06",
-          "#22271f",
-          "#3f443b",
-          "#5e635a",
-          "#7f857b",
-          "#a1a79d",
-          "#c5ccc1",
-          "#eaf1e6"
-        ]
+        "canonical": "#bbbab7",
+        "oklch": "oklch(78.9% 0.004 91.5)"
       },
       "destructive": {
         "role": "neutral",
         "displayName": "Destructive Brick",
-        "canonical": "#9d382e",
-        "oklch": "oklch(48.3% 0.137 28.8)",
-        "tonalRamp": [
-          "#2d0000",
-          "#510000",
-          "#752019",
-          "#9a4238",
-          "#c06458",
-          "#e68779",
-          "#ffab9c",
-          "#ffd0c0"
-        ]
+        "canonical": "#b3231a",
+        "oklch": "oklch(49.9% 0.181 29.1)"
       },
       "sidebar": {
         "role": "neutral",
         "displayName": "Rail",
-        "canonical": "#e9ebe3",
-        "oklch": "oklch(93.6% 0.011 118.0)",
-        "tonalRamp": [
-          "#0b0c07",
-          "#242620",
-          "#41433c",
-          "#60625b",
-          "#81837c",
-          "#a4a69e",
-          "#c8cac2",
-          "#eef0e8"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "sidebar-accent": {
         "role": "neutral",
         "displayName": "Rail Hover",
-        "canonical": "#dcdfd4",
-        "oklch": "oklch(89.8% 0.015 119.1)",
-        "tonalRamp": [
-          "#0a0c06",
-          "#24261e",
-          "#41433a",
-          "#606359",
-          "#81847a",
-          "#a4a79c",
-          "#c8cbc0",
-          "#edf0e5"
-        ]
+        "canonical": "#1f1f22",
+        "oklch": "oklch(24.1% 0.006 286.0)"
       },
       "citron": {
         "role": "primary",
         "displayName": "Citron",
-        "canonical": "#d7f45b",
-        "oklch": "oklch(91.8% 0.178 119.2)",
-        "tonalRamp": [
-          "#080e00",
-          "#202b00",
-          "#3c4900",
-          "#5a6a00",
-          "#7b8c2e",
-          "#9db054",
-          "#c0d478",
-          "#e5fa9d"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "citron-foreground": {
         "role": "primary",
         "displayName": "Ink on Citron",
-        "canonical": "#171a18",
-        "oklch": "oklch(21.4% 0.006 156.7)",
-        "tonalRamp": [
-          "#090c0a",
-          "#232624",
-          "#3f4341",
-          "#5f6260",
-          "#808381",
-          "#a2a6a3",
-          "#c6cac7",
-          "#ebf0ed"
-        ]
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
       },
       "citron-ink": {
         "role": "primary",
         "displayName": "Citron Ink",
-        "canonical": "#4b5c00",
-        "oklch": "oklch(44.4% 0.107 121.3)",
-        "tonalRamp": [
-          "#070f00",
-          "#1e2b00",
-          "#3a4a00",
-          "#586a17",
-          "#798c3e",
-          "#9baf61",
-          "#bed484",
-          "#e3faa9"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "live": {
         "role": "neutral",
         "displayName": "Live Ink",
-        "canonical": "#171a18",
-        "oklch": "oklch(21.4% 0.006 156.7)",
-        "tonalRamp": [
-          "#090c0a",
-          "#232624",
-          "#3f4341",
-          "#5f6260",
-          "#808381",
-          "#a2a6a3",
-          "#c6cac7",
-          "#ebf0ed"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "live-foreground": {
         "role": "neutral",
         "displayName": "Live Text",
-        "canonical": "#f1f2ec",
-        "oklch": "oklch(95.9% 0.008 114.2)",
-        "tonalRamp": [
-          "#0b0c08",
-          "#252621",
-          "#42423e",
-          "#61625d",
-          "#82837e",
-          "#a5a6a0",
-          "#c9cac4",
-          "#eeefe9"
-        ]
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
       },
       "live-muted": {
         "role": "neutral",
         "displayName": "Live Muted",
-        "canonical": "#b2b8ad",
-        "oklch": "oklch(77.5% 0.017 130.5)",
-        "tonalRamp": [
-          "#090d06",
-          "#22271e",
-          "#3f443b",
-          "#5e6359",
-          "#7f847a",
-          "#a1a79c",
-          "#c5cbc0",
-          "#ebf1e5"
-        ]
+        "canonical": "#b9b8b2",
+        "oklch": "oklch(78.2% 0.008 98.9)"
       },
       "live-border": {
         "role": "neutral",
         "displayName": "Live Rule",
-        "canonical": "#30352f",
-        "oklch": "oklch(32.2% 0.013 140.5)",
-        "tonalRamp": [
-          "#080c08",
-          "#222721",
-          "#3f443d",
-          "#5e635c",
-          "#7e847d",
-          "#a1a7a0",
-          "#c5cbc4",
-          "#eaf1e9"
-        ]
+        "canonical": "#2a2a2e",
+        "oklch": "oklch(28.7% 0.007 285.9)"
       },
       "verdict-true": {
         "role": "verdict",
         "displayName": "Verdict True",
-        "canonical": "#286044",
-        "oklch": "oklch(44.3% 0.076 159.2)",
-        "tonalRamp": [
-          "#001301",
-          "#002f17",
-          "#134e33",
-          "#376e52",
-          "#599072",
-          "#7bb494",
-          "#9fd9b8",
-          "#c3ffdc"
-        ]
+        "canonical": "#0b6b3a",
+        "oklch": "oklch(46.5% 0.114 153.7)"
       },
       "verdict-true-on": {
         "role": "verdict",
         "displayName": "Verdict True On",
-        "canonical": "#ffffff",
-        "oklch": "oklch(100.0% 0.000 89.9)",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
+        "canonical": "#fbfaf7",
+        "oklch": "oklch(100.0% 0.000 89.9)"
       },
       "verdict-true-soft": {
         "role": "verdict",
         "displayName": "Verdict True Soft",
-        "canonical": "#e0ece3",
-        "oklch": "oklch(93.2% 0.018 153.6)",
-        "tonalRamp": [
-          "#060d08",
-          "#1f2821",
-          "#3b453e",
-          "#5a645d",
-          "#7b867d",
-          "#9da8a0",
-          "#c1cdc4",
-          "#e6f2e9"
-        ]
+        "canonical": "#e1f3e8",
+        "oklch": "oklch(94.8% 0.024 159.1)"
       },
       "verdict-true-ink": {
         "role": "verdict",
         "displayName": "Verdict True Ink",
-        "canonical": "#1f5238",
-        "oklch": "oklch(39.6% 0.071 158.4)",
-        "tonalRamp": [
-          "#001302",
-          "#002f17",
-          "#1a4d34",
-          "#3b6e52",
-          "#5d9072",
-          "#7fb395",
-          "#a2d8b8",
-          "#c7fedd"
-        ]
+        "canonical": "#0b6b3a",
+        "oklch": "oklch(46.5% 0.114 153.7)"
       },
       "verdict-misleading": {
         "role": "verdict",
         "displayName": "Verdict Misleading",
-        "canonical": "#e0a12a",
-        "oklch": "oklch(75.1% 0.145 77.9)",
-        "tonalRamp": [
-          "#230000",
-          "#431600",
-          "#643600",
-          "#865600",
-          "#a97817",
-          "#ce9b44",
-          "#f4bf6a",
-          "#ffe58f"
-        ]
+        "canonical": "#8a5700",
+        "oklch": "oklch(50.2% 0.108 70.5)"
       },
       "verdict-misleading-on": {
         "role": "verdict",
         "displayName": "Verdict Misleading On",
-        "canonical": "#171a18",
-        "oklch": "oklch(21.4% 0.006 156.7)",
-        "tonalRamp": [
-          "#090c0a",
-          "#232624",
-          "#3f4341",
-          "#5f6260",
-          "#808381",
-          "#a2a6a3",
-          "#c6cac7",
-          "#ebf0ed"
-        ]
+        "canonical": "#fbfaf7",
+        "oklch": "oklch(100.0% 0.000 89.9)"
       },
       "verdict-misleading-soft": {
         "role": "verdict",
         "displayName": "Verdict Misleading Soft",
-        "canonical": "#f8ebcf",
-        "oklch": "oklch(94.3% 0.039 86.1)",
-        "tonalRamp": [
-          "#120900",
-          "#2e240d",
-          "#4b4129",
-          "#6b6048",
-          "#8d8168",
-          "#b0a489",
-          "#d5c8ad",
-          "#faedd1"
-        ]
+        "canonical": "#f9ecd2",
+        "oklch": "oklch(94.7% 0.037 84.6)"
       },
       "verdict-misleading-ink": {
         "role": "verdict",
         "displayName": "Verdict Misleading Ink",
-        "canonical": "#6f4600",
-        "oklch": "oklch(43.1% 0.093 71.6)",
-        "tonalRamp": [
-          "#200000",
-          "#3f1900",
-          "#603800",
-          "#82571b",
-          "#a5793f",
-          "#c99b62",
-          "#efc085",
-          "#ffe5aa"
-        ]
+        "canonical": "#8a5700",
+        "oklch": "oklch(50.2% 0.108 70.5)"
       },
       "verdict-false": {
         "role": "verdict",
         "displayName": "Verdict False",
-        "canonical": "#9d382e",
-        "oklch": "oklch(48.3% 0.137 28.8)",
-        "tonalRamp": [
-          "#2d0000",
-          "#510000",
-          "#752019",
-          "#9a4238",
-          "#c06458",
-          "#e68779",
-          "#ffab9c",
-          "#ffd0c0"
-        ]
+        "canonical": "#b3231a",
+        "oklch": "oklch(49.9% 0.181 29.1)"
       },
       "verdict-false-on": {
         "role": "verdict",
         "displayName": "Verdict False On",
-        "canonical": "#ffffff",
-        "oklch": "oklch(100.0% 0.000 89.9)",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
+        "canonical": "#fbfaf7",
+        "oklch": "oklch(100.0% 0.000 89.9)"
       },
       "verdict-false-soft": {
         "role": "verdict",
         "displayName": "Verdict False Soft",
-        "canonical": "#f4dfda",
-        "oklch": "oklch(91.9% 0.024 33.5)",
-        "tonalRamp": [
-          "#140705",
-          "#30211d",
-          "#4e3e3a",
-          "#6e5d58",
-          "#907d79",
-          "#b4a09b",
-          "#d8c4bf",
-          "#fee9e4"
-        ]
+        "canonical": "#fbe3e0",
+        "oklch": "oklch(93.4% 0.027 26.2)"
       },
       "verdict-false-ink": {
         "role": "verdict",
         "displayName": "Verdict False Ink",
-        "canonical": "#872e25",
-        "oklch": "oklch(43.1% 0.124 28.9)",
-        "tonalRamp": [
-          "#2d0000",
-          "#510000",
-          "#752018",
-          "#9a4237",
-          "#c06458",
-          "#e68779",
-          "#ffab9c",
-          "#ffd0c0"
-        ]
+        "canonical": "#b3231a",
+        "oklch": "oklch(49.9% 0.181 29.1)"
       },
       "verdict-unverifiable": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable",
-        "canonical": "#656b63",
-        "oklch": "oklch(52.0% 0.014 137.8)",
-        "tonalRamp": [
-          "#080d07",
-          "#222720",
-          "#3e443c",
-          "#5d635b",
-          "#7e847c",
-          "#a1a79f",
-          "#c5cbc2",
-          "#eaf1e8"
-        ]
+        "canonical": "#1d58c4",
+        "oklch": "oklch(49.0% 0.180 261.3)"
       },
       "verdict-unverifiable-on": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable On",
-        "canonical": "#ffffff",
-        "oklch": "oklch(100.0% 0.000 89.9)",
-        "tonalRamp": [
-          "#0b0b0b",
-          "#252525",
-          "#424242",
-          "#616161",
-          "#828282",
-          "#a5a5a5",
-          "#c9c9c9",
-          "#eeeeee"
-        ]
+        "canonical": "#fbfaf7",
+        "oklch": "oklch(100.0% 0.000 89.9)"
       },
       "verdict-unverifiable-soft": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable Soft",
-        "canonical": "#e3e5df",
-        "oklch": "oklch(91.9% 0.008 121.6)",
-        "tonalRamp": [
-          "#0b0c08",
-          "#242621",
-          "#41433e",
-          "#60625d",
-          "#81837e",
-          "#a4a6a0",
-          "#c8cac4",
-          "#edefe9"
-        ]
+        "canonical": "#e0eafb",
+        "oklch": "oklch(93.5% 0.025 261.1)"
       },
       "verdict-unverifiable-ink": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable Ink",
-        "canonical": "#474c45",
-        "oklch": "oklch(41.0% 0.013 136.6)",
-        "tonalRamp": [
-          "#090c07",
-          "#222720",
-          "#3f443d",
-          "#5e635c",
-          "#7f847d",
-          "#a1a79f",
-          "#c5cbc3",
-          "#eaf1e8"
-        ]
+        "canonical": "#1d58c4",
+        "oklch": "oklch(49.0% 0.180 261.3)"
       },
       "dark-background": {
         "role": "neutral",
         "displayName": "Background (dark)",
-        "canonical": "#121412",
-        "oklch": "oklch(18.8% 0.005 145.4)",
-        "tonalRamp": [
-          "#0a0c0a",
-          "#242624",
-          "#404340",
-          "#5f625f",
-          "#808380",
-          "#a3a6a3",
-          "#c7cac7",
-          "#ecefec"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "dark-foreground": {
         "role": "neutral",
         "displayName": "Foreground (dark)",
-        "canonical": "#eceee6",
-        "oklch": "oklch(94.5% 0.011 118.0)",
-        "tonalRamp": [
-          "#0b0c07",
-          "#242620",
-          "#41433c",
-          "#60625b",
-          "#81837c",
-          "#a4a69f",
-          "#c8cac2",
-          "#eef0e8"
-        ]
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
       },
       "dark-card": {
         "role": "neutral",
         "displayName": "Card White (dark)",
-        "canonical": "#1a1d1a",
-        "oklch": "oklch(22.6% 0.007 145.3)",
-        "tonalRamp": [
-          "#090c09",
-          "#232623",
-          "#404340",
-          "#5f625f",
-          "#808380",
-          "#a2a6a2",
-          "#c6cac6",
-          "#ecf0eb"
-        ]
+        "canonical": "#111113",
+        "oklch": "oklch(17.9% 0.004 286.0)"
       },
       "dark-popover": {
         "role": "neutral",
         "displayName": "Popover (dark)",
-        "canonical": "#1e221e",
-        "oklch": "oklch(24.6% 0.009 145.3)",
-        "tonalRamp": [
-          "#090c09",
-          "#222622",
-          "#3f433f",
-          "#5e635e",
-          "#7f847f",
-          "#a1a7a1",
-          "#c5cbc5",
-          "#ebf0eb"
-        ]
+        "canonical": "#111113",
+        "oklch": "oklch(17.9% 0.004 286.0)"
       },
       "dark-secondary": {
         "role": "neutral",
         "displayName": "Secondary Chalk (dark)",
-        "canonical": "#252924",
-        "oklch": "oklch(27.5% 0.011 139.4)",
-        "tonalRamp": [
-          "#090c08",
-          "#222621",
-          "#3f433e",
-          "#5e635d",
-          "#7f847e",
-          "#a2a7a0",
-          "#c6cbc4",
-          "#ebf0e9"
-        ]
+        "canonical": "#19191c",
+        "oklch": "oklch(21.5% 0.006 285.9)"
       },
       "dark-muted": {
         "role": "neutral",
         "displayName": "Muted Chalk (dark)",
-        "canonical": "#212520",
-        "oklch": "oklch(25.9% 0.011 139.4)",
-        "tonalRamp": [
-          "#090c08",
-          "#222621",
-          "#3f433e",
-          "#5e635d",
-          "#7f847e",
-          "#a2a7a0",
-          "#c6cbc4",
-          "#ebf0e9"
-        ]
+        "canonical": "#19191c",
+        "oklch": "oklch(21.5% 0.006 285.9)"
       },
       "dark-muted-foreground": {
         "role": "neutral",
         "displayName": "Muted Ink (dark)",
-        "canonical": "#a5ab9f",
-        "oklch": "oklch(73.3% 0.018 128.7)",
-        "tonalRamp": [
-          "#090d05",
-          "#22271d",
-          "#3f443a",
-          "#5e6358",
-          "#7f8579",
-          "#a1a79b",
-          "#c5ccbf",
-          "#ebf1e4"
-        ]
+        "canonical": "#a6a5a0",
+        "oklch": "oklch(72.1% 0.007 97.4)"
       },
       "dark-accent": {
         "role": "neutral",
         "displayName": "Accent Chalk (dark)",
-        "canonical": "#272c26",
-        "oklch": "oklch(28.6% 0.013 140.5)",
-        "tonalRamp": [
-          "#080d08",
-          "#222721",
-          "#3e443d",
-          "#5d635c",
-          "#7e847d",
-          "#a1a7a0",
-          "#c5cbc3",
-          "#eaf1e9"
-        ]
+        "canonical": "#232327",
+        "oklch": "oklch(25.8% 0.007 285.9)"
       },
       "dark-border": {
         "role": "neutral",
         "displayName": "Hairline (dark)",
-        "canonical": "#30352f",
-        "oklch": "oklch(32.2% 0.013 140.5)",
-        "tonalRamp": [
-          "#080c08",
-          "#222721",
-          "#3f443d",
-          "#5e635c",
-          "#7e847d",
-          "#a1a7a0",
-          "#c5cbc4",
-          "#eaf1e9"
-        ]
+        "canonical": "#222224",
+        "oklch": "oklch(25.3% 0.004 286.1)"
       },
       "dark-input": {
         "role": "neutral",
         "displayName": "Field Edge (dark)",
-        "canonical": "#6c7268",
-        "oklch": "oklch(54.4% 0.017 132.6)",
-        "tonalRamp": [
-          "#080d06",
-          "#22271e",
-          "#3f443b",
-          "#5e635a",
-          "#7e857a",
-          "#a1a79d",
-          "#c5ccc1",
-          "#eaf1e6"
-        ]
+        "canonical": "#4a4a4b",
+        "oklch": "oklch(40.9% 0.002 286.3)"
       },
       "dark-destructive": {
         "role": "neutral",
         "displayName": "Destructive Brick (dark)",
-        "canonical": "#e07a6c",
-        "oklch": "oklch(69.0% 0.129 29.0)",
-        "tonalRamp": [
-          "#2d0000",
-          "#510000",
-          "#752018",
-          "#9a4237",
-          "#c06457",
-          "#e68779",
-          "#ffab9c",
-          "#ffd0c0"
-        ]
+        "canonical": "#ff6a5f",
+        "oklch": "oklch(70.8% 0.184 27.0)"
       },
       "dark-sidebar": {
         "role": "neutral",
         "displayName": "Rail (dark)",
-        "canonical": "#161916",
-        "oklch": "oklch(20.9% 0.007 145.3)",
-        "tonalRamp": [
-          "#090c09",
-          "#232623",
-          "#404340",
-          "#5f625f",
-          "#808380",
-          "#a2a6a2",
-          "#c6cac6",
-          "#ebf0eb"
-        ]
+        "canonical": "#1c1c1f",
+        "oklch": "oklch(22.8% 0.006 285.9)"
       },
       "dark-sidebar-border": {
         "role": "neutral",
         "displayName": "Sidebar Border (dark)",
-        "canonical": "#2a2f29",
-        "oklch": "oklch(29.8% 0.013 140.5)",
-        "tonalRamp": [
-          "#080d08",
-          "#222721",
-          "#3e443d",
-          "#5d635c",
-          "#7e847d",
-          "#a1a7a0",
-          "#c5cbc4",
-          "#eaf1e9"
-        ]
+        "canonical": "#2a2a2e",
+        "oklch": "oklch(28.7% 0.007 285.9)"
       },
       "dark-live": {
         "role": "neutral",
         "displayName": "Live Ink (dark)",
-        "canonical": "#0b0d0b",
-        "oklch": "oklch(15.6% 0.005 145.3)",
-        "tonalRamp": [
-          "#0a0c0a",
-          "#232623",
-          "#404340",
-          "#5f625f",
-          "#808380",
-          "#a3a6a3",
-          "#c7cac7",
-          "#ecefec"
-        ]
+        "canonical": "#19191c",
+        "oklch": "oklch(21.5% 0.006 285.9)"
       },
       "dark-live-muted": {
         "role": "neutral",
         "displayName": "Live Muted (dark)",
-        "canonical": "#a5ab9f",
-        "oklch": "oklch(73.3% 0.018 128.7)",
-        "tonalRamp": [
-          "#090d05",
-          "#22271d",
-          "#3f443a",
-          "#5e6358",
-          "#7f8579",
-          "#a1a79b",
-          "#c5ccbf",
-          "#ebf1e4"
-        ]
+        "canonical": "#a6a5a0",
+        "oklch": "oklch(72.1% 0.007 97.4)"
       },
       "dark-live-border": {
         "role": "neutral",
         "displayName": "Live Rule (dark)",
-        "canonical": "#2a2f29",
-        "oklch": "oklch(29.8% 0.013 140.5)",
-        "tonalRamp": [
-          "#080d08",
-          "#222721",
-          "#3e443d",
-          "#5d635c",
-          "#7e847d",
-          "#a1a7a0",
-          "#c5cbc4",
-          "#eaf1e9"
-        ]
+        "canonical": "#232327",
+        "oklch": "oklch(25.8% 0.007 285.9)"
       },
       "dark-verdict-true": {
         "role": "verdict",
         "displayName": "Verdict True (dark)",
-        "canonical": "#4fa36f",
-        "oklch": "oklch(64.9% 0.114 154.4)",
-        "tonalRamp": [
-          "#001500",
-          "#003305",
-          "#005224",
-          "#177343",
-          "#419663",
-          "#66ba85",
-          "#8bdfa8",
-          "#b0ffcc"
-        ]
+        "canonical": "#3ddc84",
+        "oklch": "oklch(79.3% 0.180 154.0)"
       },
       "dark-verdict-true-on": {
         "role": "verdict",
         "displayName": "Verdict True On (dark)",
-        "canonical": "#0f1410",
-        "oklch": "oklch(18.4% 0.011 151.1)",
-        "tonalRamp": [
-          "#080d09",
-          "#212722",
-          "#3e443f",
-          "#5d635e",
-          "#7e847f",
-          "#a0a7a1",
-          "#c4cbc5",
-          "#e9f1eb"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "dark-verdict-true-soft": {
         "role": "verdict",
         "displayName": "Verdict True Soft (dark)",
-        "canonical": "#17301f",
-        "oklch": "oklch(28.3% 0.044 153.0)",
-        "tonalRamp": [
-          "#001003",
-          "#122b1b",
-          "#2f4937",
-          "#4e6955",
-          "#6f8a76",
-          "#91ae98",
-          "#b4d2bc",
-          "#d9f8e1"
-        ]
+        "canonical": "#0f2219",
+        "oklch": "oklch(23.2% 0.031 162.2)"
       },
       "dark-verdict-true-ink": {
         "role": "verdict",
         "displayName": "Verdict True Ink (dark)",
-        "canonical": "#8fd3a6",
-        "oklch": "oklch(80.9% 0.094 154.8)",
-        "tonalRamp": [
-          "#001400",
-          "#00310e",
-          "#00502a",
-          "#2d7149",
-          "#519369",
-          "#74b78b",
-          "#97dcae",
-          "#bcffd3"
-        ]
+        "canonical": "#3ddc84",
+        "oklch": "oklch(79.3% 0.180 154.0)"
       },
       "dark-verdict-misleading": {
         "role": "verdict",
         "displayName": "Verdict Misleading (dark)",
-        "canonical": "#e8b04a",
-        "oklch": "oklch(79.1% 0.134 79.5)",
-        "tonalRamp": [
-          "#220000",
-          "#421700",
-          "#623700",
-          "#855700",
-          "#a87915",
-          "#cd9c43",
-          "#f3c069",
-          "#ffe68e"
-        ]
+        "canonical": "#ffb224",
+        "oklch": "oklch(81.7% 0.164 75.8)"
       },
       "dark-verdict-misleading-on": {
         "role": "verdict",
         "displayName": "Verdict Misleading On (dark)",
-        "canonical": "#121412",
-        "oklch": "oklch(18.8% 0.005 145.4)",
-        "tonalRamp": [
-          "#0a0c0a",
-          "#242624",
-          "#404340",
-          "#5f625f",
-          "#808380",
-          "#a3a6a3",
-          "#c7cac7",
-          "#ecefec"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "dark-verdict-misleading-soft": {
         "role": "verdict",
         "displayName": "Verdict Misleading Soft (dark)",
-        "canonical": "#33280f",
-        "oklch": "oklch(28.3% 0.042 85.7)",
-        "tonalRamp": [
-          "#130900",
-          "#2e230a",
-          "#4c4027",
-          "#6c6046",
-          "#8e8166",
-          "#b1a487",
-          "#d6c8ab",
-          "#fbedcf"
-        ]
+        "canonical": "#29200c",
+        "oklch": "oklch(24.9% 0.035 85.5)"
       },
       "dark-verdict-misleading-ink": {
         "role": "verdict",
         "displayName": "Verdict Misleading Ink (dark)",
-        "canonical": "#f0c97a",
-        "oklch": "oklch(85.3% 0.107 83.9)",
-        "tonalRamp": [
-          "#1e0100",
-          "#3d1c00",
-          "#5c3b00",
-          "#7e5b00",
-          "#a17c2a",
-          "#c59f50",
-          "#eac375",
-          "#ffe999"
-        ]
+        "canonical": "#ffb224",
+        "oklch": "oklch(81.7% 0.164 75.8)"
       },
       "dark-verdict-false": {
         "role": "verdict",
         "displayName": "Verdict False (dark)",
-        "canonical": "#d96a5c",
-        "oklch": "oklch(65.3% 0.142 28.9)",
-        "tonalRamp": [
-          "#2d0000",
-          "#510000",
-          "#752018",
-          "#9a4238",
-          "#c06458",
-          "#e68779",
-          "#ffab9c",
-          "#ffd0c0"
-        ]
+        "canonical": "#ff6a5f",
+        "oklch": "oklch(70.8% 0.184 27.0)"
       },
       "dark-verdict-false-on": {
         "role": "verdict",
         "displayName": "Verdict False On (dark)",
-        "canonical": "#121412",
-        "oklch": "oklch(18.8% 0.005 145.4)",
-        "tonalRamp": [
-          "#0a0c0a",
-          "#242624",
-          "#404340",
-          "#5f625f",
-          "#808380",
-          "#a3a6a3",
-          "#c7cac7",
-          "#ecefec"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "dark-verdict-false-soft": {
         "role": "verdict",
         "displayName": "Verdict False Soft (dark)",
-        "canonical": "#3a1a16",
-        "oklch": "oklch(26.3% 0.052 28.5)",
-        "tonalRamp": [
-          "#1c0201",
-          "#3a1a16",
-          "#5a3732",
-          "#7c5651",
-          "#9f7771",
-          "#c39993",
-          "#e9bdb6",
-          "#ffe2db"
-        ]
+        "canonical": "#2a1311",
+        "oklch": "oklch(22.0% 0.038 25.9)"
       },
       "dark-verdict-false-ink": {
         "role": "verdict",
         "displayName": "Verdict False Ink (dark)",
-        "canonical": "#f2a69b",
-        "oklch": "oklch(79.6% 0.092 28.4)",
-        "tonalRamp": [
-          "#270000",
-          "#480a07",
-          "#6b2b25",
-          "#8e4b43",
-          "#b36c63",
-          "#d98f84",
-          "#ffb3a7",
-          "#ffd8cc"
-        ]
+        "canonical": "#ff6a5f",
+        "oklch": "oklch(70.8% 0.184 27.0)"
       },
       "dark-verdict-unverifiable": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable (dark)",
-        "canonical": "#959b91",
-        "oklch": "oklch(68.2% 0.016 132.5)",
-        "tonalRamp": [
-          "#090d06",
-          "#22271f",
-          "#3f443b",
-          "#5e635a",
-          "#7f847b",
-          "#a1a79d",
-          "#c5cbc1",
-          "#eaf1e6"
-        ]
+        "canonical": "#6aa8ff",
+        "oklch": "oklch(72.7% 0.143 257.1)"
       },
       "dark-verdict-unverifiable-on": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable On (dark)",
-        "canonical": "#121412",
-        "oklch": "oklch(18.8% 0.005 145.4)",
-        "tonalRamp": [
-          "#0a0c0a",
-          "#242624",
-          "#404340",
-          "#5f625f",
-          "#808380",
-          "#a3a6a3",
-          "#c7cac7",
-          "#ecefec"
-        ]
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "dark-verdict-unverifiable-soft": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable Soft (dark)",
-        "canonical": "#262a25",
-        "oklch": "oklch(27.9% 0.011 139.4)",
-        "tonalRamp": [
-          "#090c08",
-          "#222621",
-          "#3f433e",
-          "#5e635d",
-          "#7f847e",
-          "#a2a7a0",
-          "#c6cbc4",
-          "#ebf0ea"
-        ]
+        "canonical": "#101a2b",
+        "oklch": "oklch(21.8% 0.037 260.6)"
       },
       "dark-verdict-unverifiable-ink": {
         "role": "verdict",
         "displayName": "Verdict Unverifiable Ink (dark)",
-        "canonical": "#c3c8bf",
-        "oklch": "oklch(82.6% 0.014 130.8)",
-        "tonalRamp": [
-          "#090c07",
-          "#232620",
-          "#3f443c",
-          "#5e635b",
-          "#7f847c",
-          "#a2a79e",
-          "#c6cbc2",
-          "#ebf0e7"
-        ]
+        "canonical": "#6aa8ff",
+        "oklch": "oklch(72.7% 0.143 257.1)"
       }
     },
     "typographyMeta": {
@@ -1204,7 +524,7 @@
       "refersTo": "button-action",
       "description": "The one citron action of a screen (variant=\"action\", size=\"xl\").",
       "html": "<button class=\"ds-btn-action\">Vérifier cette information <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button>",
-      "css": ".ds-btn-action { display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:1px solid transparent; border-radius:3px; background: var(--action, #d7f45b); color: var(--action-foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; transition: background .15s, transform .15s; } .ds-btn-action:hover { background: color-mix(in oklch, var(--action, #d7f45b), var(--foreground, #171a18) 8%); } .ds-btn-action:active { transform: translateY(1px); } .ds-btn-action:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
+      "css": ".ds-btn-action { display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:1px solid transparent; border-radius:3px; background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; transition: background .15s, transform .15s; } .ds-btn-action:hover { background: color-mix(in oklch, var(--action, #0a0a0b), var(--foreground, #0a0a0b) 8%); } .ds-btn-action:active { transform: translateY(1px); } .ds-btn-action:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
     },
     {
       "name": "Primary Button",
@@ -1212,7 +532,7 @@
       "refersTo": "button-primary",
       "description": "Ink button for confirmations inside a flow.",
       "html": "<button class=\"ds-btn-primary\">Confirmer « Faux »</button>",
-      "css": ".ds-btn-primary { height:32px; padding:0 10px; border:1px solid transparent; border-radius:3px; background: var(--primary, #171a18); color: var(--primary-foreground, #f1f2ec); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--primary, #171a18) 85%, transparent); } .ds-btn-primary:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
+      "css": ".ds-btn-primary { height:32px; padding:0 10px; border:1px solid transparent; border-radius:3px; background: var(--primary, #0a0a0b); color: var(--primary-foreground, #f3f2ee); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--primary, #0a0a0b) 85%, transparent); } .ds-btn-primary:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
     },
     {
       "name": "Outline Button",
@@ -1220,7 +540,7 @@
       "refersTo": "button-outline",
       "description": "Secondary actions: retry, cancel, sign in on ink.",
       "html": "<button class=\"ds-btn-outline\">Réessayer</button>",
-      "css": ".ds-btn-outline { height:32px; padding:0 10px; border:1px solid var(--border, #d3d6cc); border-radius:3px; background: var(--background, #f1f2ec); color: var(--foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-outline:hover { background: var(--muted, #e8eae3); } .ds-btn-outline:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
+      "css": ".ds-btn-outline { height:32px; padding:0 10px; border:1px solid var(--border, #dcdbd7); border-radius:3px; background: var(--background, #f3f2ee); color: var(--foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-outline:hover { background: var(--muted, #e9e8e2); } .ds-btn-outline:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
     },
     {
       "name": "Check Field",
@@ -1228,7 +548,7 @@
       "refersTo": "check-field",
       "description": "The big paste field with its toolbar and the action button.",
       "html": "<form class=\"ds-field\"><textarea rows=\"3\" placeholder=\"Ex. : « Analakely sous l'eau ce matin, partagez ! »\"></textarea><div class=\"ds-field-bar\"><button type=\"button\" class=\"ds-field-ghost\">Dicter le message</button><button type=\"submit\" class=\"ds-field-go\">Vérifier <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button></div></form>",
-      "css": ".ds-field { max-width:640px; border:1px solid var(--input, #8a9086); border-radius:3px; background: var(--card, #fff); } .ds-field:focus-within { border-color: var(--foreground, #171a18); box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground, #171a18) 15%, transparent); } .ds-field textarea { display:block; width:100%; resize:none; border:0; background:transparent; padding:16px 16px 8px; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:18px; line-height:1.625; color: var(--foreground, #171a18); outline:none; } .ds-field textarea::placeholder { color: var(--muted-foreground, #565c55); opacity:1; } .ds-field-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--border, #d3d6cc); } .ds-field-ghost { height:40px; padding:0 10px; border:0; border-radius:3px; background:transparent; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; cursor:pointer; } .ds-field-ghost:hover { background: var(--muted, #e8eae3); } .ds-field-go { margin-left:auto; display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:0; border-radius:3px; background: var(--action, #d7f45b); color: var(--action-foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; } .ds-field-go:focus-visible, .ds-field-ghost:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
+      "css": ".ds-field { max-width:640px; border:1px solid var(--input, #bbbab7); border-radius:3px; background: var(--card, #fbfaf7); } .ds-field:focus-within { border-color: var(--foreground, #0a0a0b); box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground, #0a0a0b) 15%, transparent); } .ds-field textarea { display:block; width:100%; resize:none; border:0; background:transparent; padding:16px 16px 8px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:18px; line-height:1.625; color: var(--foreground, #0a0a0b); outline:none; } .ds-field textarea::placeholder { color: var(--muted-foreground, #55544e); opacity:1; } .ds-field-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--border, #dcdbd7); } .ds-field-ghost { height:40px; padding:0 10px; border:0; border-radius:3px; background:transparent; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; cursor:pointer; } .ds-field-ghost:hover { background: var(--muted, #e9e8e2); } .ds-field-go { margin-left:auto; display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:0; border-radius:3px; background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; } .ds-field-go:focus-visible, .ds-field-ghost:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
     },
     {
       "name": "Desk Rail",
@@ -1236,7 +556,7 @@
       "refersTo": "nav-item-active",
       "description": "Light rail; the active item carries the citron.",
       "html": "<nav class=\"ds-rail\"><a class=\"is-active\" href=\"#\">Vérifier</a><a href=\"#\">Dossiers</a><a href=\"#\">Sources</a></nav>",
-      "css": ".ds-rail { width:216px; padding:12px; background: var(--sidebar, #e9ebe3); display:flex; flex-direction:column; gap:4px; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-rail a { display:block; padding:10px 12px; border-radius:3px; color: var(--sidebar-foreground, #171a18); text-decoration:none; transition: background .15s; } .ds-rail a:hover { background: var(--sidebar-accent, #dcdfd4); } .ds-rail a.is-active { background: var(--sidebar-primary, #d7f45b); color: var(--sidebar-primary-foreground, #171a18); font-weight:700; } .ds-rail a:focus-visible { outline:2px solid var(--sidebar-ring, #171a18); outline-offset:2px; }"
+      "css": ".ds-rail { width:216px; padding:12px; background: var(--sidebar, #0a0a0b); display:flex; flex-direction:column; gap:4px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-rail a { display:block; padding:10px 12px; border-radius:3px; color: var(--sidebar-foreground, #0a0a0b); text-decoration:none; transition: background .15s; } .ds-rail a:hover { background: var(--sidebar-accent, #1f1f22); } .ds-rail a.is-active { background: var(--sidebar-primary, #0a0a0b); color: var(--sidebar-primary-foreground, #0a0a0b); font-weight:700; } .ds-rail a:focus-visible { outline:2px solid var(--sidebar-ring, #0a0a0b); outline-offset:2px; }"
     },
     {
       "name": "Verdict Chips",
@@ -1244,7 +564,7 @@
       "refersTo": "verdict-chip-false",
       "description": "Confirmed verdict = soft fill; AI suggestion = dashed outline. Always icon + word.",
       "html": "<div class=\"ds-chips\"><span class=\"ds-chip ds-false\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/></svg> Faux</span><span class=\"ds-chip ds-sugg\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> Trompeur <span class=\"ds-sugg-note\">· suggéré</span></span></div>",
-      "css": ".ds-chips { display:flex; gap:12px; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:2px; font-size:14px; font-weight:700; white-space:nowrap; } .ds-false { background: var(--verdict-false-soft, #f4dfda); color: var(--verdict-false-ink, #872e25); } .ds-sugg { border:1px dashed currentColor; background:transparent; color: var(--verdict-misleading-ink, #6f4600); font-weight:500; } .ds-sugg-note { font-weight:400; }"
+      "css": ".ds-chips { display:flex; gap:12px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:2px; font-size:14px; font-weight:700; white-space:nowrap; } .ds-false { background: var(--verdict-false-soft, #f4dfda); color: var(--verdict-false-ink, #872e25); } .ds-sugg { border:1px dashed currentColor; background:transparent; color: var(--verdict-misleading-ink, #6f4600); font-weight:500; } .ds-sugg-note { font-weight:400; }"
     },
     {
       "name": "Verdict Block",
@@ -1252,7 +572,7 @@
       "refersTo": "verdict-block-misleading",
       "description": "The conclusion stated: 2px border, solid once confirmed, dashed while suggested.",
       "html": "<div class=\"ds-vblock\"><p class=\"ds-vword\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"34\" height=\"34\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> Trompeur</p><p class=\"ds-vnote\">Suggéré par FANILO</p></div>",
-      "css": ".ds-vblock { max-width:520px; padding:20px; border:2px dashed currentColor; border-radius:3px; background: var(--verdict-misleading-soft, #f8ebcf); color: var(--verdict-misleading-ink, #6f4600); animation: ds-land .5s cubic-bezier(.16,1,.3,1) both; } .ds-vblock:hover { border-style:solid; } .ds-vword { margin:0; display:flex; align-items:center; gap:10px; font-family: var(--font-archivo, Archivo), sans-serif; font-size:36px; font-weight:800; letter-spacing:-0.025em; line-height:1; } .ds-vnote { margin:6px 0 0; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; font-weight:700; } @keyframes ds-land { from { opacity:0; transform:scale(1.04); } }"
+      "css": ".ds-vblock { max-width:520px; padding:20px; border:2px dashed currentColor; border-radius:3px; background: var(--verdict-misleading-soft, #f8ebcf); color: var(--verdict-misleading-ink, #6f4600); animation: ds-land .5s cubic-bezier(.16,1,.3,1) both; } .ds-vblock:hover { border-style:solid; } .ds-vword { margin:0; display:flex; align-items:center; gap:10px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:36px; font-weight:800; letter-spacing:-0.025em; line-height:1; } .ds-vnote { margin:6px 0 0; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:700; } @keyframes ds-land { from { opacity:0; transform:scale(1.04); } }"
     },
     {
       "name": "Numbered Line",
@@ -1260,7 +580,7 @@
       "refersTo": "step-disc-active",
       "description": "Signature: 01 L'affirmation, 02 Les éléments, 03 La conclusion; done ink disc, active citron disc that breathes, waiting outlined.",
       "html": "<ol class=\"ds-line\"><li><span class=\"ds-disc ds-done\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></span><div><b>L'affirmation</b><p>2 affirmations, 3 signes d'alerte</p></div></li><li><span class=\"ds-disc ds-active\">02</span><div><b>Les éléments</b> <small>en cours</small><p>Fact-checkeurs, web, sources de la rédaction</p></div></li><li><span class=\"ds-disc ds-wait\">03</span><div><b class=\"ds-dim\">La conclusion</b><p>Un verdict expliqué, toujours confirmé par la rédaction.</p></div></li></ol>",
-      "css": ".ds-line { list-style:none; margin:0; padding:0; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-line li { position:relative; display:flex; gap:16px; padding-bottom:24px; } .ds-line li:last-child { padding-bottom:0; } .ds-line li:not(:last-child)::after { content:\"\"; position:absolute; top:40px; bottom:0; left:20px; width:1px; background: var(--foreground, #171a18); } .ds-line li:nth-child(2)::after { background: var(--border, #d3d6cc); } .ds-disc { position:relative; z-index:1; display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:50%; font-family: var(--font-archivo, Archivo), sans-serif; font-weight:700; font-size:15px; font-variant-numeric:tabular-nums; } .ds-done { background: var(--foreground, #171a18); color: var(--action, #d7f45b); } .ds-active { background: var(--action, #d7f45b); color: var(--action-foreground, #171a18); animation: ds-breathe 1.6s ease-in-out infinite; } .ds-wait { border:1px solid var(--input, #8a9086); background: var(--card, #fff); color: var(--muted-foreground, #565c55); } .ds-line b { font-family: var(--font-archivo, Archivo), sans-serif; font-size:17px; } .ds-line small { font-size:14px; color: var(--muted-foreground, #565c55); } .ds-line p { margin:2px 0 0; font-size:14px; color: var(--muted-foreground, #565c55); } .ds-line .ds-dim { color: var(--muted-foreground, #565c55); } @keyframes ds-breathe { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--action, #d7f45b) 35%, transparent); } }"
+      "css": ".ds-line { list-style:none; margin:0; padding:0; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-line li { position:relative; display:flex; gap:16px; padding-bottom:24px; } .ds-line li:last-child { padding-bottom:0; } .ds-line li:not(:last-child)::after { content:\"\"; position:absolute; top:40px; bottom:0; left:20px; width:1px; background: var(--foreground, #0a0a0b); } .ds-line li:nth-child(2)::after { background: var(--border, #dcdbd7); } .ds-disc { position:relative; z-index:1; display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:50%; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-weight:700; font-size:15px; font-variant-numeric:tabular-nums; } .ds-done { background: var(--foreground, #0a0a0b); color: var(--action, #0a0a0b); } .ds-active { background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); animation: ds-breathe 1.6s ease-in-out infinite; } .ds-wait { border:1px solid var(--input, #bbbab7); background: var(--card, #fbfaf7); color: var(--muted-foreground, #55544e); } .ds-line b { font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:17px; } .ds-line small { font-size:14px; color: var(--muted-foreground, #55544e); } .ds-line p { margin:2px 0 0; font-size:14px; color: var(--muted-foreground, #55544e); } .ds-line .ds-dim { color: var(--muted-foreground, #55544e); } @keyframes ds-breathe { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--action, #0a0a0b) 35%, transparent); } }"
     },
     {
       "name": "Live Panel",
@@ -1268,7 +588,7 @@
       "refersTo": "live-panel",
       "description": "Ink panel where FANILO's work shows live (« Le travail de FANILO »).",
       "html": "<section class=\"ds-live\"><h2>Le travail de FANILO <span><i></i> En cours</span></h2><ol><li><time>15:55:27</time> Lecture du message…</li><li><time>15:55:29</time> Recherche chez les fact-checkeurs</li></ol></section>",
-      "css": ".ds-live { max-width:420px; padding:16px; border-radius:3px; background: var(--live, #171a18); color: var(--live-foreground, #f1f2ec); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-live h2 { margin:0; display:flex; justify-content:space-between; font-family: var(--font-archivo, Archivo), sans-serif; font-size:14px; font-weight:700; } .ds-live h2 span { display:inline-flex; align-items:center; gap:6px; } .ds-live i { width:8px; height:8px; border-radius:50%; background: var(--action, #d7f45b); animation: ds-pulse 1s ease-in-out infinite; } .ds-live ol { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:8px; font-size:14px; } .ds-live li { display:flex; gap:12px; animation: ds-arrive .45s cubic-bezier(.16,1,.3,1) both; } .ds-live time { font-size:12px; color: var(--live-muted, #b2b8ad); font-variant-numeric:tabular-nums; } @keyframes ds-pulse { 50% { opacity:.4; } } @keyframes ds-arrive { from { opacity:0; transform:translateY(6px); } }"
+      "css": ".ds-live { max-width:420px; padding:16px; border-radius:3px; background: var(--live, #0a0a0b); color: var(--live-foreground, #f3f2ee); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-live h2 { margin:0; display:flex; justify-content:space-between; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:14px; font-weight:700; } .ds-live h2 span { display:inline-flex; align-items:center; gap:6px; } .ds-live i { width:8px; height:8px; border-radius:50%; background: var(--action, #0a0a0b); animation: ds-pulse 1s ease-in-out infinite; } .ds-live ol { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:8px; font-size:14px; } .ds-live li { display:flex; gap:12px; animation: ds-arrive .45s cubic-bezier(.16,1,.3,1) both; } .ds-live time { font-size:12px; color: var(--live-muted, #b9b8b2); font-variant-numeric:tabular-nums; } @keyframes ds-pulse { 50% { opacity:.4; } } @keyframes ds-arrive { from { opacity:0; transform:translateY(6px); } }"
     },
     {
       "name": "Highlighter",
@@ -1276,15 +596,15 @@
       "refersTo": "citron",
       "description": ".signal-mark: citron sweep behind phrases FANILO flagged.",
       "html": "<p class=\"ds-msg\">URGENT : la JIRAMA annonce <mark class=\"ds-mark\">12 h de délestage par jour</mark> à Toamasina dès lundi. <mark class=\"ds-mark\" style=\"--i:1\">Partagez avant que ce soit supprimé</mark> !</p>",
-      "css": ".ds-msg { max-width:520px; padding:16px; border-radius:3px; background: var(--muted, #e8eae3); color: var(--foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:18px; line-height:1.625; } .ds-mark { color:inherit; padding:0 .12em; border-radius:2px; -webkit-box-decoration-break:clone; box-decoration-break:clone; background: linear-gradient(var(--action, #d7f45b), var(--action, #d7f45b)) no-repeat 0 0 / 100% 100%; animation: ds-mark .9s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i, 0) * 220ms + 150ms); } @keyframes ds-mark { from { background-size: 0% 100%; } }"
+      "css": ".ds-msg { max-width:520px; padding:16px; border-radius:3px; background: var(--muted, #e9e8e2); color: var(--foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:18px; line-height:1.625; } .ds-mark { color:inherit; padding:0 .12em; border-radius:2px; -webkit-box-decoration-break:clone; box-decoration-break:clone; background: linear-gradient(var(--action, #0a0a0b), var(--action, #0a0a0b)) no-repeat 0 0 / 100% 100%; animation: ds-mark .9s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i, 0) * 220ms + 150ms); } @keyframes ds-mark { from { background-size: 0% 100%; } }"
     }
   ],
   "narrative": {
-    "northStar": "Le signal clair",
-    "overview": "FANILO reads like civic signage for rumours: a chalk ground, green-black ink, square-ish edges, heavy Archivo words and one citron that says \"here\". The same world serves the newsroom desk (`/w/…`) and the public site (`/`, `/verifies`, `/signaler`, `/suivi`, sign-in and sign-up); there is no second identity. A screen is a notice board you can act on: a big field to paste a message, a numbered line that shows how far a dossier has come, and verdicts stated as words with icons, never as colour alone.\n\nThe organising device is the **numbered line**: 01 L'affirmation, 02 Les éléments, 03 La conclusion. It explains the method on the home page, runs live on Vérifier, sits mini on each dossier row and runs down the gutter of a claim's page. FANILO's own work shows in an **ink panel** (the live log « Le travail de FANILO », the public answer, the newsroom band), so machine activity is always visually separate from the journalist's page. The AI only suggests: suggestion is drawn dashed, a journalist's confirmation is drawn solid.\n\nDensity is calm and legible rather than packed: Atkinson Hyperlegible Next for every word a person reads (a cracked phone in full sun is the reference reader), generous 18px leads, 44–48px touch targets for the main controls. Motion is short and once: highlights sweep in, sources arrive, the verdict lands, the active step breathes; all of it collapses under `prefers-reduced-motion`.",
+    "northStar": "Ink and paper",
+    "overview": "FANILO reads like civic signage for rumours: a chalk ground, green-black ink, square-ish edges, heavy Bricolage Grotesque words and one citron that says \"here\". The same world serves the newsroom desk (`/w/…`) and the public site (`/`, `/verifies`, `/signaler`, `/suivi`, sign-in and sign-up); there is no second identity. A screen is a notice board you can act on: a big field to paste a message, a numbered line that shows how far a dossier has come, and verdicts stated as words with icons, never as colour alone.\n\nThe organising device is the **numbered line**: 01 L'affirmation, 02 Les éléments, 03 La conclusion. It explains the method on the home page, runs live on Vérifier, sits mini on each dossier row and runs down the gutter of a claim's page. FANILO's own work shows in an **ink panel** (the live log « Le travail de FANILO », the public answer, the newsroom band), so machine activity is always visually separate from the journalist's page. The AI only suggests: suggestion is drawn dashed, a journalist's confirmation is drawn solid.\n\nDensity is calm and legible rather than packed: Bricolage Grotesque for every word a person reads (a cracked phone in full sun is the reference reader), generous 18px leads, 44–48px touch targets for the main controls. Motion is short and once: highlights sweep in, sources arrive, the verdict lands, the active step breathes; all of it collapses under `prefers-reduced-motion`.",
     "keyCharacteristics": [
       "One world for desk and public site; light and dark themes from the same tokens.",
-      "Citron (`#d7f45b`) only for the one action of a screen, the active step and highlights.",
+      "Citron (`#0a0a0b`) only for the one action of a screen, the active step and highlights.",
       "Verdicts always icon + word on their own four-token family; status always ink icons.",
       "AI suggestion dashed, confirmed solid.",
       "The numbered line 01/02/03 as the reused signature.",
@@ -1318,7 +638,7 @@
       },
       {
         "name": "The Two-Voices Rule",
-        "body": "Archivo speaks (titles, numbers, verdicts); Atkinson is read. Do not set paragraphs in Archivo or verdict words in Atkinson.",
+        "body": "Bricolage Grotesque speaks (titles, numbers, verdicts); Atkinson is read. Do not set paragraphs in Bricolage Grotesque or verdict words in Atkinson.",
         "section": "typography"
       },
       {
