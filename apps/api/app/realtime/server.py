@@ -25,7 +25,7 @@ async def connect(sid, environ, auth):
     if not token:
         raise socketio.exceptions.ConnectionRefusedError("unauthorized")
     try:
-        user = decode_token(token)
+        user = await decode_token(token)
     except ApiError as e:
         raise socketio.exceptions.ConnectionRefusedError("invalid_token") from e
     await sio.save_session(sid, {"user_id": user.id})

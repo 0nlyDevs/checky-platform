@@ -125,8 +125,8 @@ class _StaticJWKS:
     def __init__(self, public_key):
         self._key = public_key
 
-    def get_signing_key_from_jwt(self, _token):
-        return type("K", (), {"key": self._key})()
+    async def key_for(self, _token):
+        return self._key
 
 
 @pytest.fixture
