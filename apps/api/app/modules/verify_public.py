@@ -106,6 +106,8 @@ class VerifyIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     text: str | None = Field(default=None, max_length=6000)
     url: str | None = Field(default=None, max_length=2000)
+    # The visitor's country: every newsroom is searched, theirs first among equal answers.
+    country: str | None = Field(default=None, max_length=80)
 
     @field_validator("url")
     @classmethod
@@ -510,12 +512,12 @@ async def _read(url: str) -> str:
     return str(page.get("text") or page.get("title") or "")[:6000]
 
 
-async def layered(db: Db, text: str, url: str | None) -> VerifyOut:
+async def layered(db: Db, text: str, url: str | None, country: str | None = None) -> VerifyOut:
     if not text and url:
         text = await _read(url)
     if not text:
         return VerifyOut(status="none")
-    signed = await public.best_published(db, text, k=1, threshold=MATCH)
+    signed = await public.best_published(db, text, k=1, threshold=MATCH, country=country)
     if signed:
         return VerifyOut(status="signed", signed=signed[0][1])
     facts = await gather_facts(db, text, url)
@@ -545,7 +547,7 @@ async def layered(db: Db, text: str, url: str | None) -> VerifyOut:
 async def verify(body: VerifyIn, db: Db) -> VerifyOut:
     try:
         async with asyncio.timeout(60):
-            return await layered(db, body.text or "", body.url)
+            return await layered(db, body.text or "", body.url, body.country)
     except TimeoutError as exc:
         raise ApiError(
             503, "public_check_unavailable", "The check took too long, try again"

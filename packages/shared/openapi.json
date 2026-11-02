@@ -2608,6 +2608,22 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country"
+            }
           }
         ],
         "responses": {
@@ -17557,6 +17573,18 @@
             "maxLength": 4000,
             "minLength": 3,
             "title": "Text"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
           }
         },
         "type": "object",
@@ -17896,6 +17924,18 @@
               }
             ],
             "title": "Url"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
           }
         },
         "additionalProperties": false,

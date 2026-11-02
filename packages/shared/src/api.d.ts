@@ -5417,6 +5417,8 @@ export interface components {
         app__modules__public__MatchIn: {
             /** Text */
             text: string;
+            /** Country */
+            country?: string | null;
         };
         /** AskIn */
         app__modules__rag__AskIn: {
@@ -5534,6 +5536,8 @@ export interface components {
             text?: string | null;
             /** Url */
             url?: string | null;
+            /** Country */
+            country?: string | null;
         };
         /** VerifyOut */
         app__modules__verify_public__VerifyOut: {
@@ -6982,6 +6986,7 @@ export interface operations {
                 newsroom?: string | null;
                 limit?: number;
                 offset?: number;
+                country?: string | null;
             };
             header?: never;
             path?: never;

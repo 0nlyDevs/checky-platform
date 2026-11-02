@@ -23,6 +23,7 @@ from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.http import shared as shared_http
 from app.core.models import Item, RadioPartner, Source, Workspace
+from app.core.places import fold
 from app.core.words import words
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -66,6 +67,7 @@ class VerdictPage(BaseModel):
 
 class MatchIn(BaseModel):
     text: str = Field(min_length=3, max_length=4000)
+    country: str | None = Field(default=None, max_length=80)
 
 
 class MatchOut(BaseModel):
@@ -209,8 +211,15 @@ def _claim_words(item: Item) -> list[set[str]]:
     return [w for w in (words(item.title), words(f"{item.title} {item.body}")) if w]
 
 
+def _local(ws: Workspace, country: str | None) -> bool:
+    """The newsroom is in the visitor's country (its verdict comes first among equals)."""
+    return bool(country) and fold((ws.settings or {}).get("country") or "Madagascar") == fold(
+        country or ""
+    )
+
+
 async def best_published(
-    db: Db, text: str, k: int = 3, threshold: float = 0.5
+    db: Db, text: str, k: int = 3, threshold: float = 0.5, country: str | None = None
 ) -> list[tuple[float, VerdictOut]]:
     """Published verdicts about the same claim as `text`, best first. Stricter than `find_published`
     (which feeds the assistant): a match here is shown to the public as the answer."""
@@ -224,7 +233,8 @@ async def best_published(
         score = max((overlap(asked, known) for known in _claim_words(item)), default=0.0)
         if score >= threshold:
             scored.append((score, item, ws))
-    scored.sort(key=lambda r: r[0], reverse=True)
+    # Search covers every newsroom; among equally good answers, the visitor's country first.
+    scored.sort(key=lambda r: (-round(r[0], 1), not _local(r[2], country)))
     return [(round(s, 2), await _verdict(db, i, w)) for s, i, w in _distinct(scored)[:k]]
 
 
@@ -249,7 +259,12 @@ async def newsrooms(db: Db) -> list[NewsroomOut]:
 
 @router.get("/verdicts")
 async def list_verdicts(
-    db: Db, q: str | None = None, newsroom: str | None = None, limit: int = 20, offset: int = 0
+    db: Db,
+    q: str | None = None,
+    newsroom: str | None = None,
+    limit: int = 20,
+    offset: int = 0,
+    country: str | None = None,
 ) -> VerdictPage:
     query = _published()
     if newsroom:
@@ -258,7 +273,10 @@ async def list_verdicts(
         like = f"%{q.strip()}%"
         query = query.where(Item.title.ilike(like) | Item.body.ilike(like))
     # The archive is small: read it newest first, keep one entry per rumour, then page.
-    rows = _distinct((await db.execute(query.order_by(Item.updated_at.desc()).limit(1000))).all())
+    rows = (await db.execute(query.order_by(Item.updated_at.desc()).limit(1000))).all()
+    if country:  # every newsroom, the visitor's country first (newest first within each)
+        rows = sorted(rows, key=lambda r: not _local(r[1], country))
+    rows = _distinct(rows)
     page = rows[offset : offset + min(limit, 50)]
     return VerdictPage(items=[await _verdict(db, i, w) for i, w in page], total=len(rows))
 
@@ -285,7 +303,7 @@ async def match(body: MatchIn, db: Db) -> list[MatchOut]:
         score = len(asked & known) / min(len(asked), len(known))
         if score >= 0.4:
             scored.append((score, item, ws))
-    scored.sort(key=lambda r: r[0], reverse=True)
+    scored.sort(key=lambda r: (-round(r[0], 1), not _local(r[2], body.country)))
     best = _distinct(scored)[:3]
     return [MatchOut(score=round(s, 2), verdict=await _verdict(db, i, w)) for s, i, w in best]
 

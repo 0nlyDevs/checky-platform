@@ -288,3 +288,23 @@ def test_a_tip_with_no_newsroom_goes_where_the_rumour_circulates(as_user, client
     # Mahajanga (Boeny) has no newsroom of its own: the nearest one takes it.
     assert tip(place="Mahajanga") == ("Tana", "nearest")
     assert tip()[1] in {"first", "country"}
+
+
+def test_search_covers_every_newsroom_with_the_visitors_country_first(as_user, client):
+    from tests.test_workspaces import _verify, _workspace
+
+    for user, name, country in (("tana", "Tana", "Madagascar"), ("dakar", "Dakar", "Sénégal")):
+        c = as_user(user)
+        ws = _workspace(c, name)
+        c.patch(
+            f"/api/v1/workspaces/{ws}", json={"is_public": True, "settings": {"country": country}}
+        )
+        _verify(ws)
+        _claim(c, ws, "Le vaccin contient une puce électronique", verdict="false")
+    page = client.get("/api/v1/public/verdicts", params={"country": "Sénégal"}).json()
+    assert page["items"][0]["newsroom"]["name"] == "Dakar"
+    page = client.get("/api/v1/public/verdicts", params={"country": "Madagascar"}).json()
+    assert page["items"][0]["newsroom"]["name"] == "Tana"
+    text = {"text": "le vaccin contient une puce électronique"}
+    found = client.post("/api/v1/public/match", json=text | {"country": "Sénégal"}).json()
+    assert found[0]["verdict"]["newsroom"]["name"] == "Dakar"
