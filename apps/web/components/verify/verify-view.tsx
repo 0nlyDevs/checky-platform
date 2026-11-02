@@ -491,6 +491,9 @@ function Board({
         </p>
       )}
 
+      {/* What has not arrived yet holds its place, flat and at its final size, so nothing moves when it lands. */}
+      {!result && !error && (running || Object.values(steps).some((x) => x.status !== "waiting")) && <PendingBlocks />}
+
       {result && !result.needs_text && (
         <>
           <Facts r={result} ws={ws} />
@@ -543,6 +546,25 @@ function Board({
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/** Flat placeholders (no shimmer) for the blocks a live check has not delivered yet, in their final order. */
+function PendingBlocks() {
+  return (
+    <div aria-hidden className="space-y-8">
+      <div data-pending="facts" className="h-[12rem] rounded-md bg-raised" />
+      <div data-pending="wall">
+        <div className="h-7 w-52 rounded-md bg-raised" />
+        <div className="mt-0.5 h-5 w-80 max-w-full rounded-md bg-raised" />
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-[10.25rem] rounded-md bg-raised" />
+          ))}
+        </div>
+      </div>
+      <div data-pending="lecture" className="h-[14rem] rounded-md bg-raised" />
     </div>
   );
 }
