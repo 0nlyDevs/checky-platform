@@ -318,6 +318,9 @@ export type Formats = {
   mg: Record<string, string> | null;
   written_by: "ai" | "template";
   gaps: Gap[];
+  /** Fingerprint of the Malagasy strings shown: « Relu en malgache » vouches for these exactly. */
+  mg_hash: string | null;
+  relu_mg: { by: string; name: string; at: string; mg_hash: string | null; current: boolean } | null;
 };
 
 export type Contact = {

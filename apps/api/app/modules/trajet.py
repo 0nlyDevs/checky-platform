@@ -579,8 +579,10 @@ class ReluOut(BaseModel):
     by: str
     name: str
     at: datetime
-    # The tick was given on the verdict as it reads now (a new verdict or explanation unlocks
-    # nothing: it needs reading again).
+    # The fingerprint of the Malagasy strings that were reread (see `mg_hash`).
+    mg_hash: str | None = None
+    # The tick still covers the verdict and the Malagasy strings as they read now: a new verdict,
+    # explanation or any changed Malagasy word unlocks nothing, it needs reading again.
     current: bool
 
 
@@ -602,7 +604,10 @@ class FormatsOut(BaseModel):
     number: int | None = None
     check_label: str | None = None
     seal: VerdictSealOut | None = None
-    # Who ticked « Relu en malgache » for this version; Malagasy formats stay locked until then.
+    # The fingerprint of the Malagasy formats shown here (`mg_hash`), which « Relu en malgache »
+    # sends back: the reread vouches for these exact strings, and any change locks them again.
+    mg_hash: str | None = None
+    # Who ticked « Relu en malgache » for these strings; Malagasy formats stay locked until then.
     relu_mg: ReluOut | None = None
     # Kept for the earlier panel.
     radio: str
@@ -637,11 +642,10 @@ def _posts(item: Item) -> dict[str, str | None]:
     return out
 
 
-@router.get("/workspaces/{ws}/items/{item_id}/diffusion")
-async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut:
-    """Every format of the signed verdict, written once by the model (one call, kept in memory
-    until the verdict or its explanation change) or by templates when AI is off or busy."""
-    item, ws, reason = await _publishable(db, member, item_id)
+async def render(item: Item, ws: Workspace, reason: str) -> tuple[dict[str, Any], str]:
+    """Every format of the signed verdict and who wrote it (`ai` or `template`): written once by the
+    model (one call, kept in memory until the verdict or its explanation change) or by templates
+    when AI is off or busy. The same function feeds the panel, the reread and the sending."""
     from app.modules.signing import permalink
 
     url = permalink(item)
@@ -687,6 +691,18 @@ async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut
                 _WRITTEN[key] = {k: formats.get(k) for k in (*FORMAT_KEYS, "mg")}
         except (ai.AiUnavailable, ValueError):
             pass
+    return formats, written_by
+
+
+@router.get("/workspaces/{ws}/items/{item_id}/diffusion")
+async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut:
+    """Every format of the signed verdict (see `render`), the poster, the seal and the reread."""
+    item, ws, reason = await _publishable(db, member, item_id)
+    from app.modules.signing import permalink
+
+    url = permalink(item)
+    formats, written_by = await render(item, ws, reason)
+    mg_now = mg_texts(item, formats)
     word = VERDICT_FR[item.data["verdict"]]
     published = dates.parse(
         (item.data or {}).get("published_at") or (item.data or {}).get("signed_at")
@@ -725,7 +741,8 @@ async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut
         gaps=trajet_now.gaps,
         number=seal.check_number(ref),
         check_label=seal.check_label(ref),
-        relu_mg=relu_of(item),
+        mg_hash=mg_hash(mg_now),
+        relu_mg=relu_of(item, mg_now),
         seal=VerdictSealOut(**{k: sealed[k] for k in VerdictSealOut.model_fields})
         if sealed
         else None,
@@ -906,7 +923,11 @@ async def verify_verdict_seal(
 MG_FORMATS = {"card_mg", "radio_line_mg", "sms_mg", "text_mg"}
 
 
-# --- « Relu en malgache »: a speaker reread the Malagasy formats; logged with who and when -----
+# --- « Relu en malgache »: a speaker reread these exact Malagasy strings; logged with who and when
+#
+# The reread is bound to the text: the journalist sends back the `mg_hash` of the formats they
+# read, the attestation keeps those strings and their hash, and every later use renders the formats
+# again and compares. Only the attested strings go out; any changed character locks them again.
 
 
 def _version(item: Item) -> str:
@@ -915,26 +936,74 @@ def _version(item: Item) -> str:
     return digest(item.title, item.body, item.data or {})
 
 
-def relu_of(item: Item) -> ReluOut | None:
+def mg_texts(item: Item, formats: dict[str, Any]) -> dict[str, str]:
+    """The Malagasy formats exactly as the panel shows them, by format id (`sms_mg`, `card_mg`…)."""
+    mg = formats.get("mg") if isinstance(formats.get("mg"), dict) else {}
+    out = {f"{k}_mg": mg[k] for k in MG_KEYS if isinstance(mg.get(k), str) and mg[k]}
+    card = _posts(item).get("mg")
+    if isinstance(card, str) and card:
+        out["card_mg"] = card
+    return out
+
+
+def mg_hash(texts: dict[str, str] | None) -> str | None:
+    """SHA-256 of the canonical serialisation (sorted keys, no spaces, UTF-8 kept as is) of the
+    exact strings. Nothing is normalised: a changed letter, accent or space is another hash."""
+    if not texts:
+        return None
+    return hashlib.sha256(seal.canonical(texts).encode()).hexdigest()
+
+
+def _attested(item: Item) -> dict[str, Any] | None:
     r = (item.data or {}).get("relu_mg")
-    if not isinstance(r, dict) or not r.get("by"):
+    return r if isinstance(r, dict) and r.get("by") else None
+
+
+def _still_covers(r: dict[str, Any], item: Item, texts: dict[str, str] | None) -> bool:
+    """The reread covers this verdict version and these strings, character for character."""
+    kept = r.get("texts")
+    if r.get("digest") != _version(item) or not texts or not isinstance(kept, dict):
+        return False
+    return r.get("mg_hash") == mg_hash(kept) == mg_hash(texts)
+
+
+def relu_of(item: Item, texts: dict[str, str] | None) -> ReluOut | None:
+    """The reread on record. `texts` are the Malagasy formats as rendered now (None when they cannot
+    be rendered): `current` only when the attestation still covers them exactly."""
+    r = _attested(item)
+    if r is None:
         return None
     return ReluOut(
         by=r["by"],
         name=r.get("name") or "",
         at=r["at"],
-        current=r.get("digest") == _version(item),
+        mg_hash=r.get("mg_hash"),
+        current=_still_covers(r, item, texts),
     )
 
 
-async def _mark_relu(db: AsyncSession, member, item: Item) -> None:
+def attested_texts(item: Item, texts: dict[str, str] | None) -> dict[str, str]:
+    """The strings the reread vouches for, when it still covers `texts`; otherwise nothing."""
+    r = _attested(item)
+    return dict(r["texts"]) if r and _still_covers(r, item, texts) else {}
+
+
+async def _mark_relu(db: AsyncSession, member, item: Item, texts: dict[str, str]) -> None:
     from app.modules.signing import names
 
     name = (await names(db, [member.user.id])).get(member.user.id) or member.user.email or ""
     at = datetime.now(UTC).isoformat()
+    h = mg_hash(texts)
     item.data = {
         **(item.data or {}),
-        "relu_mg": {"by": member.user.id, "name": name, "at": at, "digest": _version(item)},
+        "relu_mg": {
+            "by": member.user.id,
+            "name": name,
+            "at": at,
+            "digest": _version(item),
+            "mg_hash": h,
+            "texts": dict(texts),
+        },
     }
     await record(
         db,
@@ -943,7 +1012,12 @@ async def _mark_relu(db: AsyncSession, member, item: Item) -> None:
         "item",
         item.id,
         "relu_mg",
-        {"carnet": "Formats en malgache relus par un locuteur", "at": at},
+        {
+            "carnet": "Formats en malgache relus par un locuteur",
+            "at": at,
+            "formats": sorted(texts),
+            "mg_hash": h,
+        },
     )
 
 
@@ -951,30 +1025,53 @@ class ReluState(BaseModel):
     relu_mg: ReluOut | None
 
 
+class ReluIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    # The `mg_hash` of the diffusion that was read: the reread vouches for those strings only.
+    mg_hash: str = Field(min_length=64, max_length=64)
+
+
+async def _mg_now(db: AsyncSession, member, item_id: uuid.UUID) -> tuple[Item, dict[str, str]]:
+    """The dossier and its Malagasy formats rendered now, as the panel would show them."""
+    item, ws, reason = await _publishable(db, member, item_id)
+    formats, _ = await render(item, ws, reason)
+    return item, mg_texts(item, formats)
+
+
+@router.get("/workspaces/{ws}/items/{item_id}/relu-mg")
+async def relu_state(item_id: uuid.UUID, member: AnyMember, db: Db) -> ReluState:
+    try:
+        item, texts = await _mg_now(db, member, item_id)
+    except ApiError:
+        item, texts = await _get_item(db, member, item_id), None
+    return ReluState(relu_mg=relu_of(item, texts))
+
+
+@router.post("/workspaces/{ws}/items/{item_id}/relu-mg")
+async def mark_relu(item_id: uuid.UUID, body: ReluIn, member: AnyMember, db: Db) -> ReluState:
+    """« Relu en malgache »: the journalist read the Malagasy formats (lines, SMS, post, card) and
+    vouches for these exact strings (`mg_hash`). Until then they cannot be copied or sent, and any
+    change to them afterwards locks them again."""
+    item, texts = await _mg_now(db, member, item_id)
+    if not texts:
+        raise ApiError(409, "no_mg_formats", "There is no Malagasy format to reread")
+    if body.mg_hash != mg_hash(texts):
+        raise ApiError(
+            409, "mg_changed", "The Malagasy formats changed since they were read: read them again"
+        )
+    if not attested_texts(item, texts):
+        await _mark_relu(db, member, item, texts)
+        await db.commit()
+        await db.refresh(item)
+        await broadcast(member.workspace_id, "item.updated", {"id": str(item.id)})
+    return ReluState(relu_mg=relu_of(item, texts))
+
+
 async def _verdict_item(db: AsyncSession, member, item_id: uuid.UUID) -> Item:
     item = await _get_item(db, member, item_id)
     if (item.data or {}).get("verdict") not in VERDICT_FR:
         raise ApiError(409, "no_verdict", "Confirm a verdict before rereading its formats")
     return item
-
-
-@router.get("/workspaces/{ws}/items/{item_id}/relu-mg")
-async def relu_state(item_id: uuid.UUID, member: AnyMember, db: Db) -> ReluState:
-    return ReluState(relu_mg=relu_of(await _get_item(db, member, item_id)))
-
-
-@router.post("/workspaces/{ws}/items/{item_id}/relu-mg")
-async def mark_relu(item_id: uuid.UUID, member: AnyMember, db: Db) -> ReluState:
-    """« Relu en malgache »: the journalist read the Malagasy formats (lines, SMS, post, card) and
-    vouches for them. Until then they cannot be copied, sent or downloaded."""
-    item = await _verdict_item(db, member, item_id)
-    current = relu_of(item)
-    if not (current and current.current):
-        await _mark_relu(db, member, item)
-        await db.commit()
-        await db.refresh(item)
-        await broadcast(member.workspace_id, "item.updated", {"id": str(item.id)})
-    return ReluState(relu_mg=relu_of(item))
 
 
 @router.delete("/workspaces/{ws}/items/{item_id}/relu-mg")
@@ -1006,28 +1103,42 @@ class DiffuseRoute(BaseModel):
 class DiffuseIn(BaseModel):
     routes: list[DiffuseRoute] = Field(min_length=1, max_length=20)
     formats: list[str] = Field(default_factory=list, max_length=12)
+    # Ticking « Relu en malgache » in the same gesture: it counts only with the `mg_hash` of the
+    # strings that were read, and only while they are still the ones rendered.
     relu_mg: bool = False
+    mg_hash: str | None = Field(default=None, max_length=64)
 
 
 class DiffuseOut(BaseModel):
     trajet: TrajetOut
     formats: list[str]
     dropped: list[str]
+    # The Malagasy strings that went out: exactly the reread ones, and their fingerprint.
+    mg: dict[str, str] = Field(default_factory=dict)
+    mg_hash: str | None = None
 
 
 @router.post("/workspaces/{ws}/items/{item_id}/diffuse")
 async def diffuse(item_id: uuid.UUID, body: DiffuseIn, member: AnyMember, db: Db) -> DiffuseOut:
     """The journalist sent the formats down these routes (from their own phone, radio or print
-    shop): each becomes a truth stop `sent`. Malagasy formats go only once a speaker reread them."""
-    item, ws, _ = await _publishable(db, member, item_id)
-    relu = relu_of(item)
-    if body.relu_mg and not (relu and relu.current):
-        # Ticking « Relu en malgache » in the same gesture is the logged reread.
-        await _mark_relu(db, member, item)
-        relu = relu_of(item)
-    reread = bool(relu and relu.current)
-    kept = [f for f in dict.fromkeys(body.formats) if reread or f not in MG_FORMATS]
-    dropped = [f for f in dict.fromkeys(body.formats) if f not in kept]
+    shop): each becomes a truth stop `sent`. Malagasy formats go only as a speaker reread them:
+    rendered again here, they must match the attested strings exactly, or they stay locked."""
+    item, ws, reason = await _publishable(db, member, item_id)
+    rendered, _ = await render(item, ws, reason)
+    texts = mg_texts(item, rendered)
+    if (
+        body.relu_mg
+        and not attested_texts(item, texts)
+        and texts
+        and body.mg_hash == mg_hash(texts)
+    ):
+        await _mark_relu(db, member, item, texts)
+    attested = attested_texts(item, texts)
+    wanted = list(dict.fromkeys(body.formats))
+    kept = [f for f in wanted if f not in MG_FORMATS or f in attested]
+    dropped = [f for f in wanted if f not in kept]
+    sent_mg = {f: attested[f] for f in kept if f in MG_FORMATS}
+    sent_hash = mg_hash(attested) if sent_mg else None
     for r in body.routes:
         await add_stop(
             db,
@@ -1037,7 +1148,12 @@ async def diffuse(item_id: uuid.UUID, body: DiffuseIn, member: AnyMember, db: Db
             channel=r.channel,
             place=r.place,
             location=r.location,
-            proof={"formats": kept, "relu_mg": reread, "method": "diffuser"},
+            proof={
+                "formats": kept,
+                "relu_mg": bool(attested),
+                "mg_hash": sent_hash,
+                "method": "diffuser",
+            },
             status="sent",
             added_by=member.user.id,
             auto=False,
@@ -1049,12 +1165,16 @@ async def diffuse(item_id: uuid.UUID, body: DiffuseIn, member: AnyMember, db: Db
         "item",
         item.id,
         "diffuse",
-        {"routes": [r.model_dump(mode="json") for r in body.routes], "formats": kept},
+        {
+            "routes": [r.model_dump(mode="json") for r in body.routes],
+            "formats": kept,
+            "mg_hash": sent_hash,
+        },
     )
     await db.commit()
     out = await read_trajet(db, item)
     await broadcast(ws.id, "route.added", {"item_id": str(item.id)})
-    return DiffuseOut(trajet=out, formats=kept, dropped=dropped)
+    return DiffuseOut(trajet=out, formats=kept, dropped=dropped, mg=sent_mg, mg_hash=sent_hash)
 
 
 class RadioDiffuseIn(BaseModel):

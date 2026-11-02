@@ -22,6 +22,14 @@ def _claim(c, ws, **data):
     return item_id
 
 
+def _data(item_id):
+    async def run():
+        async with SessionLocal() as db:
+            return (await db.get(Item, uuid.UUID(item_id))).data
+
+    return asyncio.run(run())
+
+
 def _stop(ws, item_id, **kw):
     async def run():
         async with SessionLocal() as db:
@@ -274,12 +282,17 @@ def test_diffuse_draws_truth_stops_and_keeps_malagasy_until_reread(as_user, mode
     ]
     assert truth[1]["location"]["region"] == "Analamanga"
     assert {g["channel"] for g in out["trajet"]["gaps"]} == {"facebook"}
-    reread = alice.post(path, json={**body, "relu_mg": True}).json()
+    # Ticking « Relu en malgache » counts only with the fingerprint of what was read.
+    blind = alice.post(path, json={**body, "relu_mg": True}).json()
+    assert blind["dropped"] == ["sms_mg"] and blind["mg"] == {}
+    shown = alice.get(f"/api/v1/workspaces/{ws}/items/{item}/diffusion").json()
+    reread = alice.post(path, json={**body, "relu_mg": True, "mg_hash": shown["mg_hash"]}).json()
     assert reread["formats"] == ["radio_line", "sms", "sms_mg"] and reread["dropped"] == []
+    assert reread["mg"] == {"sms_mg": shown["mg"]["sms"]}
     actions = [
         a["action"] for a in alice.get(f"/api/v1/workspaces/{ws}/activity?entity_id={item}").json()
     ]
-    assert actions.count("diffuse") == 2 and actions.count("relu_mg") == 1
+    assert actions.count("diffuse") == 3 and actions.count("relu_mg") == 1
 
 
 def test_malagasy_formats_stay_locked_until_a_logged_reread(as_user, model):
@@ -292,8 +305,11 @@ def test_malagasy_formats_stay_locked_until_a_logged_reread(as_user, model):
     # The tick cannot be forged through the ordinary edit.
     forged = alice.patch(base, json={"data": {"relu_mg": {"by": "bob", "at": "2026-11-02"}}})
     assert forged.status_code in (403, 409, 422)
-    tick = alice.post(base + "/relu-mg").json()["relu_mg"]
+    shown = alice.get(base + "/diffusion").json()
+    assert alice.post(base + "/relu-mg", json={}).status_code == 422  # say what was read
+    tick = alice.post(base + "/relu-mg", json={"mg_hash": shown["mg_hash"]}).json()["relu_mg"]
     assert tick["by"] == "alice" and tick["name"] == "Alice Rabe" and tick["current"] is True
+    assert tick["mg_hash"] == shown["mg_hash"]
     body = {"routes": [{"channel": "sms", "place": "Abonnés"}], "formats": ["sms_mg", "text_mg"]}
     assert alice.post(base + "/diffuse", json=body).json()["dropped"] == []
     carnet = alice.get(base + "/carnet").json()["entries"]
@@ -304,13 +320,86 @@ def test_malagasy_formats_stay_locked_until_a_logged_reread(as_user, model):
     )
     assert alice.get(base + "/relu-mg").json()["relu_mg"]["current"] is False
     assert alice.post(base + "/diffuse", json=body).json()["dropped"] == ["sms_mg", "text_mg"]
-    alice.post(base + "/relu-mg")
+    alice.post(
+        base + "/relu-mg", json={"mg_hash": alice.get(base + "/diffusion").json()["mg_hash"]}
+    )
     assert alice.delete(base + "/relu-mg").json() == {"relu_mg": None}
     actions = [
         a["action"] for a in alice.get(f"/api/v1/workspaces/{ws}/activity?entity_id={item}").json()
     ]
     assert actions.count("relu_mg") == 2 and actions.count("relu_mg_undo") == 1
-    assert as_user("bob").post(base + "/relu-mg").status_code == 404
+    assert as_user("bob").post(base + "/relu-mg", json={"mg_hash": "0" * 64}).status_code == 404
+
+
+def _model_writes(monkeypatch, mg):
+    """The model's next diffusion call returns these Malagasy drafts (the cache forgotten, as after
+    a restart or a new call)."""
+    trajet._WRITTEN.clear()
+    reply = {
+        "radio_line": "La rédaction a vérifié : les 72 heures de délestage sont fausses.",
+        "sms": "FAUX : pas 72 heures de délestage.",
+        "mg": mg,
+    }
+
+    def handler(request):
+        msg = {"role": "assistant", "content": json.dumps(reply, ensure_ascii=False)}
+        return httpx.Response(200, json={"model": "m", "choices": [{"message": msg}]})
+
+    monkeypatch.setattr(ai, "_transport", httpx.MockTransport(handler))
+
+
+def test_reread_then_send_sends_the_attested_strings(as_user, model):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    item = _published(alice, ws)
+    base = f"/api/v1/workspaces/{ws}/items/{item}"
+    shown = alice.get(base + "/diffusion").json()
+    tick = alice.post(base + "/relu-mg", json={"mg_hash": shown["mg_hash"]}).json()["relu_mg"]
+    assert tick["current"] is True
+    # The attestation keeps the very strings that were read, and their fingerprint.
+    kept = _data(item)["relu_mg"]
+    assert kept["texts"] == {"sms_mg": shown["mg"]["sms"], "text_mg": shown["mg"]["text"]}
+    assert kept["mg_hash"] == shown["mg_hash"] == trajet.mg_hash(kept["texts"])
+    body = {"routes": [{"channel": "sms", "place": "Abonnés"}], "formats": ["sms_mg", "text_mg"]}
+    out = alice.post(base + "/diffuse", json=body).json()
+    assert out["formats"] == ["sms_mg", "text_mg"] and out["dropped"] == []
+    # What goes out is exactly the attested text, character for character.
+    assert out["mg"] == kept["texts"] and out["mg_hash"] == shown["mg_hash"]
+    stop = next(s for s in out["trajet"]["truth"] if s["channel"] == "sms")
+    assert stop["proof"]["mg_hash"] == shown["mg_hash"] and stop["proof"]["relu_mg"] is True
+
+
+def test_a_change_after_the_reread_locks_the_malagasy_formats_again(as_user, model, monkeypatch):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    item = _published(alice, ws)
+    base = f"/api/v1/workspaces/{ws}/items/{item}"
+    body = {"routes": [{"channel": "sms", "place": "Abonnés"}], "formats": ["sms_mg", "text_mg"]}
+    read = alice.get(base + "/diffusion").json()
+    alice.post(base + "/relu-mg", json={"mg_hash": read["mg_hash"]})
+    # The model writes the Malagasy text again (cache lost): one word differs, same verdict.
+    _model_writes(monkeypatch, {**read["mg"], "text": "Diso tanteraka ity vaovao ity."})
+    now = alice.get(base + "/diffusion").json()
+    assert now["mg_hash"] != read["mg_hash"] and now["relu_mg"]["current"] is False
+    out = alice.post(base + "/diffuse", json=body).json()
+    assert out["dropped"] == ["sms_mg", "text_mg"] and out["mg"] == {} and out["mg_hash"] is None
+    # An old fingerprint cannot vouch for the new text.
+    stale = alice.post(base + "/relu-mg", json={"mg_hash": read["mg_hash"]})
+    assert stale.status_code == 409 and stale.json()["error"]["code"] == "mg_changed"
+    sneaky = alice.post(
+        base + "/diffuse", json={**body, "relu_mg": True, "mg_hash": read["mg_hash"]}
+    )
+    assert sneaky.json()["dropped"] == ["sms_mg", "text_mg"]
+    # A new reread of the new text unlocks it, and that text is what goes out.
+    alice.post(base + "/relu-mg", json={"mg_hash": now["mg_hash"]})
+    sent = alice.post(base + "/diffuse", json=body).json()
+    assert sent["mg"]["text_mg"] == "Diso tanteraka ity vaovao ity." and sent["dropped"] == []
+    # Editing the Malagasy card's post after the reread locks it all again too.
+    r = alice.patch(base, json={"data": {"posts": {"mg": "Lahatsoratra vaovao."}}})
+    assert r.status_code == 200, r.text
+    after = alice.get(base + "/diffusion").json()
+    assert after["relu_mg"]["current"] is False
+    assert alice.post(base + "/diffuse", json=body).json()["dropped"] == ["sms_mg", "text_mg"]
 
 
 def test_partner_radio_marks_a_flash_broadcast_with_its_token(as_user, client, model):

@@ -31,6 +31,7 @@ function FormatBlock({
   ticked,
   onTick,
   draft,
+  locked,
 }: {
   id: string;
   label: string;
@@ -39,6 +40,8 @@ function FormatBlock({
   ticked: boolean;
   onTick: (on: boolean) => void;
   draft?: boolean;
+  /** A Malagasy draft nobody has reread yet: shown, but neither copied nor counted as sent. */
+  locked?: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   return (
@@ -52,6 +55,7 @@ function FormatBlock({
         <Button
           size="sm"
           variant="outline"
+          disabled={locked}
           onClick={async () => {
             await navigator.clipboard.writeText(text).catch(() => null);
             setCopied(true);
@@ -59,10 +63,17 @@ function FormatBlock({
           }}
         >
           {copied ? <IconCheck aria-hidden /> : <IconCopy aria-hidden />}
-          {copied ? f.copied : f.copy}
+          {locked ? f.mgLocked : copied ? f.copied : f.copy}
         </Button>
         <label htmlFor={`fmt-${id}`} className="inline-flex items-center gap-2 text-sm">
-          <input id={`fmt-${id}`} type="checkbox" checked={ticked} onChange={(e) => onTick(e.target.checked)} className="size-4 accent-foreground" />
+          <input
+            id={`fmt-${id}`}
+            type="checkbox"
+            checked={ticked && !locked}
+            disabled={locked}
+            onChange={(e) => onTick(e.target.checked)}
+            className="size-4 accent-foreground"
+          />
           {t.dossier.trajet.status.sent}
         </label>
       </div>
@@ -91,7 +102,7 @@ export function DiffusePanel({
   const { data, error, isLoading } = useSWR<Formats>(key, fetcher, { revalidateOnFocus: false });
   const { mutate } = useSWRConfig();
   const [ticked, setTicked] = useState<Set<string>>(new Set());
-  const [relu, setRelu] = useState(false);
+  const [rereading, setRereading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [channel, setChannel] = useState<string>("whatsapp");
   const [place, setPlace] = useState("");
@@ -109,7 +120,10 @@ export function DiffusePanel({
     try {
       const out = await api<{ formats: string[]; dropped: string[] }>(`/workspaces/${ws}/items/${item.id}/diffuse`, {
         method: "POST",
-        body: JSON.stringify({ routes: routes.map((r) => ({ channel: r.channel, place: r.place, location: r.location ?? null })), formats: [...ticked], relu_mg: relu }),
+        body: JSON.stringify({
+          routes: routes.map((r) => ({ channel: r.channel, place: r.place, location: r.location ?? null })),
+          formats: [...ticked].filter((id) => reread || !id.endsWith("_mg")),
+        }),
       });
       toast.success(f.sent(routes.length));
       if (out.dropped.length) toast(f.dropped);
@@ -120,6 +134,21 @@ export function DiffusePanel({
       toast.error(f.failed);
     } finally {
       setBusy(false);
+    }
+  }
+
+  // The reread vouches for the exact strings on screen (`mg_hash`); any change locks them again.
+  const reread = !!data?.relu_mg?.current;
+  async function markReread(on: boolean) {
+    if (!data) return;
+    setRereading(true);
+    try {
+      await api(`/workspaces/${ws}/items/${item.id}/relu-mg`, on ? { method: "POST", body: JSON.stringify({ mg_hash: data.mg_hash }) } : { method: "DELETE" });
+    } catch (e) {
+      toast.error(e instanceof ApiError && e.code === "mg_changed" ? f.mgChanged : f.failed);
+    } finally {
+      await mutate(`/workspaces/${ws}/items/${item.id}/diffusion`);
+      setRereading(false);
     }
   }
 
@@ -181,13 +210,23 @@ export function DiffusePanel({
               </div>
               <ul className="grid gap-3 lg:grid-cols-2">
                 {mg.map((x) => (
-                  <FormatBlock key={x.id} id={x.id} label={f.formats[x.id]} text={x.text!} meta={x.meta} ticked={ticked.has(x.id)} onTick={tick(x.id)} draft />
+                  <FormatBlock key={x.id} id={x.id} label={f.formats[x.id]} text={x.text!} meta={x.meta} ticked={ticked.has(x.id)} onTick={tick(x.id)} draft locked={!reread} />
                 ))}
               </ul>
               <label htmlFor="relu-mg" className="inline-flex items-center gap-2 text-sm font-medium">
-                <input id="relu-mg" type="checkbox" checked={relu} onChange={(e) => setRelu(e.target.checked)} className="size-4 accent-foreground" />
+                <input
+                  id="relu-mg"
+                  type="checkbox"
+                  checked={reread}
+                  disabled={rereading || !data.mg_hash}
+                  onChange={(e) => markReread(e.target.checked)}
+                  className="size-4 accent-foreground"
+                />
                 {f.mgReviewed}
               </label>
+              {data.relu_mg && (
+                <p className="text-sm text-muted-foreground">{reread ? f.mgReviewedBy(data.relu_mg.name) : f.mgStale(data.relu_mg.name)}</p>
+              )}
             </div>
           )}
 
