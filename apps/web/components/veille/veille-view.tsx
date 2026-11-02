@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { IconArrowSquareOut, IconArrowsClockwise, IconCircleNotch, IconGlobe, IconMapPin, IconRadio, IconWarning, IconX } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EcoGate } from "@/components/prefs/eco";
 import { PeopleAsk } from "@/components/settings/people-ask";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "@/components/rubrique/bits";
@@ -260,7 +261,9 @@ function DeskVeille({ ws }: { ws: string }) {
               )}
             </div>
             <div className="isolate h-72 border-y border-border sm:h-[26rem]">
-              <VeilleMap regions={map.data?.regions ?? []} selected={region} onSelect={(r) => go({ region: r })} country={shown} />
+              <EcoGate kind="map" className="h-full w-full rounded-none border-0">
+                <VeilleMap regions={map.data?.regions ?? []} selected={region} onSelect={(r) => go({ region: r })} country={shown} />
+              </EcoGate>
             </div>
             <div className="px-4 py-3">
               {regions.length > 0 && (

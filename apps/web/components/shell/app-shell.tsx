@@ -10,6 +10,7 @@ import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
 import { openPalette } from "@/components/shell/command-palette";
 import { NAV, WORKSPACE_NAV } from "@/components/shell/nav";
+import { EcoMenuItem, FontMenuRow } from "@/components/prefs/prefs-controls";
 import { PreferenceDock } from "@/components/shell/preference-dock";
 import { TabBar, TabIsland } from "@/components/shell/tab-island";
 import {
@@ -130,6 +131,9 @@ function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: s
             <IconMonitor className="size-4" aria-hidden /> {t.nav.themeSystem}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <FontMenuRow />
+        <EcoMenuItem />
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={signOut}>
           <IconSignOut className="size-4" aria-hidden /> {t.auth.signOut}

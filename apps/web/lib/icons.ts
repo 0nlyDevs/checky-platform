@@ -7,6 +7,11 @@ import {
   ArrowSquareOut,
   ArrowUp,
   ArrowsClockwise,
+  CloudSlash as CloudSlashGlyph,
+  Leaf as LeafGlyph,
+  TextAa as TextAaGlyph,
+  Translate as TranslateGlyph,
+  Tray as TrayGlyph,
   Books,
   Broadcast,
   Calculator,
@@ -164,3 +169,9 @@ export const IconRadio = duo(Radio);
 export const IconStamp = duo(Stamp);
 export const IconPhone = duo(Phone);
 export const IconPrinter = duo(Printer);
+// Reach: Mode éco, text size, offline and the outbox, the language.
+export const IconLeaf = duo(LeafGlyph);
+export const IconTextAa = duo(TextAaGlyph);
+export const IconCloudSlash = duo(CloudSlashGlyph);
+export const IconTray = duo(TrayGlyph);
+export const IconTranslate = duo(TranslateGlyph);

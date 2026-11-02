@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Cormorant_Garamond } from "next/font/google";
+import { EcoProvider } from "@/components/prefs/eco";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { RippleListener } from "@/components/shell/ripple";
 import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/lib/brand";
+import { PREFS_SCRIPT } from "@/lib/prefs";
 import "./globals.css";
 
 // Everything: titles at 700-800 with tight tracking, text at 400-500, tabular figures in tables.
@@ -37,9 +39,13 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" suppressHydrationWarning className={`${bricolage.variable} ${cormorant.variable} h-full antialiased`}>
+      <head>
+        {/* Text size and Mode éco before the first paint (lib/prefs.ts). */}
+        <script dangerouslySetInnerHTML={{ __html: PREFS_SCRIPT }} />
+      </head>
       <body className="min-h-full">
         <ThemeProvider>
-          {children}
+          <EcoProvider>{children}</EcoProvider>
           <Toaster position="bottom-center" />
           <RippleListener />
         </ThemeProvider>

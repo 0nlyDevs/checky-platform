@@ -3,6 +3,7 @@ import { plural } from "@/lib/when";
 import { crew } from "./fr/crew";
 import { dossier } from "./fr/dossier";
 import { publicLayer } from "./fr/publicLayer";
+import { reach } from "./fr/reach";
 import { registre } from "./fr/registre";
 import { rubrique } from "./fr/rubrique";
 import { team } from "./fr/team";
@@ -825,6 +826,7 @@ export const fr = {
   publicLayer,
   team,
   verification,
+  reach,
 } as const;
 
 export const t = fr;
