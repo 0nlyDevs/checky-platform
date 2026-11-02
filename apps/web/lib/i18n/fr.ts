@@ -71,6 +71,7 @@ export const fr = {
     moreLabel: "Autres espaces",
     account: "Votre compte",
     preferences: "Préférences",
+    search: "Rechercher partout (Ctrl K)",
     toDark: "Thème sombre",
     toLight: "Thème clair",
   },

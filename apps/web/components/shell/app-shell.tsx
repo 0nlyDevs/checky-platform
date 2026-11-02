@@ -5,9 +5,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import useSWR from "swr";
-import { IconCaretUpDown, IconCheck, IconMonitor, IconMoon, IconPlus, IconSignOut, IconSun } from "@/lib/icons";
+import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon, IconPlus, IconSignOut, IconSun } from "@/lib/icons";
 import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
+import { openPalette } from "@/components/shell/command-palette";
 import { CARNET_NAV, NAV, WORKSPACE_NAV } from "@/components/shell/nav";
 import { PreferenceDock } from "@/components/shell/preference-dock";
 import { TabBar, TabIsland } from "@/components/shell/tab-island";
@@ -158,6 +159,9 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
           </div>
           <TabIsland ws={ws} items={items} />
           <div className="bar-right">
+            <button type="button" className="bar-icon" data-ripple onClick={openPalette} aria-label={t.nav.search} aria-keyshortcuts="Control+K">
+              <IconMagnifyingGlass className="size-5" aria-hidden />
+            </button>
             <UserMenu user={user} ws={ws} team={!restricted} />
           </div>
         </header>
