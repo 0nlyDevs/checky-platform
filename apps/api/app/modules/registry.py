@@ -1124,21 +1124,27 @@ def _result(
     }
 
 
-async def match_text(db: AsyncSession, workspace_id: uuid.UUID, text: str) -> dict[str, Any]:
+async def match_text(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    text: str,
+    *,
+    only_added_by: str | None = None,
+    with_contacts: bool = True,
+) -> dict[str, Any]:
     """Which registered original a circulating text quotes, from this newsroom's registry and every
     public newsroom's, and how it differs: `authentic` (same words), `modified` (the number exists,
     the words differ: `diff` and `changed_numbers`), `not_found` (an institution or a number is
     cited, nothing registered matches: « Introuvable », never « Faux »), `inconsistent` (the number
     cannot belong to the issuer's series) or `none` (no institution or communiqué is cited)."""
     text = (text or "").strip()
-    rows = (
-        await db.execute(
-            _visible(workspace_id)
-            .where(Communique.status == "original")
-            .order_by(Communique.created_at.desc())
-            .limit(500)
+    stmt = _visible(workspace_id).where(Communique.status == "original")
+    if only_added_by:
+        # An issuer compares against its own originals only, never the desk's registry.
+        stmt = stmt.where(
+            Communique.workspace_id == workspace_id, Communique.added_by == only_added_by
         )
-    ).all()
+    rows = (await db.execute(stmt.order_by(Communique.created_at.desc()).limit(500))).all()
     # This newsroom's own entries first, then sealed ones, then the newest.
     rows.sort(key=lambda r: (r[0].workspace_id != workspace_id, not r[0].sealed))
     folded = places.fold(text)
@@ -1184,7 +1190,7 @@ async def match_text(db: AsyncSession, workspace_id: uuid.UUID, text: str) -> di
     if not issuer and not number:
         return _result("none", None, None, summary="Ce texte ne cite ni institution ni communiqué.")
     who = f" de {issuer}" if issuer else ""
-    contacts = await press_contacts(db, workspace_id, issuer) if issuer else []
+    contacts = await press_contacts(db, workspace_id, issuer) if issuer and with_contacts else []
     if issuer and number:
         series = [
             c.number for c, _ in rows if c.number and _mentions(places.fold(issuer), c.issuer)
@@ -1230,6 +1236,10 @@ class MatchIn(BaseModel):
 async def match(body: MatchIn, member: Anyone, db: Db) -> dict:
     """Compare a circulating text with the registered originals (no model involved)."""
     _ensure_reader(member)
+    if member.role == "issuer":
+        return await match_text(
+            db, member.workspace_id, body.text, only_added_by=member.user.id, with_contacts=False
+        )
     return await match_text(db, member.workspace_id, body.text)
 
 

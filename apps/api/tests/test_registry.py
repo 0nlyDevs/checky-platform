@@ -254,3 +254,20 @@ def test_the_demo_still_seeds_without_a_seal_secret(as_user, monkeypatch):
     alice.post(f"/api/v1/workspaces/{ws}/demo/reset")
     jirama = alice.get(f"/api/v1/workspaces/{ws}/registry", params={"q": "2026-118"}).json()
     assert len(jirama) == 1 and jirama[0]["sealed"] is None
+
+
+def test_an_issuer_matches_against_its_own_originals_only_and_sees_no_contacts(as_user):
+    alice, ivy = as_user("alice"), as_user("ivy")
+    ws = _workspace(alice)
+    invite(alice, ws, ivy, "issuer")
+    # The desk registers the JIRAMA original; the Annuaire knows its press office.
+    assert alice.post(f"/api/v1/workspaces/{ws}/registry", json=ORIGINAL).status_code == 201
+    contact = {"name": "Service de presse", "institution": "JIRAMA"}
+    assert alice.post(f"/api/v1/workspaces/{ws}/contacts", json=contact).status_code == 201
+    # The issuer account (another institution) cannot read the desk's registry through a match.
+    seen = ivy.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": RUMOUR}).json()
+    assert seen["status"] == "not_found" and seen["communique"] is None
+    assert seen["contacts"] == []
+    # The desk itself gets the modified original and who can confirm it.
+    desk = alice.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": RUMOUR}).json()
+    assert desk["status"] == "modified" and desk["communique"]["number"] == "2026-118"
