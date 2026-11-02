@@ -1,5 +1,7 @@
 """The confidence score: computed from evidence, explained, never the model's own number."""
 
+import json
+import uuid
 from datetime import timedelta
 
 from app.core import confidence, dates
@@ -108,3 +110,73 @@ def test_concerns_take_points_off():
 def test_unknown_references_are_ignored():
     out = confidence.compute([{"n": 9, "stance": "supports"}], [_src(1)], "2026-01-01")
     assert out["score"] == 0
+
+
+def test_the_claim_checker_stores_its_confidence(as_user, monkeypatch):
+    import asyncio
+    import sys
+    import types
+    from types import SimpleNamespace
+
+    from app.core.db import SessionLocal
+    from app.core.models import Source
+    from app.modules import checker
+    from app.workers import queue
+    from tests.test_workspaces import _workspace
+
+    async def reply(messages, **params):
+        content = {
+            "evidence": [
+                {
+                    "source": 1,
+                    "stance": "contradicts",
+                    "quote": "aucun délestage n'est prévu",
+                    "explanation": "La société dément.",
+                }
+            ],
+            "verdict": "false",
+            "reason": "Le communiqué officiel dément.",
+        }
+        return SimpleNamespace(content=json.dumps(content), provider="groq", model="m")
+
+    async def declared(db, workspace_id):
+        return {"jirama.mg"}
+
+    monkeypatch.setattr(checker.ai, "complete", reply)
+    directory = types.ModuleType("app.modules.directory")
+    directory.official_hosts = declared
+    monkeypatch.setitem(sys.modules, "app.modules.directory", directory)
+
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    item = alice.post(
+        f"/api/v1/workspaces/{ws}/items", json={"title": "Délestage de 72 heures"}
+    ).json()["id"]
+    source = alice.post(
+        f"/api/v1/workspaces/{ws}/sources",
+        json={
+            "title": "Communiqué",
+            "text": "La société précise qu'aucun délestage n'est prévu cette semaine.",
+            "item_id": item,
+            "published_at": TODAY.isoformat(),
+        },
+    ).json()["id"]
+
+    async def from_the_site():  # as if read from the page the newsroom declared official
+        async with SessionLocal() as db:
+            row = await db.get(Source, uuid.UUID(source))
+            row.url = "https://www.jirama.mg/communiques/118"
+            await db.commit()
+
+    asyncio.run(from_the_site())
+    alice.post(f"/api/v1/workspaces/{ws}/items/{item}/analyze")
+    asyncio.run(queue.run_once())
+    analysis = alice.get(f"/api/v1/workspaces/{ws}/items/{item}").json()["data"]["analysis"]
+    out = analysis["confidence"]
+    assert out["direction"] == "contradicts" and out["meaning"].startswith("evidence_strength")
+    assert _points(out)["attached"] == 10 and _points(out)["dates"] == 15
+    assert _points(out)["official"] == 25  # declared in the Annuaire
+    assert "Une source contredit l'affirmation." in out["reasons"]
+    # One source only: enough to lean, not to be sure.
+    assert out["score"] == sum(_points(out).values()) and out["score"] < 85
+    assert any("Peu de sources" in m for m in out["missing"])

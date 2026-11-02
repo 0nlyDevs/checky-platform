@@ -9,6 +9,8 @@ are close enough to the claim (other claims' files, unattached sources), marked 
 Dates are worked out in code (`app/core/dates.py`): the prompt states today's date, when the
 rumour was first seen and how old each source is; afterwards, a "true" resting only on sources
 from well before the rumour becomes "unverifiable" (`date_check`).
+How solid the reading is comes from code too (`app/core/confidence.py`, `analysis.confidence`):
+how many sources back it, how official and recent they are, never the model's own confidence.
 """
 
 import json
@@ -22,7 +24,7 @@ from typing import Any
 from fastapi import APIRouter
 from sqlalchemy import select
 
-from app.core import ai, dates
+from app.core import ai, confidence, credibility, dates
 from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.db import SessionLocal
@@ -261,6 +263,48 @@ def clean(raw: dict[str, Any], sources: list[Source], item: Item) -> dict[str, A
     }
 
 
+async def official_hosts(db, workspace_id: uuid.UUID) -> set[str]:
+    """Official sites the newsroom declared in its Annuaire, once that module exists."""
+    try:
+        from app.modules.directory import official_hosts as declared
+    except (ImportError, AttributeError):
+        return set()
+    try:
+        return set(await declared(db, workspace_id))
+    except Exception as exc:  # noqa: BLE001 - no declared site only means none is recognised
+        log.info("official hosts unavailable: %s", type(exc).__name__)
+        await db.rollback()
+        return set()
+
+
+def strength(
+    result: dict[str, Any], sources: list[Source], item: Item, official: set[str]
+) -> dict[str, Any]:
+    """`confidence.compute` over the evidence kept by `clean`. Every source read here is held by
+    the newsroom (joined to the dossier or among its other files), so all count as kept."""
+    seen = first_seen(item)
+    listed = []
+    for n, s in enumerate(sources, 1):
+        host = credibility.registrable(credibility.host_of(s.url)) if s.url else ""
+        listed.append(
+            {
+                "n": n,
+                "kind": "web" if s.url else "file",
+                "url": s.url,
+                "date": dating(s, seen.date())["date"],
+                "title": s.title,
+                "press": host in credibility.PRESS_HOSTS,
+            }
+        )
+    return confidence.compute(
+        result["evidence"],
+        listed,
+        seen,
+        [n for n, _ in enumerate(sources, 1)],
+        official_hosts=official,
+    )
+
+
 @handler("analyze_claim")
 async def analyze_claim(ctx: JobContext) -> dict[str, Any]:
     item_id = uuid.UUID(ctx.input["item_id"])
@@ -279,6 +323,7 @@ async def analyze_claim(ctx: JobContext) -> dict[str, Any]:
         excerpts = await relevant_excerpts(db, item)
         related, related_excerpts = await related_sources(db, item, sources)
         prompt = build_prompt(item, sources + related, {**excerpts, **related_excerpts})
+        official = await official_hosts(db, item.workspace_id)
     await ctx.progress(20)
     reply = await ai.complete(
         [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
@@ -292,6 +337,7 @@ async def analyze_claim(ctx: JobContext) -> dict[str, Any]:
         **result,
         "sources_used": len(sources),
         "related_used": len(related),
+        "confidence": strength(result, sources + related, item, official),
         "provider": reply.provider,
         "model": reply.model,
         "at": datetime.now(UTC).isoformat(),
