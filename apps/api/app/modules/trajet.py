@@ -12,10 +12,11 @@ import hashlib
 import json
 import re
 import uuid
+from collections import defaultdict, deque
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -553,8 +554,25 @@ class PosterOut(BaseModel):
     newsroom: str
     ref: str | None
     date: str | None
+    # The seal's URL when the newsroom can seal (SEAL_SECRET set), else the public page.
     qr_url: str
     short_link: str | None
+    number: int | None = None
+    check_label: str | None = None
+    sealed: bool = False
+
+
+class VerdictSealOut(BaseModel):
+    """The newsroom's signature on the published verdict, as the card's QR carries it."""
+
+    alg: str
+    key_id: str
+    public_key: str
+    payload: dict[str, Any]
+    message: str
+    signature: str
+    url: str
+    number: int | None
 
 
 class FormatsOut(BaseModel):
@@ -571,6 +589,10 @@ class FormatsOut(BaseModel):
     mg: dict[str, str] | None
     written_by: Literal["ai", "template"]
     gaps: list[GapOut]
+    # « vérification 145 »: the same number on every format, resolved by /v/145.
+    number: int | None = None
+    check_label: str | None = None
+    seal: VerdictSealOut | None = None
     # Kept for the earlier panel.
     radio: str
     social: str
@@ -659,6 +681,10 @@ async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut
         (item.data or {}).get("published_at") or (item.data or {}).get("signed_at")
     )
     trajet_now = await read_trajet(db, item)
+    sealed = await verdict_seal(db, item, ws)
+    if sealed:
+        await db.commit()  # the newsroom's key, created on first use
+    ref = (item.data or {}).get("ref")
     return FormatsOut(
         card=_posts(item),
         radio_line=formats["radio_line"],
@@ -677,15 +703,185 @@ async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut
             newsroom=ws.name,
             ref=(item.data or {}).get("ref"),
             date=dates.fr(published) if published else None,
-            qr_url=url,
+            qr_url=sealed["url"] if sealed else url,
             short_link=short_link(item),
+            number=seal.check_number(ref),
+            check_label=seal.check_label(ref),
+            sealed=bool(sealed),
         ),
         mg=formats.get("mg"),
         written_by=written_by,
         gaps=trajet_now.gaps,
+        number=seal.check_number(ref),
+        check_label=seal.check_label(ref),
+        seal=VerdictSealOut(**{k: sealed[k] for k in VerdictSealOut.model_fields})
+        if sealed
+        else None,
         radio=formats["radio_line"],
         social=formats["text"],
         url=url,
+    )
+
+
+# --- the sealed card: the newsroom signs the published verdict, a phone checks it offline -------
+
+
+async def verdict_seal(db: AsyncSession, item: Item, ws: Workspace) -> dict[str, Any] | None:
+    """The seal of the verdict as it reads now: None without SEAL_SECRET, a published verdict or a
+    newsroom that publishes (public and verified by Checky). Flushes the newsroom's key on first
+    use: the caller commits."""
+    d = item.data or {}
+    if (
+        not seal.available()
+        or not ws.publishes
+        or item.status != "published"
+        or d.get("verdict") not in VERDICT_FR
+    ):
+        return None
+    from app.modules.signing import digest
+
+    signed = (
+        dates.parse_moment(d.get("signed_at"))
+        or dates.parse_moment(d.get("published_at"))
+        or item.updated_at
+    )
+    return await seal.sign_verdict(
+        db,
+        ws.id,
+        item_id=item.id,
+        ref=d.get("ref"),
+        verdict=d["verdict"],
+        title=item.title,
+        signed_at=signed,
+        digest=digest(item.title, item.body, d),
+    )
+
+
+@router.get("/workspaces/{ws}/items/{item_id}/seal")
+async def item_seal(item_id: uuid.UUID, member: AnyMember, db: Db) -> VerdictSealOut:
+    """The QR of the card and the story: the newsroom's signature over the published verdict."""
+    item = await _get_item(db, member, item_id)
+    if item.status != "published" or (item.data or {}).get("verdict") not in VERDICT_FR:
+        raise ApiError(409, "not_published", "Publish a newsroom verdict first")
+    ws = await db.get(Workspace, member.workspace_id)
+    if not ws.publishes:
+        raise ApiError(
+            409, "private_workspace", "Only a public, verified newsroom seals its verdict cards"
+        )
+    sealed = await verdict_seal(db, item, ws)
+    if sealed is None:
+        raise ApiError(503, "seal_unavailable", "Sealing is not configured on this server")
+    await db.commit()
+    return VerdictSealOut(**{k: sealed[k] for k in VerdictSealOut.model_fields})
+
+
+class PublicVerdictSealOut(VerdictSealOut):
+    item_id: uuid.UUID
+    ref: str | None
+    title: str
+    verdict: str
+    check_label: str | None
+    newsroom: dict[str, str]
+    published_url: str
+
+
+class SealCheckIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    message: str = Field(min_length=10, max_length=2000)
+    signature: str = Field(min_length=10, max_length=200)
+    key_id: str = Field(min_length=3, max_length=40)
+
+
+class SealCheckOut(BaseModel):
+    valid: bool
+    revoked: bool
+    # The fragment's version is still the one published (same verdict, same fingerprint).
+    current: bool
+    newsroom: dict[str, str] | None
+
+
+_SEAL_CHECKS: dict[str, deque[float]] = defaultdict(deque)
+SEAL_LIMIT, SEAL_WINDOW = 60, 600.0
+
+
+def _seal_rate(request: Request) -> None:
+    from app.modules.public import _allow
+
+    addr = request.client.host if request.client else "unknown"
+    if not _allow(_SEAL_CHECKS, addr, SEAL_LIMIT, SEAL_WINDOW):
+        raise ApiError(429, "too_many_checks", "Too many checks, try again in a few minutes")
+
+
+async def _public_item(db: AsyncSession, item_id: uuid.UUID) -> tuple[Item, Workspace]:
+    from app.modules.public import _published
+
+    row = (await db.execute(_published().where(Item.id == item_id))).first()
+    if row is None:
+        raise ApiError(404, "not_found", "Verdict not found")
+    return row[0], row[1]
+
+
+@router.get("/public/sceau/v/{item_id}")
+async def public_verdict_seal(item_id: uuid.UUID, request: Request, db: Db) -> PublicVerdictSealOut:
+    """The seal of a published verdict as it reads now, to compare with a card's QR. Only a public
+    newsroom's published verdict; nothing of the dossier beyond what its public page shows."""
+    _seal_rate(request)
+    item, ws = await _public_item(db, item_id)
+    sealed = await verdict_seal(db, item, ws)
+    if sealed is None:
+        raise ApiError(404, "not_sealed", "This verdict has no seal")
+    await db.commit()
+    from app.modules.signing import permalink
+
+    d = item.data or {}
+    return PublicVerdictSealOut(
+        **{k: sealed[k] for k in VerdictSealOut.model_fields},
+        item_id=item.id,
+        ref=d.get("ref"),
+        title=item.title,
+        verdict=d["verdict"],
+        check_label=seal.check_label(d.get("ref")),
+        newsroom={"slug": ws.slug, "name": ws.name},
+        published_url=permalink(item),
+    )
+
+
+@router.post("/public/sceau/v/{item_id}/verify")
+async def verify_verdict_seal(
+    item_id: uuid.UUID, body: SealCheckIn, request: Request, db: Db
+) -> SealCheckOut:
+    """The server-side check, for browsers without Ed25519 in WebCrypto: the QR's message and
+    signature against the key it names, and whether that version is still the published one."""
+    from app.core.models import SealKey
+
+    _seal_rate(request)
+    row = (
+        await db.execute(
+            select(SealKey, Workspace)
+            .join(Workspace, Workspace.id == SealKey.workspace_id)
+            .where(SealKey.key_id == body.key_id, Workspace.publishes)
+        )
+    ).first()
+    if row is None:
+        return SealCheckOut(valid=False, revoked=False, current=False, newsroom=None)
+    key, ws = row
+    valid = seal.verify_message(key.public_key, body.message, body.signature)
+    found = seal.read_fragment(f"{seal.b64u(body.message.encode())}.x.y")
+    # A genuine seal of another verdict does not vouch for this page.
+    valid = valid and bool(found) and found[0].get("id") == str(item_id)
+    current = False
+    if valid:
+        try:
+            item, _ = await _public_item(db, item_id)
+            now = await verdict_seal(db, item, ws)
+            current = bool(now) and now["message"] == body.message
+        except ApiError:
+            current = False
+    return SealCheckOut(
+        valid=valid,
+        revoked=key.revoked_at is not None,
+        current=current,
+        newsroom={"slug": ws.slug, "name": ws.name},
     )
 
 

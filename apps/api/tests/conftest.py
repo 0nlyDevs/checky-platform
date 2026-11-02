@@ -106,6 +106,9 @@ def _clean_db():
     from app.core.public_checks import budget
 
     budget.reset()
+    from app.modules import trajet
+
+    trajet._SEAL_CHECKS.clear()
     from app.core import websearch
 
     websearch._cache.clear()
