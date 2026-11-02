@@ -18,12 +18,12 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import dates, numbers, places
+from app.core import dates, numbers, places, seal
 from app.core.access import AnyMember, Anyone, Db, Issuer, Member
 from app.core.activity import broadcast, record
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
-from app.core.models import Communique, Workspace
+from app.core.models import Communique, SealKey, Workspace
 from app.core.seal import fingerprint, normalise, seal_url
 from app.core.words import words
 
@@ -277,6 +277,86 @@ async def register(body: OriginalIn, member: Issuer, db: Db) -> CommuniqueOut:
     return out(original, ws, member.workspace_id)
 
 
+# --- seals: the issuer's keys ------------------------------------------------------------------
+
+
+class KeyOut(BaseModel):
+    key_id: str
+    issuer: str
+    public_key: str
+    created_at: datetime
+    revoked_at: datetime | None
+    seals: int
+
+
+async def _key_out(db: AsyncSession, key: SealKey) -> KeyOut:
+    count = await db.scalar(
+        select(func.count())
+        .select_from(Communique)
+        .where(
+            Communique.workspace_id == key.workspace_id,
+            Communique.sealed["key_id"].astext == key.key_id,
+        )
+    )
+    return KeyOut(
+        key_id=key.key_id,
+        issuer=key.issuer,
+        public_key=key.public_key,
+        created_at=key.created_at,
+        revoked_at=key.revoked_at,
+        seals=count or 0,
+    )
+
+
+async def _own_issuers(db: AsyncSession, member: Member) -> set[str] | None:
+    """The issuers an institution's account speaks for (those it registered); None for the desk."""
+    if member.role != "issuer":
+        return None
+    rows = await db.scalars(
+        select(Communique.issuer).where(
+            Communique.workspace_id == member.workspace_id,
+            Communique.added_by == member.user.id,
+        )
+    )
+    return set(rows.all())
+
+
+@router.get("/workspaces/{ws}/registry/keys")
+async def seal_keys(member: Issuer, db: Db) -> list[KeyOut]:
+    stmt = select(SealKey).where(SealKey.workspace_id == member.workspace_id)
+    mine = await _own_issuers(db, member)
+    if mine is not None:
+        stmt = stmt.where(SealKey.issuer.in_(mine or {""}))
+    keys = (await db.scalars(stmt.order_by(SealKey.created_at.desc()))).all()
+    return [await _key_out(db, k) for k in keys]
+
+
+@router.post("/workspaces/{ws}/registry/keys/{key_id}/revoke")
+async def revoke_key(key_id: str, member: Issuer, db: Db) -> KeyOut:
+    """A lost or leaked key: its seals still check out mathematically but every page shows them
+    as revoked; the next seal creates a new key."""
+    key = await db.scalar(
+        select(SealKey).where(SealKey.workspace_id == member.workspace_id, SealKey.key_id == key_id)
+    )
+    mine = await _own_issuers(db, member)
+    if key is None or (mine is not None and key.issuer not in mine):
+        raise ApiError(404, "not_found", "Key not found")
+    if key.revoked_at is None:
+        key.revoked_at = datetime.now(UTC)
+        await record(
+            db,
+            member.workspace_id,
+            member.user.id,
+            "seal_key",
+            key.id,
+            "revoke",
+            {"key_id": key_id},
+        )
+        await db.commit()
+        await db.refresh(key)
+    return await _key_out(db, key)
+
+
 @router.get("/workspaces/{ws}/registry/{cid}")
 async def get_original(cid: uuid.UUID, member: Anyone, db: Db) -> CommuniqueOut:
     _ensure_reader(member)
@@ -372,6 +452,229 @@ async def record_fake(cid: uuid.UUID, body: FakeIn, member: Anyone, db: Db) -> C
     await broadcast(member.workspace_id, "registry.changed", {"id": str(fake.id)})
     ws = await db.get(Workspace, member.workspace_id)
     return out(fake, ws, member.workspace_id)
+
+
+# --- seals: sealing an original, and checking a seal without an account ------------------------
+
+
+class SealResult(BaseModel):
+    sealed: SealOut
+    payload: dict[str, Any]
+    public_key: str
+    qr_svg: str
+    # The QR only opens for everyone once the newsroom publishes its registry (« is_public »).
+    public: bool
+
+
+async def _seal_result(db: AsyncSession, c: Communique) -> SealResult:
+    key = await db.scalar(select(SealKey).where(SealKey.key_id == c.sealed["key_id"]))
+    ws = await db.get(Workspace, c.workspace_id)
+    url = seal.seal_url(c.id, c.sealed["signature"])
+    return SealResult(
+        sealed=SealOut(
+            key_id=c.sealed["key_id"],
+            signature=c.sealed["signature"],
+            sealed_at=c.sealed["sealed_at"],
+            url=url,
+        ),
+        payload=c.sealed["payload"],
+        public_key=key.public_key if key else "",
+        qr_svg=seal.qr_svg(url),
+        public=bool(ws and ws.is_public),
+    )
+
+
+async def _own_original(db: AsyncSession, member: Member, cid: uuid.UUID) -> Communique:
+    c = await db.get(Communique, cid)
+    if c is None or c.workspace_id != member.workspace_id:
+        raise ApiError(404, "not_found", "Communiqué not found")
+    if member.role == "issuer" and c.added_by != member.user.id:
+        raise ApiError(404, "not_found", "Communiqué not found")
+    if c.status != "original":
+        raise ApiError(409, "not_an_original", "Only originals can be sealed")
+    return c
+
+
+async def _still_valid(db: AsyncSession, c: Communique) -> bool:
+    if not (c.sealed and c.sealed.get("signature")):
+        return False
+    key = await db.scalar(select(SealKey).where(SealKey.key_id == c.sealed["key_id"]))
+    return bool(key and key.revoked_at is None and c.sealed["payload"] == seal.payload_of(c))
+
+
+@router.post("/workspaces/{ws}/registry/{cid}/seal")
+async def seal_original(cid: uuid.UUID, member: Issuer, db: Db) -> SealResult:
+    """The issuer signs its original: Ed25519 over issuer, number, date, title and the text's
+    fingerprint. Sealing an entry already sealed with a valid key returns the same seal."""
+    c = await _own_original(db, member, cid)
+    if not await _still_valid(db, c):
+        await seal.seal(db, c, member.user.id, member.role)
+        await record(
+            db,
+            member.workspace_id,
+            member.user.id,
+            "communique",
+            c.id,
+            "seal",
+            {"key_id": c.sealed["key_id"]},
+        )
+        await db.commit()
+        await db.refresh(c)
+        await broadcast(member.workspace_id, "registry.changed", {"id": str(c.id)})
+    return await _seal_result(db, c)
+
+
+@router.get("/workspaces/{ws}/registry/{cid}/seal")
+async def seal_of(cid: uuid.UUID, member: Anyone, db: Db) -> SealResult:
+    """The seal and its QR again (to print or download it later)."""
+    _ensure_reader(member)
+    c = await _own_original(db, member, cid)
+    if not (c.sealed and c.sealed.get("signature")):
+        raise ApiError(404, "not_sealed", "This original is not sealed")
+    return await _seal_result(db, c)
+
+
+class PublicSeal(BaseModel):
+    id: uuid.UUID
+    alg: str
+    payload: dict[str, Any]
+    # The exact string that was signed; the page shows the fields parsed back from it.
+    message: str
+    signature: str
+    key_id: str
+    public_key: str
+    sealed_at: str
+    # Sealed from the institution's own account, or by the newsroom on its behalf.
+    sealed_by: Literal["issuer", "newsroom"]
+    revoked_at: datetime | None
+    is_demo: bool
+    newsroom: NewsroomOut
+    url: str
+    text: str
+
+
+async def _public_sealed(db: AsyncSession, cid: uuid.UUID):
+    row = (
+        await db.execute(
+            select(Communique, Workspace)
+            .join(Workspace, Workspace.id == Communique.workspace_id)
+            .where(Communique.id == cid, Workspace.is_public.is_(True))
+        )
+    ).first()
+    if row is None or not (row[0].sealed and row[0].sealed.get("signature")):
+        raise ApiError(404, "not_found", "No public seal for this communiqué")
+    c, ws = row
+    key = await db.scalar(select(SealKey).where(SealKey.key_id == c.sealed["key_id"]))
+    if key is None:
+        raise ApiError(404, "not_found", "No public seal for this communiqué")
+    return c, ws, key
+
+
+@router.get("/public/sceau/{cid}")
+async def public_seal(cid: uuid.UUID, db: Db) -> PublicSeal:
+    """Everything a phone needs to check the seal itself: the signed fields, the exact message,
+    the signature and the issuer's public key. Only public newsrooms' seals are served."""
+    c, ws, key = await _public_sealed(db, cid)
+    payload = c.sealed["payload"]
+    return PublicSeal(
+        id=c.id,
+        alg=seal.ALG,
+        payload=payload,
+        message=seal.canonical(payload),
+        signature=c.sealed["signature"],
+        key_id=key.key_id,
+        public_key=key.public_key,
+        sealed_at=c.sealed["sealed_at"],
+        sealed_by="issuer" if c.sealed.get("role") == "issuer" else "newsroom",
+        revoked_at=key.revoked_at,
+        is_demo=c.is_demo,
+        newsroom=NewsroomOut(slug=ws.slug, name=ws.name),
+        url=seal.seal_url(c.id, c.sealed["signature"]),
+        text=c.text,
+    )
+
+
+class VerifyIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    # The signature printed in the QR (after `#`); the stored one when absent.
+    signature: str | None = Field(default=None, max_length=200)
+
+
+class VerifyOut(BaseModel):
+    valid: bool
+    revoked: bool
+    # The registry still holds what was signed (nothing changed after sealing).
+    matches_record: bool
+    key_id: str
+
+
+@router.post("/public/sceau/{cid}/verify")
+async def verify_public_seal(cid: uuid.UUID, body: VerifyIn, db: Db) -> VerifyOut:
+    """The server-side check, for browsers without Ed25519 in WebCrypto."""
+    c, _, key = await _public_sealed(db, cid)
+    payload = c.sealed["payload"]
+    return VerifyOut(
+        valid=seal.verify(key.public_key, payload, body.signature or c.sealed["signature"]),
+        revoked=key.revoked_at is not None,
+        matches_record=payload == seal.payload_of(c),
+        key_id=key.key_id,
+    )
+
+
+class PublicKeyOut(BaseModel):
+    key_id: str
+    issuer: str
+    alg: str
+    public_key: str
+    created_at: datetime
+    newsroom: NewsroomOut
+
+
+class RevokedKeyOut(BaseModel):
+    key_id: str
+    issuer: str
+    revoked_at: datetime
+    newsroom: NewsroomOut
+
+
+class SealKeysOut(BaseModel):
+    keys: list[PublicKeyOut]
+    revoked: list[RevokedKeyOut]
+
+
+@router.get("/public/seal-keys")
+async def public_seal_keys(db: Db) -> SealKeysOut:
+    """The issuers' public keys (to check seals offline) and the revoked ones."""
+    rows = (
+        await db.execute(
+            select(SealKey, Workspace)
+            .join(Workspace, Workspace.id == SealKey.workspace_id)
+            .where(Workspace.is_public.is_(True))
+            .order_by(SealKey.created_at.desc())
+            .limit(1000)
+        )
+    ).all()
+    keys, revoked = [], []
+    for key, ws in rows:
+        room = NewsroomOut(slug=ws.slug, name=ws.name)
+        if key.revoked_at:
+            revoked.append(
+                RevokedKeyOut(
+                    key_id=key.key_id, issuer=key.issuer, revoked_at=key.revoked_at, newsroom=room
+                )
+            )
+        else:
+            keys.append(
+                PublicKeyOut(
+                    key_id=key.key_id,
+                    issuer=key.issuer,
+                    alg=seal.ALG,
+                    public_key=key.public_key,
+                    created_at=key.created_at,
+                    newsroom=room,
+                )
+            )
+    return SealKeysOut(keys=keys, revoked=revoked)
 
 
 # --- word by word -----------------------------------------------------------------------------

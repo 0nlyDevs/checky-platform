@@ -76,3 +76,85 @@ def test_issuer_key_is_created_once_and_kept_encrypted(as_user, secret):
     assert seal.seal_url(c.id, first["signature"]).endswith(f"/sceau/{c.id}#{first['signature']}")
     svg = seal.qr_svg(seal.seal_url(c.id, first["signature"]))
     assert svg.startswith("<svg") and "#171a18" in svg
+
+
+def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
+    from tests.test_newsroom_resources import invite
+    from tests.test_registry import ORIGINAL
+
+    alice, bob, carol, outsider = as_user("alice"), as_user("bob"), as_user("carol"), as_user("x")
+    ws = _workspace(alice)
+    invite(alice, ws, bob, "journalist")
+    invite(alice, ws, carol, "issuer")
+    base = f"/api/v1/workspaces/{ws}/registry"
+    cid = carol.post(base, json=ORIGINAL).json()["id"]
+
+    monkeypatch.setattr(get_settings(), "seal_secret", "")
+    refused = alice.post(f"{base}/{cid}/seal")
+    assert refused.status_code == 503 and refused.json()["error"]["code"] == "seal_unavailable"
+    monkeypatch.setattr(get_settings(), "seal_secret", SECRET)
+    assert bob.post(f"{base}/{cid}/seal").status_code == 403
+    assert outsider.post(f"{base}/{cid}/seal").status_code == 404
+
+    sealed = carol.post(f"{base}/{cid}/seal").json()
+    signature = sealed["sealed"]["signature"]
+    assert sealed["sealed"]["url"].endswith(f"/sceau/{cid}#{signature}")
+    assert sealed["qr_svg"].startswith("<svg") and sealed["public"] is False
+    assert sealed["payload"]["number"] == "2026-118"
+    assert carol.post(f"{base}/{cid}/seal").json()["sealed"]["signature"] == signature
+    assert alice.get(f"{base}/{cid}/seal").json()["sealed"]["signature"] == signature
+    assert alice.get(base).json()[0]["sealed"]["key_id"] == sealed["sealed"]["key_id"]
+
+    # A private newsroom's seal is not served to the public.
+    anyone = as_user("nobody")
+    anyone.headers.pop("Authorization")
+    assert anyone.get(f"/api/v1/public/sceau/{cid}").status_code == 404
+    assert anyone.get("/api/v1/public/seal-keys").json() == {"keys": [], "revoked": []}
+    alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    public = anyone.get(f"/api/v1/public/sceau/{cid}").json()
+    assert public["alg"] == "Ed25519" and public["sealed_by"] == "issuer"
+    assert public["message"] == seal.canonical(public["payload"]) and public["revoked_at"] is None
+    assert seal.verify(public["public_key"], public["payload"], public["signature"])
+    check = f"/api/v1/public/sceau/{cid}/verify"
+    assert anyone.post(check, json={"signature": signature}).json()["valid"] is True
+    forged = anyone.post(check, json={"signature": signature[:-4] + "AAAA"}).json()
+    assert forged["valid"] is False and forged["matches_record"] is True
+    assert [k["issuer"] for k in anyone.get("/api/v1/public/seal-keys").json()["keys"]] == [
+        "JIRAMA"
+    ]
+
+    keys = carol.get(f"{base}/keys").json()
+    assert len(keys) == 1 and keys[0]["seals"] == 1
+    key_id = keys[0]["key_id"]
+    assert bob.post(f"{base}/keys/{key_id}/revoke").status_code == 403
+    revoked = carol.post(f"{base}/keys/{key_id}/revoke").json()
+    assert revoked["revoked_at"]
+    assert anyone.get(f"/api/v1/public/sceau/{cid}").json()["revoked_at"]
+    assert anyone.post(check, json={}).json()["revoked"] is True
+    assert anyone.get("/api/v1/public/seal-keys").json()["revoked"][0]["key_id"] == key_id
+    # Sealing again after a revocation makes a new key.
+    fresh = carol.post(f"{base}/{cid}/seal").json()
+    assert fresh["sealed"]["key_id"] != key_id
+    assert anyone.post(check, json={}).json() == {
+        "valid": True,
+        "revoked": False,
+        "matches_record": True,
+        "key_id": fresh["sealed"]["key_id"],
+    }
+
+
+def test_an_issuer_account_only_handles_its_own_keys(as_user, secret):
+    from tests.test_newsroom_resources import invite
+    from tests.test_registry import ORIGINAL
+
+    alice, carol = as_user("alice"), as_user("carol")
+    ws = _workspace(alice)
+    invite(alice, ws, carol, "issuer")
+    base = f"/api/v1/workspaces/{ws}/registry"
+    cid = alice.post(base, json={**ORIGINAL, "issuer": "CENI"}).json()["id"]
+    key_id = alice.post(f"{base}/{cid}/seal").json()["sealed"]["key_id"]
+    assert alice.get(f"/api/v1/public/sceau/{cid}").status_code == 404
+    assert carol.post(f"{base}/{cid}/seal").status_code == 404
+    assert carol.get(f"{base}/keys").json() == []
+    assert carol.post(f"{base}/keys/{key_id}/revoke").status_code == 404
+    assert alice.get(f"{base}/keys").json()[0]["key_id"] == key_id
