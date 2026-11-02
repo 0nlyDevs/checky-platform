@@ -188,6 +188,43 @@ def test_public_image_works_without_auth_and_does_not_enable_a_private_detector(
     assert budget.active == 0
 
 
+def test_public_image_file_works_without_auth_or_storage(client, monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "image_detector_url", "https://private-detector.example/check")
+    monkeypatch.setattr(settings, "image_detector_validated", True)
+    monkeypatch.setattr(settings, "public_image_detector_enabled", False)
+    monkeypatch.setattr(
+        imagecheck,
+        "_detector_transport",
+        httpx.MockTransport(
+            lambda _: pytest.fail("Public access must not enable private detector billing")
+        ),
+    )
+    endpoint = "/api/v1/public/image-check/file"
+    result = client.post(
+        endpoint, content=png("Stable Diffusion"), headers={"Content-Type": "image/png"}
+    )
+    assert result.status_code == 200
+    assert result.json()["source"] == "file" and result.json()["url"] is None
+    assert result.json()["assessment"] == "detected"
+    assert result.json()["detector"]["status"] == "not_configured"
+    assert (
+        client.post(
+            endpoint, content=b"<svg/>", headers={"Content-Type": "image/svg+xml"}
+        ).status_code
+        == 415
+    )
+    assert (
+        client.post(
+            endpoint,
+            content=png(),
+            headers={"Content-Type": "image/png", "Content-Length": str(6 * 1024 * 1024)},
+        ).status_code
+        == 413
+    )
+    assert budget.active == 0
+
+
 def test_public_text_and_images_share_ip_daily_and_concurrency_budgets(
     client, evidence, monkeypatch
 ):

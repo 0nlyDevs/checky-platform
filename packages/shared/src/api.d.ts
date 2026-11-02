@@ -801,6 +801,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/image-check/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Image File Check */
+        post: operations["image_file_check_api_v1_workspaces__ws__image_check_file_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/check": {
         parameters: {
             query?: never;
@@ -846,6 +863,26 @@ export interface paths {
         put?: never;
         /** Image Check */
         post: operations["image_check_api_v1_public_image_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/image-check/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Image File Check
+         * @description The same examination for an image sent as a file; nothing is stored.
+         */
+        post: operations["image_file_check_api_v1_public_image_check_file_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1126,7 +1163,13 @@ export interface components {
         /** ImageOut */
         ImageOut: {
             /** Url */
-            url: string;
+            url: string | null;
+            /**
+             * Source
+             * @default url
+             * @enum {string}
+             */
+            source: "url" | "file";
             /**
              * Assessment
              * @enum {string}
@@ -3623,6 +3666,44 @@ export interface operations {
             };
         };
     };
+    image_file_check_api_v1_workspaces__ws__image_check_file_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+                "image/webp": string;
+                "image/gif": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     check_api_v1_public_check_post: {
         parameters: {
             query?: never;
@@ -3718,6 +3799,33 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    image_file_check_api_v1_public_image_check_file_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "image/jpeg": string;
+                "image/png": string;
+                "image/webp": string;
+                "image/gif": string;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImageOut"];
                 };
             };
         };

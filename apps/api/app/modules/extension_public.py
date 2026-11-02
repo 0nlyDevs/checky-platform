@@ -8,7 +8,7 @@ import asyncio
 from collections.abc import AsyncIterable
 
 import httpx
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
@@ -152,6 +152,21 @@ async def image_check(body: imagecheck.ImageIn) -> imagecheck.ImageOut:
         async with asyncio.timeout(35):
             return await imagecheck.inspect_image(
                 body, allow_detector=get_settings().public_image_detector_enabled
+            )
+    except TimeoutError as exc:
+        raise ApiError(
+            503, "public_image_unavailable", "Public image examination timed out"
+        ) from exc
+
+
+@router.post("/image-check/file", openapi_extra=imagecheck.FILE_BODY)
+async def image_file_check(request: Request) -> imagecheck.ImageOut:
+    """The same examination for an image sent as a file; nothing is stored."""
+    try:
+        async with asyncio.timeout(35):
+            raw = await imagecheck.read_upload(request)
+            return await imagecheck.examine(
+                raw, url=None, allow_detector=get_settings().public_image_detector_enabled
             )
     except TimeoutError as exc:
         raise ApiError(

@@ -1,6 +1,7 @@
 """Read image provenance hints without turning absence of markers into authenticity.
 
-An optional, operator-configured pixel detector accepts raw image bytes and returns
+An image arrives either as a public URL (fetched here) or as the file itself (a WhatsApp photo,
+a screenshot), sent as the raw request body. An optional, operator-configured pixel detector accepts raw image bytes and returns
 {"ai_score": 0..1, "model": "versioned identifier"}. It is never contacted until
 IMAGE_DETECTOR_VALIDATED=true. Scores are signals, not calibrated probabilities of truth.
 No image, result or dossier is persisted by this endpoint.
@@ -28,6 +29,24 @@ from app.workers import ingest
 
 router = APIRouter(tags=["image-check"])
 Assessment = Literal["detected", "none", "inconclusive"]
+IMAGE_TYPES = ("image/jpeg", "image/png", "image/webp", "image/gif")
+MAX_IMAGE_BYTES = ingest.MAX_PAGE_BYTES  # 5 MB, the same cap as a downloaded image
+# Documents the raw body so the generated client types know these routes take a file.
+FILE_BODY = {
+    "requestBody": {
+        "required": True,
+        "content": {
+            mime: {"schema": {"type": "string", "format": "binary"}} for mime in IMAGE_TYPES
+        },
+    }
+}
+LIMITATIONS = [
+    "metadata_can_be_removed_or_forged",
+    "absence_of_markers_does_not_prove_authenticity",
+    "content_credentials_signature_not_verified",
+    "pixel_detector_is_probabilistic",
+    "image_origin_is_not_claim_truth",
+]
 _IMAGES: dict[str, deque[float]] = defaultdict(deque)
 _detector_transport: httpx.AsyncBaseTransport | None = None
 
@@ -72,7 +91,8 @@ class SearchLink(BaseModel):
 
 
 class ImageOut(BaseModel):
-    url: str
+    url: str | None  # None when the image was sent as a file
+    source: Literal["url", "file"] = "url"
     assessment: Assessment
     image: ImageFacts
     detector: DetectorOut
@@ -165,12 +185,54 @@ async def image_check(body: ImageIn, _member: AnyMember) -> ImageOut:
     return await inspect_image(body)
 
 
+@router.post(
+    "/workspaces/{ws}/image-check/file", dependencies=[Depends(_limited)], openapi_extra=FILE_BODY
+)
+async def image_file_check(request: Request, _member: AnyMember) -> ImageOut:
+    return await examine(await read_upload(request), url=None)
+
+
+def manual_reverse_search() -> list[SearchLink]:
+    """A file has no address to hand over: these pages take an image the user drops on them."""
+    return [
+        SearchLink(name="Google Lens", url="https://lens.google.com/"),
+        SearchLink(name="TinEye", url="https://tineye.com/"),
+        SearchLink(name="Yandex", url="https://yandex.com/images/"),
+    ]
+
+
+async def read_upload(request: Request) -> bytes:
+    """Read an image sent as the raw body, refusing anything over 5 MB before buffering it all."""
+    mime = (request.headers.get("content-type") or "").split(";")[0].strip().lower()
+    if mime not in IMAGE_TYPES:
+        raise ApiError(415, "unsupported_media", "Send a JPEG, PNG, WebP or GIF image")
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > MAX_IMAGE_BYTES:
+        raise ApiError(413, "too_large", "Images are limited to 5 MB")
+    raw = bytearray()
+    async for chunk in request.stream():
+        raw += chunk
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise ApiError(413, "too_large", "Images are limited to 5 MB")
+    if not raw:
+        raise ApiError(422, "image_unreadable", "The image file is empty")
+    return bytes(raw)
+
+
 async def inspect_image(body: ImageIn, *, allow_detector: bool = True) -> ImageOut:
     """Shared read-only examination; callers provide their own authorization and budget."""
     try:
         final, declared_mime, raw, _ = await ingest.fetch_raw(body.url)
         if not declared_mime.startswith("image/"):
             raise ValueError("The URL does not return an image")
+    except (ValueError, OSError, httpx.HTTPError) as exc:
+        raise ApiError(422, "image_unreadable", "The public image could not be read") from exc
+    return await examine(raw, url=final, allow_detector=allow_detector)
+
+
+async def examine(raw: bytes, *, url: str | None, allow_detector: bool = True) -> ImageOut:
+    """Examine image bytes, fetched from `url` or sent as a file (`url` None)."""
+    try:
         facts, mime = await asyncio.to_thread(_facts, raw)
     except (
         ValueError,
@@ -178,9 +240,8 @@ async def inspect_image(body: ImageIn, *, allow_detector: bool = True) -> ImageO
         UnidentifiedImageError,
         Image.DecompressionBombError,
         Image.DecompressionBombWarning,
-        httpx.HTTPError,
     ) as exc:
-        raise ApiError(422, "image_unreadable", "The public image could not be read") from exc
+        raise ApiError(422, "image_unreadable", "The image could not be read") from exc
     detector = (
         await detect_pixels(raw, mime) if allow_detector else DetectorOut(status="not_configured")
     )
@@ -193,16 +254,13 @@ async def inspect_image(body: ImageIn, *, allow_detector: bool = True) -> ImageO
         else "none"
     )
     return ImageOut(
-        url=final,
+        url=url,
+        source="url" if url else "file",
         assessment=assessment,
         image=facts,
         detector=detector,
-        reverse_search=[SearchLink(**link) for link in reverse_search(final)],
-        limitations=[
-            "metadata_can_be_removed_or_forged",
-            "absence_of_markers_does_not_prove_authenticity",
-            "content_credentials_signature_not_verified",
-            "pixel_detector_is_probabilistic",
-            "image_origin_is_not_claim_truth",
-        ],
+        reverse_search=[SearchLink(**link) for link in reverse_search(url)]
+        if url
+        else manual_reverse_search(),
+        limitations=LIMITATIONS,
     )

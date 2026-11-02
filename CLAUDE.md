@@ -60,7 +60,10 @@ Not yet: conversation history; a seed script with several users (the demo reset 
 Browser extension (`0nlyDevs/fanilo-extension`, separate sibling repo): **public by default**, with
 no token request or login gate. `POST /public/check {text?,url?}` (`extension_public.py`) returns
 related published verdicts and external search results, never a new AI verdict or private data.
-`POST /public/image-check {url}` returns the same cautious image examination without membership.
+`POST /public/image-check {url}` returns the same cautious image examination without membership;
+`POST /public/image-check/file` takes the image itself as the raw body (JPEG, PNG, WebP or GIF,
+5 MB, 415/413 otherwise; a WhatsApp photo or a pasted screenshot has no public link), answers with
+`url: null`, `source: "file"` and reverse-search links to the services' upload pages, and stores nothing.
 Both share per-process budgets (`core/public_checks.py`): 12 requests/IP/10 min, 1,000 requests
 per 24-hour budget period and 2 concurrent requests; configurable via `PUBLIC_CHECKS_*`. Address
 storage is bounded; there is no persistent visitor ID. These limits are not distributed: use an
@@ -99,7 +102,7 @@ Connection is optional for saving a dossier or choosing newsroom analysis: the e
 the website session through a credentialed `GET /api/auth/token`, with host permissions limited
 to FANILO. Public results survive optional connection. Selected text is sent as `text` only,
 never silently combined with its entire source page; private failures never fall back publicly.
-`POST /workspaces/{ws}/image-check {url}` (`app/modules/imagecheck.py`) fetches a public raster
+`POST /workspaces/{ws}/image-check {url}` (`app/modules/imagecheck.py`; `…/image-check/file` for a raw image body) fetches a public raster
 image (5 MB, 20 MP max), returns metadata hints, cautious `detected|none|inconclusive` assessment,
 reverse-search links and a separate optional pixel detector result. No image or dossier is
 persisted by this endpoint. Content Credentials signatures are not verified; no markers never

@@ -107,6 +107,47 @@ def test_private_urls_bad_files_and_outsiders_are_rejected(as_user, image_web, m
     assert alice.post(endpoint, json={"url": url}).status_code == 422
 
 
+def test_an_image_file_is_examined_without_a_link(as_user, image_web):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    response = alice.post(
+        f"/api/v1/workspaces/{ws}/image-check/file",
+        content=png("Stable Diffusion XL"),
+        headers={"Content-Type": "image/png"},
+    )
+    assert response.status_code == 200
+    result = response.json()
+    assert result["url"] is None and result["source"] == "file"
+    assert result["assessment"] == "detected"
+    assert result["image"]["ai_markers"] == ["Stable Diffusion"]
+    # No address exists to pass along: the links only open the services' upload pages.
+    assert [link["name"] for link in result["reverse_search"]] == [
+        "Google Lens",
+        "TinEye",
+        "Yandex",
+    ]
+    assert all("url=" not in link["url"] for link in result["reverse_search"])
+    assert alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"] == []
+
+
+def test_image_files_are_bounded_and_members_only(as_user, image_web, monkeypatch):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    endpoint = f"/api/v1/workspaces/{ws}/image-check/file"
+    image = {"Content-Type": "image/png"}
+    assert bob.post(endpoint, content=png(), headers=image).status_code == 404
+    assert (
+        alice.post(
+            endpoint, content=b"%PDF-1.7", headers={"Content-Type": "application/pdf"}
+        ).status_code
+        == 415
+    )
+    assert alice.post(endpoint, content=b"", headers=image).status_code == 422
+    assert alice.post(endpoint, content=b"not an image", headers=image).status_code == 422
+    monkeypatch.setattr(imagecheck, "MAX_IMAGE_BYTES", 64)
+    assert alice.post(endpoint, content=png() + b"\0" * 64, headers=image).status_code == 413
+
+
 def test_unvalidated_detector_is_never_contacted(as_user, image_web, monkeypatch):
     monkeypatch.setattr(get_settings(), "image_detector_url", "https://detector.test/check")
     alice = as_user("alice")
