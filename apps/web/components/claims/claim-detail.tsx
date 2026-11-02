@@ -47,6 +47,7 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
   if (a.action === "comment") return t.detail.events.commented;
   if (a.action === "delete") return t.detail.events.deleted;
   if (a.action === "source") return t.detail.events.sourceAdded;
+  if (a.action === "face_revealed") return t.detail.events.faceRevealed;
   const ev = t.dossier.events;
   const word = (v: unknown) => (typeof v === "string" && v in VERDICT_META ? VERDICT_META[v as Verdict].label : "—");
   if (a.action === "sign") {
