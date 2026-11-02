@@ -27,7 +27,7 @@ BROWSER_UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/141.0 Safari/537.36"
 )
-# Fact-checkers that publish in French or about Africa and Madagascar.
+# Fact-checkers that publish in French or about Africa and Madagascar, then worldwide.
 FACT_CHECKERS = [
     "factuel.afp.com",
     "africacheck.org",
@@ -36,6 +36,25 @@ FACT_CHECKERS = [
     "francetvinfo.fr/vrai-ou-fake",
     "liberation.fr/checknews",
     "rfi.fr/fr/podcasts/les-dessous-de-l-infox",
+    # Worldwide signatories of the IFCN code of principles (a rumour often travels from abroad).
+    "factcheck.afp.com",
+    "20minutes.fr/societe/desintox",
+    "snopes.com",
+    "politifact.com",
+    "factcheck.org",
+    "fullfact.org",
+    "leadstories.com",
+    "maldita.es",
+    "newtral.es",
+    "chequeado.com",
+    "aosfatos.org",
+    "correctiv.org/faktencheck",
+    "boomlive.in",
+    "altnews.in",
+    "dubawa.org",
+    "pesacheck.org",
+    "reuters.com/fact-check",
+    "apnews.com/hub/ap-fact-check",
 ]
 CACHE_SECONDS, CACHE_MAX = 600.0, 200
 
