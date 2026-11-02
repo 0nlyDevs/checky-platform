@@ -28,7 +28,7 @@ from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 
-from app.core import contact
+from app.core import contact, places
 from app.core.access import Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
@@ -413,3 +413,66 @@ async def outbox(db: Db, limit: int = Query(default=50, ge=1, le=200)) -> list[S
         m.status, m.sent_at = "sent", now
     await db.commit()
     return out
+
+
+# --- the verdict goes back down the road: askers and the subscribers of the rumour's regions
+async def notify_signed(db, item: Item) -> int:
+    """Queue the signed verdict for everyone who asked about this claim and for the subscribers of
+    the regions on its rumour routes. Only a published verdict of a public newsroom leaves; one SMS
+    per number per claim, so calling it again (after a release, a re-sign) is safe. E-mail askers
+    stay « waiting » (no mail service). Commits; returns the number of SMS queued."""
+    d = item.data or {}
+    if item.status != "published" or d.get("verdict") not in VERDICT_WORDS["fr"]:
+        return 0
+    ws = await db.get(Workspace, item.workspace_id)
+    if ws is None or not ws.is_public:
+        return 0
+    verdict = await public._verdict(db, item, ws)
+    done = set(
+        await db.scalars(
+            select(SmsMessage.phone_hash).where(
+                SmsMessage.direction == "out",
+                SmsMessage.item_id == item.id,
+                SmsMessage.text.contains(short_link(verdict)),
+            )
+        )
+    )
+    queued, now = 0, datetime.now(UTC)
+    asked = await db.scalars(
+        select(PublicQuestion).where(
+            PublicQuestion.item_id == item.id,
+            PublicQuestion.contact_hash.is_not(None),
+            PublicQuestion.notified_at.is_(None),
+        )
+    )
+    for q in asked:
+        where = q.location or {}
+        if where.get("kind") == "email":
+            continue
+        if q.contact_hash not in done:
+            line = verdict_line(verdict, "mg" if where.get("lang") == "mg" else "fr")
+            _queue(db, q.contact_hash, q.contact_masked or "", line, ws.id, item.id)
+            done.add(q.contact_hash)
+            queued += 1
+        q.notified_at = now
+    regions = {
+        places.fold(r)
+        for r in await db.scalars(
+            select(Route.location["region"].astext).where(
+                Route.item_id == item.id, Route.side == "rumour"
+            )
+        )
+        if r
+    }
+    home = d.get("location") if isinstance(d.get("location"), dict) else {}
+    if home.get("region"):
+        regions.add(places.fold(home["region"]))
+    if regions:
+        for sub in await db.scalars(select(SmsSubscriber).where(SmsSubscriber.active.is_(True))):
+            if sub.region and places.fold(sub.region) in regions and sub.phone_hash not in done:
+                line = verdict_line(verdict, "mg" if sub.language == "mg" else "fr")
+                _queue(db, sub.phone_hash, sub.phone_masked, line, ws.id, item.id)
+                done.add(sub.phone_hash)
+                queued += 1
+    await db.commit()
+    return queued

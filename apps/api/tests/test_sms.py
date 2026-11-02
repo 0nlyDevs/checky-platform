@@ -129,3 +129,80 @@ def test_subscribe_stop_help_and_the_daily_limit():
     assert nobody["reply"] == "Reçu. Aucune rédaction ne reçoit de SMS pour l'instant."
     r = sms("encore une question sur le riz")
     assert r.status_code == 429 and r.json()["error"]["code"] == "too_many_sms"
+
+
+def _publish(c, ws, item):
+    r = c.patch(f"/api/v1/workspaces/{ws}/items/{item}", json={"status": "published"})
+    assert r.status_code == 200, r.text
+
+
+async def _notify(item_id):
+    from app.core.db import SessionLocal
+    from app.core.models import Item
+    from app.modules.sms import notify_signed
+
+    async with SessionLocal() as db:
+        return await notify_signed(db, await db.get(Item, item_id))
+
+
+def test_a_signed_verdict_goes_back_to_askers_and_the_regions_it_crossed(as_user):
+    import asyncio
+
+    from app.core.db import SessionLocal
+    from app.core.models import Route
+
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    item = _claim(alice, ws, CLAIM, status="verified", verdict="false", reason="Quatre heures.")
+    assert sms(f"CHECKY {CLAIM}").json()["action"] == "followed"  # an asker by SMS
+    assert sms("ABONNE Toliara", sender="+261 32 99 999 92").json()["action"] == "subscribed"
+    assert sms("ABONNE Toamasina", sender="+261 32 99 999 93").json()["action"] == "subscribed"
+    r = TestClient(app).post(
+        "/api/v1/public/notify",
+        json={"text": CLAIM, "contact": "asker@example.org", "item_id": item},
+    )
+    assert r.status_code == 201
+
+    async def road():
+        async with SessionLocal() as db:
+            db.add(
+                Route(
+                    workspace_id=ws,
+                    item_id=item,
+                    added_by="alice",
+                    side="rumour",
+                    channel="whatsapp",
+                    location={"name": "Toliara", "region": "Atsimo-Andrefana"},
+                )
+            )
+            await db.commit()
+
+    asyncio.run(road())
+    TestClient(app).get("/api/v1/public/sms/outbox", headers=GW)  # the earlier replies leave
+    assert asyncio.run(_notify(item)) == 0  # signed is not published: nothing leaves yet
+    _publish(alice, ws, item)
+    # the SMS asker and the Toliara subscriber; not Toamasina, and not the e-mail asker
+    assert asyncio.run(_notify(item)) == 2
+    assert asyncio.run(_notify(item)) == 0  # once per number
+    box = TestClient(app).get("/api/v1/public/sms/outbox", headers=GW).json()
+    assert {m["masked"] for m in box} == {"+261 32 •• ••• 91", "+261 32 •• ••• 92"}
+    assert all(m["text"].startswith("Faux — 72 heures") for m in box)
+    groups = alice.get(f"/api/v1/workspaces/{ws}/questions").json()
+    assert groups[0]["waiting"] == 1  # the e-mail asker: no mail service yet
+
+
+def test_a_number_left_on_the_site_is_handed_to_the_gateway(as_user):
+    import asyncio
+
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    item = _claim(alice, ws, CLAIM, status="to_check", verdict=None)
+    body = {"text": CLAIM, "contact": "032 99 999 94", "item_id": item}
+    assert TestClient(app).post("/api/v1/public/notify", json=body).status_code == 201
+    alice.patch(
+        f"/api/v1/workspaces/{ws}/items/{item}",
+        json={"status": "published", "data": {"verdict": "false"}},
+    )
+    assert asyncio.run(_notify(item)) == 1
+    box = TestClient(app).get("/api/v1/public/sms/outbox", headers=GW).json()
+    assert [m["to"] for m in box] == ["+261329999994"]
