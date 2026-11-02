@@ -619,6 +619,17 @@ def fact_evidence(numbered: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def weighed_evidence(
+    model: list[dict[str, Any]], numbered: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    """What the confidence weighs: the code's stance wherever code decides one (a modified
+    registry original contradicts even when the Synthèse cited it as context), the Synthèse's
+    for everything else."""
+    decided = fact_evidence(numbered)
+    by_code = {e["n"] for e in decided}
+    return [e for e in model if e["n"] not in by_code] + decided
+
+
 def readable(numbered: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Only what was actually read (a page's passages, a registry original, a figure, a review's
     own words, a newsroom source) can back a reading; a search snippet alone cannot."""
@@ -1066,9 +1077,7 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
     async def weigh(state):
         numbered = state.get("numbered") or []
         analysis = state.get("analysis")
-        model = analysis["evidence"] if analysis else []
-        cited = {e["n"] for e in model}
-        evidence = model + [e for e in fact_evidence(numbered) if e["n"] not in cited]
+        evidence = weighed_evidence(analysis["evidence"] if analysis else [], numbered)
         kept = {r["n"] for r in numbered if r["kind"] in ("registry", "figure", "archive")}
         score = confidence.compute(
             evidence,

@@ -412,3 +412,19 @@ def test_archives_share_a_name_with_the_message(as_user, monkeypatch, research):
         alice.post(f"/api/v1/workspaces/{ws}/sources", json={"title": title, "text": text})
     _, result = _run(alice, ws, text=DEMO_RUMOUR_TEXT, ai_enabled=False)
     assert [a["title"] for a in result["archives"]] == ["Toamasina"]
+
+
+def test_the_code_stance_of_a_fact_outweighs_the_readings():
+    numbered = [
+        {"n": 1, "kind": "web"},
+        {"n": 2, "kind": "registry", "status": "modified"},
+        {"n": 3, "kind": "registry", "status": "not_found"},
+    ]
+    model = [
+        {"n": 1, "stance": "supports", "quote": "a"},
+        {"n": 2, "stance": "context", "quote": "b"},
+        {"n": 3, "stance": "supports", "quote": "c"},
+    ]
+    weighed = {e["n"]: e["stance"] for e in crew.weighed_evidence(model, numbered)}
+    # a modified original contradicts; « Introuvable » decides nothing, the reading stands
+    assert weighed == {1: "supports", 2: "contradicts", 3: "supports"}
