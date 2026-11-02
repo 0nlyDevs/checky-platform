@@ -20,6 +20,10 @@ The crew (`app/core/graph.py`), named after verification jobs:
 Three model calls at most. With « Mode sans IA » (the newsroom's `settings.ai_enabled`, or this
 run's `ai_enabled: false`) the model nodes report `no_ai` and every fact still shows. A node that
 fails is reported as failed with one line; the others go on and the stream always ends.
+
+`public_facts(db, text, url)` runs the fact nodes that need no newsroom (provenance,
+fact-checkers, registry, figures, tone, source reliability, published verdicts) for the public
+check: no model, never a reading or a percentage.
 """
 
 import asyncio
@@ -1135,6 +1139,99 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
     out["tracked"] = await linkcheck._tracked(
         ws, url, claims[0] if claims else None, page.get("item_id")
     )
+    return out
+
+
+# --- the public facts (no newsroom, no model) ----------------------------------------------------
+
+
+async def public_facts(db, text: str | None, url: str | None = None) -> dict[str, Any]:
+    """Facts only, for the public check: provenance, fact-checkers' reviews, registry and figures
+    (across public newsrooms, when those modules are wired), tone, source reliability and the
+    verdicts already published. No model, no workspace, never a reading or a percentage."""
+    page: dict[str, Any] = {"kind": "text", "text": ""}
+    html = None
+    if url:
+        try:
+            async with asyncio.timeout(15):
+                page, html = await _read_link(url)
+        except Exception as exc:  # noqa: BLE001 - the pasted text is still checked
+            log.info("public facts: link unreadable: %s", type(exc).__name__)
+    full = query_plan.clean_text("\n\n".join(filter(None, [page.get("text"), text or ""])))
+    plan = query_plan.fallback(full, "disabled")
+
+    async def provenance(state):
+        found = await provenance_of(page, full)
+        if found is None:
+            raise Skip("Rien à dater")
+        return {"provenance": found}
+
+    async def fact_checkers(state):
+        if not full:
+            raise Skip("Aucun texte")
+        return {"fact_checks": await fact_checks_for(plan, full)}
+
+    async def fiabilite(state):
+        target = page.get("final_url") or url
+        if not target:
+            raise Skip("Pas de lien")
+        return {"credibility": await credibility.rate(target, page, full, html=html)}
+
+    async def ton(state):
+        if not full:
+            raise Skip("Aucun texte")
+        return {"tone": tone.analyse(full), "risk": tone.risk(full)}
+
+    state = await (
+        Graph()
+        .stage(
+            "facts",
+            [
+                Node("Provenance", provenance, timeout=12),
+                Node("Fact-checkers", fact_checkers, timeout=15),
+                Node("Fiabilité", fiabilite, timeout=12),
+                Node("Ton", ton, timeout=5),
+            ],
+        )
+        .run({}, ai_enabled=False)
+    )
+    out: dict[str, Any] = {
+        "provenance": state.get("provenance"),
+        "fact_checks": state.get("fact_checks") or [],
+        "credibility": state.get("credibility"),
+        "tone": state.get("tone"),
+        "risk": state.get("risk"),
+        "registry": None,
+        "figures": None,
+        "published": [],
+        "trace": state["trace"],
+    }
+    if not full:
+        return out
+    # The database checks share the caller's session, one after the other.
+    try:
+        from app.modules.registry import match_text
+
+        out["registry"] = await match_text(db, None, full)
+    except (ImportError, AttributeError):
+        pass
+    except Exception as exc:  # noqa: BLE001 - one fact down never hides the others
+        log.info("public registry check failed: %s", type(exc).__name__)
+        await db.rollback()
+    try:
+        from app.modules.figures import check_numbers
+
+        out["figures"] = await check_numbers(db, None, full)
+    except (ImportError, AttributeError):
+        pass
+    except Exception as exc:  # noqa: BLE001 - one fact down never hides the others
+        log.info("public figures check failed: %s", type(exc).__name__)
+        await db.rollback()
+    try:
+        out["published"] = await published_verdicts(db, full)
+    except Exception as exc:  # noqa: BLE001 - one fact down never hides the others
+        log.info("published verdicts unavailable: %s", type(exc).__name__)
+        await db.rollback()
     return out
 
 

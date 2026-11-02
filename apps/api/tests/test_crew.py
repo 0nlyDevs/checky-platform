@@ -8,9 +8,11 @@ from types import SimpleNamespace
 import pytest
 
 from app.core import ai, evidence_search, websearch
+from app.core.db import SessionLocal
 from app.modules import crew, linkcheck
 from app.modules.demo import DEMO_RUMOUR_TEXT
 from tests.test_agent import _events
+from tests.test_public import _claim, _newsroom
 from tests.test_workspaces import _workspace
 
 PORT = "Le port de Rio est fermé."
@@ -322,3 +324,20 @@ def test_provenance_flags_an_old_picture_shared_as_new():
     assert found["verdict_hint"] == "old_media_new_caption"
     assert [link["name"] for link in found["reverse_links"]] == ["Google Lens", "TinEye", "Yandex"]
     assert asyncio.run(crew.provenance_of({"kind": "text"}, "Bonjour")) is None
+
+
+def test_public_facts_has_no_reading_and_finds_signed_verdicts(as_user, research):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    _claim(alice, ws, "Le port de Rio est fermé", verdict="false", reason="Le port est ouvert.")
+
+    async def run():
+        async with SessionLocal() as db:
+            return await crew.public_facts(db, PORT)
+
+    facts = asyncio.run(run())
+    assert "analysis" not in facts and "confidence" not in facts
+    assert facts["published"][0]["verdict"] == "false"
+    assert facts["published"][0]["newsroom"] == "Desk du matin"
+    assert facts["fact_checks"][0]["publisher"] == "AFP Factuel"
+    assert facts["tone"]["level"] == "neutre" and facts["registry"] is None
