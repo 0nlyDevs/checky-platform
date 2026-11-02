@@ -97,6 +97,7 @@ function FigureFacts({ list }: { list: FigureCheck[] }) {
               <span className="font-display font-bold tabular">{f.claimed}</span>
               <span className={cn("ml-auto rounded-sm px-1.5 py-px text-xs font-bold", f.verdict === "differs" ? "bg-foreground text-background" : "bg-muted")}>{k.figures.verdict[f.verdict] ?? f.verdict}</span>
             </p>
+            {!f.figure && f.summary && <p className="mt-1 text-pretty text-muted-foreground">{f.summary}</p>}
             {f.figure && (
               <p className="mt-1 text-pretty">
                 <span className="text-muted-foreground">{k.figures.official} · </span>

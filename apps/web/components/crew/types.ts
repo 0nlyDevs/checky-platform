@@ -57,6 +57,7 @@ export type FigureCheck = {
     old?: boolean;
   } | null;
   verdict: "matches" | "differs" | "no_figure";
+  summary?: string;
 };
 
 export type Review = { publisher: string; url: string; rating: string | null; date: string | null; title: string; snippet?: string };
