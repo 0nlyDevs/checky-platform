@@ -366,3 +366,17 @@ def test_a_reason_the_model_quotes_longer_replaces_the_codes_shorter_one():
     orders = [r["quote"] for r in merged["reasons"] if r["kind"] == "fake_order"]
     assert orders == ["COMMUNIQUÉ N° 2026-118 de la JIRAMA"]
     assert {r["kind"] for r in merged["reasons"]} == {"fake_order", "panic"}
+
+
+def test_a_failed_recheck_keeps_the_first_search(as_user, monkeypatch, research, scripted):
+    async def down(query, k=6):
+        raise websearch.SearchUnavailable("blocked")
+
+    monkeypatch.setattr(websearch, "web", down)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    events, result = _run(alice, ws, text=PORT)
+    web = [d for e, d in events if e == "agent" and d["agent"] == "Web"]
+    assert [d["status"] for d in web] == ["running", "done", "running", "skipped"]
+    assert web[-1]["summary"] == "Recherche ciblée indisponible"
+    assert result["results"][0]["read_status"] == "read" and "recheck" not in result

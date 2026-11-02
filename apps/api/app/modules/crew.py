@@ -875,8 +875,12 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
             query = state.get("recheck_query") or ""
             if not query:
                 raise Skip("Pas de recherche ciblée")
-            async with asyncio.timeout(12):
-                found = await websearch.web(query, 6)
+            try:
+                async with asyncio.timeout(12):
+                    found = await websearch.web(query, 6)
+            except Exception as exc:
+                # The first search stands; only the Contradicteur's extra one is missing.
+                raise Skip("Recherche ciblée indisponible") from exc
             known = {x.get("url") for x in state.get("results") or []}
             results = [
                 {
