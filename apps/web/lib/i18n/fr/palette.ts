@@ -1,0 +1,27 @@
+export const palette = {
+  title: "Rechercher partout",
+  description: "Espaces, dossiers et actions. Flèches pour choisir, Entrée pour ouvrir, Échap pour fermer.",
+  placeholder: "Un espace, un dossier, une action",
+  list: "Résultats",
+  groups: { spaces: "Espaces", claims: "Dossiers", actions: "Actions" },
+  empty: "Rien ne correspond. Essayez « sources », une référence de dossier ou « thème ».",
+  loading: "Recherche des dossiers…",
+  actions: { check: "Vérifier un contenu", ask: "Demander à Checky", theme: "Changer de thème", shortcuts: "Raccourcis clavier" },
+  help: {
+    title: "Raccourcis clavier",
+    description: "Ils sont ignorés pendant la saisie dans un champ.",
+    close: "Fermer",
+    rows: [
+      { keys: ["Ctrl", "K"], label: "Rechercher partout (⌘ K sur Mac)" },
+      { keys: ["/"], label: "Rechercher partout" },
+      { keys: ["V"], label: "Vérifier un contenu" },
+      { keys: ["G", "D"], label: "Aller aux dossiers" },
+      { keys: ["G", "S"], label: "Aller aux sources" },
+      { keys: ["G", "E"], label: "Aller à l'équipe" },
+      { keys: ["G", "P"], label: "Aller aux paramètres" },
+      { keys: ["?"], label: "Afficher cette aide" },
+      { keys: ["Échap"], label: "Fermer" },
+    ],
+  },
+  undo: "Annuler",
+} as const;
