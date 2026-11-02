@@ -316,7 +316,7 @@ export function VeilleurView({ ws, desk }: { ws: string; desk: boolean }) {
 
         <fieldset>
           <legend className="font-bold">{w.language}</legend>
-          <div role="radiogroup" className="mt-1.5 grid grid-cols-2 rounded-md border border-input bg-card p-0.5">
+          <div role="radiogroup" className="mt-1.5 grid grid-cols-2 rounded-full border border-input bg-card p-1">
             {(["mg", "fr"] as const).map((l) => (
               <button
                 key={l}
@@ -324,7 +324,7 @@ export function VeilleurView({ ws, desk }: { ws: string; desk: boolean }) {
                 role="radio"
                 aria-checked={lang === l}
                 onClick={() => chooseLang(l)}
-                className={cn("h-11 rounded-[3px] font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring", lang === l ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}
+                className={cn("h-11 rounded-full font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring", lang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-raised hover:text-foreground")}
               >
                 {w.languages[l]}
               </button>
