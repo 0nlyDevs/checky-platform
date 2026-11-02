@@ -33,7 +33,7 @@ export function Shortcuts() {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
       // A dialog (palette, sheet, confirmation) owns the keyboard while it is open.
-      if (document.querySelector('[role="dialog"], [role="alertdialog"]')) return;
+      if (document.querySelector('[role="dialog"]:not([inert]), [role="alertdialog"]:not([inert])')) return;
       const key = e.key.toLowerCase();
       if (pendingG.current && Date.now() - pendingG.current < G_WINDOW_MS) {
         pendingG.current = 0;
