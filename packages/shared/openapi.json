@@ -5269,6 +5269,110 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/me/prefs": {
+      "get": {
+        "tags": [
+          "rubrique"
+        ],
+        "summary": "Get Prefs",
+        "operationId": "get_prefs_api_v1_workspaces__ws__me_prefs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrefsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "rubrique"
+        ],
+        "summary": "Put Prefs",
+        "operationId": "put_prefs_api_v1_workspaces__ws__me_prefs_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrefsIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrefsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/rubrique": {
       "get": {
         "tags": [
@@ -5290,6 +5394,38 @@
               "type": "string",
               "format": "uuid",
               "title": "Ws"
+            }
+          },
+          {
+            "name": "beat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Beat"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
             }
           }
         ],
@@ -5315,13 +5451,101 @@
             }
           }
         }
-      },
-      "put": {
+      }
+    },
+    "/api/v1/workspaces/{ws}/rubrique/brief": {
+      "get": {
         "tags": [
           "rubrique"
         ],
-        "summary": "Preferences",
-        "operationId": "preferences_api_v1_workspaces__ws__rubrique_put",
+        "summary": "Brief",
+        "description": "The morning page as a short text, for WhatsApp or an SMS. Facts only, no AI.",
+        "operationId": "brief_api_v1_workspaces__ws__rubrique_brief_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "beat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Beat"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Brief Api V1 Workspaces  Ws  Rubrique Brief Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/angles": {
+      "post": {
+        "tags": [
+          "rubrique"
+        ],
+        "summary": "Angles",
+        "description": "3 to 5 story angles grounded in the newsroom's own facts. One model call; an angle that\ncites no fact or brings a number of its own is dropped. Drawn dashed: a suggestion.",
+        "operationId": "angles_api_v1_workspaces__ws__angles_post",
         "security": [
           {
             "HTTPBearer": []
@@ -5344,7 +5568,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Interests"
+                "$ref": "#/components/schemas/AnglesIn"
               }
             }
           }
@@ -5355,7 +5579,161 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Interests"
+                  "$ref": "#/components/schemas/AnglesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/angles/keep": {
+      "post": {
+        "tags": [
+          "rubrique"
+        ],
+        "summary": "Keep Angle",
+        "description": "A journalist keeps a suggested angle on a dossier (`item.data.angles`).",
+        "operationId": "keep_angle_api_v1_workspaces__ws__items__item_id__angles_keep_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KeepIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/documents": {
+      "get": {
+        "tags": [
+          "rubrique"
+        ],
+        "summary": "Documents",
+        "description": "The newsroom's reference documents: sources whose title names a document (loi, décret,\ncommuniqué, rapport…) and the files of the Registre's originals, newest first.",
+        "operationId": "documents_api_v1_workspaces__ws__documents_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Topic"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DocumentOut"
+                  },
+                  "title": "Response Documents Api V1 Workspaces  Ws  Documents Get"
                 }
               }
             }
@@ -6258,6 +6636,165 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/signals": {
+      "get": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "List Signals",
+        "operationId": "list_signals_api_v1_workspaces__ws__signals_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SignalOut"
+                  },
+                  "title": "Response List Signals Api V1 Workspaces  Ws  Signals Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Add Signal",
+        "operationId": "add_signal_api_v1_workspaces__ws__signals_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignalIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignalOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/signals/{signal_id}": {
+      "delete": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Delete Signal",
+        "operationId": "delete_signal_api_v1_workspaces__ws__signals__signal_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "signal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Signal Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/radio-clips": {
       "get": {
         "tags": [
@@ -6349,6 +6886,588 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClipOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/radio-clips/upload-url": {
+      "post": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Clip Upload Url",
+        "description": "The veilleur's recording goes straight to storage, as every upload does; the clip then\ncompletes it. A door of its own: `files/upload-url` belongs to the desk.",
+        "operationId": "clip_upload_url_api_v1_workspaces__ws__radio_clips_upload_url_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClipUploadIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipUploadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/radio-clips/{clip_id}": {
+      "get": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Get Clip",
+        "operationId": "get_clip_api_v1_workspaces__ws__radio_clips__clip_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Clip Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/antenne": {
+      "get": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Antenne",
+        "description": "What the partner radios heard in the last 7 days, one row per claim: new first, then the\nones the desk follows, then the ones it checked.",
+        "operationId": "antenne_api_v1_workspaces__ws__antenne_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AntenneRow"
+                  },
+                  "title": "Response Antenne Api V1 Workspaces  Ws  Antenne Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/radio-clips/{clip_id}/follow": {
+      "post": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Follow Clip",
+        "description": "« Suivre »: the clip (and the clips that carry the same rumour) join a dossier, new or\nexisting, and each becomes a radio stop of the rumour's road.",
+        "operationId": "follow_clip_api_v1_workspaces__ws__radio_clips__clip_id__follow_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Clip Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FollowIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FollowOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/radio-clips/{clip_id}/ignore": {
+      "post": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Ignore Clip",
+        "operationId": "ignore_clip_api_v1_workspaces__ws__radio_clips__clip_id__ignore_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "clip_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Clip Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClipOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/veille": {
+      "get": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Veille",
+        "description": "What circulates: tips, SMS questions, radio clips and press items, newest first, each\nmarked « Déjà vérifié » when a journalist already signed a verdict on it.",
+        "operationId": "veille_api_v1_workspaces__ws__veille_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
+            }
+          },
+          {
+            "name": "beat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Beat"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "tip",
+                    "sms",
+                    "clip",
+                    "press"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/veille/refresh": {
+      "post": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Refresh",
+        "description": "Read the press feeds (and capture the radio streams) now.",
+        "operationId": "refresh_api_v1_workspaces__ws__veille_refresh_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "title": "Response Refresh Api V1 Workspaces  Ws  Veille Refresh Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/veille/map": {
+      "get": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Veille Map",
+        "description": "Where rumours circulate: per region, the claims, clips, press items and questions of the\nlast 24 hours and 7 days, and how many dossiers were judged high-risk.",
+        "operationId": "veille_map_api_v1_workspaces__ws__veille_map_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/meteo": {
+      "get": {
+        "tags": [
+          "veille"
+        ],
+        "summary": "Meteo",
+        "description": "This week's likely rumours: the season rules in effect and « Ça revient ».",
+        "operationId": "meteo_api_v1_workspaces__ws__meteo_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Meteo Api V1 Workspaces  Ws  Meteo Get"
                 }
               }
             }
@@ -6598,6 +7717,384 @@
           "question"
         ],
         "title": "AgentIn"
+      },
+      "Angle": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "rests_on": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "type": "array",
+            "title": "Rests On"
+          },
+          "missing_figure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing Figure"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "why",
+          "rests_on"
+        ],
+        "title": "Angle"
+      },
+      "AngleCard": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "rests_on": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Rests On",
+            "default": []
+          },
+          "missing_figure": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Missing Figure"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "kept",
+              "piste"
+            ],
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "why",
+          "kind"
+        ],
+        "title": "AngleCard"
+      },
+      "AnglesIn": {
+        "properties": {
+          "topic": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnglesIn"
+      },
+      "AnglesOut": {
+        "properties": {
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "angles": {
+            "items": {
+              "$ref": "#/components/schemas/Angle"
+            },
+            "type": "array",
+            "title": "Angles"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/Fact"
+            },
+            "type": "array",
+            "title": "Facts"
+          },
+          "dropped": {
+            "type": "integer",
+            "title": "Dropped"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "topic",
+          "angles",
+          "facts",
+          "dropped",
+          "model"
+        ],
+        "title": "AnglesOut"
+      },
+      "AntenneClip": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "station": {
+            "type": "string",
+            "title": "Station"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          },
+          "clip_at_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clip At S"
+          },
+          "heard_text": {
+            "type": "string",
+            "title": "Heard Text"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "text_from": {
+            "type": "string",
+            "title": "Text From"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "station",
+          "recorded_at",
+          "source_id",
+          "clip_at_s",
+          "heard_text",
+          "language",
+          "text_from",
+          "demo"
+        ],
+        "title": "AntenneClip"
+      },
+      "AntenneRow": {
+        "properties": {
+          "claim": {
+            "type": "string",
+            "title": "Claim"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "new",
+              "followed",
+              "checked"
+            ],
+            "title": "Status"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "reports": {
+            "type": "integer",
+            "title": "Reports"
+          },
+          "stations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stations"
+          },
+          "regions_24h": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regions 24H"
+          },
+          "first_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First At"
+          },
+          "latest": {
+            "$ref": "#/components/schemas/AntenneClip"
+          },
+          "clip_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Clip Ids"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "claim",
+          "item_id",
+          "ref",
+          "status",
+          "verdict",
+          "reports",
+          "stations",
+          "regions_24h",
+          "first_at",
+          "latest",
+          "clip_ids",
+          "demo"
+        ],
+        "title": "AntenneRow"
       },
       "AskOut": {
         "properties": {
@@ -7148,6 +8645,167 @@
         ],
         "title": "CheckIn"
       },
+      "Checked": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "newsroom": {
+            "type": "string",
+            "title": "Newsroom"
+          },
+          "mine": {
+            "type": "boolean",
+            "title": "Mine"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "verdict",
+          "newsroom",
+          "mine"
+        ],
+        "title": "Checked",
+        "description": "A verdict a journalist already signed for this rumour (this newsroom or a public one)."
+      },
+      "Circulating": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "item",
+              "tip",
+              "sms",
+              "clip",
+              "press"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "station": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Beats"
+          },
+          "item": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ItemOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "already_checked": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Already Checked"
+          },
+          "seasons": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Seasons",
+            "default": []
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "at",
+          "place",
+          "beats"
+        ],
+        "title": "Circulating"
+      },
       "ClipIn": {
         "properties": {
           "station": {
@@ -7159,8 +8817,8 @@
           "heard_text": {
             "type": "string",
             "maxLength": 4000,
-            "minLength": 10,
-            "title": "Heard Text"
+            "title": "Heard Text",
+            "default": ""
           },
           "language": {
             "type": "string",
@@ -7185,37 +8843,86 @@
               }
             ],
             "title": "Source Id"
+          },
+          "file_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "clip_at_s": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clip At S"
           }
         },
         "additionalProperties": false,
         "type": "object",
         "required": [
           "station",
-          "heard_text",
           "recorded_at"
         ],
         "title": "ClipIn"
       },
       "ClipOut": {
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "station": {
             "type": "string",
-            "maxLength": 120,
-            "minLength": 1,
             "title": "Station"
           },
           "heard_text": {
             "type": "string",
-            "maxLength": 4000,
-            "minLength": 10,
             "title": "Heard Text"
           },
-          "language": {
+          "text_from": {
             "type": "string",
-            "maxLength": 10,
-            "minLength": 2,
-            "title": "Language",
-            "default": "mg"
+            "enum": [
+              "veilleur",
+              "transcript",
+              "pending"
+            ],
+            "title": "Text From"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
           },
           "recorded_at": {
             "type": "string",
@@ -7234,26 +8941,150 @@
             ],
             "title": "Source Id"
           },
-          "id": {
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "origin": {
             "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "title": "Origin"
           },
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "clip_at_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clip At S"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo"
+          },
+          "served": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ServedOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
+          "id",
           "station",
           "heard_text",
+          "text_from",
+          "language",
           "recorded_at",
-          "id",
-          "status"
+          "source_id",
+          "item_id",
+          "location",
+          "origin",
+          "status",
+          "clip_at_s",
+          "created_by",
+          "created_at",
+          "demo"
         ],
         "title": "ClipOut"
+      },
+      "ClipUploadIn": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Filename"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Size Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "mime",
+          "size_bytes"
+        ],
+        "title": "ClipUploadIn"
+      },
+      "ClipUploadOut": {
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Headers"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_id",
+          "upload_url",
+          "headers",
+          "expires_in"
+        ],
+        "title": "ClipUploadOut"
       },
       "CommentIn": {
         "properties": {
@@ -7507,6 +9338,49 @@
         ],
         "title": "CommuniqueOut"
       },
+      "CommuniqueRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "issuer",
+          "number",
+          "issued_on"
+        ],
+        "title": "CommuniqueRef"
+      },
       "CompleteIn": {
         "properties": {
           "messages": {
@@ -7630,6 +9504,113 @@
           "cached"
         ],
         "title": "CompleteOut"
+      },
+      "ContactCard": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "institution": {
+            "type": "string",
+            "title": "Institution"
+          },
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Topics"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "verified": {
+            "type": "boolean",
+            "title": "Verified"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "role",
+          "institution",
+          "topics",
+          "phone",
+          "whatsapp",
+          "email",
+          "website",
+          "region",
+          "verified",
+          "is_demo"
+        ],
+        "title": "ContactCard"
       },
       "ContactIn": {
         "properties": {
@@ -8215,6 +10196,167 @@
         ],
         "title": "DiffuseRoute"
       },
+      "DocumentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "doc_type": {
+            "type": "string",
+            "title": "Doc Type"
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "excerpt": {
+            "type": "string",
+            "title": "Excerpt"
+          },
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Beats"
+          },
+          "communique": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CommuniqueRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "status",
+          "doc_type",
+          "issuer",
+          "url",
+          "published_at",
+          "created_at",
+          "item_id",
+          "excerpt",
+          "beats",
+          "communique",
+          "demo"
+        ],
+        "title": "DocumentOut"
+      },
+      "Fact": {
+        "properties": {
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "claim",
+              "verdict",
+              "season",
+              "question",
+              "figure",
+              "missing"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n",
+          "kind",
+          "label"
+        ],
+        "title": "Fact"
+      },
       "FakeIn": {
         "properties": {
           "text": {
@@ -8244,6 +10386,275 @@
           "text"
         ],
         "title": "FakeIn"
+      },
+      "FeedEntry": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "tip",
+              "sms",
+              "clip",
+              "press"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "station": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Beats"
+          },
+          "risk": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk"
+          },
+          "already_checked": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Checked"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "text",
+          "at",
+          "place",
+          "status",
+          "beats"
+        ],
+        "title": "FeedEntry"
+      },
+      "FeedOut": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/FeedEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Counts"
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Since"
+          },
+          "feeds_configured": {
+            "type": "boolean",
+            "title": "Feeds Configured"
+          },
+          "streams_configured": {
+            "type": "boolean",
+            "title": "Streams Configured"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries",
+          "counts",
+          "since",
+          "feeds_configured",
+          "streams_configured"
+        ],
+        "title": "FeedOut"
+      },
+      "FigureCard": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "as_of": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "source_name": {
+            "type": "string",
+            "title": "Source Name"
+          },
+          "source_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Url"
+          },
+          "age_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Days"
+          },
+          "old": {
+            "type": "boolean",
+            "title": "Old"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "topic",
+          "label",
+          "value",
+          "unit",
+          "as_of",
+          "source_name",
+          "source_url",
+          "age_days",
+          "old",
+          "is_demo"
+        ],
+        "title": "FigureCard"
       },
       "FigureIn": {
         "properties": {
@@ -8546,6 +10957,65 @@
           "download_url"
         ],
         "title": "FileOut"
+      },
+      "FollowIn": {
+        "properties": {
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "FollowIn"
+      },
+      "FollowOut": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "created": {
+            "type": "boolean",
+            "title": "Created"
+          },
+          "clip_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "title": "Clip Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "ref",
+          "created",
+          "clip_ids"
+        ],
+        "title": "FollowOut"
       },
       "FormatsOut": {
         "properties": {
@@ -8917,28 +11387,6 @@
         ],
         "title": "ImageOut"
       },
-      "Interests": {
-        "properties": {
-          "beats": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "maxItems": 20,
-            "title": "Beats"
-          },
-          "regions": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "maxItems": 30,
-            "title": "Regions"
-          }
-        },
-        "type": "object",
-        "title": "Interests"
-      },
       "InvitationIn": {
         "properties": {
           "role": {
@@ -9202,6 +11650,19 @@
         "type": "object",
         "title": "ItemPatch"
       },
+      "KeepIn": {
+        "properties": {
+          "angle": {
+            "$ref": "#/components/schemas/Angle"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "angle"
+        ],
+        "title": "KeepIn"
+      },
       "KeyOut": {
         "properties": {
           "key_id": {
@@ -9290,6 +11751,32 @@
         },
         "type": "object",
         "title": "LinkIn"
+      },
+      "MapOut": {
+        "properties": {
+          "regions": {
+            "items": {
+              "$ref": "#/components/schemas/RegionCount"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
+          "unplaced": {
+            "type": "integer",
+            "title": "Unplaced"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "regions",
+          "unplaced",
+          "total"
+        ],
+        "title": "MapOut"
       },
       "MatchOut": {
         "properties": {
@@ -9637,11 +12124,6 @@
             "minLength": 1,
             "format": "uri",
             "title": "Url"
-          },
-          "verified": {
-            "type": "boolean",
-            "title": "Verified",
-            "default": false
           }
         },
         "additionalProperties": false,
@@ -10020,6 +12502,114 @@
           "short_link"
         ],
         "title": "PosterOut"
+      },
+      "PrefsIn": {
+        "properties": {
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Beats"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Regions"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg",
+              "en"
+            ],
+            "title": "Language",
+            "default": "fr"
+          },
+          "station": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PrefsIn"
+      },
+      "PrefsOut": {
+        "properties": {
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Beats"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 30,
+            "title": "Regions"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg",
+              "en"
+            ],
+            "title": "Language",
+            "default": "fr"
+          },
+          "station": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Station"
+          },
+          "beats_offered": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Beats Offered"
+          },
+          "regions_offered": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regions Offered"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "beats_offered",
+          "regions_offered"
+        ],
+        "title": "PrefsOut"
       },
       "Preparation": {
         "properties": {
@@ -10728,6 +13318,66 @@
         ],
         "title": "RatingOut"
       },
+      "RegionCount": {
+        "properties": {
+          "region": {
+            "type": "string",
+            "title": "Region"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "lng": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lng"
+          },
+          "last_24h": {
+            "type": "integer",
+            "title": "Last 24H"
+          },
+          "last_7d": {
+            "type": "integer",
+            "title": "Last 7D"
+          },
+          "high_risk": {
+            "type": "integer",
+            "title": "High Risk"
+          },
+          "kinds": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Kinds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "region",
+          "lat",
+          "lng",
+          "last_24h",
+          "last_7d",
+          "high_risk",
+          "kinds"
+        ],
+        "title": "RegionCount"
+      },
       "ReponseIn": {
         "properties": {
           "stance": {
@@ -11098,21 +13748,102 @@
       },
       "RubriqueOut": {
         "properties": {
-          "interests": {
-            "$ref": "#/components/schemas/Interests"
+          "today": {
+            "type": "string",
+            "title": "Today"
           },
-          "items": {
+          "today_label": {
+            "type": "string",
+            "title": "Today Label"
+          },
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Beats"
+          },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
+          "prefs": {
+            "$ref": "#/components/schemas/PrefsOut"
+          },
+          "circulating": {
+            "items": {
+              "$ref": "#/components/schemas/Circulating"
+            },
+            "type": "array",
+            "title": "Circulating"
+          },
+          "mine": {
             "items": {
               "$ref": "#/components/schemas/ItemOut"
             },
             "type": "array",
-            "title": "Items"
+            "title": "Mine"
+          },
+          "to_sign": {
+            "items": {
+              "$ref": "#/components/schemas/ItemOut"
+            },
+            "type": "array",
+            "title": "To Sign"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/ContactCard"
+            },
+            "type": "array",
+            "title": "Contacts"
+          },
+          "figures": {
+            "items": {
+              "$ref": "#/components/schemas/FigureCard"
+            },
+            "type": "array",
+            "title": "Figures"
+          },
+          "angles": {
+            "items": {
+              "$ref": "#/components/schemas/AngleCard"
+            },
+            "type": "array",
+            "title": "Angles"
+          },
+          "meteo": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Meteo"
+          },
+          "antenne": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Antenne"
           }
         },
         "type": "object",
         "required": [
-          "interests",
-          "items"
+          "today",
+          "today_label",
+          "beats",
+          "regions",
+          "prefs",
+          "circulating",
+          "mine",
+          "to_sign",
+          "contacts",
+          "figures",
+          "angles",
+          "meteo",
+          "antenne"
         ],
         "title": "RubriqueOut"
       },
@@ -11321,6 +14052,72 @@
         ],
         "title": "Segment"
       },
+      "ServedOut": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "truth_routes": {
+            "type": "integer",
+            "title": "Truth Routes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "ref",
+          "title",
+          "status",
+          "verdict",
+          "signed_at",
+          "truth_routes"
+        ],
+        "title": "ServedOut",
+        "description": "« Votre signalement a servi »: the dossier the clip fed, its signed verdict, the routes the\ncorrection took."
+      },
       "SignIn": {
         "properties": {
           "verdict": {
@@ -11351,6 +14148,56 @@
           "reason"
         ],
         "title": "SignIn"
+      },
+      "SignalIn": {
+        "properties": {
+          "word": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Word"
+          }
+        },
+        "type": "object",
+        "required": [
+          "word"
+        ],
+        "title": "SignalIn"
+      },
+      "SignalOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "word": {
+            "type": "string",
+            "title": "Word"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          },
+          "hits": {
+            "type": "integer",
+            "title": "Hits"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "word",
+          "active",
+          "hits",
+          "created_at"
+        ],
+        "title": "SignalOut"
       },
       "SimilarOut": {
         "properties": {
