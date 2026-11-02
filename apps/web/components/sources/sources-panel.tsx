@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 import { IconArrowCounterClockwise, IconArrowSquareOut, IconCalendarDots, IconCheck, IconCircleNotch, IconCopy, IconFileText, IconImage, IconLink, IconMapPin, IconPaperclip, IconPlay, IconPlus, IconSealCheck, IconSparkle, IconTextT, IconVideoCamera, IconWarning, IconWaveform, type Icon } from "@/lib/icons";
 import { toast } from "sonner";
+import { undoable } from "@/lib/undo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -486,7 +487,7 @@ export function SourcesPanel({ ws, itemId, kind }: { ws: string; itemId?: string
       });
       mutate((list) => (list?.some((x) => x.id === s.id) ? list : [s, ...(list ?? [])]), { revalidate: false });
       setUrl("");
-      toast.success(t.sources.added);
+      undoable(t.sources.added, () => unattach(s), t.sources.removed);
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -504,13 +505,19 @@ export function SourcesPanel({ ws, itemId, kind }: { ws: string; itemId?: string
     try {
       const s = await uploadFile(ws, file, itemId, (progress) => setUpload({ name: file.name, progress }));
       mutate((list) => (list?.some((x) => x.id === s.id) ? list : [s, ...(list ?? [])]), { revalidate: false });
-      toast.success(t.sources.added);
+      undoable(t.sources.added, () => unattach(s), t.sources.removed);
     } catch (err) {
       toast.error(errorText(err));
     } finally {
       setUpload(null);
       if (fileInput.current) fileInput.current.value = "";
     }
+  }
+
+  /** Undo of an addition: the source is taken out again. */
+  async function unattach(s: Source) {
+    await api(`/workspaces/${ws}/sources/${s.id}`, { method: "DELETE" });
+    mutate((list) => list?.filter((x) => x.id !== s.id), { revalidate: false });
   }
 
   async function remove(s: Source) {
