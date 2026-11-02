@@ -11,7 +11,7 @@ from sqlalchemy import func, select, update
 from app.core import dates, storage
 from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import Item, Job, PublicQuestion, RadioClip, Route, Source
+from app.core.models import Item, Job, PublicQuestion, RadioClip, Route, Season, Source
 from app.modules import veille
 from app.workers import queue, radio_capture, veille_poll
 from tests.test_public import _claim, _newsroom
@@ -376,6 +376,37 @@ def test_the_map_counts_what_circulates_per_region(as_user):
 
 
 # --- Météo des rumeurs
+def test_meteo_seeds_the_seasons_and_brings_back_last_years_verdicts(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    today = dates.today()
+    try:
+        last_year = today.replace(year=today.year - 1)
+    except ValueError:
+        last_year = today.replace(year=today.year - 1, day=28)
+    seen = datetime(last_year.year, last_year.month, last_year.day, 9, tzinfo=dates.EAT)
+    _claim(
+        alice,
+        ws,
+        "Les sujets du bac auraient fuité",
+        first_seen_at=(seen + timedelta(days=4)).isoformat(),
+    )
+    _claim(
+        alice, ws, "Trop vieux pour revenir", first_seen_at=(seen - timedelta(days=60)).isoformat()
+    )
+    out = alice.get(f"/api/v1/workspaces/{ws}/meteo").json()
+    assert out["today"] == today.isoformat()
+    assert [r["title"] for r in out["returning"]] == ["Les sujets du bac auraient fuité"]
+    assert out["returning"][0]["mine"] and out["returning"][0]["year"] == seen.year
+    count = _db(lambda db: db.scalar(select(func.count()).select_from(Season)))
+    assert count == len(veille.seasons.MG_SEASONS)
+    in_effect = {s["name"] for s in out["seasons"]}
+    expected = {
+        n
+        for n, _, a, b, _, _ in veille.seasons.MG_SEASONS
+        if veille.seasons.in_months(a, b, today.month)
+    }
+    assert in_effect <= expected
 
 
 # --- press and radio capture jobs

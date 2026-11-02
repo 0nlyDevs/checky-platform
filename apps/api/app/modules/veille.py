@@ -27,7 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import dates, storage
+from app.core import dates, seasons, storage
 from app.core.access import AnyMember, Db, Member, Veilleur
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
@@ -1240,6 +1240,16 @@ async def veille_map(member: AnyMember, db: Db) -> MapOut:
 
 
 # ----------------------------------------------------------------------- Météo des rumeurs
+@router.get("/workspaces/{ws}/meteo")
+async def meteo(member: AnyMember, db: Db, region: str | None = None) -> dict[str, Any]:
+    """This week's likely rumours: the season rules in effect and « Ça revient »."""
+    from app.modules.rubrique import load_prefs
+
+    workspace = await db.get(Workspace, member.workspace_id)
+    pref = await load_prefs(db, member)
+    return await seasons.meteo(
+        db, workspace, canonical_region(region), pref.beats if pref else None
+    )
 
 
 # ------------------------------------------------------------------------------- demo seed
