@@ -239,7 +239,7 @@ export function Facts({ r, ws }: { r: CrewResult; ws: string }) {
     <section>
       <h2 className="font-display text-2xl font-bold">{k.facts.title}</h2>
       <p className="mt-0.5 text-sm text-muted-foreground">{k.facts.lead}</p>
-      {cards.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{cards}</div> : <p className="mt-3 text-muted-foreground">{k.facts.none}</p>}
+      {cards.length ? <div className="mt-4 grid items-start gap-3 md:grid-cols-2">{cards}</div> : <p className="mt-3 text-muted-foreground">{k.facts.none}</p>}
       {!!notChecked.length && (
         <p className="mt-3 text-sm text-pretty text-muted-foreground">
           <span className="font-bold text-foreground">{k.facts.notChecked} :</span> {notChecked.map((a) => (a.summary ? `${a.agent} (${a.summary})` : a.agent)).join(" · ")}
