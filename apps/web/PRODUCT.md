@@ -15,7 +15,7 @@ web
 
 ## Product Purpose
 
-FANILO is a fact-checking and information-resilience tool for media professionals in Madagascar, made for the FANILO Hackathon (IFM and the French Embassy press service, Antananarivo, 2–4 November 2026). Journalists check claims, track their verification together, extract quotes from interviews, inspect images and share confirmed verdicts. Evidence, citations and verification progress stay together in the newsroom's workspace.
+Checky is a fact-checking and information-resilience tool for media professionals in Madagascar, born at the FANILO Hackathon (IFM and the French Embassy press service, Antananarivo, 2–4 November 2026). Journalists check claims, track their verification together, extract quotes from interviews, inspect images and share confirmed verdicts. Evidence, citations and verification progress stay together in the newsroom's workspace.
 
 Success: a newsroom can take a rumour from its first appearance to a sourced, journalist-confirmed verdict, and the claim checker and verification board work end to end on seed data.
 
@@ -42,8 +42,9 @@ Built for the local newsroom reality: French and Malagasy content, field conditi
 
 ## Brand Commitments
 
-- Working name **FANILO**, kept in one config file with one SVG logo so it can change in one place.
-- Voice: calm, factual, plain French; no hype.
+- Product name **Checky** (wordmark « Checky. » in Bricolage Grotesque 800, the dot in Cormorant Garamond italic), kept in one config file (`lib/brand.ts`) with one SVG logo so it changes in one place. A line « né au hackathon FANILO » may appear in footers and About only. Until the name slice lands, strings and the logo still read FANILO.
+- Identity: ink and paper. Colour lives only on verdicts; see `DESIGN.md`.
+- Voice: calm, factual, plain French; no hype. Verbatim quotations are set in Cormorant Garamond italic.
 
 ## Evidence on Hand
 
