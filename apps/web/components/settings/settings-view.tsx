@@ -7,6 +7,7 @@ import useSWR from "swr";
 import { IconArrowCounterClockwise, IconArrowsClockwise, IconCheck, IconCircleNotch, IconMinusCircle, IconWarning } from "@/lib/icons";
 import { toast } from "sonner";
 import { NewsroomRules } from "@/components/claims/publication-panel";
+import { BeatsSection, PlaceSection } from "@/components/settings/newsroom-sections";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
@@ -201,23 +202,35 @@ function DemoSection({ ws }: { ws: string }) {
 export function SettingsView() {
   const { ws } = useParams<{ ws: string }>();
   const { role } = useWorkspace(ws);
+  const admin = role === "admin";
 
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <header className="pb-6">
         <h1 className="page-title">{t.settings.title}</h1>
-        <p className="mt-1 text-muted-foreground">{t.settings.lead}</p>
+        <p className="mt-1 text-muted-foreground">{t.team.settings.lead}</p>
       </header>
-      {/* Service health is for whoever runs the desk; journalists only need to know who to ask. */}
-      {role === "admin" ? (
+      {role && (
         <div className="space-y-8">
-          <HealthSection />
-        {role === "admin" && <NewsroomRules ws={ws} />}
-          <PublicSection ws={ws} />
-          <DemoSection ws={ws} />
+          {/* The newsroom's own rules first; then what the public asks and where verdicts go back out;
+              service health and the demo last. Journalists see the questions and the radios. */}
+          {admin && (
+            <>
+              <NewsroomRules ws={ws} />
+              <BeatsSection ws={ws} />
+              <PlaceSection ws={ws} />
+              <PublicSection ws={ws} />
+            </>
+          )}
+          {admin ? (
+            <>
+              <HealthSection />
+              <DemoSection ws={ws} />
+            </>
+          ) : (
+            <p className="max-w-prose text-muted-foreground">{t.team.settings.adminOnly}</p>
+          )}
         </div>
-      ) : (
-        role && <p className="max-w-prose text-muted-foreground">{t.settings.adminOnly}</p>
       )}
     </div>
   );
