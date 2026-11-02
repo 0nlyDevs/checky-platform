@@ -91,7 +91,14 @@ def key_id_of(public_raw: bytes) -> str:
 
 
 async def issuer_key(db: AsyncSession, workspace_id: uuid.UUID, issuer: str) -> SealKey:
-    """The issuer's active key in this newsroom, created on first use."""
+    """The issuer's active key in this newsroom, created on first use. Reserved names (the
+    newsroom's verdict key) are refused here: only `sign_verdict` reaches that key."""
+    if reserved_issuer(issuer):
+        raise ApiError(422, "reserved_issuer", "This issuer name is reserved")
+    return await _key_for(db, workspace_id, issuer)
+
+
+async def _key_for(db: AsyncSession, workspace_id: uuid.UUID, issuer: str) -> SealKey:
     fernet = _fernet()
     key = await db.scalar(
         select(SealKey)
@@ -173,8 +180,22 @@ def qr_svg(url: str) -> str:
 
 # --- the newsroom's own seal on a signed verdict (cards, story, poster) -----------------------
 
-# The issuer name a newsroom's own key is kept under (one key per newsroom, beside its issuers').
-NEWSROOM_ISSUER = "Rédaction"
+# The newsroom's own verdict key lives in a namespace of its own: issuer names starting with
+# `checky:` (after NFKC, casefold, whitespace removed) are refused by the registry, never listed
+# among the issuers' keys and never revoked from there, so no communiqué issuer can share it.
+RESERVED_PREFIX = "checky:"
+NEWSROOM_ISSUER = "checky:verdicts"
+# Domain separation: a verdict seal says what it is, and verification requires it.
+VERDICT_TYPE = "verdict"
+
+
+def reserved_issuer(name: str | None) -> bool:
+    """`checky:` in any guise: compatibility forms folded (NFKC: full-width letters), case folded,
+    whitespace ignored."""
+    folded = re.sub(r"\s+", "", unicodedata.normalize("NFKC", name or "")).casefold()
+    return folded.startswith(RESERVED_PREFIX)
+
+
 VERDICTS = ("true", "misleading", "false", "unverifiable")
 TITLE_MAX = 100  # the signed title travels inside a QR code: a card's title, clipped by code
 
@@ -221,6 +242,7 @@ def verdict_payload(
     if verdict not in VERDICTS:
         raise ValueError(f"Unknown verdict: {verdict}")
     return {
+        "type": VERDICT_TYPE,
         "id": str(item_id),
         "ref": ref,
         "verdict": verdict,
@@ -251,7 +273,7 @@ async def sign_verdict(
     """Seal a published verdict with the newsroom's key (created on first use, flushed: the caller
     commits). Ed25519 is deterministic, so the same version always gives the same seal and nothing
     needs storing on the dossier. Raises 503 `seal_unavailable` without SEAL_SECRET."""
-    key = await issuer_key(db, workspace_id, NEWSROOM_ISSUER)
+    key = await _key_for(db, workspace_id, NEWSROOM_ISSUER)
     private = Ed25519PrivateKey.from_private_bytes(_fernet().decrypt(key.private_key_enc.encode()))
     payload = verdict_payload(
         item_id=item_id,
@@ -276,14 +298,15 @@ async def sign_verdict(
 
 
 def read_fragment(fragment: str) -> tuple[dict[str, Any], str, str, str] | None:
-    """The QR's `#message.signature.key_id` back into (payload, message, signature, key_id)."""
+    """The QR's `#message.signature.key_id` back into (payload, message, signature, key_id); None
+    for anything that is not a verdict seal (`"type": "verdict"`)."""
     try:
         packed, signature, key_id = fragment.lstrip("#").split(".")
         message = unb64u(packed).decode()
         payload = json.loads(message)
     except (ValueError, UnicodeDecodeError):
         return None
-    if not isinstance(payload, dict):
+    if not isinstance(payload, dict) or payload.get("type") != VERDICT_TYPE:
         return None
     return payload, message, signature, key_id
 

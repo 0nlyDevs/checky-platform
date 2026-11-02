@@ -62,6 +62,14 @@ class OriginalIn(BaseModel):
     def tidy(cls, value):
         return re.sub(r"\s+", " ", value).strip() if value else value
 
+    @field_validator("issuer")
+    @classmethod
+    def not_reserved(cls, value):
+        # `checky:` names hold the newsroom's own verdict key (app/core/seal.py).
+        if seal.reserved_issuer(value):
+            raise ValueError("This issuer name is reserved")
+        return value
+
 
 class NewsroomOut(BaseModel):
     slug: str
@@ -296,7 +304,9 @@ async def _key_out(db: AsyncSession, key: SealKey) -> KeyOut:
 
 @router.get("/workspaces/{ws}/registry/keys")
 async def seal_keys(member: AnyMember, db: Db) -> list[KeyOut]:
-    stmt = select(SealKey).where(SealKey.workspace_id == member.workspace_id)
+    stmt = select(SealKey).where(
+        SealKey.workspace_id == member.workspace_id, SealKey.issuer != seal.NEWSROOM_ISSUER
+    )
     keys = (await db.scalars(stmt.order_by(SealKey.created_at.desc()))).all()
     return [await _key_out(db, k) for k in keys]
 
@@ -308,7 +318,7 @@ async def revoke_key(key_id: str, member: AnyMember, db: Db) -> KeyOut:
     key = await db.scalar(
         select(SealKey).where(SealKey.workspace_id == member.workspace_id, SealKey.key_id == key_id)
     )
-    if key is None:
+    if key is None or seal.reserved_issuer(key.issuer):
         raise ApiError(404, "not_found", "Key not found")
     if key.revoked_at is None:
         key.revoked_at = datetime.now(UTC)
@@ -587,6 +597,8 @@ async def verify_public_seal(cid: uuid.UUID, body: VerifyIn, db: Db) -> VerifyOu
 class PublicKeyOut(BaseModel):
     key_id: str
     issuer: str
+    # `verdict`: a newsroom's own key for its verdict cards; `communique`: an issuer's key.
+    kind: Literal["communique", "verdict"] = "communique"
     alg: str
     public_key: str
     created_at: datetime
@@ -596,6 +608,7 @@ class PublicKeyOut(BaseModel):
 class RevokedKeyOut(BaseModel):
     key_id: str
     issuer: str
+    kind: Literal["communique", "verdict"] = "communique"
     revoked_at: datetime
     newsroom: NewsroomOut
 
@@ -620,10 +633,15 @@ async def public_seal_keys(db: Db) -> SealKeysOut:
     keys, revoked = [], []
     for key, ws in rows:
         room = NewsroomOut(slug=ws.slug, name=ws.name)
+        kind = "verdict" if key.issuer == seal.NEWSROOM_ISSUER else "communique"
         if key.revoked_at:
             revoked.append(
                 RevokedKeyOut(
-                    key_id=key.key_id, issuer=key.issuer, revoked_at=key.revoked_at, newsroom=room
+                    key_id=key.key_id,
+                    issuer=key.issuer,
+                    kind=kind,
+                    revoked_at=key.revoked_at,
+                    newsroom=room,
                 )
             )
         else:
@@ -631,6 +649,7 @@ async def public_seal_keys(db: Db) -> SealKeysOut:
                 PublicKeyOut(
                     key_id=key.key_id,
                     issuer=key.issuer,
+                    kind=kind,
                     alg=seal.ALG,
                     public_key=key.public_key,
                     created_at=key.created_at,

@@ -879,8 +879,14 @@ async def verify_verdict_seal(
     key, ws = row
     valid = seal.verify_message(key.public_key, body.message, body.signature)
     found = seal.read_fragment(f"{seal.b64u(body.message.encode())}.x.y")
-    # A genuine seal of another verdict does not vouch for this page.
-    valid = valid and bool(found) and found[0].get("id") == str(item_id)
+    # Only a verdict seal (domain-separated) of this very verdict vouches for this page, and only
+    # with the newsroom's verdict key, never an issuer's.
+    valid = (
+        valid
+        and key.issuer == seal.NEWSROOM_ISSUER
+        and bool(found)
+        and found[0].get("id") == str(item_id)
+    )
     current = False
     if valid:
         try:

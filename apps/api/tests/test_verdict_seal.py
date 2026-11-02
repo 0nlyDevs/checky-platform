@@ -9,6 +9,7 @@ import pytest
 from app.core import seal
 from app.core.config import get_settings
 from app.core.db import SessionLocal
+from app.core.errors import ApiError
 from tests.ref_fixture import set_ref
 from tests.test_workspaces import _verify, _workspace
 
@@ -97,7 +98,8 @@ def test_card_seal_is_checked_offline_and_fails_once_the_verdict_changes(as_user
     assert sealed["number"] == 145 and sealed["payload"]["verdict"] == "false"
     # The public keys list carries the newsroom's key, so a phone checks with no network.
     keys = client.get("/api/v1/public/seal-keys").json()["keys"]
-    assert any(k["key_id"] == sealed["key_id"] and k["issuer"] == "Rédaction" for k in keys)
+    assert any(k["key_id"] == sealed["key_id"] and k["kind"] == "verdict" for k in keys)
+    assert sealed["payload"]["type"] == "verdict"
     _payload, message, signature, key_id = seal.read_fragment(sealed["url"].split("#")[1])
     assert seal.verify_message(sealed["public_key"], message, signature)
 
@@ -181,3 +183,32 @@ def test_seal_needs_the_secret(as_user, client, monkeypatch):
     r = alice.get(f"/api/v1/workspaces/{ws}/items/{item}/seal")
     assert r.status_code == 503 and r.json()["error"]["code"] == "seal_unavailable"
     assert client.get(f"/api/v1/public/sceau/v/{item}").status_code == 404
+
+
+def test_verdict_key_lives_in_its_own_namespace(as_user, client, secret):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    item = _published(alice, ws)
+    sealed = alice.get(f"/api/v1/workspaces/{ws}/items/{item}/seal").json()
+    # A registry entry cannot take the reserved name, whatever its case or spacing.
+    for name in ("checky:verdicts", "CHECKY:Verdicts", "  Checky:  autre", "ｃhecky:x"):
+        r = alice.post(
+            f"/api/v1/workspaces/{ws}/registry",
+            json={"issuer": name, "title": "Faux", "text": "Un texte assez long pour le registre."},
+        )
+        assert r.status_code == 422, name
+    # The issuers' key list and its revocation never reach the verdict key.
+    keys = alice.get(f"/api/v1/workspaces/{ws}/registry/keys").json()
+    assert all(k["key_id"] != sealed["key_id"] for k in keys)
+    revoke = alice.post(f"/api/v1/workspaces/{ws}/registry/keys/{sealed['key_id']}/revoke")
+    assert revoke.status_code == 404
+
+    async def issuer_key_refuses():
+        async with SessionLocal() as db:
+            with pytest.raises(ApiError):
+                await seal.issuer_key(db, uuid.UUID(ws), "Checky:Verdicts")
+
+    asyncio.run(issuer_key_refuses())
+    # Verification requires the verdict type: a signed message without it is refused.
+    payload = {k: v for k, v in sealed["payload"].items() if k != "type"}
+    assert seal.read_fragment(f"{seal.b64u(seal.canonical(payload).encode())}.s.k") is None
