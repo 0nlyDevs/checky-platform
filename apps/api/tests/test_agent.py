@@ -133,6 +133,6 @@ def test_agent_stops_after_max_steps(as_user, scripted):
     ws = _workspace(alice)
     events = _events(alice.post(f"/api/v1/workspaces/{ws}/agent", json={"question": "x?"}).text)
     assert [e for e, _ in events].count("step") == MAX_STEPS - 1
-    assert events[-2] == ("answer", {"text": "Synthèse.", "citations": []})
+    assert events[-2] == ("answer", {"text": "Synthèse.", "citations": [], "actions": []})
     # The last turn is asked without tools, so it must answer.
     assert "tools" not in seen[-1]

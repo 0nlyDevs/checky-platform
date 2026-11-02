@@ -301,3 +301,15 @@ def test_outsiders_cannot_use_a_workspace_ai(fake, as_user):
     ws = _workspace(as_user("alice"))
     r = as_user("mallory").post(f"/api/v1/workspaces/{ws}/ai/complete", json={"messages": MSGS})
     assert r.status_code == 404
+
+
+def test_tool_calls_are_replayed_in_each_providers_dialect():
+    call = {"id": "c1", "type": "function", "function": {"name": "f", "arguments": "{}"}}
+    signed = {**call, "extra_content": {"google": {"thought_signature": "sig"}}}
+    msgs = [{"role": "assistant", "content": None, "tool_calls": [call, signed]}]
+    gemini = ai.Provider("gemini", "", "k", "m")
+    groq = ai.Provider("groq", "", "k", "m")
+    to_gemini = ai._replay(gemini, msgs)[0]["tool_calls"]
+    assert to_gemini[0]["extra_content"]["google"]["thought_signature"] == ai.GEMINI_UNSIGNED
+    assert to_gemini[1]["extra_content"]["google"]["thought_signature"] == "sig"
+    assert all("extra_content" not in c for c in ai._replay(groq, msgs)[0]["tool_calls"])

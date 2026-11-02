@@ -279,7 +279,7 @@ Ordinary people can use FANILO without an account, in the same case-file world:
 - « Est-ce déjà vérifié ? » (`/verifies`): a public AI assistant. Ask a question or paste a message received on WhatsApp or Facebook, in French or Malagasy; it answers only from verdicts published by newsrooms, citing them [n] with links to each file. With nothing published on the subject it makes no AI call and invites a tip. It never makes up a verdict.
 - The archive of published verdicts, searchable, each with its reason, sources and a shareable page.
 - « Signaler une rumeur » (`/signaler`): send a message or link to a newsroom; it lands in its « à vérifier » list, tagged « signalement », live. No personal data is asked; a follow-up link (`/suivi/…`) shows the steps and the verdict once published.
-- The assistant is a floating chat button on every page (public pages answer from published verdicts; inside a workspace it answers from the desk's sources). Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
+- The assistant is a floating chat button on every page and is an agent for the site itself, not only for checking facts. For visitors it answers from published verdicts, explains FANILO, prepares a tip (shown as an editable draft, sent only when the visitor presses Envoyer), says where their own tips stand and opens the right page. Inside a workspace it is the desk's copilot: what has circulated longest, the night in brief, claims without sources, answers from the sources, and proposed changes (new claim, attach a link, run the analysis, move a status, open a claim) that run only after the journalist confirms, with their own rights. It never confirms a verdict and never publishes. Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
 - Each newsroom opts in (admin setting « Publier nos verdicts »); the demo newsroom is public after a demo reset.
 
 **Component inventory**
@@ -428,7 +428,7 @@ fanilo-base/
 | `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, `STORAGE_BUCKET` | api | Neon branch storage endpoint and credential; bucket `uploads` (production), `uploads-dev` (local) |
 | `LLM_PROVIDERS` | api | `groq,gemini,nvidia` (order = fallback order) |
 | `GROQ_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY` | api | one set per team member if needed |
-| `LLM_MODEL_GROQ`, `LLM_MODEL_GEMINI`, `LLM_MODEL_NVIDIA` | api | empty = gateway defaults (`openai/gpt-oss-120b`, `gemini-3.5-flash-lite`) |
+| `LLM_MODEL_GROQ`, `LLM_MODEL_GEMINI`, `LLM_MODEL_NVIDIA` | api | empty = gateway defaults (`openai/gpt-oss-120b`, `gemini-3.5-flash-lite`, `nvidia/nemotron-3.5-lightning-30b-a3b`) |
 | `EMBED_PROVIDER`, `EMBED_MODEL`, `EMBED_DIM` | api | set once, never changed during the event |
 | `STT_PROVIDER`, `STT_MODEL` | api | Groq Whisper |
 | `AI_CACHE` | api | `true` in development |

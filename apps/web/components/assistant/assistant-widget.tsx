@@ -1,29 +1,62 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AudioLines, Mic, MessageCircle, Send, Square, Volume2, VolumeX, X } from "lucide-react";
+import { AudioLines, Mic, MessageCircle, RotateCcw, Send, Square, Volume2, VolumeX, X } from "lucide-react";
 import { VerdictChip } from "@/components/site/fragments";
-import { API_URL, ApiError } from "@/lib/api";
+import { API_URL, ApiError, api } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
-import { type PublicVerdict, publicApi } from "@/lib/public-api";
+import { type PublicVerdict, myTips, publicApi, rememberTip } from "@/lib/public-api";
 import { postStream } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 
 const a = t.assistant;
 type Lang = "fr" | "mg";
-type Passage = { n: number; title: string };
+type Cite = { n: number; title: string; url?: string | null; id?: string; verdict?: PublicVerdict["verdict"] };
+type Origin = keyof typeof t.origins;
+/** A change the agent proposes; nothing happens until the person confirms it here. */
+type Action = {
+  id: number;
+  kind: "tip" | "navigate" | "create_claim" | "attach_link" | "analyze" | "set_status";
+  href?: string;
+  label?: string;
+  newsroom?: string;
+  newsroom_name?: string;
+  newsrooms?: { slug: string; name: string }[];
+  text?: string;
+  url?: string | null;
+  origin?: Origin;
+  title?: string;
+  item_id?: string;
+  ref?: string | null;
+  status?: keyof typeof t.status;
+  state?: "pending" | "running" | "done" | "cancelled" | "failed";
+  outcome?: string;
+  link?: string;
+};
 type Turn = {
   id: number;
   question: string;
   answer: string;
-  state: "thinking" | "answering" | "done" | "error";
-  verdicts?: PublicVerdict[];
-  passages?: Passage[];
+  state: "thinking" | "done" | "error";
+  steps?: string[];
+  cites?: Cite[];
+  actions?: Action[];
   note?: string;
-  unchecked?: boolean;
 };
+
+const YES = /^(oui|ouais|ok|okay|d'accord|dacord|vas[- ]y|envoie|envoyez|confirme|confirmer|c'est bon|eny|eka|ie)\b/i;
+const NO = /^(non|annule|annuler|stop|laisse|tsia|aza)\b/i;
+const STORE = "fanilo:assistant";
+
+function stored(key: string): Turn[] {
+  try {
+    return typeof window === "undefined" ? [] : ((JSON.parse(sessionStorage.getItem(key) ?? "{}").turns as Turn[]) ?? []);
+  } catch {
+    return [];
+  }
+}
 
 const plain = (s: string) => s.replace(/\[\d+\]|【[^】]*】|\*\*/g, "").replace(/\s+/g, " ").trim();
 
@@ -72,16 +105,27 @@ function stopSpeaking() {
 }
 
 /**
- * The floating assistant on every page. Signed-out (or outside a workspace) it answers from published
- * verdicts only; inside a workspace it asks the desk's own sources. Questions can be typed or dictated
- * (French or Malagasy, Whisper), and in voice mode answers are read aloud.
+ * The floating site agent on every page. Outside a workspace it is the visitors' guide (published
+ * verdicts, tips, their follow-up, the right page); inside one it is the desk's copilot (the desk, its
+ * sources, proposed changes). Every change it proposes waits for a click, or a spoken « oui ».
+ * Questions can be typed or dictated (French or Malagasy, Whisper); in voice mode answers are read aloud.
  */
 export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk" }) {
   const params = useParams<{ ws?: string }>();
   const ws = scope === "desk" ? params?.ws : undefined;
+  const router = useRouter();
+  const pathname = usePathname();
+  const key = `${STORE}:${ws ?? "public"}`;
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
-  const [turns, setTurns] = useState<Turn[]>([]);
+  // The conversation survives page changes (the agent itself opens pages) for this tab.
+  const [turns, setTurns] = useState<Turn[]>(() => stored(key));
+  const [loaded, setLoaded] = useState(key);
+  if (loaded !== key) {
+    // the shell's widget outlives the onboarding page: a workspace has its own conversation
+    setLoaded(key);
+    setTurns(stored(key));
+  }
   const [lang, setLang] = useState<Lang>("fr");
   const [voice, setVoice] = useState(false);
   const [rec, setRec] = useState<"idle" | "listening" | "transcribing">("idle");
@@ -90,7 +134,9 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   const recorder = useRef<MediaRecorder | null>(null);
   const log = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
-  const seq = useRef(0);
+  const seq = useRef(turns.reduce((m, x) => Math.max(m, x.id), 0));
+  const pending = useRef<{ turn: number; action: Action } | null>(null);
+  const turnsRef = useRef(turns);
   const voiceRef = useRef(voice);
   const openRef = useRef(open);
   useEffect(() => {
@@ -105,7 +151,21 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight, behavior: "smooth" });
-  }, [turns]);
+    turnsRef.current = turns;
+    try {
+      sessionStorage.setItem(key, JSON.stringify({ turns: turns.slice(-12), open }));
+    } catch {
+      // without storage the conversation simply starts again on the next page
+    }
+  }, [turns, open, key]);
+  useEffect(() => {
+    // reopen after a page the agent opened (a different layout mounts a new widget)
+    try {
+      if (JSON.parse(sessionStorage.getItem(key) ?? "{}").open) requestAnimationFrame(() => setOpen(true));
+    } catch {
+      // nothing to restore
+    }
+  }, [key]);
   useEffect(() => {
     if (!open) return;
     input.current?.focus();
@@ -117,39 +177,93 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
 
   const update = (id: number, patch: (x: Turn) => Partial<Turn>) => setTurns((all) => all.map((x) => (x.id === id ? { ...x, ...patch(x) } : x)));
 
+  function history(q: string) {
+    const past = turns.filter((x) => x.state === "done").slice(-3);
+    return [
+      ...past.flatMap((x) => {
+        const said = [x.answer, ...(x.actions ?? []).map((ac) => ac.outcome)].filter(Boolean).join(" ");
+        return [{ role: "user", content: x.question.slice(0, 2000) }, ...(said ? [{ role: "assistant", content: said.slice(0, 2000) }] : [])];
+      }),
+      { role: "user", content: q.slice(0, 2000) },
+    ];
+  }
+
   async function ask(question: string) {
     const q = question.trim();
-    if (q.length < 3) return;
+    if (q.length < 2) return;
     const id = ++seq.current;
-    setTurns((all) => [...all, { id, question: q, answer: "", state: "thinking" }]);
+    const messages = history(q);
+    setTurns((all) => [...all, { id, question: q, answer: "", state: "thinking", steps: [] }]);
     setText("");
     let finalAnswer = "";
+    let actions: Action[] = [];
+    const body = { messages, lang, page: pathname, tips: ws ? [] : myTips().map((x) => x.token) };
     try {
-      if (ws) {
-        await postStream(`/workspaces/${ws}/ask`, { question: q, k: 4 }, (event, data) => {
-          if (event === "citations") update(id, () => ({ passages: data as Passage[], state: "answering" }));
-          else if (event === "delta") update(id, (x) => ((finalAnswer = x.answer + (data as { text: string }).text), { answer: finalAnswer }));
-          else if (event === "error") update(id, () => ({ state: "error", note: a.failed }));
-        });
-        update(id, (x) => (x.state === "error" ? {} : { state: "done" }));
-      } else {
-        const res = await publicApi<{ answer: string | null; verdicts: PublicVerdict[]; checked: boolean }>("/ask", {
-          method: "POST",
-          body: JSON.stringify({ question: q.slice(0, 600) }),
-        });
-        finalAnswer = res.answer ?? (res.checked ? a.busy : a.notChecked);
-        update(id, () => ({ answer: res.answer ?? "", verdicts: res.verdicts, state: "done", unchecked: !res.checked, note: res.answer ? undefined : res.checked ? a.busy : a.notChecked }));
-      }
-      if (voiceRef.current && finalAnswer) {
-        setSpeaking(true);
-        void speak(finalAnswer, lang, () => {
-          setSpeaking(false);
-          // a conversation: once the answer is read, the assistant listens again
-          if (voiceRef.current && openRef.current) void listen();
-        });
-      }
+      await postStream(ws ? `/workspaces/${ws}/copilot` : "/public/agent", body, (event, data) => {
+        if (event === "step") update(id, (x) => ({ steps: [...(x.steps ?? []), (data as { summary: string }).summary] }));
+        else if (event === "answer") {
+          const d = data as { text: string; citations: Cite[]; actions: Action[] };
+          finalAnswer = d.text ?? "";
+          actions = d.actions.map((ac) => ({ ...ac, state: ac.kind === "navigate" ? "done" : "pending" }));
+          update(id, () => ({ answer: finalAnswer, cites: d.citations, actions, state: "done" }));
+        } else if (event === "error") update(id, () => ({ state: "error", note: (data as { code?: string }).code === "ai_unavailable" ? a.busy : a.failed }));
+      });
     } catch (err) {
-      update(id, () => ({ state: "error", note: err instanceof ApiError && err.status === 429 ? a.tooMany : a.failed }));
+      return update(id, () => ({ state: "error", note: err instanceof ApiError && err.status === 429 ? a.tooMany : a.failed }));
+    }
+    const go = actions.find((ac) => ac.kind === "navigate");
+    if (go?.href && go.href !== pathname) router.push(go.href as never);
+    const waiting = actions.find((ac) => ac.state === "pending");
+    pending.current = waiting ? { turn: id, action: waiting } : null;
+    if (voiceRef.current && finalAnswer) say(waiting ? `${finalAnswer} ${a.sayYes}` : finalAnswer);
+  }
+
+  /** Reads a line aloud in voice mode, then listens again: a hands-free conversation. */
+  function say(line: string) {
+    setSpeaking(true);
+    void speak(line, lang, () => {
+      setSpeaking(false);
+      if (voiceRef.current && openRef.current) void listen();
+    });
+  }
+
+  const patchAction = (turn: number, action: number, patch: Partial<Action>) =>
+    update(turn, (x) => ({ actions: x.actions?.map((ac) => (ac.id === action ? { ...ac, ...patch } : ac)) }));
+
+  async function run(turn: number, proposed: Action, confirmed: boolean) {
+    pending.current = null;
+    // the visitor may have edited the draft since it was proposed
+    const ac = turnsRef.current.find((x) => x.id === turn)?.actions?.find((y) => y.id === proposed.id) ?? proposed;
+    if (!confirmed) {
+      patchAction(turn, ac.id, { state: "cancelled", outcome: a.cancelled });
+      if (voiceRef.current) say(a.cancelled);
+      return;
+    }
+    patchAction(turn, ac.id, { state: "running" });
+    try {
+      let outcome: string = a.done;
+      let link: string | undefined;
+      if (ac.kind === "tip") {
+        const res = await publicApi<{ token: string; ref: string }>("/tips", {
+          method: "POST",
+          body: JSON.stringify({ newsroom: ac.newsroom, text: ac.text, url: ac.url || undefined, origin: ac.origin ?? "other" }),
+        });
+        rememberTip({ token: res.token, ref: res.ref, title: (ac.text ?? "").split("\n")[0].slice(0, 300) });
+        outcome = a.sent(res.ref);
+        link = `/suivi/${res.token}`;
+      } else if (ws) {
+        const res = await api<{ item_id: string; ref: string | null }>(`/workspaces/${ws}/copilot/act`, {
+          method: "POST",
+          body: JSON.stringify({ kind: ac.kind, item_id: ac.item_id, title: ac.title, body: ac.text, origin: ac.origin, url: ac.url, status: ac.status }),
+        });
+        link = `/w/${ws}/affirmations/${res.item_id}`;
+        if (res.ref) outcome = `${a.done} ${res.ref}.`;
+      }
+      patchAction(turn, ac.id, { state: "done", outcome, link });
+      if (voiceRef.current) say(outcome);
+    } catch (err) {
+      const note = err instanceof ApiError && err.status === 403 ? a.forbidden : err instanceof ApiError && err.status === 429 ? a.tooMany : a.actFailed;
+      patchAction(turn, ac.id, { state: "failed", outcome: note });
     }
   }
 
@@ -210,7 +324,10 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
         const { text: said } = (await res.json()) as { text: string };
         setRec("idle");
         if (!said.trim()) return;
-        if (voiceRef.current) await ask(said);
+        const waiting = pending.current;
+        const words = said.trim().toLowerCase();
+        if (voiceRef.current && waiting && (YES.test(words) || NO.test(words))) await run(waiting.turn, waiting.action, YES.test(words));
+        else if (voiceRef.current) await ask(said);
         else setText((prev) => (prev ? `${prev} ${said}` : said));
       } catch {
         setNotice(a.dictationFailed);
@@ -230,7 +347,13 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
           <header className="assistant-head">
             <AudioLines className="size-5" aria-hidden />
             <h2 id="assistant-title">{a.title}</h2>
-            <button type="button" className="assistant-icon ml-auto" onClick={() => {
+            {!!turns.length && (
+              <button type="button" className="assistant-icon ml-auto" onClick={() => { stopSpeaking(); pending.current = null; setTurns([]); }} title={a.clear}>
+                <RotateCcw className="size-4" aria-hidden />
+                <span className="sr-only">{a.clear}</span>
+              </button>
+            )}
+            <button type="button" className={cn("assistant-icon", !turns.length && "ml-auto")} onClick={() => {
                 const on = !voice;
                 setVoice(on);
                 voiceRef.current = on;
@@ -253,36 +376,45 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
             {turns.map((x) => (
               <div key={x.id} className="space-y-2">
                 <p className="assistant-q">{x.question}</p>
-                <div className="assistant-a">
-                  {x.state === "thinking" && <p className="text-muted-foreground">{a.thinking}</p>}
-                  {x.answer && <p className="whitespace-pre-line">{renderCites(x.answer, x.verdicts)}</p>}
+                <div className="assistant-a" data-state={x.state}>
+                  {x.state === "thinking" && <p className="text-muted-foreground">{x.steps?.at(-1) ? `${x.steps.at(-1)}…` : a.thinking}</p>}
+                  {x.answer && <p className="whitespace-pre-line">{renderCites(x.answer, x.cites)}</p>}
                   {x.note && <p className={cn(x.state === "error" && "text-verdict-false-ink")}>{x.note}</p>}
-                  {!!x.verdicts?.length && (
+                  {x.cites?.some((c) => c.verdict) && (
                     <ul className="mt-2 space-y-1.5">
-                      {x.verdicts.map((v, i) => (
-                        <li key={v.id}>
-                          <Link href={`/verifies/${v.id}`} className="assistant-file">
-                            <span className="tabular">[{i + 1}]</span>
-                            <span className="min-w-0 flex-1 truncate">{v.title}</span>
-                            <VerdictChip verdict={v.verdict} />
-                          </Link>
-                        </li>
-                      ))}
+                      {x.cites.map((c) =>
+                        c.verdict && c.url ? (
+                          <li key={c.n}>
+                            <Link href={c.url as never} className="assistant-file">
+                              <span className="tabular">[{c.n}]</span>
+                              <span className="min-w-0 flex-1 truncate">{c.title}</span>
+                              <VerdictChip verdict={c.verdict} />
+                            </Link>
+                          </li>
+                        ) : null,
+                      )}
                     </ul>
                   )}
-                  {!!x.passages?.length && (
+                  {!!x.cites?.length && !x.cites.some((c) => c.verdict) && (
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {a.passages} : {x.passages.map((p) => `[${p.n}] ${p.title}`).join(" · ")}
+                      {a.passages} : {x.cites.map((c) => `[${c.n}] ${c.title}`).join(" · ")}
                     </p>
                   )}
-                  {x.unchecked && (
-                    <Link href={`/signaler?texte=${encodeURIComponent(x.question)}`} className="mt-2 inline-block font-medium underline underline-offset-4">
-                      {a.report} →
-                    </Link>
-                  )}
+                  {x.actions?.map((ac) => (
+                    <ActionCard key={ac.id} action={ac} onRun={(ok) => void run(x.id, ac, ok)} onEdit={(patch) => patchAction(x.id, ac.id, patch)} />
+                  ))}
                 </div>
               </div>
             ))}
+            {!turns.length && (
+              <div className="flex flex-wrap gap-2">
+                {(ws ? a.suggestionsDesk : a.suggestionsPublic).map((q) => (
+                  <button key={q} type="button" className="assistant-chip" onClick={() => void ask(q)}>
+                    {q}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <form
@@ -344,18 +476,94 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   );
 }
 
-// [n] (or 【n】) in an answer becomes a link to the cited file when there is one.
-function renderCites(body: string, files?: PublicVerdict[]) {
+// [n] (or 【n】) in an answer becomes a link to the cited verdict when there is one.
+function renderCites(body: string, cites?: Cite[]) {
   return body.split(/(\[\d+\]|【\d+[^】]*】|\*\*[^*]+\*\*)/g).map((part, i) => {
     if (/^\*\*[^*]+\*\*$/.test(part)) return <strong key={i}>{part.slice(2, -2)}</strong>;
     const n = Number(/^(?:\[(\d+)\]|【(\d+))/.exec(part)?.slice(1).find(Boolean));
-    const v = n && files?.[n - 1];
-    return v ? (
-      <Link key={i} href={`/verifies/${v.id}`} className="font-semibold underline underline-offset-2">
+    const c = n ? cites?.find((x) => x.n === n) : undefined;
+    return c?.url?.startsWith("/") ? (
+      <Link key={i} href={c.url as never} className="font-semibold underline underline-offset-2">
         [{n}]
       </Link>
     ) : (
       part
     );
   });
+}
+
+/** One proposed change: what it will do in plain words, and the two buttons. */
+function ActionCard({ action: ac, onRun, onEdit }: { action: Action; onRun: (confirmed: boolean) => void; onEdit: (patch: Partial<Action>) => void }) {
+  if (ac.kind === "navigate")
+    return ac.href ? (
+      <Link href={ac.href as never} className="assistant-file mt-2">
+        <span className="min-w-0 flex-1 truncate">{a.opening(ac.label ?? ac.href)}</span>
+        <span aria-hidden>→</span>
+      </Link>
+    ) : null;
+  const what =
+    ac.kind === "tip"
+      ? null
+      : ac.kind === "create_claim"
+        ? a.actions.create_claim(ac.title ?? "")
+        : ac.kind === "attach_link"
+          ? a.actions.attach_link(ac.url ?? "", ac.ref ?? "")
+          : ac.kind === "analyze"
+            ? a.actions.analyze(ac.ref ?? "")
+            : a.actions.set_status(ac.ref ?? "", ac.status ? t.status[ac.status] : "");
+  return (
+    <div className="assistant-action" data-state={ac.state}>
+      <p className="assistant-action-head">{ac.kind === "tip" ? a.tipTitle : a.proposal}</p>
+      {ac.kind === "tip" ? (
+        <>
+          <p className="text-sm text-muted-foreground">
+            {ac.state === "pending" && (ac.newsrooms?.length ?? 0) > 1 ? (
+              <select
+                className="assistant-lang mr-1"
+                aria-label={t.site.pub.report.newsroom}
+                value={ac.newsroom}
+                onChange={(e) => onEdit({ newsroom: e.target.value, newsroom_name: e.target.selectedOptions[0]?.text })}
+              >
+                {ac.newsrooms?.map((n) => (
+                  <option key={n.slug} value={n.slug}>
+                    {n.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              a.tipTo(ac.newsroom_name ?? "")
+            )}{" "}
+            · {a.tipFrom} {t.origins[ac.origin ?? "other"]}
+          </p>
+          {ac.state === "pending" ? (
+            <textarea className="assistant-input mt-1.5 w-full" rows={3} maxLength={4000} aria-label={a.tipText} value={ac.text ?? ""} onChange={(e) => onEdit({ text: e.target.value })} />
+          ) : (
+            <blockquote className="assistant-quote">{ac.text}</blockquote>
+          )}
+          {ac.url && <p className="truncate text-sm">{ac.url}</p>}
+        </>
+      ) : (
+        <p>{what}</p>
+      )}
+      {ac.state === "pending" || ac.state === "running" ? (
+        <div className="mt-2 flex gap-2">
+          <button type="button" className="assistant-confirm" disabled={ac.state === "running"} onClick={() => onRun(true)}>
+            {ac.state === "running" ? a.working : ac.kind === "tip" ? a.sendTip : a.confirm}
+          </button>
+          <button type="button" className="assistant-cancel" disabled={ac.state === "running"} onClick={() => onRun(false)}>
+            {a.cancel}
+          </button>
+        </div>
+      ) : (
+        <p className={cn("mt-1 text-sm font-medium", ac.state === "failed" && "text-verdict-false-ink")} role="status">
+          {ac.outcome}{" "}
+          {ac.link && ac.state === "done" && (
+            <Link href={ac.link as never} className="underline underline-offset-4">
+              {ac.kind === "tip" ? a.follow : a.openIt} →
+            </Link>
+          )}
+        </p>
+      )}
+    </div>
+  );
 }

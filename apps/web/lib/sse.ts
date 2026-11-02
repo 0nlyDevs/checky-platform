@@ -12,7 +12,10 @@ export async function postStream(
 ): Promise<void> {
   const res = await fetch(`${API_URL}/api/v1${path}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${await getApiToken()}` },
+    // the public routes need no account
+    headers: path.startsWith("/public/")
+      ? { "Content-Type": "application/json" }
+      : { "Content-Type": "application/json", Authorization: `Bearer ${await getApiToken()}` },
     body: JSON.stringify(body),
     signal,
   });

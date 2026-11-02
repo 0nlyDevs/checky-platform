@@ -33,9 +33,16 @@ RESULT_CHARS = 4000
 
 @dataclass
 class AgentContext:
-    workspace_id: uuid.UUID
+    workspace_id: uuid.UUID | None
     # Passages and pages the agent has read, numbered for citations in the final answer.
     cited: list[dict[str, Any]] = field(default_factory=list)
+    # Changes the agent proposes; nothing is written until the person confirms one in the UI.
+    actions: list[dict[str, Any]] = field(default_factory=list)
+
+    def propose(self, kind: str, **payload: Any) -> dict[str, Any]:
+        action = {"id": len(self.actions) + 1, "kind": kind, **payload}
+        self.actions.append(action)
+        return action
 
     def cite(self, title: str, url: str | None, text: str, source_id: str | None = None) -> int:
         self.cited.append(
@@ -106,7 +113,8 @@ async def find_claims(ctx: AgentContext, query: str) -> tuple[str, str]:
 
 
 Tool = Callable[..., Awaitable[tuple[str, str]]]
-TOOLS: dict[str, tuple[Tool, str, dict[str, Any]]] = {
+Tools = dict[str, tuple[Tool, str, dict[str, Any]]]
+TOOLS: Tools = {
     "search_sources": (
         search_sources,
         "Search the workspace's sources (articles, documents, transcripts) and return numbered passages.",
@@ -133,37 +141,51 @@ ou s'il apparaît dans les passages.
 - Réponds dans la langue de la question, en 3 à 6 phrases."""
 
 
-def _tool_specs() -> list[dict[str, Any]]:
+def _nullable(schema: dict[str, Any]) -> dict[str, Any]:
+    # Models often send null for an argument they skip, and Groq rejects that against a plain
+    # "string": every optional argument also accepts null (the tools default it).
+    required = set(schema.get("required", []))
+    props = {}
+    for name, prop in schema.get("properties", {}).items():
+        if name not in required and isinstance(prop.get("type"), str):
+            prop = {**prop, "type": [prop["type"], "null"]}
+            if "enum" in prop:
+                prop["enum"] = [*prop["enum"], None]
+        props[name] = prop
+    return {**schema, "properties": props}
+
+
+def tool_specs(tools: Tools) -> list[dict[str, Any]]:
     return [
-        {"type": "function", "function": {"name": n, "description": d, "parameters": p}}
-        for n, (_, d, p) in TOOLS.items()
+        {"type": "function", "function": {"name": n, "description": d, "parameters": _nullable(p)}}
+        for n, (_, d, p) in tools.items()
     ]
 
 
-class AgentIn(BaseModel):
-    question: str = Field(min_length=2, max_length=2000)
-
-
-@router.post("/workspaces/{ws}/agent", response_class=EventSourceResponse)
-async def run_agent(body: AgentIn, member: AnyMember) -> AsyncIterable[ServerSentEvent]:
-    ctx = AgentContext(member.workspace_id)
-    messages: list[dict[str, Any]] = [
-        {"role": "system", "content": SYSTEM},
-        {"role": "user", "content": body.question},
-    ]
+async def tool_loop(
+    ctx: AgentContext,
+    messages: list[dict[str, Any]],
+    tools: Tools,
+    max_steps: int = MAX_STEPS,
+    **params: Any,
+) -> AsyncIterable[ServerSentEvent]:
+    """Runs the model with tools until it answers. SSE: `step`…, `answer` ({text, citations,
+    actions}), `done`, or `error`. The last turn has no tools, so the model must answer."""
     step = 0
     try:
-        for turn in range(MAX_STEPS):
-            last = turn == MAX_STEPS - 1
+        for turn in range(max_steps):
+            last = turn == max_steps - 1
             reply = await ai.complete(
                 messages,
-                None if last else _tool_specs(),
-                workspace_id=member.workspace_id,
+                None if last else tool_specs(tools),
+                workspace_id=ctx.workspace_id,
                 temperature=0.1,
+                **params,
             )
             if not reply.tool_calls:
                 yield ServerSentEvent(
-                    data={"text": reply.content, "citations": ctx.cited}, event="answer"
+                    data={"text": reply.content, "citations": ctx.cited, "actions": ctx.actions},
+                    event="answer",
                 )
                 yield ServerSentEvent(
                     data={"provider": reply.provider, "model": reply.model, "steps": step},
@@ -179,9 +201,9 @@ async def run_agent(body: AgentIn, member: AnyMember) -> AsyncIterable[ServerSen
                 except json.JSONDecodeError:
                     args = {}
                 step += 1
-                if name in TOOLS:
+                if name in tools:
                     try:
-                        summary, result = await TOOLS[name][0](ctx, **args)
+                        summary, result = await tools[name][0](ctx, **args)
                     except TypeError:
                         summary, result = "arguments invalides", "Invalid arguments for this tool."
                 else:
@@ -206,3 +228,17 @@ async def run_agent(body: AgentIn, member: AnyMember) -> AsyncIterable[ServerSen
         yield ServerSentEvent(
             data={"code": "agent_failed", "message": type(e).__name__}, event="error"
         )
+
+
+class AgentIn(BaseModel):
+    question: str = Field(min_length=2, max_length=2000)
+
+
+@router.post("/workspaces/{ws}/agent", response_class=EventSourceResponse)
+async def run_agent(body: AgentIn, member: AnyMember) -> AsyncIterable[ServerSentEvent]:
+    messages: list[dict[str, Any]] = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": body.question},
+    ]
+    async for event in tool_loop(AgentContext(member.workspace_id), messages, TOOLS):
+        yield event

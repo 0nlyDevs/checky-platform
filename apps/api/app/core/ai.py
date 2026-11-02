@@ -38,7 +38,7 @@ log = logging.getLogger("fanilo.ai")
 PROVIDERS: dict[str, tuple[str, str]] = {
     "groq": ("https://api.groq.com/openai/v1", "openai/gpt-oss-120b"),
     "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-3.5-flash-lite"),
-    "nvidia": ("https://integrate.api.nvidia.com/v1", "meta/llama-3.3-70b-instruct"),
+    "nvidia": ("https://integrate.api.nvidia.com/v1", "nvidia/nemotron-3.5-lightning-30b-a3b"),
 }
 
 # Tests swap these for an httpx.MockTransport and a no-op sleep.
@@ -144,7 +144,34 @@ class _Retryable(Exception):
         self.status = status
 
 
+GEMINI_UNSIGNED = "skip_thought_signature_validator"  # Gemini's documented value for foreign calls
+
+
+def _replay(provider: Provider, messages) -> list[dict[str, Any]]:
+    """Tool calls made by one provider, replayed to another after a fallback. Gemini requires a
+    thought signature on every earlier call (its own carry one in `extra_content`); the others may
+    reject that field, so it is dropped for them."""
+    out = []
+    for m in messages:
+        if m.get("role") == "assistant" and m.get("tool_calls"):
+            calls = []
+            for c in m["tool_calls"]:
+                c = {k: v for k, v in c.items() if k != "extra_content"} | (
+                    {
+                        "extra_content": c.get("extra_content")
+                        or {"google": {"thought_signature": GEMINI_UNSIGNED}}
+                    }
+                    if provider.name == "gemini"
+                    else {}
+                )
+                calls.append(c)
+            m = {**m, "tool_calls": calls}
+        out.append(m)
+    return out
+
+
 def _body(provider: Provider, messages, tools, stream: bool, params) -> dict[str, Any]:
+    messages = _replay(provider, messages)
     body: dict[str, Any] = {"model": provider.model, "messages": messages, **params}
     if tools:
         body["tools"] = tools

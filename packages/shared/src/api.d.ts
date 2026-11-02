@@ -687,10 +687,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/agent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Guide */
+        post: operations["guide_api_v1_public_agent_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/copilot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copilot */
+        post: operations["copilot_api_v1_workspaces__ws__copilot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/copilot/act": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Act
+         * @description Runs one confirmed proposal through the ordinary routes, with the journalist's rights.
+         */
+        post: operations["act_api_v1_workspaces__ws__copilot_act_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ActIn */
+        ActIn: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "create_claim" | "attach_link" | "analyze" | "set_status";
+            /** Item Id */
+            item_id?: string | null;
+            /** Title */
+            title?: string | null;
+            /**
+             * Body
+             * @default
+             */
+            body: string;
+            /**
+             * Origin
+             * @default other
+             * @enum {string}
+             */
+            origin: "facebook" | "whatsapp" | "tiktok" | "radio" | "press" | "other";
+            /** Url */
+            url?: string | null;
+            /** Status */
+            status?: ("to_check" | "in_progress" | "verified") | null;
+        };
+        /** ActOut */
+        ActOut: {
+            /** Kind */
+            kind: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ref */
+            ref: string | null;
+        };
         /** ActivityOut */
         ActivityOut: {
             /**
@@ -836,6 +929,27 @@ export interface components {
             };
             /** Download Url */
             download_url: string | null;
+        };
+        /** GuideIn */
+        GuideIn: {
+            /** Messages */
+            messages: components["schemas"]["Turn"][];
+            /**
+             * Lang
+             * @default fr
+             * @enum {string}
+             */
+            lang: "fr" | "mg";
+            /**
+             * Page
+             * @default /
+             */
+            page: string;
+            /**
+             * Tips
+             * @default []
+             */
+            tips: string[];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1236,6 +1350,16 @@ export interface components {
             highlights?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** Turn */
+        Turn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "assistant";
+            /** Content */
+            content: string;
         };
         /** UploadCompleteIn */
         UploadCompleteIn: {
@@ -2913,6 +3037,109 @@ export interface operations {
                 };
                 content: {
                     "audio/mpeg": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    guide_api_v1_public_agent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    copilot_api_v1_workspaces__ws__copilot_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuideIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    act_api_v1_workspaces__ws__copilot_act_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ActIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ActOut"];
                 };
             };
             /** @description Validation Error */

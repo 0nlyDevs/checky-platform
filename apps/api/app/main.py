@@ -12,7 +12,9 @@ from app.modules import (
     ai,
     card,
     checker,
+    copilot,
     demo,
+    guide,
     health,
     items,
     jobs,
@@ -64,6 +66,8 @@ api.include_router(agent.router, prefix="/api/v1")
 api.include_router(quotes.router, prefix="/api/v1")
 api.include_router(card.router, prefix="/api/v1")
 api.include_router(public.router, prefix="/api/v1")
+api.include_router(guide.router, prefix="/api/v1")
+api.include_router(copilot.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)

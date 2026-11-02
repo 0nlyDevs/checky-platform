@@ -339,20 +339,25 @@ def _allow(store: dict[str, deque[float]], addr: str, limit: int, window: float)
     return True
 
 
-@router.post("/ask")
-async def ask(body: AskIn, request: Request, db: Db) -> AskOut:
-    if not _allow(
-        _ASKS, request.client.host if request.client else "unknown", ASK_LIMIT, ASK_WINDOW
-    ):
-        raise ApiError(429, "too_many_questions", "Too many questions, try again in a few minutes")
-    asked = _words(body.question)
+async def find_published(db: Db, text: str, k: int = 5) -> list[VerdictOut]:
+    """Published verdicts sharing enough words with the text (accent-free), best first."""
+    asked = _words(text)
     scored = []
     for item, ws in (await db.execute(_published().limit(500))).all():
         known = _words(f"{item.title} {item.body} {(item.data or {}).get('reason', '')}")
         if asked and known and (hit := len(asked & known)):
             scored.append((hit / len(asked), item, ws))
     scored.sort(key=lambda r: r[0], reverse=True)
-    files = [await _verdict(db, i, w) for s, i, w in scored[:5] if s >= 0.2]
+    return [await _verdict(db, i, w) for s, i, w in scored[:k] if s >= 0.2]
+
+
+@router.post("/ask")
+async def ask(body: AskIn, request: Request, db: Db) -> AskOut:
+    if not _allow(
+        _ASKS, request.client.host if request.client else "unknown", ASK_LIMIT, ASK_WINDOW
+    ):
+        raise ApiError(429, "too_many_questions", "Too many questions, try again in a few minutes")
+    files = await find_published(db, body.question)
     if not files:  # nothing published to answer from: no AI call, no invented answer
         return AskOut(answer=None, verdicts=[], checked=False)
     label = {

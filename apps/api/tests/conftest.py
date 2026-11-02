@@ -81,6 +81,9 @@ def _clean_db():
     public._VOICE.clear()
     public._SPEAKS.clear()
     public._AUDIO.clear()
+    from app.modules import guide
+
+    guide._GUIDES.clear()
     yield
 
     async def truncate():
