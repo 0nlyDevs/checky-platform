@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { anton, specialElite } from "@/app/fonts/site";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { brand } from "@/lib/brand";
 import { t } from "@/lib/i18n/fr";
 
@@ -40,6 +41,7 @@ export default function AuthLayout({ children }: LayoutProps<"/">) {
           <span className="stamp" data-on="true" aria-hidden data-label={t.site.hero.stamp} />
         </section>
       </div>
+      <AssistantWidget />
     </div>
   );
 }

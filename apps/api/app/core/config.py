@@ -45,6 +45,15 @@ class Settings(BaseSettings):
     # Speech-to-text (Groq Whisper). large-v3 is the stronger one for Malagasy.
     stt_model: str = "whisper-large-v3"
     stt_timeout: float = 120.0
+    # Text to speech for the assistant's voice mode (optional; without a key the browser's voice reads)
+    elevenlabs_api_key: str = ""
+    elevenlabs_voice_id: str = (
+        "JBFqnCBsd6RMkjVDRZzb"  # "George", a default voice (free plans cannot use library voices)
+    )
+    elevenlabs_model: str = "eleven_flash_v2_5"
+    elevenlabs_model_mg: str = (
+        "eleven_v3"  # Malagasy: no language code on these models, v3 sounds best
+    )
     # Attempts per provider on 429, 5xx or timeout before falling back to the next one.
     ai_attempts: int = 2
     # Cache keyed on the request (stored in app.ai_cache), so reloads and demo rehearsals do

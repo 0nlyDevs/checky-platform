@@ -2062,7 +2062,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/AskIn"
+                "$ref": "#/components/schemas/app__modules__rag__AskIn"
               }
             }
           }
@@ -2587,6 +2587,137 @@
           }
         }
       }
+    },
+    "/api/v1/public/ask": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Ask",
+        "operationId": "ask_api_v1_public_ask_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__public__AskIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AskOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/transcribe": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Transcribe Voice",
+        "operationId": "transcribe_voice_api_v1_public_transcribe_post",
+        "parameters": [
+          {
+            "name": "lang",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "fr",
+                    "mg"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Lang"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DictationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/speak": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Speak",
+        "operationId": "speak_api_v1_public_speak_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeakIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "audio/mpeg": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2653,39 +2784,38 @@
         ],
         "title": "AgentIn"
       },
-      "AskIn": {
+      "AskOut": {
         "properties": {
-          "question": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 2,
-            "title": "Question"
-          },
-          "k": {
-            "type": "integer",
-            "maximum": 12.0,
-            "minimum": 1.0,
-            "title": "K",
-            "default": 4
-          },
-          "item_id": {
+          "answer": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "uuid"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Item Id"
+            "title": "Answer"
+          },
+          "verdicts": {
+            "items": {
+              "$ref": "#/components/schemas/VerdictOut"
+            },
+            "type": "array",
+            "title": "Verdicts"
+          },
+          "checked": {
+            "type": "boolean",
+            "title": "Checked"
           }
         },
         "type": "object",
         "required": [
-          "question"
+          "answer",
+          "verdicts",
+          "checked"
         ],
-        "title": "AskIn"
+        "title": "AskOut"
       },
       "Check": {
         "properties": {
@@ -2911,6 +3041,31 @@
           "cached"
         ],
         "title": "CompleteOut"
+      },
+      "DictationOut": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "language"
+        ],
+        "title": "DictationOut"
       },
       "FileOut": {
         "properties": {
@@ -3817,6 +3972,30 @@
         ],
         "title": "SourceOut"
       },
+      "SpeakIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 900,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg"
+            ],
+            "title": "Lang",
+            "default": "fr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "SpeakIn"
+      },
       "TipIn": {
         "properties": {
           "newsroom": {
@@ -4374,6 +4553,55 @@
           "is_public"
         ],
         "title": "WorkspaceSettingsOut"
+      },
+      "app__modules__public__AskIn": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 600,
+            "minLength": 3,
+            "title": "Question"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "AskIn"
+      },
+      "app__modules__rag__AskIn": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 2,
+            "title": "Question"
+          },
+          "k": {
+            "type": "integer",
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "K",
+            "default": 4
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "AskIn"
       }
     },
     "securitySchemes": {

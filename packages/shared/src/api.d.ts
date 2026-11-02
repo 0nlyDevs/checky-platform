@@ -636,6 +636,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask */
+        post: operations["ask_api_v1_public_ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/transcribe": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Transcribe Voice */
+        post: operations["transcribe_voice_api_v1_public_transcribe_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/speak": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Speak */
+        post: operations["speak_api_v1_public_speak_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -673,17 +724,14 @@ export interface components {
             /** Question */
             question: string;
         };
-        /** AskIn */
-        AskIn: {
-            /** Question */
-            question: string;
-            /**
-             * K
-             * @default 4
-             */
-            k: number;
-            /** Item Id */
-            item_id?: string | null;
+        /** AskOut */
+        AskOut: {
+            /** Answer */
+            answer: string | null;
+            /** Verdicts */
+            verdicts: components["schemas"]["VerdictOut"][];
+            /** Checked */
+            checked: boolean;
         };
         /** Check */
         Check: {
@@ -759,6 +807,13 @@ export interface components {
             tokens_out: number | null;
             /** Cached */
             cached: boolean;
+        };
+        /** DictationOut */
+        DictationOut: {
+            /** Text */
+            text: string;
+            /** Language */
+            language: string | null;
         };
         /** FileOut */
         FileOut: {
@@ -1108,6 +1163,17 @@ export interface components {
              */
             duplicates: number;
         };
+        /** SpeakIn */
+        SpeakIn: {
+            /** Text */
+            text: string;
+            /**
+             * Lang
+             * @default fr
+             * @enum {string}
+             */
+            lang: "fr" | "mg";
+        };
         /** TipIn */
         TipIn: {
             /** Newsroom */
@@ -1295,6 +1361,23 @@ export interface components {
             slug: string;
             /** Is Public */
             is_public: boolean;
+        };
+        /** AskIn */
+        app__modules__public__AskIn: {
+            /** Question */
+            question: string;
+        };
+        /** AskIn */
+        app__modules__rag__AskIn: {
+            /** Question */
+            question: string;
+            /**
+             * K
+             * @default 4
+             */
+            k: number;
+            /** Item Id */
+            item_id?: string | null;
         };
     };
     responses: never;
@@ -2435,7 +2518,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["AskIn"];
+                "application/json": components["schemas"]["app__modules__rag__AskIn"];
             };
         };
         responses: {
@@ -2733,6 +2816,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TipStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_api_v1_public_ask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__modules__public__AskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AskOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    transcribe_voice_api_v1_public_transcribe_post: {
+        parameters: {
+            query?: {
+                lang?: ("fr" | "mg") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DictationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    speak_api_v1_public_speak_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpeakIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "audio/mpeg": unknown;
                 };
             };
             /** @description Validation Error */

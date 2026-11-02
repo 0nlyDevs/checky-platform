@@ -109,3 +109,107 @@ def test_only_admins_open_the_newsroom(as_user):
     ]
     bob.post(f"/api/v1/invitations/{token}/accept")
     assert bob.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True}).status_code == 403
+
+
+def test_ask_answers_only_from_published_files(as_user, monkeypatch):
+    import json
+
+    import httpx
+
+    from app.core import ai
+    from app.core.config import get_settings
+
+    s = get_settings()
+    monkeypatch.setattr(s, "gemini_api_key", "k")
+    monkeypatch.setattr(s, "llm_providers", "gemini")
+    monkeypatch.setattr(s, "ai_cache", False)
+    prompts = []
+
+    def chat(request):
+        prompts.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": "C'est faux : la vidéo date de 2019 [1]."}}]},
+        )
+
+    monkeypatch.setattr(ai, "_transport", httpx.MockTransport(chat))
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    _claim(
+        alice, ws, "Une vidéo montre l'inondation d'Analakely ce matin", reason="Images de 2019."
+    )
+    anon = TestClient(app)
+    r = anon.post("/api/v1/public/ask", json={"question": "Analakely est inondé ce matin ?"}).json()
+    assert r["checked"] and r["answer"].endswith("[1].") and r["verdicts"][0]["verdict"] == "false"
+    assert "Images de 2019." in prompts[0]["messages"][1]["content"]
+    # nothing published on the subject: no AI call, an invitation to send a tip instead
+    r = anon.post(
+        "/api/v1/public/ask", json={"question": "Le carburant baisse-t-il demain ?"}
+    ).json()
+    assert r == {"answer": None, "verdicts": [], "checked": False} and len(prompts) == 1
+
+
+def test_dictation_transcribes_a_short_recording(monkeypatch):
+    import httpx
+
+    from app.core import stt
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "groq_api_key", "k")
+    seen = {}
+
+    def whisper(request):
+        seen["body"] = request.content
+        return httpx.Response(
+            200, json={"text": " Misy vola vaovao ve ? ", "language": "malagasy", "segments": []}
+        )
+
+    monkeypatch.setattr(stt, "_transport", httpx.MockTransport(whisper))
+    anon = TestClient(app)
+    r = anon.post(
+        "/api/v1/public/transcribe?lang=mg",
+        content=b"\x1a\x45\xdf\xa3fake",
+        headers={"content-type": "audio/webm;codecs=opus"},
+    )
+    assert r.status_code == 200 and r.json()["text"] == "Misy vola vaovao ve ?"
+    assert b'name="language"' in seen["body"] and b"mg" in seen["body"]
+    assert (
+        anon.post(
+            "/api/v1/public/transcribe", content=b"x", headers={"content-type": "text/plain"}
+        ).status_code
+        == 415
+    )
+
+
+def test_speak_uses_elevenlabs_once_per_answer_and_falls_back_without_a_key(monkeypatch):
+    import json
+
+    import httpx
+
+    from app.core.config import get_settings
+    from app.modules import public
+
+    anon = TestClient(app)
+    monkeypatch.setattr(
+        public, "_tts_transport", httpx.MockTransport(lambda r: httpx.Response(500))
+    )
+    monkeypatch.setattr(get_settings(), "elevenlabs_api_key", "")
+    assert anon.post("/api/v1/public/speak", json={"text": "Bonjour"}).status_code == 501
+    monkeypatch.setattr(get_settings(), "elevenlabs_api_key", "xi")
+    calls = []
+
+    def tts(request):
+        calls.append(json.loads(request.content))
+        return httpx.Response(200, content=b"ID3fake-mp3")
+
+    monkeypatch.setattr(public, "_tts_transport", httpx.MockTransport(tts))
+    for _ in range(2):
+        r = anon.post("/api/v1/public/speak", json={"text": "C'est faux [1].", "lang": "fr"})
+        assert (
+            r.status_code == 200
+            and r.headers["content-type"] == "audio/mpeg"
+            and r.content == b"ID3fake-mp3"
+        )
+    assert (
+        len(calls) == 1 and calls[0]["text"] == "C'est faux." and calls[0]["language_code"] == "fr"
+    )

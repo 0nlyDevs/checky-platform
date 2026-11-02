@@ -273,9 +273,10 @@ The landing and the sign-in and sign-up pages have their own world, "Le dossier"
 **Public features (27 October)**
 
 Ordinary people can use FANILO without an account, in the same case-file world:
-- « Est-ce déjà vérifié ? » (`/verifies`): paste a message received on WhatsApp or Facebook; FANILO finds the matching verdicts already published by newsrooms. It never makes up a verdict: only verdicts confirmed by a journalist and published are shown.
+- « Est-ce déjà vérifié ? » (`/verifies`): a public AI assistant. Ask a question or paste a message received on WhatsApp or Facebook, in French or Malagasy; it answers only from verdicts published by newsrooms, citing them [n] with links to each file. With nothing published on the subject it makes no AI call and invites a tip. It never makes up a verdict.
 - The archive of published verdicts, searchable, each with its reason, sources and a shareable page.
 - « Signaler une rumeur » (`/signaler`): send a message or link to a newsroom; it lands in its « à vérifier » list, tagged « signalement », live. No personal data is asked; a follow-up link (`/suivi/…`) shows the steps and the verdict once published.
+- The assistant is a floating chat button on every page (public pages answer from published verdicts; inside a workspace it answers from the desk's sources). Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
 - Each newsroom opts in (admin setting « Publier nos verdicts »); the demo newsroom is public after a demo reset.
 
 **Component inventory**

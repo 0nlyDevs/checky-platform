@@ -2,6 +2,7 @@
 their follow-up. Only newsrooms that opted in (`workspace.is_public`) are visible, and only claims a
 journalist confirmed and moved to `published` leave the newsroom."""
 
+import hashlib
 import re
 import secrets
 import time
@@ -11,12 +12,15 @@ from collections import defaultdict, deque
 from datetime import datetime
 from typing import Literal
 
-from fastapi import APIRouter, Request
+import httpx
+from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import func, select
 
+from app.core import ai, stt
 from app.core.access import Db
 from app.core.activity import broadcast, record
+from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.models import Item, Source, Workspace
 
@@ -299,4 +303,182 @@ async def tip_status(token: str, db: Db) -> TipStatusOut:
         received_at=item.created_at,
         newsroom=NewsroomOut(slug=ws.slug, name=ws.name),
         verdict=await _verdict(db, item, ws) if published else None,
+    )
+
+
+# --- the public assistant: answers only from published, journalist-confirmed verdicts, with citations
+ASK_SYSTEM = (
+    "Tu es l'assistant public de FANILO, un outil de vérification des rédactions de Madagascar. "
+    "Tu réponds UNIQUEMENT à partir des dossiers numérotés fournis : ce sont des verdicts confirmés et "
+    "publiés par des journalistes. Cite chaque dossier utilisé sous la forme [n]. Si aucun dossier ne "
+    "répond à la question, dis clairement que cette information n'a pas encore été vérifiée par une "
+    "rédaction et invite à la signaler. N'invente jamais de verdict, de fait ni de source. Réponds en "
+    "deux à quatre phrases, dans la langue de la question (français ou malagasy)."
+)
+_ASKS: dict[str, deque[float]] = defaultdict(deque)
+ASK_LIMIT, ASK_WINDOW = 10, 600.0
+
+
+class AskIn(BaseModel):
+    question: str = Field(min_length=3, max_length=600)
+
+
+class AskOut(BaseModel):
+    answer: str | None
+    verdicts: list[VerdictOut]
+    checked: bool  # False: nothing published matches, the visitor is invited to send a tip
+
+
+def _allow(store: dict[str, deque[float]], addr: str, limit: int, window: float) -> bool:
+    now, q = time.monotonic(), store[addr]
+    while q and now - q[0] > window:
+        q.popleft()
+    if len(q) >= limit:
+        return False
+    q.append(now)
+    return True
+
+
+@router.post("/ask")
+async def ask(body: AskIn, request: Request, db: Db) -> AskOut:
+    if not _allow(
+        _ASKS, request.client.host if request.client else "unknown", ASK_LIMIT, ASK_WINDOW
+    ):
+        raise ApiError(429, "too_many_questions", "Too many questions, try again in a few minutes")
+    asked = _words(body.question)
+    scored = []
+    for item, ws in (await db.execute(_published().limit(500))).all():
+        known = _words(f"{item.title} {item.body} {(item.data or {}).get('reason', '')}")
+        if asked and known and (hit := len(asked & known)):
+            scored.append((hit / len(asked), item, ws))
+    scored.sort(key=lambda r: r[0], reverse=True)
+    files = [await _verdict(db, i, w) for s, i, w in scored[:5] if s >= 0.2]
+    if not files:  # nothing published to answer from: no AI call, no invented answer
+        return AskOut(answer=None, verdicts=[], checked=False)
+    label = {
+        "true": "Vrai",
+        "misleading": "Trompeur",
+        "false": "Faux",
+        "unverifiable": "Invérifiable",
+    }
+    context = "\n\n".join(
+        f"[{n}] {v.ref} · {v.newsroom.name} · verdict : {label[v.verdict]}\n"
+        f"Affirmation : {v.title}\nRaison : {v.reason or '—'}\nSources : {', '.join(v.sources) or '—'}"
+        for n, v in enumerate(files, 1)
+    )
+    try:
+        out = await ai.complete(
+            [
+                {"role": "system", "content": ASK_SYSTEM},
+                {
+                    "role": "user",
+                    "content": f"Dossiers :\n\n{context}\n\nQuestion : {body.question}",
+                },
+            ],
+            temperature=0.1,
+            max_tokens=400,
+        )
+        answer = out.content.strip()
+    except ai.AiUnavailable:
+        answer = None  # the matching files still show; the page says the assistant is busy
+    return AskOut(answer=answer, verdicts=files, checked=True)
+
+
+# --- dictation: a short voice recording becomes text (Groq Whisper, French or Malagasy); nothing is kept
+_VOICE: dict[str, deque[float]] = defaultdict(deque)
+VOICE_LIMIT, VOICE_WINDOW, VOICE_MAX_BYTES = 20, 600.0, 3_000_000
+VOCABULARY = (
+    "Madagascar, Antananarivo, Tana, Analakely, Mahamasina, Anosy, Andohalo, Ambohijatovo, Isotry, "
+    "Toamasina, Mahajanga, Fianarantsoa, Toliara, Antsiranana, Ambositra, Rova, JIRAMA, ariary, vary gasy, "
+    "fokontany, taxi-be, WhatsApp, Facebook, TikTok, FANILO."
+)
+
+
+class DictationOut(BaseModel):
+    text: str
+    language: str | None
+
+
+@router.post("/transcribe")
+async def transcribe_voice(
+    request: Request, lang: Literal["fr", "mg"] | None = None
+) -> DictationOut:
+    if not _allow(
+        _VOICE, request.client.host if request.client else "unknown", VOICE_LIMIT, VOICE_WINDOW
+    ):
+        raise ApiError(
+            429, "too_many_recordings", "Too many recordings, try again in a few minutes"
+        )
+    mime = (request.headers.get("content-type") or "").split(";")[0].strip()
+    if not mime.startswith("audio/"):
+        raise ApiError(415, "unsupported_media", "Send the recording as audio/*")
+    raw = await request.body()
+    if not raw or len(raw) > VOICE_MAX_BYTES:
+        raise ApiError(413, "too_large", "Recordings are limited to about one minute")
+    ext = {
+        "audio/webm": "webm",
+        "audio/ogg": "ogg",
+        "audio/mp4": "m4a",
+        "audio/mpeg": "mp3",
+        "audio/wav": "wav",
+    }.get(mime, "webm")
+    try:
+        out = await stt.transcribe(raw, f"dictation.{ext}", mime, language=lang, prompt=VOCABULARY)
+    except stt.SttUnavailable as e:
+        raise ApiError(503, "stt_unavailable", "Dictation is unavailable right now") from e
+    return DictationOut(text=out["text"], language=out.get("language"))
+
+
+# --- the assistant's voice (ElevenLabs when a key is set; otherwise the browser reads the answer)
+_SPEAKS: dict[str, deque[float]] = defaultdict(deque)
+SPEAK_LIMIT, SPEAK_WINDOW = 20, 600.0
+_AUDIO: dict[
+    str, bytes
+] = {}  # recent answers already spoken: the same answer costs no credits twice
+_AUDIO_MAX = 64
+TTS_URL = "https://api.elevenlabs.io/v1/text-to-speech/{voice}"
+_tts_transport: httpx.AsyncBaseTransport | None = None  # tests swap in a mock
+
+
+class SpeakIn(BaseModel):
+    text: str = Field(min_length=1, max_length=900)
+    lang: Literal["fr", "mg"] = "fr"
+
+
+@router.post("/speak", response_class=Response, responses={200: {"content": {"audio/mpeg": {}}}})
+async def speak(body: SpeakIn, request: Request) -> Response:
+    s = get_settings()
+    if not s.elevenlabs_api_key:
+        raise ApiError(501, "tts_not_configured", "No voice configured; the browser reads instead")
+    text = re.sub(r"\[\d+\]|【[^】]*】|\*\*", "", body.text)
+    text = re.sub(r"\s+([.,;:!?])", r"\1", re.sub(r"\s+", " ", text)).strip()
+    key = hashlib.sha256(f"{s.elevenlabs_voice_id}|{body.lang}|{text}".encode()).hexdigest()
+    if key not in _AUDIO:
+        if not _allow(
+            _SPEAKS, request.client.host if request.client else "unknown", SPEAK_LIMIT, SPEAK_WINDOW
+        ):
+            raise ApiError(
+                429, "too_many_voices", "Too many spoken answers, try again in a few minutes"
+            )
+        try:
+            async with httpx.AsyncClient(transport=_tts_transport, timeout=30) as http:
+                r = await http.post(
+                    TTS_URL.format(voice=s.elevenlabs_voice_id),
+                    params={"output_format": "mp3_44100_64"},
+                    headers={"xi-api-key": s.elevenlabs_api_key, "accept": "audio/mpeg"},
+                    json={"text": text, "model_id": s.elevenlabs_model_mg, "language_code": None}
+                    if body.lang == "mg"
+                    else {"text": text, "model_id": s.elevenlabs_model, "language_code": "fr"},
+                )
+        except httpx.HTTPError as e:
+            raise ApiError(503, "tts_unavailable", "The voice is unavailable right now") from e
+        if r.status_code != 200:
+            raise ApiError(
+                503, "tts_unavailable", f"The voice is unavailable right now ({r.status_code})"
+            )
+        if len(_AUDIO) >= _AUDIO_MAX:
+            _AUDIO.pop(next(iter(_AUDIO)))
+        _AUDIO[key] = r.content
+    return Response(
+        _AUDIO[key], media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=3600"}
     )

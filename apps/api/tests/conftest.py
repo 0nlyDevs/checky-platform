@@ -60,6 +60,14 @@ def _migrate():
 
 
 @pytest.fixture(autouse=True)
+def _no_paid_voice(monkeypatch):
+    # The real .env may hold an ElevenLabs key: no test may spend its credits.
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "elevenlabs_api_key", "")
+
+
+@pytest.fixture(autouse=True)
 def _clean_db():
     from app.core import ai
 
@@ -69,6 +77,10 @@ def _clean_db():
     from app.modules import public
 
     public._TIPS.clear()
+    public._ASKS.clear()
+    public._VOICE.clear()
+    public._SPEAKS.clear()
+    public._AUDIO.clear()
     yield
 
     async def truncate():

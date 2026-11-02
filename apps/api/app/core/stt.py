@@ -25,7 +25,7 @@ class SttUnavailable(Exception):
 
 
 async def transcribe(
-    raw: bytes, filename: str, mime: str, language: str | None = None
+    raw: bytes, filename: str, mime: str, language: str | None = None, prompt: str | None = None
 ) -> dict[str, Any]:
     s = get_settings()
     if not s.groq_api_key:
@@ -33,6 +33,8 @@ async def transcribe(
     data = {"model": s.stt_model, "response_format": "verbose_json", "temperature": "0"}
     if language:
         data["language"] = language
+    if prompt:  # a vocabulary hint: Whisper spells these names the way they are written
+        data["prompt"] = prompt
     errors = []
     for attempt in range(max(1, s.ai_attempts)):
         started = time.monotonic()

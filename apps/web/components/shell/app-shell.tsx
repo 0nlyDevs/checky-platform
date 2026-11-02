@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import useSWR from "swr";
 import { Check, ChevronsUpDown, LogOut, Monitor, Moon, Plus, Sun } from "lucide-react";
+import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { Wordmark } from "@/components/brand/logo";
 import { NAV, WORKSPACE_NAV, type NavItem } from "@/components/shell/nav";
 import {
@@ -222,6 +223,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
       <main id="contenu" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-0">
         {children}
       </main>
+      <AssistantWidget scope="desk" />
 
       <nav
         aria-label="Navigation principale"

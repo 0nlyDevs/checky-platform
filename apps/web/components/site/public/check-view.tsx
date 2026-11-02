@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { VerdictFile, VerdictRow } from "@/components/site/public/verdict-file";
+import { VerdictRow } from "@/components/site/public/verdict-file";
 import { t } from "@/lib/i18n/fr";
+import { ApiError } from "@/lib/api";
 import { type PublicVerdict, publicApi } from "@/lib/public-api";
 
 const c = t.site.pub.check;
@@ -13,6 +14,8 @@ const a = t.site.pub.archive;
 export function CheckView() {
   const [text, setText] = useState("");
   const [hits, setHits] = useState<PublicVerdict[] | null>(null);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [q, setQ] = useState("");
   const [page, setPage] = useState<{ items: PublicVerdict[]; total: number } | null>(null);
@@ -31,15 +34,37 @@ export function CheckView() {
     e.preventDefault();
     if (text.trim().length < 3) return;
     setBusy(true);
+    setNote(null);
     try {
-      const res = await publicApi<{ score: number; verdict: PublicVerdict }[]>("/match", { method: "POST", body: JSON.stringify({ text }) });
-      setHits(res.map((r) => r.verdict));
-    } catch {
-      setHits([]);
+      const res = await publicApi<{ answer: string | null; verdicts: PublicVerdict[]; checked: boolean }>("/ask", {
+        method: "POST",
+        body: JSON.stringify({ question: text.slice(0, 600) }),
+      });
+      setHits(res.verdicts);
+      setAnswer(res.answer);
+      if (res.checked && !res.answer) setNote(c.busy);
+    } catch (err) {
+      setHits(null);
+      setAnswer(null);
+      setNote(err instanceof ApiError && err.status === 429 ? c.tooMany : c.none);
     } finally {
       setBusy(false);
     }
   }
+
+  // [n] in the answer opens the matching file.
+  const cite = (body: string) =>
+    body.split(/(\[\d+\]|【\d+[^】]*】)/).map((part, i) => {
+      const n = Number(part.match(/\d+/)?.[0]);
+      const v = /^(\[|【)/.test(part) && hits?.[n - 1];
+      return v ? (
+        <Link key={i} href={`/verifies/${v.id}`} className="ulink font-semibold">
+          [{n}]
+        </Link>
+      ) : (
+        part
+      );
+    });
 
   return (
     <>
@@ -62,20 +87,27 @@ export function CheckView() {
           </form>
         </div>
         <div aria-live="polite">
+          {note && !hits && <p className="mt-10 text-xl">{note}</p>}
           {hits && (
             <div className="mt-14">
-              <h2 className="disp text-[clamp(28px,3vw,44px)]">{hits.length ? c.found(hits.length) : c.none}</h2>
-              {hits.length ? (
-                <div className="pub-grid mt-6">
-                  {hits.map((v) => (
-                    <VerdictFile key={v.id} v={v} />
-                  ))}
+              {answer && (
+                <div className="pub-answer">
+                  <p className="typed text-[15px] text-ink-soft">{c.answer}</p>
+                  <p className="mt-2 text-xl leading-relaxed">{cite(answer)}</p>
                 </div>
-              ) : (
-                <Link href={`/signaler?texte=${encodeURIComponent(text.slice(0, 600))}`} className="tab-btn mt-6">
-                  {c.noneAction} <span className="arr" aria-hidden>→</span>
-                </Link>
               )}
+              {note && <p className="mt-6 text-lg">{note}</p>}
+              <h2 className="disp mt-10 text-[clamp(28px,3vw,44px)]">{hits.length ? c.found(hits.length) : c.notChecked}</h2>
+              {hits.length ? (
+                <ul className="pub-list mt-6">
+                  {hits.map((v) => (
+                    <VerdictRow key={v.id} v={v} />
+                  ))}
+                </ul>
+              ) : null}
+              <Link href={`/signaler?texte=${encodeURIComponent(text.slice(0, 600))}`} className="tab-btn mt-8">
+                {c.noneAction} <span className="arr" aria-hidden>→</span>
+              </Link>
             </div>
           )}
         </div>
