@@ -1,6 +1,7 @@
 "use client";
 
 import type { components } from "@fanilo/shared";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import useSWR from "swr";
 import { IconArrowCounterClockwise, IconArrowSquareOut, IconCalendarDots, IconCheck, IconCircleNotch, IconCopy, IconEye, IconEyeSlash, IconFileText, IconImage, IconLink, IconMapPin, IconPaperclip, IconPlay, IconPlus, IconSealCheck, IconSparkle, IconTextT, IconVideoCamera, IconWarning, IconWaveform, type Icon } from "@/lib/icons";
@@ -52,6 +53,7 @@ function exifDate(v: string) {
 }
 
 type Shown = components["schemas"]["PictureOut"];
+type MemoryMatch = components["schemas"]["MemoryMatch"];
 
 /**
  * A picture of a source as the desk shows it: faces blurred, or hidden while they could not be
@@ -121,6 +123,32 @@ function ReverseLinks({ links, label }: { links: Shown["reverse_search"]; label?
   );
 }
 
+/** The newsroom's memory of a picture: the same image (or video frame) seen before, oldest first. */
+function PictureMemory({ ws, source }: { ws: string; source: Source }) {
+  const { data } = useSWR<MemoryMatch[]>(`/workspaces/${ws}/sources/${source.id}/memory`, fetcher);
+  if (!data?.length) return null;
+  return (
+    <ul className="space-y-1 text-sm">
+      {data.map((m) => {
+        const href = m.own && m.item_id ? `/w/${ws}/affirmations/${m.item_id}` : m.verdict_id ? `/verifies/${m.verdict_id}` : null;
+        return (
+          <li key={m.source_id} className="flex items-start gap-1.5 font-medium">
+            <IconCalendarDots className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            {href ? (
+              <Link href={href} className="underline decoration-border underline-offset-4 hover:decoration-foreground">
+                {m.line}
+                {m.ref ? ` · ${m.ref}` : ""}
+              </Link>
+            ) : (
+              <span>{m.line}</span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function ImageFacts({ ws, source }: { ws: string; source: Source }) {
   const meta = (source.file?.meta ?? {}) as { exif?: Record<string, unknown>; ai_markers?: string[]; content_credentials?: boolean };
   const exif = meta.exif ?? {};
@@ -163,6 +191,7 @@ function ImageFacts({ ws, source }: { ws: string; source: Source }) {
           {t.sources.duplicates(source.duplicates)}
         </p>
       )}
+      <PictureMemory ws={ws} source={source} />
       {!!picture?.reverse_search.length && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
           <span>{t.sources.reverse} :</span>
@@ -329,7 +358,8 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
               </li>
             ))}
           </ul>
-            </section>
+          <PictureMemory ws={ws} source={source} />
+        </section>
       )}
       {!!meta.ai_markers?.length && (
         <ImageTrace state="detected" className="text-sm">
