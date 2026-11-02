@@ -3,46 +3,25 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IconArrowLeft, IconArrowRight, IconCheck, IconLink, IconShareNetwork, IconSpeakerHigh, IconStop } from "@/lib/icons";
-import { VERDICT_META } from "@/components/claims/verdict";
 import { StepLine } from "@/components/flow/step-line";
-import { day } from "@/components/site/public/verdicts";
-import { Button } from "@/components/ui/button";
-import { t } from "@/lib/i18n/fr";
-import { type PublicVerdict, publicApi } from "@/lib/public-api";
-import { speak, stopSpeaking } from "@/lib/speak";
+import { Evidence, ShareActions, type SignedVerdict, Trajet, VerdictBlock } from "@/components/site/public/public-verdict";
+import { useDay, useT } from "@/lib/i18n";
+import { IconArrowLeft, IconArrowRight } from "@/lib/icons";
+import { publicApi } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
-import { cn } from "@/lib/utils";
 
-const p = t.site.pub.file;
-
-/** The confirmed verdict as a visitor needs it: the answer first, why, where it was checked, then share. */
-export function VerdictCard({ v }: { v: PublicVerdict }) {
-  const m = VERDICT_META[v.verdict];
-  const Icon = m.icon;
-  return (
-    <section className={cn("verdict-land rounded-md border-2 border-current p-5 md:p-7", m.soft, m.ink)} aria-label={p.verdict}>
-      <p className="flex items-center gap-3 font-display text-5xl font-extrabold tracking-tight md:text-6xl">
-        <Icon className="size-10 shrink-0 md:size-12" aria-hidden />
-        {m.label}
-      </p>
-      <p className="mt-2 text-sm font-bold">{p.confirmed}</p>
-      {v.reason && <p className="mt-4 max-w-[62ch] text-xl leading-relaxed text-pretty text-foreground">{v.reason}</p>}
-    </section>
-  );
-}
-
-/** One published verdict, at its own shareable address. */
+/** One published verdict, at its own shareable address: the answer first, why, the evidence with
+ *  its dates, where the correction went, then share. */
 export function VerdictPage() {
   const { id } = useParams<{ id: string }>();
-  const [v, setV] = useState<PublicVerdict | null | "missing">(null);
-  const [copied, setCopied] = useState(false);
-  const [reading, setReading] = useState(false);
+  const t = useT();
+  const p = t.site.pub.file;
+  const day = useDay();
+  const [v, setV] = useState<SignedVerdict | null | "missing">(null);
 
   useEffect(() => {
-    publicApi<PublicVerdict>(`/verdicts/${id}`).then(setV).catch(() => setV("missing"));
+    publicApi<SignedVerdict>(`/verdicts/${id}`).then(setV).catch(() => setV("missing"));
   }, [id]);
-  useEffect(() => () => stopSpeaking(), []);
 
   if (v === "missing")
     return (
@@ -58,48 +37,27 @@ export function VerdictPage() {
       </Shell>
     );
 
-  const label = t.verdict[v.verdict];
-  const listen = () => {
-    if (reading) {
-      stopSpeaking();
-      setReading(false);
-      return;
-    }
-    setReading(true);
-    void speak(`${v.title}. ${label}. ${v.post ?? v.reason ?? ""}`, "fr", () => setReading(false));
-  };
-  const href = typeof window === "undefined" ? "" : location.href;
-
+  const origin = v.origin ? ((t.origins as Record<string, string>)[v.origin] ?? null) : null;
   return (
     <Shell>
       <h1 className="mt-6 max-w-[30ch] font-display text-[1.7rem] leading-[1.1] font-extrabold tracking-tight text-pretty md:mt-8 md:text-[2.6rem]">«&nbsp;{tidy(v.title)}&nbsp;»</h1>
       <p className="mt-2 text-sm text-muted-foreground">
-        {p.by(v.newsroom.name)}
+        {t.publicLayer.check.signed.by(v.newsroom.name, day(v.signed_at ?? v.published_at))}
         {v.ref && <span className="tabular"> · {v.ref}</span>}
       </p>
 
       <div className="mt-6 grid gap-10 md:mt-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0">
-          <VerdictCard v={v} />
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild variant="action" size="xl">
-              <a href={`https://wa.me/?text=${encodeURIComponent(p.whatsappText(v.title, label, href))}`} target="_blank" rel="noreferrer">
-                <IconShareNetwork aria-hidden /> {p.whatsapp}
-              </a>
-            </Button>
-            <Button variant="outline" size="xl" onClick={listen} aria-pressed={reading}>
-              {reading ? <IconStop aria-hidden /> : <IconSpeakerHigh aria-hidden />}
-              {reading ? p.stopListening : p.listen}
-            </Button>
-            <Button
-              variant="outline"
-              size="xl"
-              onClick={() => navigator.clipboard?.writeText(location.href).then(() => setCopied(true))}
-            >
-              {copied ? <IconCheck aria-hidden /> : <IconLink aria-hidden />}
-              {copied ? p.copied : p.share}
-            </Button>
+          <VerdictBlock v={v} />
+          <div className="mt-4">
+            <ShareActions v={v} primary />
           </div>
+
+          {(v.confidence || !!v.evidence?.length) && (
+            <section className="mt-10">
+              <Evidence v={v} />
+            </section>
+          )}
 
           {v.post && (
             <section className="mt-10">
@@ -108,21 +66,26 @@ export function VerdictPage() {
             </section>
           )}
 
-          <section className="mt-10">
-            <h2 className="font-display text-lg font-bold">{p.sources}</h2>
-            {v.sources.length ? (
-              <ol className="mt-2 border-t border-foreground">
-                {v.sources.map((s, i) => (
-                  <li key={s} className="arrive flex gap-4 border-b border-border py-3" style={{ "--i": i } as React.CSSProperties}>
-                    <span className="font-display font-bold text-muted-foreground tabular">{String(i + 1).padStart(2, "0")}</span>
-                    <span className="min-w-0 text-pretty">{s}</span>
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <p className="mt-2 text-muted-foreground">{p.noSources}</p>
-            )}
-          </section>
+          {/* Older verdicts have only source titles: listed as before. */}
+          {!v.evidence?.length && (
+            <section className="mt-10">
+              <h2 className="font-display text-lg font-bold">{p.sources}</h2>
+              {v.sources.length ? (
+                <ol className="mt-2 border-t border-foreground">
+                  {v.sources.map((s, i) => (
+                    <li key={s} className="arrive flex gap-4 border-b border-border py-3" style={{ "--i": i } as React.CSSProperties}>
+                      <span className="font-display font-bold text-muted-foreground tabular">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="min-w-0 text-pretty">{s}</span>
+                    </li>
+                  ))}
+                </ol>
+              ) : (
+                <p className="mt-2 text-muted-foreground">{p.noSources}</p>
+              )}
+            </section>
+          )}
+
+          <Trajet id={v.id} className="mt-10" />
         </div>
 
         <aside className="lg:border-l lg:border-border lg:pl-8">
@@ -130,7 +93,7 @@ export function VerdictPage() {
           <StepLine
             states={{ claim: "done", evidence: "done", conclusion: "done" }}
             notes={{
-              claim: v.first_seen_at ? p.seenOn(day(v.first_seen_at), v.origin ? (t.origins[v.origin as keyof typeof t.origins] ?? null) : null) : undefined,
+              claim: v.first_seen_at ? p.seenOn(day(v.first_seen_at), origin) : undefined,
               evidence: v.sources.length ? p.sourcesSeen(v.sources.length) : p.noSources,
               conclusion: p.publishedBy(day(v.published_at), v.newsroom.name),
             }}
@@ -151,6 +114,7 @@ export function VerdictPage() {
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
+  const p = useT().site.pub.file;
   return (
     <div className="mx-auto max-w-[88rem] px-4 pt-8 pb-20 lg:px-10">
       <Link href="/verifies" className="inline-flex items-center gap-1.5 text-sm font-bold hover:underline">

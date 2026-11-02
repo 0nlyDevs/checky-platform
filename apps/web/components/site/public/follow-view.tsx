@@ -5,11 +5,9 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IconArrowRight } from "@/lib/icons";
 import { type Step, type StepState, StepLine } from "@/components/flow/step-line";
-import { VerdictCard } from "@/components/site/public/verdict-page";
-import { t } from "@/lib/i18n/fr";
+import { VerdictBlock } from "@/components/site/public/public-verdict";
+import { useMoment, useT } from "@/lib/i18n";
 import { type TipStatus, publicApi } from "@/lib/public-api";
-
-const f = t.site.pub.follow;
 
 /** Where a tip stands at the desk, on the same numbered line as everything else. */
 function states(status: TipStatus["status"]): Record<Step, StepState> {
@@ -22,6 +20,9 @@ function states(status: TipStatus["status"]): Record<Step, StepState> {
 /** The follow-up of a public tip: where it stands at the desk, and its verdict once published. */
 export function FollowView() {
   const { token } = useParams<{ token: string }>();
+  const t = useT();
+  const f = t.site.pub.follow;
+  const moment = useMoment();
   const [tip, setTip] = useState<TipStatus | null | "missing">(null);
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export function FollowView() {
               </p>
               <p className="mt-2 font-display text-xl leading-snug font-bold text-pretty">« {tip.title} »</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                {f.received(new Date(tip.received_at).toLocaleString("fr-FR", { dateStyle: "long", timeStyle: "short" }))}
+                {f.received(moment(tip.received_at))}
               </p>
             </div>
             <StepLine
@@ -69,7 +70,7 @@ export function FollowView() {
           <div aria-live="polite">
             {tip.verdict ? (
               <>
-                <VerdictCard v={tip.verdict} />
+                <VerdictBlock v={tip.verdict} />
                 <Link href={`/verifies/${tip.verdict.id}`} className="mt-4 inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
                   {t.site.pub.file.open} <IconArrowRight className="size-4" aria-hidden />
                 </Link>

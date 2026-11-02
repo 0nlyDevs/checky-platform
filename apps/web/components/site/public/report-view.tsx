@@ -7,17 +7,18 @@ import { IconArrowRight, IconCheck, IconCircleNotch } from "@/lib/icons";
 import { StepLine } from "@/components/flow/step-line";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { useT } from "@/lib/i18n";
 import { type Newsroom, myTips, publicApi, rememberTip } from "@/lib/public-api";
 import { cn } from "@/lib/utils";
 
-const r = t.site.pub.report;
 const ORIGINS = ["whatsapp", "facebook", "tiktok", "radio", "press", "other"] as const;
 const field =
   "mt-1.5 w-full rounded-md border border-input bg-card px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15";
 
 /** The public tip form: a message heard or received goes to a newsroom's "to check" list. */
 export function ReportView() {
+  const t = useT();
+  const r = t.site.pub.report;
   const params = useSearchParams();
   const [rooms, setRooms] = useState<Newsroom[] | null>(null);
   const [room, setRoom] = useState("");

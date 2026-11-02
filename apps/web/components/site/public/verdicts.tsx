@@ -3,18 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { IconArrowRight } from "@/lib/icons";
-import { VerdictChip } from "@/components/claims/verdict";
-import { t } from "@/lib/i18n/fr";
+import { VerdictWord } from "@/components/site/public/public-verdict";
+import { useDay, useT } from "@/lib/i18n";
 import { type PublicVerdict, publicApi } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
-const p = t.site.pub.file;
-const a = t.site.pub.archive;
-export const day = (iso: string) => new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
 
 /** One published verdict on a line: the claim and why, the verdict word, who checked it and when.
  *  `compact` keeps only the verdict and the claim, for a short list under the check field. */
 export function VerdictRow({ v, index = 0, compact = false }: { v: PublicVerdict; index?: number; compact?: boolean }) {
+  const p = useT().site.pub.file;
+  const day = useDay();
   if (compact)
     return (
       <li className="arrive" style={{ "--i": index } as React.CSSProperties}>
@@ -22,7 +21,7 @@ export function VerdictRow({ v, index = 0, compact = false }: { v: PublicVerdict
           href={`/verifies/${v.id}`}
           className="group flex items-center gap-3 border-b border-border py-2.5 outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <VerdictChip verdict={v.verdict} className="w-[8.5rem] shrink-0" />
+          <VerdictWord verdict={v.verdict} className="w-[8.5rem] shrink-0" />
           <span className="min-w-0 flex-1 truncate font-bold group-hover:underline">{tidy(v.title)}</span>
           <IconArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
         </Link>
@@ -43,7 +42,7 @@ export function VerdictRow({ v, index = 0, compact = false }: { v: PublicVerdict
           </span>
         </span>
         <span className="flex items-center gap-3 md:self-center">
-          <VerdictChip verdict={v.verdict} className="text-base" />
+          <VerdictWord verdict={v.verdict} className="text-base" />
           <IconArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
         </span>
       </Link>
@@ -53,6 +52,7 @@ export function VerdictRow({ v, index = 0, compact = false }: { v: PublicVerdict
 
 /** The latest verdicts the newsrooms published, `limit` of them, with an optional filter and more. */
 export function VerdictList({ limit: first = 3, filter = false, compact = false }: { limit?: number; filter?: boolean; compact?: boolean }) {
+  const a = useT().site.pub.archive;
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(first);
   const [page, setPage] = useState<{ items: PublicVerdict[]; total: number } | null>(null);
