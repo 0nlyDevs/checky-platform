@@ -107,3 +107,39 @@ def test_only_admin_changes_settings(as_user):
     _join(alice, bob, ws, role="editor")
     r = bob.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"double_signature": True}})
     assert r.status_code == 403
+
+
+def test_permission_matrix_follows_the_routes_dependencies(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    _join(alice, bob, ws, role="veilleur")
+    out = bob.get(f"/api/v1/workspaces/{ws}/permissions").json()  # every member may read it
+    assert out["roles"] == ["admin", "editor", "journalist", "veilleur", "issuer"]
+    grid = {c["key"]: c["roles"] for c in out["capabilities"]}
+    assert grid["read_dossiers"] == {
+        "admin": True,
+        "editor": True,
+        "journalist": True,
+        "veilleur": False,
+        "issuer": False,
+    }
+    assert grid["record_clip"]["veilleur"] and not grid["record_clip"]["issuer"]
+    assert grid["register"]["issuer"] and grid["register"]["editor"]
+    assert not grid["register"]["journalist"]
+    assert grid["edit_own"]["journalist"] and not grid["edit_all"]["journalist"]
+    assert grid["edit_all"]["editor"] and grid["delete"]["editor"]
+    assert not grid["delete"]["journalist"]
+    assert grid["release"] == {
+        "admin": True,
+        "editor": True,
+        "journalist": False,
+        "veilleur": False,
+        "issuer": False,
+    }
+    assert grid["invite"] == {r: r == "admin" for r in out["roles"]}
+    assert grid["demo_reset"] == grid["invite"] == grid["settings"]
+    sign = next(c for c in out["capabilities"] if c["key"] == "sign")
+    assert sign["scope"] == "own" and sign["roles"]["journalist"]
+    assert out["double_signature"] is False
+    assert as_user("mallory").get(f"/api/v1/workspaces/{ws}/permissions").status_code == 404
+

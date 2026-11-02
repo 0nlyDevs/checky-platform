@@ -2,16 +2,34 @@ import re
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Literal
+from typing import Literal, get_args
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from fastapi.routing import APIRoute
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
-from app.core.access import Admin, AnyMember, Anyone, Db, get_membership
+from app.core.access import (
+    RANK,
+    Admin,
+    AnyMember,
+    Anyone,
+    Db,
+    Editor,
+    Issuer,
+    Veilleur,
+    get_membership,
+)
 from app.core.errors import ApiError
-from app.core.models import DEFAULT_BEATS, Invitation, Membership, Workspace, auth_user
+from app.core.models import (
+    DEFAULT_BEATS,
+    ROLES,
+    Invitation,
+    Membership,
+    Workspace,
+    auth_user,
+)
 from app.core.security import User
 
 router = APIRouter(tags=["workspaces"])
@@ -241,3 +259,96 @@ async def remove_member(user_id: str, admin: Admin, db: Db) -> None:
     await _guard_last_admin(db, admin, m)
     await db.delete(m)
     await db.commit()
+
+
+# --- « Qui peut quoi »: the roles matrix, read from the membership dependencies the routes use.
+# Each capability names the route that grants it and the dependency it is expected to carry (used
+# when another slice's route is not mounted yet), plus the rule the handler adds in code.
+CAPABILITIES: list[tuple[str, str, str, object, str | None]] = [
+    ("read_dossiers", "GET", "/workspaces/{ws}/items", AnyMember, None),
+    ("create", "POST", "/workspaces/{ws}/items", AnyMember, None),
+    ("edit_own", "PATCH", "/workspaces/{ws}/items/{item_id}", AnyMember, None),
+    # items.update_item: the author, or an editor for every dossier
+    ("edit_all", "PATCH", "/workspaces/{ws}/items/{item_id}", AnyMember, "editor"),
+    ("delete", "DELETE", "/workspaces/{ws}/items/{item_id}", Editor, None),
+    # signing.sign: the author or an editor; a journalist signs their own dossiers
+    ("sign", "POST", "/workspaces/{ws}/items/{item_id}/sign", AnyMember, "own"),
+    ("publish", "POST", "/workspaces/{ws}/items/{item_id}/sign", AnyMember, "own"),
+    # signing.publication_guard: under double signature, an editor releases the signed version
+    ("release", "PATCH", "/workspaces/{ws}/items/{item_id}", AnyMember, "editor"),
+    ("register", "POST", "/workspaces/{ws}/registry", Issuer, None),
+    ("seal", "POST", "/workspaces/{ws}/registry/{id}/seal", Issuer, None),
+    ("record_clip", "POST", "/workspaces/{ws}/radio-clips", Veilleur, None),
+    ("invite", "POST", "/workspaces/{ws}/invitations", Admin, None),
+    ("settings", "PATCH", "/workspaces/{ws}", Admin, None),
+    ("demo_reset", "POST", "/workspaces/{ws}/demo/reset", Admin, None),
+]
+
+
+class Capability(BaseModel):
+    key: str
+    roles: dict[str, bool]
+    # "own": a journalist may do it on their own dossiers only
+    scope: Literal["own"] | None = None
+    route: str
+
+
+class PermissionsOut(BaseModel):
+    roles: list[str]
+    double_signature: bool
+    capabilities: list[Capability]
+
+
+def _allowed_by(call) -> set[str] | None:
+    """The roles a membership dependency lets through (`require_role` keeps `min_role` in its
+    closure, `require_any` keeps `roles`); None for any other dependency."""
+    code, cells = getattr(call, "__code__", None), getattr(call, "__closure__", None)
+    if code is None or not cells:
+        return None
+    free = dict(zip(code.co_freevars, (c.cell_contents for c in cells), strict=False))
+    if isinstance(free.get("min_role"), str):
+        return {r for r in ROLES if RANK[r] >= RANK[free["min_role"]]}
+    if isinstance(free.get("roles"), tuple):
+        return set(free["roles"])
+    return None
+
+
+def _shape(path: str) -> str:
+    return re.sub(r"\{[^}]+\}", "{}", path.removeprefix("/api/v1"))
+
+
+def _route_roles(routes, method: str, path: str) -> set[str] | None:
+    for route in routes:
+        if not isinstance(route, APIRoute) or method not in route.methods:
+            continue
+        if _shape(route.path) != _shape(path):
+            continue
+        for dep in route.dependant.dependencies:
+            if (found := _allowed_by(dep.call)) is not None:
+                return found
+    return None
+
+
+@router.get("/workspaces/{ws}/permissions")
+async def permissions(member: Anyone, db: Db, request: Request) -> PermissionsOut:
+    ws = await db.get(Workspace, member.workspace_id)
+    rows = []
+    for key, method, path, fallback, rule in CAPABILITIES:
+        allowed = _route_roles(request.app.routes, method, path)
+        if allowed is None:
+            allowed = _allowed_by(get_args(fallback)[1].dependency) or set()
+        if rule == "editor":
+            allowed = {r for r in allowed if RANK[r] >= RANK["editor"]}
+        rows.append(
+            Capability(
+                key=key,
+                roles={r: r in allowed for r in ROLES},
+                scope="own" if rule == "own" else None,
+                route=f"{method} {path}",
+            )
+        )
+    return PermissionsOut(
+        roles=list(ROLES),
+        double_signature=newsroom_settings(ws).double_signature,
+        capabilities=rows,
+    )
