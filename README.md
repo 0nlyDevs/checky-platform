@@ -285,6 +285,34 @@ Next.js 16 is newer than most tutorials and AI training data: read
 | AI routes return 503 `ai_unavailable` | no AI key in `.env`, or every provider failed (see `app.ai_call`) |
 | `npm` warns it blocked an install script | harmless |
 
+## API on Render
+
+[`render.yaml`](render.yaml) describes the service: free plan, Frankfurt, Render's own Python 3.13
+(no Docker; ffmpeg comes with Render's runtime). It deploys `dev` once CI is green on it, and its
+build runs `alembic upgrade head`, so the production database is migrated before new code goes live.
+
+First time:
+
+1. Render → **New → Blueprint**, connect GitHub (org **0nlyDevs**), pick `fanilo-base`.
+2. Fill in the values it asks for:
+   - `DATABASE_URL`: the Neon **direct** connection string (the same as `PROD_DATABASE_URL`);
+   - the web app's production address (Vercel) in `AUTH_ISSUER`, `AUTH_AUDIENCE` and
+     `CORS_ORIGINS`, and the same address followed by `/api/auth/jwks` in `AUTH_JWKS_URL`;
+   - `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY` (bucket `uploads` is set);
+   - `GROQ_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`.
+3. Optional keys go in the service's **Environment** tab: `CLAUDE_API_KEY`, `ELEVENLABS_API_KEY`,
+   `GOOGLE_FACTCHECK_API_KEY`.
+4. Open `<service URL>/api/v1/health`: the database, storage and AI providers should be `up`.
+
+Good to know:
+
+- A free instance sleeps after 15 minutes without a visit and takes about a minute to wake;
+  background jobs wait and resume. Open Paramètres a few minutes before a demo.
+- `FORWARDED_ALLOW_IPS=*` makes the API read the visitor's address from Render's proxy; without
+  it every visitor would share one rate limit on the public routes.
+- There is deliberately no health check path: `/api/v1/health` queries Neon and every AI
+  provider, and polling it would keep the database awake.
+
 ## Production database (Neon)
 
 Project **fanilo** in the Neon org **0nlydevs** (id `green-heart-84751490`, AWS Frankfurt,
@@ -292,7 +320,7 @@ Postgres 18, free plan). Set up with `vector`, `better_auth` and `app` at the cu
 
 - Its connection string is `PROD_DATABASE_URL` in `.env` (ask the owner, or Neon console →
   project → Connect, with **connection pooling off**). The app itself never reads that variable.
-- Migrate production after a new migration:
+- Render's build migrates production on every deploy. To migrate by hand:
   ```bash
   cd apps/api && DATABASE_URL="$PROD_DATABASE_URL" uv run alembic upgrade head
   ```

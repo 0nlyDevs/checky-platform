@@ -1,0 +1,66 @@
+# FANILO API on Render (free plan, native Python runtime, no Docker).
+# Render → New → Blueprint → this repo: it creates the service and asks for every `sync: false` value.
+services:
+  - type: web
+    name: fanilo-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    branch: dev
+    # Deploy a push to dev only once CI is green on it.
+    autoDeployTrigger: checksPass
+    rootDir: apps/api
+    # Migrations run here, so the production database is at the code's schema before it goes live.
+    buildCommand: pip install uv && uv sync --locked --no-dev && uv run --no-sync alembic upgrade head
+    startCommand: uv run --no-sync uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # No healthCheckPath: /api/v1/health queries the database and every AI provider, and polling it
+    # would keep Neon awake around the clock. Render checks that the port answers instead.
+    envVars:
+      # New services default to Python 3.14; FANILO runs and is tested on 3.13.
+      - key: PYTHON_VERSION
+        value: 3.13.16
+      # Use Render's Python, never one uv downloads outside the project.
+      - key: UV_PYTHON_DOWNLOADS
+        value: never
+      - key: UV_LINK_MODE
+        value: copy
+      # Render's proxy sits in front: take the visitor's address from X-Forwarded-For, otherwise
+      # every visitor shares one rate limit on the public routes.
+      - key: FORWARDED_ALLOW_IPS
+        value: "*"
+      # Neon project fanilo, direct (non-pooled) connection string, as PROD_DATABASE_URL in .env.
+      - key: DATABASE_URL
+        sync: false
+      # All four are the web app's production address (Vercel), e.g. https://fanilo.vercel.app;
+      # AUTH_JWKS_URL adds /api/auth/jwks.
+      - key: AUTH_JWKS_URL
+        sync: false
+      - key: AUTH_ISSUER
+        sync: false
+      - key: AUTH_AUDIENCE
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      # Neon Object Storage, branch production; the production bucket is `uploads`.
+      - key: STORAGE_ENDPOINT
+        sync: false
+      - key: STORAGE_ACCESS_KEY_ID
+        sync: false
+      - key: STORAGE_SECRET_ACCESS_KEY
+        sync: false
+      - key: STORAGE_REGION
+        value: eu-central-1
+      - key: STORAGE_BUCKET
+        value: uploads
+      # Comma-separated lists are fine (one key per teammate).
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
+        sync: false
+      # Same request, same answer (stored in app.ai_cache): steady demos, less free-tier quota.
+      - key: AI_CACHE
+        value: "true"
+      # Optional, added by hand in the dashboard when wanted: CLAUDE_API_KEY, ELEVENLABS_API_KEY,
+      # GOOGLE_FACTCHECK_API_KEY.
