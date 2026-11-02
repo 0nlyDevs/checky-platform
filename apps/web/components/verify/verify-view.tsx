@@ -6,6 +6,8 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
 import { IconArrowCounterClockwise, IconArrowRight, IconArrowSquareOut, IconCalendarDots, IconCircleNotch, IconMicrophone, IconSealCheck, IconSparkle, IconStop } from "@/lib/icons";
+import { AgentTrace, ResearchDetails, type AgentEvent, type ResearchExtras } from "@/components/verify/research-details";
+import { research } from "@/lib/i18n/fr/research";
 import { AskView } from "@/components/ask/ask-view";
 import { toClaim, VERDICT_META, VerdictChip } from "@/components/claims/verdict";
 import { claimSteps, type Step, StepLine, type StepState } from "@/components/flow/step-line";
@@ -19,9 +21,9 @@ const v = t.verify;
 const c = t.linkCheck;
 type StepKey = "read" | "claims" | "search" | "verdict";
 type Run = { status: "waiting" | "running" | "done" | "failed"; summary: string };
-type Found = { n: number; kind: string; title: string; url: string; snippet: string };
+type Found = { n: number; kind: string; title: string; url: string; snippet: string; date?: string | null; read_status?: string; passages?: string[] };
 type Evidence = { result: number; stance: "supports" | "contradicts" | "context"; quote: string };
-type Result = {
+type Result = ResearchExtras & {
   url: string | null;
   platform: string | null;
   kind?: "page" | "post" | "image" | "text";
@@ -79,7 +81,7 @@ function lineStates(s: Record<StepKey, Run>): Record<Step, StepState> {
   return { claim, evidence: from(s.search), conclusion: from(s.verdict, "suggested") };
 }
 
-/** The message with the phrases FANILO flagged lit in citron, one after another. */
+/** The message with the phrases Checky flagged lit in citron, one after another. */
 function Lit({ text, quotes }: { text: string; quotes: string[] }) {
   const hits: [number, number][] = [];
   const lower = text.toLowerCase();
@@ -151,7 +153,7 @@ function useDictation(onText: (text: string) => void) {
 }
 
 /**
- * Vérifier: paste (or dictate) what came in and watch FANILO work along the numbered line: it reads
+ * Vérifier: paste (or dictate) what came in and watch Checky work along the numbered line: it reads
  * the message and lights the phrases that should worry, brings what fact-checkers and the web say,
  * then suggests a conclusion. Nothing is written until the journalist follows it in the desk.
  * The second tab asks every source of the newsroom (and the agent for a deeper search).
@@ -165,6 +167,8 @@ export function VerifyView() {
   const [input, setInput] = useState(params.get("lien") ?? "");
   const [sent, setSent] = useState<{ url: string | null; text: string | null } | null>(null);
   const [running, setRunning] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [agents, setAgents] = useState<AgentEvent[]>([]);
   const [steps, setSteps] = useState(fresh);
   const [log, setLog] = useState<LogLine[]>([]);
   const [result, setResult] = useState<Result | null>(null);
@@ -186,12 +190,16 @@ export function VerifyView() {
     setSent(body);
     setRunning(true);
     setSteps(fresh());
+    setAgents([]);
     setLog([]);
     setResult(null);
     setError(null);
     try {
-      await postStream(`/workspaces/${ws}/link-check`, body, (event, data) => {
-        if (event === "step") {
+      await postStream(`/workspaces/${ws}/crew`, { ...body, ai_enabled: aiEnabled }, (event, data) => {
+        if (event === "agent") {
+          const agent = data as AgentEvent;
+          setAgents(previous => [...previous.filter(a => a.agent !== agent.agent), agent]);
+        } else if (event === "step") {
           const d = data as { key: StepKey; status: Run["status"]; summary: string };
           setSteps((all) => ({ ...all, [d.key]: { status: d.status, summary: d.summary } }));
           if (d.status === "running") say(v.log[d.key], "running");
@@ -235,6 +243,7 @@ export function VerifyView() {
         body: [result.summary, sent?.text && sent.text !== title ? sent.text : "", result.url ?? ""].filter(Boolean).join("\n\n").slice(0, 4000),
         origin: (result.platform && ORIGIN[result.platform]) || (result.kind === "page" ? "press" : "other"),
       });
+      await api(`/workspaces/${ws}/items/${made.item_id}`, { method: "PATCH", body: JSON.stringify({ data: { research: result, verdict_suggested: result.analysis?.verdict } }) });
       const links = [result.url, ...picked].filter((u, i, all): u is string => !!u && all.indexOf(u) === i);
       // one by one: the API checks each link before queueing it
       for (const link of links) await act({ kind: "attach_link", item_id: made.item_id, url: link }).catch(() => null);
@@ -250,6 +259,7 @@ export function VerifyView() {
     setResult(null);
     setError(null);
     setSteps(fresh());
+    setAgents([]);
     setLog([]);
     setInput("");
   }
@@ -339,6 +349,9 @@ export function VerifyView() {
                 </div>
               </form>
 
+              <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={aiEnabled} disabled={running} onChange={e => setAiEnabled(e.target.checked)} className="size-4" />{research.ai}</label>
+              {!aiEnabled && <p className="mt-1 text-sm text-muted-foreground">{research.noAi}</p>}
+              <AgentTrace agents={agents} />
               {!touched ? (
                 <section className="mt-12 max-w-4xl">
                   <h2 className="font-display text-xl font-bold">{v.how}</h2>
@@ -515,6 +528,7 @@ function Board({
       {result && !result.needs_text && (
         <>
           <Conclusion r={result} />
+          <ResearchDetails data={result} ws={ws} />
           {(result.claims?.length ?? 0) > 1 && (
             <section>
               <h2 className="font-display text-lg font-bold">{c.claims}</h2>

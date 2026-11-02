@@ -42,7 +42,8 @@ async def join(sid, ws_id: str):
     except (ValueError, TypeError):
         return {"ok": False, "error": "bad_workspace"}
     async with SessionLocal() as db:
-        if await get_membership(db, ws, session["user_id"]) is None:
+        membership = await get_membership(db, ws, session["user_id"])
+        if membership is None or membership.role not in ("admin", "editor", "journalist"):
             return {"ok": False, "error": "not_found"}
     await sio.enter_room(sid, room(ws))
     return {"ok": True}

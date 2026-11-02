@@ -33,7 +33,7 @@ def web(monkeypatch):
         if host == "html.duckduckgo.com":
             return httpx.Response(200, text=DDG)
         if host == "fr.wikipedia.org" and request.url.path == "/w/api.php":
-            assert "FANILO" in request.headers["user-agent"]
+            assert "Checky" in request.headers["user-agent"]
             return httpx.Response(200, json={"query": {"search": [{"title": "Analakely"}]}})
         if host == "fr.wikipedia.org":
             return httpx.Response(200, json={"extract": "Analakely est le quartier central."})

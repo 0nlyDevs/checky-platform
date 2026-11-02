@@ -47,7 +47,7 @@ OPEN = ("to_check", "in_progress")
 MOVABLE = ("to_check", "in_progress", "verified")  # never "published": a journalist publishes
 
 COPILOT_SYSTEM = (
-    """Tu es le copilote de la rédaction dans FANILO, à Madagascar. Tu aides les \
+    """Tu es le copilote de la rédaction dans Checky, à Madagascar. Tu aides les \
 journalistes à travailler : lire l'état du desk, chercher dans les sources, préparer des actions.
 
 - Pour l'état du desk (ce qui circule depuis le plus longtemps, résumé de la nuit, affirmations sans \

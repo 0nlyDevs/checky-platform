@@ -31,8 +31,9 @@ How the pieces talk:
 - **Background jobs** run inside the API process from a Postgres table (no Redis).
 - **Realtime** updates go over Socket.IO from the API.
 - **AI** calls go through one gateway (`apps/api/app/core/ai.py`) that falls back from Groq to
-  Gemini to NVIDIA (and Claude, once its key is set) when a provider fails. Every key may be a
-  comma-separated list; a key that hits its quota is set aside and the next one is used.
+  Gemini to NVIDIA (and Claude, once its key is set) when a provider fails. Every outside-service
+  key (AI, voice, Tavily search, fact-checks, image detection) may be a comma-separated list; a key
+  that hits its quota is set aside and the next one is used.
 - **Agents** (Vérifier's deep search, the docked assistant's desk copilot and public guide) share
   one tool loop and one set of guardrails (`apps/api/app/modules/guard.py`); they search the web,
   Wikipedia and fact-checkers (`apps/api/app/core/websearch.py`). Dedicated web search uses

@@ -272,3 +272,99 @@ def test_sightengine_waits_for_validation_and_failures_claim_nothing(
         result = alice.post(endpoint, content=png(), headers=image).json()
         assert result["detector"]["status"] == "unavailable"
         assert result["assessment"] == "inconclusive"
+
+
+@pytest.mark.parametrize(
+    "refusal",
+    [
+        httpx.Response(429, json={"status": "failure", "error": {"message": "Too many requests"}}),
+        httpx.Response(
+            200,
+            json={"status": "failure", "error": {"type": "usage_limit", "message": "Daily limit"}},
+        ),
+        httpx.Response(401, json={"status": "failure", "error": {"type": "credentials_error"}}),
+    ],
+)
+def test_sightengine_accounts_rotate_in_pairs(as_user, image_web, monkeypatch, refusal):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "sightengine_api_user", "u1,u2")
+    monkeypatch.setattr(settings, "sightengine_api_secret", "s1,s2")
+    monkeypatch.setattr(settings, "image_detector_validated", True)
+    used = []
+
+    def respond(request):
+        body = request.content
+        pair = ("u1", "s1") if b"u1" in body else ("u2", "s2")
+        assert (pair[0] in body.decode(errors="ignore")) and (
+            pair[1] in body.decode(errors="ignore")
+        )
+        used.append(pair)
+        if pair[0] == "u1":
+            return refusal
+        return httpx.Response(200, json={"status": "success", "type": {"ai_generated": 0.98}})
+
+    monkeypatch.setattr(imagecheck, "_detector_transport", httpx.MockTransport(respond))
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    result = alice.post(
+        f"/api/v1/workspaces/{ws}/image-check/file",
+        content=png(),
+        headers={"Content-Type": "image/png"},
+    ).json()
+    assert used == [("u1", "s1"), ("u2", "s2")]
+    assert result["detector"]["status"] == "assessed"
+    assert result["assessment"] == "detected"
+
+
+def test_a_bad_image_does_not_burn_a_sightengine_account(as_user, image_web, monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "sightengine_api_user", "u1,u2")
+    monkeypatch.setattr(settings, "sightengine_api_secret", "s1,s2")
+    monkeypatch.setattr(settings, "image_detector_validated", True)
+    used = []
+
+    def respond(request):
+        used.append(request)
+        return httpx.Response(
+            400, json={"status": "failure", "error": {"type": "media_error", "code": 21}}
+        )
+
+    monkeypatch.setattr(imagecheck, "_detector_transport", httpx.MockTransport(respond))
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    result = alice.post(
+        f"/api/v1/workspaces/{ws}/image-check/file",
+        content=png(),
+        headers={"Content-Type": "image/png"},
+    ).json()
+    assert result["detector"]["status"] == "unavailable" and len(used) == 1
+
+
+def test_custom_detector_tokens_rotate(as_user, image_web, monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "image_detector_url", "https://detector.test/check")
+    monkeypatch.setattr(settings, "image_detector_token", "t1,t2")
+    monkeypatch.setattr(settings, "image_detector_validated", True)
+    used = []
+
+    def respond(request):
+        token = request.headers["authorization"].removeprefix("Bearer ")
+        used.append(token)
+        if token == "t1":
+            return httpx.Response(429)
+        return httpx.Response(200, json={"ai_score": 0.02, "model": "detector-v1"})
+
+    monkeypatch.setattr(imagecheck, "_detector_transport", httpx.MockTransport(respond))
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    result = alice.post(
+        f"/api/v1/workspaces/{ws}/image-check/file",
+        content=png(),
+        headers={"Content-Type": "image/png"},
+    ).json()
+    assert used == ["t1", "t2"]
+    assert result["detector"] == {
+        "status": "assessed",
+        "assessment": "none",
+        "model": "detector-v1",
+    }

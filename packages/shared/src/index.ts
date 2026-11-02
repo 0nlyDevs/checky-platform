@@ -16,7 +16,9 @@ export type Activity = Schemas["ActivityOut"];
 export type AiCompleteIn = Schemas["CompleteIn"];
 export type AiCompletion = Schemas["CompleteOut"];
 
-export const ROLES = ["admin", "editor", "journalist"] as const;
+// The desk (admin, editor, journalist), a veilleur (reports what was heard on a radio) and an
+// issuer (an institution that registers and seals its own communiqués).
+export const ROLES = ["admin", "editor", "journalist", "veilleur", "issuer"] as const;
 export type Role = (typeof ROLES)[number];
 
 export const STATUSES = ["to_check", "in_progress", "verified", "published"] as const;

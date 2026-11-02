@@ -1,12 +1,15 @@
 import { createElement } from "react";
 import {
+  AddressBook,
   ArrowCounterClockwise,
   ArrowLeft,
   ArrowRight,
-  ArrowsClockwise,
   ArrowSquareOut,
   ArrowUp,
+  ArrowsClockwise,
   Books,
+  Broadcast,
+  Calculator,
   CalendarDots,
   CaretDown,
   CaretRight,
@@ -18,6 +21,7 @@ import {
   CircleDashed,
   CircleNotch,
   Columns,
+  Compass,
   Copy,
   DotsThreeVertical,
   DownloadSimple,
@@ -34,13 +38,14 @@ import {
   MinusCircle,
   Monitor,
   Moon,
-  Paperclip,
+  Newspaper,
   PaperPlaneTilt,
+  Paperclip,
   PencilSimple,
   Play,
   Plus,
   Question,
-  Broadcast,
+  Radio,
   Robot,
   Rows,
   Scan,
@@ -50,6 +55,7 @@ import {
   SignOut,
   Sparkle,
   SpeakerHigh,
+  Stamp,
   Stop,
   Sun,
   TextT,
@@ -136,4 +142,9 @@ export const IconWaveform = duo(Waveform);
 export const IconWifiSlash = duo(WifiSlash);
 export const IconX = duo(X);
 export const IconXCircle = duo(XCircle);
-
+export const IconAddressBook = duo(AddressBook);
+export const IconCalculator = duo(Calculator);
+export const IconCompass = duo(Compass);
+export const IconNewspaper = duo(Newspaper);
+export const IconRadio = duo(Radio);
+export const IconStamp = duo(Stamp);

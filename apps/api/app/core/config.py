@@ -99,6 +99,17 @@ class Settings(BaseSettings):
     # Separate opt-in: a validated private detector is not automatically offered anonymously.
     public_image_detector_enabled: bool = False
 
+    # Where the public site lives (links in SMS, cards, posters, attestations: /verifies/{id}).
+    public_web_url: str = "http://localhost:3000"
+    # Encrypts issuers' private seal keys at rest and signs attestations; any long random string.
+    seal_secret: str = ""
+    # The Android SMS gateway (or the simulator in Paramètres) sends `X-Gateway-Secret` with it.
+    sms_gateway_secret: str = ""
+    # Radio streams captured for « À l'antenne »: "Station|https://stream.url|Region,…" (empty = off).
+    radio_streams: str = ""
+    # RSS feeds of the national press for Veille (comma list; empty = off).
+    press_feeds: str = ""
+
     @property
     def async_database_url(self) -> str:
         """Same DATABASE_URL as the web app, with the asyncpg driver for SQLAlchemy.

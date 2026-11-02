@@ -159,9 +159,9 @@ function AttachToClaim({ ws, x }: { ws: string; x: Exchange }) {
 }
 
 /** Ask every source of the newsroom; `embedded` drops the page frame (it lives in Vérifier). */
-export function AskView({ embedded = false }: { embedded?: boolean }) {
+export function AskView({ embedded = false, initialQuestion = "" }: { embedded?: boolean; initialQuestion?: string }) {
   const { ws } = useParams<{ ws: string }>();
-  const [question, setQuestion] = useState("");
+  const [question, setQuestion] = useState(initialQuestion);
   const [exchanges, setExchanges] = useState<Exchange[]>([]);
   const [highlight, setHighlight] = useState<string | null>(null);
   const [deep, setDeep] = useState(false);

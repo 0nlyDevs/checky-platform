@@ -1,4 +1,10 @@
 // Every UI string lives here so Malagasy can be added as a sibling file.
+import { crew } from "./fr/crew";
+import { dossier } from "./fr/dossier";
+import { publicLayer } from "./fr/publicLayer";
+import { registre } from "./fr/registre";
+import { rubrique } from "./fr/rubrique";
+import { team } from "./fr/team";
 
 /** A distance in days, rounded the way a person says it (same rounding as the API's dates.span). */
 const span = (days: number) => {
@@ -34,8 +40,17 @@ export const fr = {
     },
   },
   nav: {
+    rubrique: "Ma rubrique",
+    rubriqueShort: "Rubrique",
     claims: "Dossiers",
     check: "Vérifier",
+    veille: "Veille",
+    registre: "Registre",
+    carnet: "Le carnet",
+    annuaire: "Annuaire",
+    documents: "Documents",
+    chiffres: "Chiffres",
+    angles: "Angles",
     analyse: "Analyser",
     sources: "Sources",
     transcriptions: "Transcriptions",
@@ -214,11 +229,15 @@ export const fr = {
       admin: "Administrateur",
       editor: "Éditeur",
       journalist: "Journaliste",
+      veilleur: "Veilleur",
+      issuer: "Institution",
     },
     roleHelp: {
       admin: "Gère les membres et les données de démonstration.",
       editor: "Valide, modifie et supprime toutes les affirmations.",
       journalist: "Ajoute des affirmations et modifie les siennes.",
+      veilleur: "Signale ce qu'il entend à la radio ; ne voit pas les dossiers.",
+      issuer: "Enregistre et scelle ses propres communiqués ; ne touche pas aux verdicts.",
     },
     inviteTitle: "Inviter quelqu'un",
     inviteLead: "Créez un lien et envoyez-le par WhatsApp ou e-mail. Il est valable 7 jours et ne sert qu'une fois.",
@@ -454,7 +473,7 @@ export const fr = {
     nav: { label: "Navigation principale", signIn: "Se connecter", newsroom: "Espace rédaction" },
     home: {
       title: "Un doute ? Faisons le point.",
-      lead: "Collez le message reçu sur WhatsApp ou Facebook. FANILO cherche si une rédaction l'a déjà vérifié, et vous montre pourquoi, sources à l'appui.",
+      lead: "Collez le message reçu sur WhatsApp ou Facebook. Checky cherche si une rédaction l'a déjà vérifié, et vous montre pourquoi, sources à l'appui.",
       saying: "Aza maika mizara : vérifions avant de partager.",
       how: "Comment une rumeur est vérifiée",
       howLead: "Chaque rumeur suit la même ligne, du message reçu au verdict publié. L'IA lit, cherche et propose ; une rédaction confirme toujours.",
@@ -462,7 +481,7 @@ export const fr = {
       all: "Tous les verdicts",
       newsroomsTitle: "Votre rédaction vérifie plus vite.",
       newsroomsText:
-        "Un espace partagé pour suivre chaque rumeur jusqu'au verdict sourcé : FANILO lit les messages et les liens, cherche chez les fact-checkeurs et dans vos sources, propose une conclusion citée mot pour mot. Un journaliste la confirme, puis la publie ici.",
+        "Un espace partagé pour suivre chaque rumeur jusqu'au verdict sourcé : Checky lit les messages et les liens, cherche chez les fact-checkeurs et dans vos sources, propose une conclusion citée mot pour mot. Un journaliste la confirme, puis la publie ici.",
       newsroomsCta: "Créer l'espace de ma rédaction",
       newsroomsPoints: ["Les dossiers de la nuit, au même endroit", "Les sources lues, les citations vérifiées", "Un verdict confirmé par une personne, jamais par la machine"],
       specimen: {
@@ -479,7 +498,7 @@ export const fr = {
       nav: { check: "Vérifier", verified: "Les verdicts", report: "Signaler", home: "Accueil" },
       check: {
         title: "Est-ce déjà vérifié ?",
-        lead: "Posez votre question ou collez le message reçu, en français ou en malagasy. L'assistant de FANILO répond uniquement à partir des verdicts publiés par les rédactions, et cite ses dossiers. Il n'invente jamais de verdict.",
+        lead: "Posez votre question ou collez le message reçu, en français ou en malagasy. L'assistant de Checky répond uniquement à partir des verdicts publiés par les rédactions, et cite ses dossiers. Il n'invente jamais de verdict.",
         label: "Votre question ou le message reçu",
         answer: "Réponse de l'assistant",
         busy: "L'assistant est très demandé : voici les dossiers qui correspondent.",
@@ -557,12 +576,12 @@ export const fr = {
       lead: "Les rumeurs de la nuit, leurs sources et leurs verdicts, partagés avec votre équipe.",
     },
     footer: {
-      what: "FANILO aide les rédactions de Madagascar à vérifier les rumeurs avant de les partager, et publie leurs verdicts pour tous.",
-      made: "Hackathon FANILO · Institut français de Madagascar et Ambassade de France · novembre 2026.",
+      what: "Checky aide les rédactions de Madagascar à vérifier les rumeurs avant de les partager, et publie leurs verdicts pour tous.",
+      made: "Checky, né au Hackathon FANILO · Institut français de Madagascar et Ambassade de France · novembre 2026.",
       fictional: "Les rumeurs données en exemple sur ce site sont fictives.",
     },
   },
-  // The numbered line every rumour travels; shown live while FANILO works, and on every dossier.
+  // The numbered line every rumour travels; shown live while Checky works, and on every dossier.
   flow: {
     label: "Les étapes de la vérification",
     steps: { claim: "L'affirmation", evidence: "Les éléments", conclusion: "La conclusion" },
@@ -576,25 +595,25 @@ export const fr = {
   },
   verify: {
     title: "Un doute ? Faisons le point.",
-    lead: "Collez un message, un lien, ou dictez-le. FANILO le lit, cherche ce que disent les fact-checkeurs et le web, puis propose une conclusion. La rédaction confirme toujours.",
+    lead: "Collez un message, un lien, ou dictez-le. Checky le lit, cherche ce que disent les fact-checkeurs et le web, puis propose une conclusion. La rédaction confirme toujours.",
     field: "Ce que vous avez reçu",
     placeholder: "Collez ici le message WhatsApp, le texte d'un post ou un lien…",
     submit: "Vérifier cette information",
-    running: "FANILO travaille…",
+    running: "Checky travaille…",
     dictate: "Dicter le message",
     stopDictate: "Arrêter la dictée",
     transcribing: "Transcription…",
     micDenied: "Le micro n'est pas autorisé dans le navigateur.",
     dictationFailed: "La dictée n'a pas marché. Collez le texte à la place.",
     modes: { label: "Que voulez-vous faire ?", message: "Vérifier un message", sources: "Interroger nos sources" },
-    how: "Comment FANILO vérifie",
+    how: "Comment Checky vérifie",
     open: "Dossiers ouverts",
     allDossiers: "Tous les dossiers",
     noOpen: "Aucun dossier ouvert : le desk est à jour.",
     recent: "Vérifié récemment",
     message: "Le message",
     link: "Le lien",
-    live: "Le travail de FANILO",
+    live: "Le travail de Checky",
     liveNow: "En direct",
     liveDone: "Terminé",
     sourcesCount: (n: number) => (n === 1 ? "+1 source" : `+${n} sources`),
@@ -615,7 +634,7 @@ export const fr = {
   },
   linkCheck: {
     title: "Analyser un lien",
-    lead: "Collez le lien d'une publication, d'un article ou d'une image. FANILO lit le contenu, relève ce qu'il affirme et les signes d'alerte, cherche ce qu'en disent les fact-checkeurs et le web, puis suggère un verdict. Un journaliste le confirme toujours.",
+    lead: "Collez le lien d'une publication, d'un article ou d'une image. Checky lit le contenu, relève ce qu'il affirme et les signes d'alerte, cherche ce qu'en disent les fact-checkeurs et le web, puis suggère un verdict. Un journaliste le confirme toujours.",
     url: "Lien à analyser",
     urlPlaceholder: "Lien d'un post, d'un article ou d'une image",
     submit: "Analyser",
@@ -623,7 +642,7 @@ export const fr = {
     textToggle: "Le lien ne s'ouvre pas ? Collez le texte de la publication",
     text: "Texte de la publication (facultatif)",
     textPlaceholder: "Copiez ici le message, la légende ou le texte de l'article",
-    needsText: "Ce lien ne s'ouvre pas pour FANILO (compte nécessaire ou site protégé). Collez le texte de la publication ci-dessous, puis relancez.",
+    needsText: "Ce lien ne s'ouvre pas pour Checky (compte nécessaire ou site protégé). Collez le texte de la publication ci-dessous, puis relancez.",
     steps: {
       read: "Lecture du contenu",
       claims: "Affirmations et signes d'alerte",
@@ -685,10 +704,10 @@ export const fr = {
   assistant: {
     open: "Ouvrir l'assistant",
     close: "Fermer l'assistant",
-    title: "Assistant FANILO",
+    title: "Assistant Checky",
     leadPublic: "Je réponds à partir des verdicts publiés par les rédactions et je cite mes dossiers. Je peux aussi préparer un signalement, vous dire où en sont les vôtres et vous ouvrir la bonne page. Je n'invente jamais de verdict.",
     leadDesk: "Je lis le desk et vos sources : ce qui circule depuis le plus longtemps, la nuit en bref, les affirmations sans source. Je prépare les actions, vous confirmez. Je ne confirme jamais un verdict et je ne publie jamais.",
-    suggestionsPublic: ["Analakely est inondé ce matin ?", "Je veux signaler un message", "C'est quoi FANILO ?"],
+    suggestionsPublic: ["Analakely est inondé ce matin ?", "Je veux signaler un message", "C'est quoi Checky ?"],
     suggestionsDesk: ["Qu'est-ce qui circule depuis le plus longtemps ?", "Résume la nuit", "Quelles affirmations n'ont aucune source ?"],
     tipTitle: "Signalement prêt",
     tipTo: (name: string) => `Pour ${name}`,
@@ -786,6 +805,13 @@ export const fr = {
     loading: "Chargement…",
     demoData: "Données de démonstration",
   },
+  // Checky sections, one file per Wave 1 agent (lib/i18n/fr/*.ts).
+  crew,
+  dossier,
+  registre,
+  rubrique,
+  publicLayer,
+  team,
 } as const;
 
 export const t = fr;

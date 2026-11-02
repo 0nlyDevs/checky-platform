@@ -270,7 +270,7 @@ async def tip_status(token: str, db: Db) -> TipStatusOut:
 
 # --- the public assistant: answers only from published, journalist-confirmed verdicts, with citations
 ASK_SYSTEM = (
-    "Tu es l'assistant public de FANILO, un outil de vérification des rédactions de Madagascar. "
+    "Tu es l'assistant public de Checky, un outil de vérification des rédactions de Madagascar. "
     "Tu réponds UNIQUEMENT à partir des dossiers numérotés fournis : ce sont des verdicts confirmés et "
     "publiés par des journalistes. Cite chaque dossier utilisé sous la forme [n]. Si aucun dossier ne "
     "répond à la question, dis clairement que cette information n'a pas encore été vérifiée par une "
@@ -357,7 +357,7 @@ VOICE_LIMIT, VOICE_WINDOW, VOICE_MAX_BYTES = 20, 600.0, 3_000_000
 VOCABULARY = (
     "Madagascar, Antananarivo, Tana, Analakely, Mahamasina, Anosy, Andohalo, Ambohijatovo, Isotry, "
     "Toamasina, Mahajanga, Fianarantsoa, Toliara, Antsiranana, Ambositra, Rova, JIRAMA, ariary, vary gasy, "
-    "fokontany, taxi-be, WhatsApp, Facebook, TikTok, FANILO."
+    "fokontany, taxi-be, WhatsApp, Facebook, TikTok, Checky, FANILO."
 )
 
 

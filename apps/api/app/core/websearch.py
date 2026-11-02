@@ -22,7 +22,7 @@ from app.core import keys
 from app.core.config import get_settings
 
 # Wikimedia asks every client for a User-Agent with a way to reach its maintainers.
-WIKI_UA = "FANILO/0.1 (https://github.com/0nlyDevs/fanilo-base; newsroom fact-checking tool)"
+WIKI_UA = "Checky/0.1 (https://github.com/0nlyDevs/fanilo-base; newsroom fact-checking tool)"
 BROWSER_UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/141.0 Safari/537.36"
@@ -48,6 +48,15 @@ class SearchUnavailable(Exception):
     def __init__(self, message: str, *, reason: str = "unavailable"):
         super().__init__(message)
         self.reason = reason
+
+
+class _KeyRefused(SearchUnavailable):
+    """This key cannot search right now (quota, plan, rate limit, bad key); the next one may."""
+
+
+# Tavily statuses that refuse a key before any credit is spent: bad key, rate limit, plan limit,
+# pay-as-you-go limit.
+TAVILY_REFUSED = {401, 403, 429, 432, 433}
 
 
 def _text(fragment: str) -> str:
@@ -230,7 +239,8 @@ async def _tavily_json(http: httpx.AsyncClient, method: str, path: str, **kwargs
         method, f"https://api.tavily.com/{path}", follow_redirects=False, **kwargs
     ) as response:
         if response.status_code != 200:
-            raise SearchUnavailable(
+            error = _KeyRefused if response.status_code in TAVILY_REFUSED else SearchUnavailable
+            raise error(
                 f"Tavily {path} HTTP {response.status_code}",
                 reason="blocked" if response.status_code == 429 else "unavailable",
             )
@@ -261,15 +271,13 @@ def _free_tavily_budget(usage: dict) -> None:
     except (KeyError, TypeError, ValueError, OverflowError) as exc:
         raise SearchUnavailable("Tavily free usage could not be verified") from exc
     if not free or not no_overage or not 0 < plan_limit <= 1000:
-        raise SearchUnavailable("Tavily requires a free plan with pay-as-you-go disabled")
+        raise _KeyRefused("Tavily requires a free plan with pay-as-you-go disabled")
     if plan_usage < 0 or key_usage < 0 or plan_usage >= plan_limit or key_usage >= key_limit:
-        raise SearchUnavailable("Tavily free quota is exhausted")
+        raise _KeyRefused("Tavily free quota is exhausted")
 
 
-async def _tavily(query: str, k: int, domains: list[str] | None = None) -> list[dict[str, Any]]:
-    key = get_settings().tavily_api_key.strip()
-    if not key:
-        raise SearchUnavailable("Tavily API key is not configured")
+async def _tavily_search(key: str, query: str, k: int, domains: list[str] | None) -> dict:
+    """One key: check its free usage, then search. No retry of the POST with the same key."""
     try:
         async with _client(
             {"Authorization": f"Bearer {key}", "Accept": "application/json"}
@@ -298,6 +306,30 @@ async def _tavily(query: str, k: int, domains: list[str] | None = None) -> list[
             "Tavily request failed",
             reason="timeout" if isinstance(exc, httpx.TimeoutException) else "unavailable",
         ) from exc
+    return data
+
+
+async def _tavily(query: str, k: int, domains: list[str] | None = None) -> list[dict[str, Any]]:
+    tavily_keys = keys.split(get_settings().tavily_api_key)
+    if not tavily_keys:
+        raise SearchUnavailable("Tavily API key is not configured")
+    refused: SearchUnavailable | None = None
+    for key in keys.rotation("tavily", tavily_keys):
+        try:
+            data = await _tavily_search(key, query, k, domains)
+        except _KeyRefused as exc:
+            # Refused before any credit was spent: set this key aside, the next one may answer.
+            keys.set_aside("tavily", key, 30.0 if exc.reason == "blocked" else 3600.0)
+            refused = exc
+            continue
+        return _tavily_results(data, k)
+    raise SearchUnavailable(
+        "Every Tavily key is exhausted or refused",
+        reason=refused.reason if refused else "unavailable",
+    ) from refused
+
+
+def _tavily_results(data: dict, k: int) -> list[dict[str, Any]]:
     if not isinstance(data.get("results"), list):
         raise SearchUnavailable("Tavily returned no results field")
     out, seen = [], set()

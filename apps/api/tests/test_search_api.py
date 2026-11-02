@@ -162,3 +162,34 @@ def test_fact_checker_labels_reject_lookalike_hosts_and_unrelated_sections():
     assert not websearch._fact_checker_url("https://factuel.afp.com.attacker.example/article")
     assert not websearch._fact_checker_url("https://news.example/?url=//factuel.afp.com/article")
     assert not websearch._fact_checker_url("https://www.lemonde.fr/sport/article")
+
+
+@pytest.mark.parametrize("refusal", ["exhausted", 432, 401, 429])
+def test_tavily_keys_rotate_when_one_is_refused(monkeypatch, refusal):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "web_search_provider", "auto")
+    monkeypatch.setattr(settings, "tavily_api_key", "tvly-first, tvly-second")
+    monkeypatch.setattr(settings, "google_factcheck_api_key", "")
+    used = []
+
+    def handle(request):
+        key = request.headers["authorization"].removeprefix("Bearer ")
+        used.append((key, request.url.path))
+        first = key == "tvly-first"
+        if request.url.path == "/usage":
+            if first and refusal == "exhausted":
+                return httpx.Response(200, json={**USAGE, "key": {"limit": 1000, "usage": 1000}})
+            return httpx.Response(200, json=USAGE)
+        if first and refusal != "exhausted":
+            return httpx.Response(refusal, json={})
+        return httpx.Response(200, json=RESULTS)
+
+    monkeypatch.setattr(websearch, "_transport", httpx.MockTransport(handle))
+    found = asyncio.run(websearch.web("MAZAVALOHA PARC 2026"))
+    assert found[0]["url"] == "https://www.parcrobotics.org/"
+    assert used[-2:] == [("tvly-second", "/usage"), ("tvly-second", "/search")]
+    # The refused key is set aside: the next search starts with the other one.
+    assert websearch.keys.rotation("tavily", ["tvly-first", "tvly-second"])[0] == "tvly-second"
+    # A key refusal spends no credit, so at most one search per key is ever sent.
+    searches = [key for key, path in used if path == "/search"]
+    assert len(searches) == len(set(searches))

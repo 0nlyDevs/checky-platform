@@ -1,5 +1,6 @@
 """Demo data for the pitch: plausible public claims, clearly synthetic (M12)."""
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter
@@ -10,6 +11,7 @@ from app.core.access import Admin, Db
 from app.core.activity import broadcast, record
 from app.core.models import Item, Source, Workspace
 
+log = logging.getLogger("fanilo.demo")
 router = APIRouter(tags=["demo"])
 
 # (minutes ago first seen, title, status, verdict, suggested verdict, origin, source count, tags)
@@ -94,7 +96,25 @@ DEMO_CLAIMS = [
         2,
         ["économie"],
     ),
+    # The rumour the pitch follows from birth to the fokontany poster (FAN-0145): a video of 2023
+    # and a doctored JIRAMA communiqué (the registry holds the original: 4 hours a day, not 72).
+    (
+        430,
+        "72 heures de délestage dès demain sur tout Antananarivo, selon la JIRAMA",
+        "to_check",
+        None,
+        None,
+        "facebook",
+        1,
+        ["énergie"],
+    ),
 ]
+
+# The circulating text of the demo rumour (pasted into Vérifier during the pitch). Fictional.
+DEMO_RUMOUR_TEXT = (
+    "URGENT ⚠️ COMMUNIQUÉ N° 2026-118 de la JIRAMA : délestage de 72 heures à partir du 3 novembre "
+    "sur tout Antananarivo, hausse de 40 % du tarif en décembre. Partagez à tous vos contacts !!!"
+)
 
 
 # The reason a journalist wrote for each published demo verdict (shown on the public archive).
@@ -161,7 +181,52 @@ DEMO_SOURCES = {
             "TikTok sont un montage."
         ),
     ),
+    8: (
+        "Démo · La vidéo du délestage retrouvée en ligne le 14 mars 2023 (exemple fictif)",
+        (
+            "La vidéo jointe au message montre des quartiers d'Antananarivo plongés dans le noir. Les "
+            "mêmes images ont été mises en ligne le 14 mars 2023 sur la chaîne YouTube d'une télévision "
+            "nationale, lors des coupures de mars 2023. Elles ne montrent donc pas la situation de "
+            "novembre 2026."
+        ),
+    ),
 }
+# The demo video's fictional upload date (the source above is dated to it, not to the rumour).
+DEMO_SOURCE_DATES = {8: "2023-03-14"}
+
+
+# Every newsroom resource module (contacts, originals, figures, routes, clips, prefs, SMS…) may
+# export `seed_demo(db, workspace_id, user_id, items)` where `items` maps the demo refs
+# (FAN-0137…) to the created claims. Each seed is idempotent and runs on its own: a failure in
+# one shelf is logged and never blocks the demo.
+SEED_MODULES = (
+    "directory",
+    "registry",
+    "figures",
+    "trajet",
+    "veille",
+    "rubrique",
+    "sms",
+)
+
+
+async def seed_extras(db, workspace_id, user_id, items: dict[str, Item]) -> None:
+    import importlib
+
+    for name in SEED_MODULES:
+        try:
+            module = importlib.import_module(f"app.modules.{name}")
+        except ImportError:
+            continue
+        seed = getattr(module, "seed_demo", None)
+        if seed is None:
+            continue
+        try:
+            await seed(db, workspace_id, user_id, items)
+            await db.commit()
+        except Exception:
+            log.exception("demo seed %s failed", name)
+            await db.rollback()
 
 
 @router.post("/workspaces/{ws}/demo/reset")
@@ -174,6 +239,7 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
     await db.execute(delete(Source).where(Source.item_id.in_(items)))
     await db.execute(delete(Item).where(Item.workspace_id == admin.workspace_id))
     created_sources = []
+    by_ref: dict[str, Item] = {}
     now = datetime.now(UTC)
     for i, (ago, title, status, verdict, suggested, origin, sources, tags) in enumerate(
         DEMO_CLAIMS
@@ -199,6 +265,7 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
         )
         db.add(item)
         await db.flush()
+        by_ref[item.data["ref"]] = item
         await record(db, admin.workspace_id, admin.user.id, "item", item.id, "create")
         if i in DEMO_SOURCES:
             title, text = DEMO_SOURCES[i]
@@ -210,16 +277,17 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
                 status="ready",
                 title=title,
                 text=text,
-                # Written the day the rumour surfaced, so the checker reads it as current.
-                published_at=(now - timedelta(minutes=ago))
-                .astimezone(dates.EAT)
-                .date()
-                .isoformat(),
+                # Written the day the rumour surfaced, so the checker reads it as current (or the
+                # real date of an old video, so the date check sees it is old).
+                published_at=DEMO_SOURCE_DATES.get(
+                    i, (now - timedelta(minutes=ago)).astimezone(dates.EAT).date().isoformat()
+                ),
             )
             db.add(source)
             await db.flush()
             created_sources.append(source.id)
     await db.commit()
+    await seed_extras(db, admin.workspace_id, admin.user.id, by_ref)
     from app.modules.rag import queue_embedding
 
     for source_id in created_sources:

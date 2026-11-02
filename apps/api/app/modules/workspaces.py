@@ -8,14 +8,14 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from app.core.access import Admin, AnyMember, Db, get_membership
+from app.core.access import Admin, AnyMember, Anyone, Db, get_membership
 from app.core.errors import ApiError
 from app.core.models import Invitation, Membership, Workspace, auth_user
 from app.core.security import User
 
 router = APIRouter(tags=["workspaces"])
 
-Role = Literal["admin", "editor", "journalist"]
+Role = Literal["admin", "editor", "journalist", "veilleur", "issuer"]
 
 
 class WorkspaceIn(BaseModel):
@@ -46,16 +46,23 @@ class InvitationOut(BaseModel):
     expires_at: datetime
 
 
+class NewsroomSettings(BaseModel):
+    double_signature: bool = False
+    ai_enabled: bool = True
+
+
 class WorkspaceSettingsOut(BaseModel):
     id: uuid.UUID
     name: str
     slug: str
     is_public: bool
+    settings: NewsroomSettings = Field(default_factory=NewsroomSettings)
 
 
 class WorkspacePatch(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     is_public: bool | None = None
+    settings: NewsroomSettings | None = None
 
 
 class RoleIn(BaseModel):
@@ -78,9 +85,15 @@ async def create_workspace(body: WorkspaceIn, user: User, db: Db) -> WorkspaceOu
 
 
 @router.get("/workspaces/{ws}")
-async def get_workspace(member: AnyMember, db: Db) -> WorkspaceSettingsOut:
+async def get_workspace(member: Anyone, db: Db) -> WorkspaceSettingsOut:
     ws = await db.get(Workspace, member.workspace_id)
-    return WorkspaceSettingsOut(id=ws.id, name=ws.name, slug=ws.slug, is_public=ws.is_public)
+    return WorkspaceSettingsOut(
+        id=ws.id,
+        name=ws.name,
+        slug=ws.slug,
+        is_public=ws.is_public,
+        settings=NewsroomSettings.model_validate(ws.settings or {}),
+    )
 
 
 @router.patch("/workspaces/{ws}")
@@ -90,8 +103,16 @@ async def update_workspace(body: WorkspacePatch, admin: Admin, db: Db) -> Worksp
         ws.name = body.name
     if body.is_public is not None:
         ws.is_public = body.is_public
+    if body.settings is not None:
+        ws.settings = {**(ws.settings or {}), **body.settings.model_dump(exclude_unset=True)}
     await db.commit()
-    return WorkspaceSettingsOut(id=ws.id, name=ws.name, slug=ws.slug, is_public=ws.is_public)
+    return WorkspaceSettingsOut(
+        id=ws.id,
+        name=ws.name,
+        slug=ws.slug,
+        is_public=ws.is_public,
+        settings=NewsroomSettings.model_validate(ws.settings or {}),
+    )
 
 
 @router.get("/workspaces/{ws}/members")
