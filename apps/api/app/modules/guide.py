@@ -23,6 +23,7 @@ from app.core.db import SessionLocal
 from app.core.errors import ApiError
 from app.core.models import Item, Workspace
 from app.modules.agent import AgentContext, Tools, tool_loop
+from app.modules.guard import SCOPE, Guard
 from app.modules.public import _allow, find_published
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -51,7 +52,8 @@ PAGES = {
     "inscription": ("/inscription", "Créer l'espace d'une rédaction"),
 }
 
-GUIDE_SYSTEM = """Tu es le guide du site FANILO, à Madagascar. Tu aides les visiteurs, sans compte.
+GUIDE_SYSTEM = (
+    """Tu es le guide du site FANILO, à Madagascar. Tu aides les visiteurs, sans compte.
 
 Ce qu'est FANILO : un outil de vérification pour les rédactions. Les journalistes suivent les rumeurs \
 de la nuit (Facebook, WhatsApp, TikTok, radio), joignent leurs sources, une IA propose un verdict et \
@@ -70,7 +72,25 @@ brouillon. Il n'est PAS envoyé : le visiteur le relit et appuie sur « Envoyer 
 - « Où en est mon signalement ? » : my_tips.
 - « Montre-moi », « emmène-moi », une page : open_page.
 - N'écris jamais d'adresse web ni de lien inventé : open_page ouvre la page tout seul.
-- Réponds en deux à quatre phrases courtes, simples, dans la langue demandée."""
+- Réponds en deux à quatre phrases courtes, simples, dans la langue demandée.
+
+"""
+    + SCOPE
+)
+
+
+GUIDE_REFUSAL = {
+    "fr": "Ce n'est pas mon rôle : je suis le guide de FANILO. Je peux chercher si une rumeur a "
+    "déjà été vérifiée par une rédaction, préparer un signalement ou vous dire où en sont les vôtres.",
+    "mg": "Tsy anjarako izany : mpitari-dalana ao amin'ny FANILO aho. Afaka mijery aho raha efa "
+    "nohamarinin'ny mpanao gazety ny tsaho iray, na manomana fitarainana ho anao.",
+}
+GUIDE_NO_VERDICT = {
+    "fr": "Aucune rédaction n'a encore publié de verdict sur ce sujet : il n'est pas vérifié. "
+    "Vous pouvez le signaler pour qu'une rédaction le vérifie.",
+    "mg": "Mbola tsy misy mpanao gazety namoaka valiny momba izany : tsy voamarina izy io. "
+    "Azonao atao ny mitatitra azy.",
+}
 
 
 @dataclass
@@ -270,6 +290,15 @@ def _limited(request: Request) -> None:
 async def guide(body: GuideIn) -> AsyncIterable[ServerSentEvent]:
     ctx = GuideContext(None, tips=[t for t in body.tips if re.fullmatch(r"[\w-]{10,64}", t)])
     async for event in tool_loop(
-        ctx, conversation(GUIDE_SYSTEM, body), GUIDE_TOOLS, GUIDE_STEPS, max_tokens=500
+        ctx,
+        conversation(GUIDE_SYSTEM, body),
+        GUIDE_TOOLS,
+        GUIDE_STEPS,
+        guard=Guard(
+            refusal=GUIDE_REFUSAL[body.lang],
+            verdict_needs_cites=True,
+            no_verdict=GUIDE_NO_VERDICT[body.lang],
+        ),
+        max_tokens=500,
     ):
         yield event

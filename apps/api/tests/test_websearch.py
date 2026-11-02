@@ -1,4 +1,4 @@
-"""Searching outside the newsroom: web (keyless DuckDuckGo or Brave), Wikipedia, fact-checkers,
+"""Searching outside the newsroom: web (keyless DuckDuckGo), Wikipedia, fact-checkers,
 and the traces AI generators leave in image files."""
 
 import asyncio
@@ -47,19 +47,6 @@ def web(monkeypatch):
             return httpx.Response(
                 200, json={"claims": [{"text": "Madagascar quitte l'OMS", "claimReview": [review]}]}
             )
-        if host == "api.search.brave.com":
-            if request.headers["x-subscription-token"] == "spent":
-                return httpx.Response(429)
-            return httpx.Response(
-                200,
-                json={
-                    "web": {
-                        "results": [
-                            {"title": "B", "url": "https://b.mg", "description": "<b>x</b>"}
-                        ]
-                    }
-                },
-            )
         return httpx.Response(404)
 
     monkeypatch.setattr(websearch, "_transport", httpx.MockTransport(handler))
@@ -80,13 +67,7 @@ def test_keyless_web_search_skips_adverts_and_decodes_links(web):
     assert len(web) == 1  # the second identical search came from the cache
 
 
-def test_brave_rotates_keys_and_wikipedia_gives_summaries(web, monkeypatch):
-    monkeypatch.setattr(get_settings(), "brave_api_key", "spent,good")
-    assert asyncio.run(websearch.web("bac"))[0] == {
-        "title": "B",
-        "url": "https://b.mg",
-        "snippet": "x",
-    }
+def test_wikipedia_gives_summaries(web):
     wiki = asyncio.run(websearch.wikipedia("Analakely"))
     assert wiki[0]["url"] == "https://fr.wikipedia.org/wiki/Analakely"
     assert wiki[0]["snippet"] == "Analakely est le quartier central."

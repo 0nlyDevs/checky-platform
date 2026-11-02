@@ -1,8 +1,7 @@
 """Searching outside the newsroom's own files: the web, Wikipedia and published fact-checks.
 
-No key needed: the web goes through DuckDuckGo's HTML page and Wikipedia through its public API.
-`BRAVE_API_KEY` (comma list, rotated like the AI keys) switches the web search to the Brave
-Search API, which is steadier under load. Results are kept 10 minutes in memory, so an agent
+No key needed: the web goes through DuckDuckGo's HTML page and Wikipedia through its public API
+(paid search APIs such as Brave's were left out on purpose). Results are kept 10 minutes in memory, so an agent
 asking twice costs one request. Reading a found page is the agent's `fetch_url` (SSRF-guarded).
 """
 
@@ -31,7 +30,7 @@ FACT_CHECKERS = [
     "lemonde.fr/les-decodeurs",
     "francetvinfo.fr/vrai-ou-fake",
     "liberation.fr/checknews",
-    "rfi.fr",
+    "rfi.fr/fr/podcasts/les-dessous-de-l-infox",
 ]
 CACHE_SECONDS, CACHE_MAX = 600.0, 200
 
@@ -96,41 +95,11 @@ async def _duckduckgo(query: str, k: int) -> list[dict[str, Any]]:
     return out
 
 
-async def _brave(query: str, k: int) -> list[dict[str, Any]]:
-    s = get_settings()
-    for api_key in keys.rotation("brave", keys.split(s.brave_api_key)):
-        async with _client({"Accept": "application/json", "X-Subscription-Token": api_key}) as http:
-            r = await http.get(
-                "https://api.search.brave.com/res/v1/web/search",
-                params={"q": query, "count": k, "search_lang": "fr"},
-            )
-        if r.status_code in (401, 402, 403, 429):
-            keys.set_aside("brave", api_key, keys.retry_after(r.headers, s.ai_cooldown))
-            continue
-        if r.status_code != 200:
-            break
-        return [
-            {
-                "title": w.get("title", ""),
-                "url": w["url"],
-                "snippet": _text(w.get("description", "")),
-            }
-            for w in (r.json().get("web") or {}).get("results", [])[:k]
-            if w.get("url")
-        ]
-    raise SearchUnavailable("Brave Search unavailable")
-
-
 async def web(query: str, k: int = 6) -> list[dict[str, Any]]:
     """Web results [{title, url, snippet}], best first."""
     query = query.strip()[:300]
 
     async def fetch():
-        if keys.split(get_settings().brave_api_key):
-            try:
-                return await _brave(query, k)
-            except (SearchUnavailable, httpx.HTTPError):
-                pass  # the keyless search still works
         try:
             return await _duckduckgo(query, k)
         except httpx.HTTPError as e:
@@ -181,7 +150,7 @@ async def fact_checks(query: str, k: int = 6) -> list[dict[str, Any]]:
             reviews = await _cached(f"claims|{k}|{query}", lambda: _claim_reviews(query, k))
         except httpx.HTTPError:
             reviews = []
-    sites = " OR ".join(f"site:{d}" for d in FACT_CHECKERS)
+    sites = " OR ".join(sorted({f"site:{d.split('/')[0]}" for d in FACT_CHECKERS}))
     try:
         found = await web(f"{query} ({sites})", k + 4)
     except SearchUnavailable:
@@ -192,7 +161,9 @@ async def fact_checks(query: str, k: int = 6) -> list[dict[str, Any]]:
     on_sites = [
         r
         for r in found
-        if any(d.split("/")[0] in r["url"] for d in FACT_CHECKERS) and r["url"] not in known
+        # the fact-checking section itself, not the rest of a newspaper's site
+        if any(f"//{d}" in r["url"] or f".{d}" in r["url"] for d in FACT_CHECKERS)
+        and r["url"] not in known
     ]
     return (reviews + on_sites)[:k]
 

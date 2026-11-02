@@ -242,8 +242,10 @@
   color: var(--site-ink);
   font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
 }
-html:has(.site),
-body:has(.site) {
+/* Next keeps the page you left mounted but hidden: once the desk shell is in, the case file's
+   manila no longer paints the page behind it. */
+html:has(.site):not(:has([data-app-shell])),
+body:has(.site):not(:has([data-app-shell])) {
   background: var(--site-manila);
   scrollbar-color: var(--site-ink-soft) var(--site-manila);
 }
@@ -468,6 +470,9 @@ body:has(.site) {
 @media (min-width: 1024px) { .assistant[data-scope="desk"] { bottom: 20px; } }
 .assistant-fab { display: grid; place-items: center; width: 60px; height: 60px; border-radius: 50%; background: #141210; color: #efe4c8; box-shadow: 0 12px 28px -10px rgba(20, 18, 16, .55); transition: transform .2s, background-color .2s; }
 .assistant-fab:hover { transform: translateY(-2px); background: #a3231b; }
+/* On the dark desk the ink button would vanish: manila, like the rail's marker (≥ 3:1 against the page). */
+.dark .assistant-fab { background: #dcc9a3; color: #141210; }
+.dark .assistant-fab:hover { background: #efe4c8; }
 .assistant-panel { display: flex; flex-direction: column; width: min(26rem, calc(100vw - 32px)); height: min(36rem, calc(100svh - 120px)); background: var(--card); color: var(--card-foreground); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; box-shadow: 0 24px 60px -24px rgba(20, 18, 16, .55); }
 .assistant-head { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 16px; background: #141210; color: #efe4c8; }
 .assistant-head h2 { font-family: var(--font-anton), "Arial Narrow", sans-serif; font-weight: 400; font-size: 20px; letter-spacing: .04em; text-transform: uppercase; }
@@ -485,6 +490,7 @@ body:has(.site) {
 .assistant-lang { height: 32px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); font-size: 13px; }
 .assistant-input { flex: 1; min-height: 44px; max-height: 120px; resize: none; padding: 10px 12px; border: 1px solid var(--input); border-radius: 8px; background: var(--background); font-size: 15px; color: var(--foreground); }
 .assistant-input:focus { outline: 2px solid var(--ring); outline-offset: 1px; }
+.assistant-input::placeholder { color: var(--muted-foreground); opacity: 1; }
 .assistant-mic, .assistant-send { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 8px; }
 .assistant-mic { border: 1px solid var(--border); }
 .assistant-mic.is-on { background: #a3231b; color: #fff; border-color: #a3231b; animation: assistant-pulse 1.2s ease-in-out infinite; }

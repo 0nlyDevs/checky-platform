@@ -31,7 +31,11 @@ How the pieces talk:
 - **Background jobs** run inside the API process from a Postgres table (no Redis).
 - **Realtime** updates go over Socket.IO from the API.
 - **AI** calls go through one gateway (`apps/api/app/core/ai.py`) that falls back from Groq to
-  Gemini to NVIDIA when a provider fails.
+  Gemini to NVIDIA (and Claude, once its key is set) when a provider fails. Every key may be a
+  comma-separated list; a key that hits its quota is set aside and the next one is used.
+- **Agents** (Vérifier's deep search, the floating assistant's desk copilot and public guide) share
+  one tool loop and one set of guardrails (`apps/api/app/modules/guard.py`); they search the web,
+  Wikipedia and fact-checkers without any key (`apps/api/app/core/websearch.py`).
 - **In production:** web on Vercel, API on Render, database and file storage on **Neon**
   (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
 
@@ -104,7 +108,14 @@ cp .env apps/web/.env.local
 | `GROQ_API_KEY` | secret | [console.groq.com](https://console.groq.com/keys) |
 | `GEMINI_API_KEY` | secret | [aistudio.google.com](https://aistudio.google.com/apikey) |
 | `NVIDIA_API_KEY` | secret | [build.nvidia.com](https://build.nvidia.com/) |
+| `CLAUDE_API_KEY` | secret, optional and paid; empty = Claude is skipped | [console.anthropic.com](https://console.anthropic.com/) |
+| `ELEVENLABS_API_KEY` | secret, optional (the assistant's voice; without it the browser reads) | [elevenlabs.io](https://elevenlabs.io/app/settings/api-keys) |
+| `GOOGLE_FACTCHECK_API_KEY` | optional: claim reviews from fact-checkers worldwide | a Google Cloud key with the Fact Check Tools API enabled |
 | `LLM_MODEL_*` | empty = gateway default | set once we have picked models |
+| `LLM_PROVIDERS` | `groq,gemini,nvidia,claude` | the order is the fallback order; put `claude` first to prefer it |
+
+Several teammates' keys can share one variable: `GROQ_API_KEY=gsk_a,gsk_b` (one free account each;
+several accounts per person usually breaks the providers' terms).
 | `AI_CACHE` | `true` | caches identical AI requests on disk so reloads don't burn quota |
 
 If you run the web app on a port other than 3000, change it in **all** of `BETTER_AUTH_URL`,
@@ -196,6 +207,11 @@ reply = await ai.complete(
 )
 reply.content, reply.provider
 ```
+
+To give an agent a new tool, write `async def tool(ctx, **args) -> (summary, result)` and add it
+to the agent's tool table (`TOOLS` in `agent.py`, `COPILOT_TOOLS` in `copilot.py`); a tool that
+changes something only *proposes* it with `ctx.propose(...)`, and the person confirms it in the
+widget. Run the loop with `guard=` so the answer is checked against what the tools returned.
 
 For streaming to the browser, use `POST /api/v1/workspaces/{ws}/ai/stream` (Server-Sent Events:
 `delta` events with `{text}`, then `done`). The AI only **suggests** a verdict

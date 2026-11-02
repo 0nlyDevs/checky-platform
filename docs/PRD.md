@@ -239,6 +239,13 @@ Five features answer the journalist's main tasks. Each one is a thin layer over 
 - Perceptual hash to find the same or near-same image already in the workspace.
 - One-click links to reverse image search engines.
 - Show any signals as hints, never as proof: the app does not claim to detect AI-generated images with certainty.
+- Traces of AI generators found in the file (EXIF, PNG text, XMP/IPTC « trainedAlgorithmicMedia », Midjourney, Stable Diffusion, DALL·E, Firefly…) and Content Credentials (C2PA) when present; none found proves nothing.
+
+### F6. Analyser un lien
+
+- Paste a post, article or image link (or the post's text when the link needs an account, as on Facebook and TikTok) and get in one pass: what it claims, the warning signs in how it is written (each with its quote), what fact-checkers, the web and Wikipedia already say, and a suggested verdict resting only on those results, each quote checked.
+- Nothing is written until the journalist follows it in the desk, with the sources they tick; the journalist still confirms the verdict on the claim.
+- No detector of AI-written text is reliable, so text only gets hints, never an "AI probability".
 
 ### F5. Verdict card
 
@@ -486,7 +493,7 @@ The biggest risk is a demo that fails in front of the jury: no single free tier,
 - [x] Which embedding model? Gemini `gemini-embedding-2` (both Gemini models scored 18/18; NVIDIA not tested, no key).
 - [ ] Is the Gemini free tier usable from Madagascar?
 - [ ] Is a free vision model available for screenshot OCR in F1?
-- [x] Free web search for the agent? Yes, without a key: DuckDuckGo's HTML results, the Wikipedia API and fact-checkers' sites (27 Oct). Brave Search and Google Fact Check Tools are optional keys; Claude is wired in as an optional provider, off until a key is set.
+- [x] Free web search for the agent? Yes, without a key: DuckDuckGo's HTML results, the Wikipedia API and fact-checkers' sites (27 Oct). Google Fact Check Tools is an optional free key (Brave Search was dropped: no free plan any more); Claude is wired in as an optional provider, off until a key is set.
 - [ ] Render free or Railway trial for the API?
 
 ## Sources

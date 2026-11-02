@@ -22,6 +22,8 @@ from app.core import ai, embed, websearch
 from app.core.access import AnyMember
 from app.core.db import SessionLocal
 from app.core.models import Item
+from app.modules import guard
+from app.modules.guard import Guard
 from app.modules.rag import search
 from app.workers import ingest
 
@@ -200,7 +202,8 @@ TOOLS: Tools = {
     **WEB_TOOLS,
 }
 
-SYSTEM = """Tu es l'agent de vérification d'une rédaction à Madagascar. Tu utilises les outils pour \
+SYSTEM = (
+    """Tu es l'agent de vérification d'une rédaction à Madagascar. Tu utilises les outils pour \
 trouver des éléments, puis tu réponds.
 - Cherche d'abord dans les sources de l'espace (search_sources). Si elles ne suffisent pas, cherche \
 dehors : search_fact_checks (déjà vérifié ailleurs ?), search_wikipedia (faits établis), search_web \
@@ -209,7 +212,11 @@ dehors : search_fact_checks (déjà vérifié ailleurs ?), search_wikipedia (fai
 primaires (institutions, presse reconnue) aux réseaux sociaux.
 - Ta réponse finale ne s'appuie que sur ce que les outils ont renvoyé et cite les passages [n].
 - Si rien ne permet de conclure, dis-le et indique quoi chercher.
-- Réponds dans la langue de la question, en 3 à 6 phrases."""
+- Réponds dans la langue de la question, en 3 à 6 phrases.
+
+"""
+    + guard.SCOPE
+)
 
 
 def _nullable(schema: dict[str, Any]) -> dict[str, Any]:
@@ -226,6 +233,17 @@ def _nullable(schema: dict[str, Any]) -> dict[str, Any]:
     return {**schema, "properties": props}
 
 
+DESK_REFUSAL = (
+    "Ce n'est pas mon rôle : je vérifie des affirmations à partir des sources de votre espace, "
+    "des fact-checkeurs, de Wikipedia et du web, et j'aide à faire avancer le travail du desk. "
+    "Posez-moi une question de vérification."
+)
+
+
+def desk_guard() -> Guard:
+    return Guard(refusal=DESK_REFUSAL)
+
+
 def tool_specs(tools: Tools) -> list[dict[str, Any]]:
     return [
         {"type": "function", "function": {"name": n, "description": d, "parameters": _nullable(p)}}
@@ -238,11 +256,15 @@ async def tool_loop(
     messages: list[dict[str, Any]],
     tools: Tools,
     max_steps: int = MAX_STEPS,
+    guard: Guard | None = None,
     **params: Any,
 ) -> AsyncIterable[ServerSentEvent]:
     """Runs the model with tools until it answers. SSE: `step`…, `answer` ({text, citations,
-    actions}), `done`, or `error`. The last turn has no tools, so the model must answer."""
+    actions}), `done`, or `error`. The last turn has no tools, so the model must answer.
+    With a `guard`, the answer is checked against what the tools returned (see guard.py)."""
     step = 0
+    # what the answer may rest on: the instructions, the question, every tool result
+    context = [str(m.get("content") or "") for m in messages if m.get("role") in ("system", "user")]
     try:
         for turn in range(max_steps):
             last = turn == max_steps - 1
@@ -254,8 +276,11 @@ async def tool_loop(
                 **params,
             )
             if not reply.tool_calls:
+                text = reply.content or ""
+                if guard:
+                    text, reply = await _checked(ctx, messages, reply, step, guard, context, params)
                 yield ServerSentEvent(
-                    data={"text": reply.content, "citations": ctx.cited, "actions": ctx.actions},
+                    data={"text": text, "citations": ctx.cited, "actions": ctx.actions},
                     event="answer",
                 )
                 yield ServerSentEvent(
@@ -289,6 +314,8 @@ async def tool_loop(
                         "content": result[:RESULT_CHARS],
                     }
                 )
+                if guard:
+                    guard.seen.append(result[:RESULT_CHARS])
         # The last turn was asked without tools, so it can only have answered above.
         yield ServerSentEvent(
             data={"code": "no_answer", "message": "The agent did not conclude"}, event="error"
@@ -301,6 +328,26 @@ async def tool_loop(
         )
 
 
+async def _checked(ctx, messages, reply, steps, g: Guard, context, params):
+    """The guard's verdict on an answer: refuse, clean, or ask for one rewrite."""
+    text = reply.content or ""
+    if guard.from_memory(text, steps, g):
+        return g.refusal, reply
+    if guard.verdict_without_files(text, len(ctx.cited), g):
+        return g.no_verdict or g.refusal, reply
+    text = guard.strip_bad_cites(text, len(ctx.cited))
+    seen = [*context, *g.seen]
+    missing = guard.unbacked(text, seen, "")
+    if missing:
+        messages.append(reply.message)
+        messages.append({"role": "user", "content": guard.repair_prompt(missing)})
+        reply = await ai.complete(messages, None, workspace_id=ctx.workspace_id, **params)
+        text = guard.strip_bad_cites(reply.content or "", len(ctx.cited))
+        if missing := guard.unbacked(text, seen, ""):
+            text += guard.flag(missing)
+    return text, reply
+
+
 class AgentIn(BaseModel):
     question: str = Field(min_length=2, max_length=2000)
 
@@ -311,5 +358,7 @@ async def run_agent(body: AgentIn, member: AnyMember) -> AsyncIterable[ServerSen
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": body.question},
     ]
-    async for event in tool_loop(AgentContext(member.workspace_id), messages, TOOLS):
+    async for event in tool_loop(
+        AgentContext(member.workspace_id), messages, TOOLS, guard=desk_guard()
+    ):
         yield event

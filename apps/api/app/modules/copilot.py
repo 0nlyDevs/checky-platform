@@ -14,6 +14,7 @@ from collections.abc import AsyncIterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Literal
+from urllib.parse import quote
 
 from fastapi import APIRouter
 from fastapi.sse import EventSourceResponse, ServerSentEvent
@@ -28,11 +29,13 @@ from app.modules.agent import (
     WEB_TOOLS,
     AgentContext,
     Tools,
+    desk_guard,
     fetch_url,
     find_claims,
     search_sources,
     tool_loop,
 )
+from app.modules.guard import SCOPE
 from app.modules.guide import STATUS_FR, VERDICT_FR, GuideIn, conversation
 
 router = APIRouter(tags=["agent"])
@@ -41,12 +44,14 @@ COPILOT_STEPS = 5  # room for search → read → propose
 OPEN = ("to_check", "in_progress")
 MOVABLE = ("to_check", "in_progress", "verified")  # never "published": a journalist publishes
 
-COPILOT_SYSTEM = """Tu es le copilote de la rédaction dans FANILO, à Madagascar. Tu aides les \
+COPILOT_SYSTEM = (
+    """Tu es le copilote de la rédaction dans FANILO, à Madagascar. Tu aides les \
 journalistes à travailler : lire l'état du desk, chercher dans les sources, préparer des actions.
 
 - Pour l'état du desk (ce qui circule depuis le plus longtemps, résumé de la nuit, affirmations sans \
 source, signalements du public) : desk_overview.
 - Pour une affirmation précise : find_claims. Pour un fait dans les sources : search_sources, et cite [n].
+- Pour un lien à analyser (« c'est vrai ce post ? », « regarde ce lien ») : open_link_check.
 - Pour trouver des sources hors du desk : search_fact_checks, search_wikipedia, search_web, puis lis la \
 page avec fetch_url. Propose de joindre les bonnes avec propose_attach_link (le journaliste confirme). \
 Préfère les sources primaires et la presse reconnue aux publications de réseaux sociaux.
@@ -60,7 +65,11 @@ ne peux pas le proposer et ouvre la fiche avec open_claim.
 vérification), verified = « vérifié », published = « publié ». N'écris jamais les noms anglais.
 - Cite [n] uniquement pour les passages et résultats renvoyés par tes outils de recherche. Désigne une affirmation par sa \
 référence (FAN-0139), sans crochets.
-- Réponds en deux à cinq phrases courtes, dans la langue demandée."""
+- Réponds en deux à cinq phrases courtes, dans la langue demandée.
+
+"""
+    + SCOPE
+)
 
 
 @dataclass
@@ -197,6 +206,14 @@ async def propose_status(
     return f"{_target(item)['ref']} → {STATUS_FR[status]}", "Proposed; waiting for Confirmer."
 
 
+async def open_link_check(ctx: DeskContext, url: str) -> tuple[str, str]:
+    if not re.match(r"https?://", url or ""):
+        return "lien invalide", "The link must start with http:// or https://."
+    href = f"/w/{ctx.workspace_id}/analyser?lien={quote(url, safe='')}"
+    ctx.propose("navigate", href=href, label="Analyser ce lien")
+    return "analyse du lien ouverte", "The link analysis page opens and runs on this link."
+
+
 async def open_claim(ctx: DeskContext, claim: str) -> tuple[str, str]:
     item = await _claim(ctx, claim)
     if item is None:
@@ -279,6 +296,14 @@ COPILOT_TOOLS: Tools = {
             "required": ["status"],
         },
     ),
+    "open_link_check": (
+        open_link_check,
+        (
+            "Open the link analysis page on a post, article or image link: what it claims, warning "
+            "signs, what fact-checkers already say, a suggested verdict."
+        ),
+        {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]},
+    ),
     "open_claim": (
         open_claim,
         "Open a claim's page for the journalist.",
@@ -300,6 +325,7 @@ async def copilot(body: GuideIn, member: AnyMember) -> AsyncIterable[ServerSentE
         conversation(COPILOT_SYSTEM, body, context),
         COPILOT_TOOLS,
         COPILOT_STEPS,
+        guard=desk_guard(),
         max_tokens=600,
     ):
         yield event

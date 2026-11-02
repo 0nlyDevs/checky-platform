@@ -106,7 +106,7 @@ export function VerdictBadge({ claim, className, compact = false }: { claim: Cla
       <Icon className="size-3.5 shrink-0" aria-hidden />
       {m.label}
       {suggested && (
-        <span className={cn("font-normal opacity-80", compact && "sr-only")}>· {t.verdict.suggested}</span>
+        <span className={cn("font-normal", compact && "sr-only")}>· {t.verdict.suggested}</span>
       )}
     </span>
   );

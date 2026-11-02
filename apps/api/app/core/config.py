@@ -32,8 +32,6 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     nvidia_api_key: str = ""
     claude_api_key: str = ""
-    # Optional: steadier web search for the agent (without it, DuckDuckGo needs no key).
-    brave_api_key: str = ""
     # Optional: Google Fact Check Tools (claim reviews by fact-checkers worldwide), a Google Cloud
     # API key with that API enabled.
     google_factcheck_api_key: str = ""

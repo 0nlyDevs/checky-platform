@@ -11,6 +11,7 @@ import ipaddress
 import re
 import socket
 import uuid
+from html import unescape as html_unescape
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
@@ -57,8 +58,9 @@ async def check_public_url(url: str) -> None:
             raise ValueError("This address is not reachable from the public internet")
 
 
-async def fetch_page(url: str) -> tuple[str, str]:
-    """GET a page, following up to 5 redirects, each one checked. Returns (final url, html)."""
+async def fetch_raw(url: str) -> tuple[str, str, bytes, str | None]:
+    """GET a public URL, following up to 5 redirects, each one checked.
+    Returns (final url, content type, body, encoding)."""
     async with httpx.AsyncClient(transport=_transport, timeout=15, headers=HEADERS) as http:
         for _ in range(6):
             await check_public_url(url)
@@ -73,8 +75,35 @@ async def fetch_page(url: str) -> tuple[str, str]:
                     body += chunk
                     if len(body) > MAX_PAGE_BYTES:
                         raise ValueError("The page is larger than 5 MB")
-                return url, body.decode(resp.encoding or "utf-8", errors="replace")
+                kind = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+                return url, kind, bytes(body), resp.encoding
     raise ValueError("Too many redirects")
+
+
+async def fetch_page(url: str) -> tuple[str, str]:
+    """GET a page (see fetch_raw). Returns (final url, html)."""
+    final, _, body, encoding = await fetch_raw(url)
+    return final, body.decode(encoding or "utf-8", errors="replace")
+
+
+def page_meta(html: str) -> dict[str, str]:
+    """Open Graph tags: social networks often only show these to visitors without an account."""
+    out: dict[str, str] = {}
+    for tag in re.findall(r"<meta\b[^>]*>", html[:300_000], re.IGNORECASE):
+        prop = re.search(r'(?:property|name)\s*=\s*["\']([^"\']+)', tag, re.IGNORECASE)
+        content = re.search(r'content\s*=\s*["\']([^"\']*)', tag, re.IGNORECASE)
+        if prop and content:
+            key = prop.group(1).lower()
+            if key in (
+                "og:title",
+                "og:description",
+                "og:image",
+                "og:site_name",
+                "article:published_time",
+                "description",
+            ):
+                out.setdefault(key, html_unescape(content.group(1)).strip()[:2000])
+    return out
 
 
 def extract_page(html: str, url: str) -> dict[str, Any]:

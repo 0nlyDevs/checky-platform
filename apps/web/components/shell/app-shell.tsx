@@ -136,7 +136,7 @@ function UserMenu({ user, compact = false }: { user: SessionUser; compact?: bool
 function NavLinks({ ws, variant, items = NAV }: { ws?: string; variant: "rail" | "bar"; items?: NavItem[] }) {
   const pathname = usePathname();
   return (
-    <ul className={variant === "rail" ? "space-y-0.5" : "grid grid-cols-3"}>
+    <ul className={variant === "rail" ? "space-y-0.5" : "grid grid-cols-4"}>
       {items.map(({ label, icon: Icon, path }) => {
         const href = ws && path ? `/w/${ws}/${path}` : undefined;
         const active = href ? pathname.startsWith(href) : false;
@@ -187,7 +187,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
   const { data: me } = useSWR<Me>("/me", fetcher);
 
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+    <div data-app-shell className="min-h-dvh bg-background lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
       <a
         href="#contenu"
         className="sr-only z-50 rounded-md bg-card px-3 py-2 font-medium text-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:ring-2 focus:ring-ring"
@@ -237,7 +237,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
 
 export function ShellSkeleton() {
   return (
-    <div className="min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]" aria-busy>
+    <div data-app-shell className="min-h-dvh bg-background lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]" aria-busy>
       <aside className="hidden h-dvh flex-col gap-4 bg-sidebar p-5 lg:flex">
         <Wordmark className="text-sidebar-foreground" />
         <div className="h-12 rounded-md bg-sidebar-accent/60" />
