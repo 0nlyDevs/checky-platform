@@ -232,6 +232,7 @@ def test_carnet_lists_the_diligence_and_the_attestation_verifies(as_user, client
     assert "Source ajoutée : Communiqué N° 2026-118" in texts
     assert "Question envoyée à JIRAMA (démo) (WhatsApp)" in texts
     assert "Verdict signé : Faux et publié" in texts
+    assert "Correction envoyée : Web · Page publique" in texts
     assert book["sources"][0]["added_by"] == "Alice Rabe"
     assert book["questions"][0]["answered_at"] is None and book["routes"]["truth"] == 1
 

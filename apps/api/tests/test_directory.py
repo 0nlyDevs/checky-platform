@@ -143,7 +143,8 @@ def test_a_question_goes_out_as_links_and_comes_back_as_a_dated_source(
             return source, row.stats, jobs
 
     source, stats, jobs = asyncio.run(check())
-    assert source.title == f"Réponse de {JIRAMA['name']} (JIRAMA)"
+    # The institution is already in the name: it is not repeated in brackets.
+    assert source.title == f"Réponse de {JIRAMA['name']}"
     assert source.text.startswith("Dément l'information.") and source.published_at
     assert stats["asked"] == 1 and stats["answered"] == 1 and "last_answer_hours" in stats
     assert "analyze_claim" in jobs

@@ -479,6 +479,19 @@ VERDICT_WORDS = {
 }
 STANCE_WORDS = {"confirms": "confirme", "denies": "dément", "unknown": "ne peut pas trancher"}
 CHANNEL_WORDS = {"whatsapp": "WhatsApp", "sms": "SMS", "email": "e-mail", "call": "appel"}
+ROUTE_WORDS = {
+    "facebook": "Facebook",
+    "whatsapp": "WhatsApp",
+    "tiktok": "TikTok",
+    "radio": "Radio",
+    "sms": "SMS",
+    "press": "Presse",
+    "web": "Web",
+    "poster": "Affiche",
+    "institution": "Institution",
+    "voice": "Vocal",
+    "other": "Autre",
+}
 
 
 class CarnetEntry(BaseModel):
@@ -557,7 +570,8 @@ def _entry_text(action: str, diff: dict, titles: dict[str, str], contacts: dict[
         return f"Réponse reçue : {STANCE_WORDS.get(diff.get('stance'), 'réponse')}"
     if action == "route":
         side = "Rumeur vue" if diff.get("side") == "rumour" else "Correction envoyée"
-        return f"{side} : {diff.get('channel')} · {diff.get('place') or '—'}"
+        channel = ROUTE_WORDS.get(str(diff.get("channel")), str(diff.get("channel") or "—"))
+        return f"{side} : {channel} · {diff.get('place') or '—'}"
     if action == "diffuse":
         n = len(diff.get("routes") or [])
         return f"Diffusé sur {n} route{'s' if n > 1 else ''}"

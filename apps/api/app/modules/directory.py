@@ -659,8 +659,10 @@ async def answer(token: str, body: ReponseIn, request: Request, db: Db) -> Repon
         raise ApiError(409, "already_answered", "This question was already answered")
     contact = await db.get(Contact, asked.contact_id) if asked.contact_id else None
     now = datetime.now(UTC)
-    who_ = f"{contact.name} ({contact.institution})" if contact and contact.institution else None
-    who_ = who_ or (contact.name if contact else body.name.strip())
+    who_ = contact.name if contact else body.name.strip()
+    # « Porte-parole (JIRAMA) », but not « Service de la JIRAMA (JIRAMA) ».
+    if contact and contact.institution and _fold(contact.institution) not in _fold(contact.name):
+        who_ = f"{contact.name} ({contact.institution})"
     source = Source(
         workspace_id=ws.id,
         item_id=item.id,
