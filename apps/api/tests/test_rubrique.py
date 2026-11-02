@@ -261,12 +261,17 @@ def test_documents_are_the_sources_that_name_a_document(as_user):
         ),
         ("Notes de terrain", "Vu au marché."),
         ("Rapport annuel de l'INSTAT", "Population et prix."),
+        ("Calendrier des examens nationaux", "Le bac commence le 24 novembre."),
     ):
         assert alice.post(base + "/sources", json={"title": title, "text": text}).status_code == 201
     docs = alice.get(base + "/documents").json()
-    assert sorted(d["doc_type"] for d in docs) == ["communiqué", "décret", "rapport"]
+    assert sorted(d["doc_type"] for d in docs) == ["calendrier", "communiqué", "décret", "rapport"]
     jirama = next(d for d in docs if d["doc_type"] == "communiqué")
     assert jirama["issuer"] == "JIRAMA" and jirama["beats"] == ["énergie"] and not jirama["demo"]
+    issuers = {d["doc_type"]: d["issuer"] for d in docs}
+    assert (
+        issuers["rapport"] == "INSTAT" and issuers["calendrier"] is None
+    )  # a subject, not an issuer
     assert next(d for d in docs if d["doc_type"] == "décret")["demo"]
     assert [d["doc_type"] for d in alice.get(base + "/documents?topic=énergie").json()] == [
         "communiqué"

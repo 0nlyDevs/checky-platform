@@ -899,7 +899,9 @@ class DocumentOut(BaseModel):
 
 
 _DEMO_PREFIX = re.compile(r"^\s*d[ée]mo\s*[·:-]\s*", re.IGNORECASE)
-_ISSUER = re.compile(r"\b(?:de la|de l'|du|des|de)\s+(.{3,80}?)(?:\s*\(|$| à | sur | pour )")
+_ISSUER = re.compile(
+    r"\b(?:de la\s+|de l['’]\s*|du\s+|des\s+|de\s+)(.{3,80}?)(?:\s*\(|$| à | sur | pour )"
+)
 
 
 def document_type(title: str) -> str | None:
@@ -911,10 +913,26 @@ def document_type(title: str) -> str | None:
     return None
 
 
+# Who issues a document: a proper name (« de la JIRAMA », « de la Banque centrale ») or an
+# institution word; « Calendrier des examens » or « Relevé des prix » name a subject, not an issuer.
+INSTITUTION_WORDS = (
+    "ministère", "ministre", "direction", "gouvernement", "présidence", "primature", "préfecture",
+    "mairie", "commune", "région", "district", "banque", "office", "agence", "institut",
+    "assemblée", "sénat", "conseil", "tribunal", "cour", "police", "gendarmerie", "commission",
+    "autorité", "service", "université", "hôpital", "centre",
+)  # fmt: skip
+
+
 def _issuer(title: str) -> str | None:
     rest = _DEMO_PREFIX.sub("", title or "")
     m = _ISSUER.search(rest)
-    return m.group(1).strip(" .,") if m else None
+    if not m:
+        return None
+    name = m.group(1).strip(" .,")
+    first = name.split()[0] if name else ""
+    if first[:1].isupper() or fold(first) in {fold(w) for w in INSTITUTION_WORDS}:
+        return name
+    return None
 
 
 @router.get("/workspaces/{ws}/documents")
