@@ -5,9 +5,11 @@ No key needed: the web goes through DuckDuckGo's HTML page and Wikipedia through
 asking twice costs one request. Reading a found page is the agent's `fetch_url` (SSRF-guarded).
 """
 
+import asyncio
 import html
 import re
 import time
+from html.parser import HTMLParser
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
@@ -40,7 +42,9 @@ _cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 
 
 class SearchUnavailable(Exception):
-    pass
+    def __init__(self, message: str, *, reason: str = "unavailable"):
+        super().__init__(message)
+        self.reason = reason
 
 
 def _text(fragment: str) -> str:
@@ -69,7 +73,7 @@ def _ddg_url(href: str) -> str | None:
     if href.startswith("//"):
         href = "https:" + href
     parsed = urlparse(href)
-    if parsed.netloc.endswith("duckduckgo.com"):
+    if parsed.hostname == "duckduckgo.com" or (parsed.hostname or "").endswith(".duckduckgo.com"):
         if parsed.path.startswith("/y.js"):  # an advert
             return None
         target = parse_qs(parsed.query).get("uddg")
@@ -79,39 +83,108 @@ def _ddg_url(href: str) -> str | None:
 
 # DuckDuckGo's HTML page, then its "lite" page: after a burst of queries the first one answers
 # 202 (a "slow down" page) for a few minutes while the lite one usually still answers.
-DDG_HTML = (
-    r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>'
-    r'(?:.*?class="result__snippet"[^>]*>(.*?)</a>)?'
-)
-DDG_LITE = (
-    r"<a[^>]+href=\"([^\"]+)\"[^>]*class='result-link'[^>]*>(.*?)</a>"
-    r"(?:.*?class='result-snippet'[^>]*>(.*?)</td>)?"
-)
 DDG_PAGES = (
-    ("https://html.duckduckgo.com/html/", DDG_HTML),
-    ("https://lite.duckduckgo.com/lite/", DDG_LITE),
+    "https://html.duckduckgo.com/html/",
+    "https://lite.duckduckgo.com/lite/",
 )
 
 
 async def _duckduckgo(query: str, k: int) -> list[dict[str, Any]]:
-    status = 0
-    async with _client({"User-Agent": BROWSER_UA, "Accept-Language": "fr-FR,fr;q=0.9"}) as http:
-        for url, pattern in DDG_PAGES:
-            r = await http.post(url, data={"q": query, "kl": "fr-fr"})
-            if r.status_code == 200:
-                return _ddg_results(r.text, pattern, k)
-            status = r.status_code
-    raise SearchUnavailable(f"DuckDuckGo HTTP {status}")
+    failure = SearchUnavailable("DuckDuckGo did not return a recognizable result page")
+    try:
+        async with asyncio.timeout(12):
+            async with _client(
+                {"User-Agent": BROWSER_UA, "Accept-Language": "fr-FR,fr;q=0.9"}
+            ) as http:
+                for url in DDG_PAGES:
+                    for method in ("POST", "GET"):
+                        try:
+                            r = await http.request(
+                                method,
+                                url,
+                                **(
+                                    {"data": {"q": query, "kl": "fr-fr"}}
+                                    if method == "POST"
+                                    else {"params": {"q": query, "kl": "fr-fr"}}
+                                ),
+                                timeout=4,
+                            )
+                        except httpx.HTTPError as exc:
+                            failure = SearchUnavailable(
+                                type(exc).__name__,
+                                reason="timeout"
+                                if isinstance(exc, httpx.TimeoutException)
+                                else "unavailable",
+                            )
+                            continue
+                        if r.status_code == 200:
+                            parsed = _DDGParser()
+                            parsed.feed(r.text)
+                            if parsed.results:
+                                return parsed.results[:k]
+                            if parsed.empty and not parsed.blocked:
+                                return []
+                            failure = SearchUnavailable(
+                                "DuckDuckGo challenge or unknown markup",
+                                reason="blocked" if parsed.blocked else "unavailable",
+                            )
+                        else:
+                            failure = SearchUnavailable(
+                                f"DuckDuckGo HTTP {r.status_code}",
+                                reason="blocked"
+                                if r.status_code in (202, 403, 429)
+                                else "unavailable",
+                            )
+                        # Try the other endpoint before GET if POST was explicitly throttled.
+                        if r.status_code in (202, 429):
+                            break
+    except TimeoutError as exc:
+        raise SearchUnavailable("DuckDuckGo timed out", reason="timeout") from exc
+    raise failure
 
 
-def _ddg_results(page: str, pattern: str, k: int) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    for href, title, snippet in re.findall(pattern, page, re.DOTALL):
-        if (url := _ddg_url(href)) and url not in {o["url"] for o in out}:
-            out.append({"title": _text(title), "url": url, "snippet": _text(snippet or "")})
-        if len(out) >= k:
-            break
-    return out
+class _DDGParser(HTMLParser):
+    """Attribute order and quote style vary between the HTML and lite search pages."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.results = []
+        self.current = None
+        self.capture = None
+        self.buffer = []
+        self.empty = False
+        self.blocked = False
+
+    def handle_starttag(self, tag, attrs):
+        values = dict(attrs)
+        classes = (values.get("class") or "").split()
+        self.empty |= any(c.startswith("no-results") for c in classes)
+        self.blocked |= values.get("id") in ("challenge-form", "anomaly-form") or any(
+            "anomaly" in c for c in classes
+        )
+        if tag == "a" and any(c in ("result__a", "result-link") for c in classes):
+            url = _ddg_url(values.get("href") or "")
+            self.current = None
+            if url and url not in {r["url"] for r in self.results}:
+                self.current = {"title": "", "url": url, "snippet": ""}
+                self.results.append(self.current)
+                self.capture, self.buffer = (tag, "title"), []
+        elif self.current is not None and any(
+            c in ("result__snippet", "result-snippet") for c in classes
+        ):
+            self.capture, self.buffer = (tag, "snippet"), []
+        elif self.capture and tag == "br":
+            self.buffer.append(" ")
+
+    def handle_data(self, data):
+        if self.capture:
+            self.buffer.append(data)
+
+    def handle_endtag(self, tag):
+        if self.capture and tag == self.capture[0]:
+            if self.current is not None:
+                self.current[self.capture[1]] = re.sub(r"\s+", " ", "".join(self.buffer)).strip()
+            self.capture = None
 
 
 LOCAL = ("madagascar", "madagasikara", "malagasy", "gasy")
@@ -127,7 +200,7 @@ def localised(query: str) -> str:
 
 async def web(query: str, k: int = 6) -> list[dict[str, Any]]:
     """Web results [{title, url, snippet}], best first."""
-    query = query.strip()[:300]
+    query = query.strip()[:1000]  # retain fact-check site filters appended to a short query
 
     async def fetch():
         try:

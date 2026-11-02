@@ -130,3 +130,39 @@ def test_a_throttled_search_falls_back_to_the_lite_page(monkeypatch):
             "snippet": "La crise de la Jirama s'aggrave.",
         }
     ]
+
+
+def test_html_200_challenges_are_not_cached_as_empty_results(monkeypatch):
+    websearch._cache.clear()
+    monkeypatch.setattr(
+        websearch,
+        "_transport",
+        httpx.MockTransport(
+            lambda _: httpx.Response(200, text='<form id="challenge-form">Challenge</form>')
+        ),
+    )
+    with pytest.raises(websearch.SearchUnavailable) as error:
+        asyncio.run(websearch.web("MAZAVALOHA PARC 2026"))
+    assert error.value.reason == "blocked" and not websearch._cache
+
+
+def test_parser_accepts_reordered_attributes_single_quotes_and_non_anchor_snippets(monkeypatch):
+    page = "<a href='https://news.example/parc' class='extra result__a'><b>PARC</b> 2026</a><div class='result__snippet'>Dakar &amp; MAZAVALOHA</div>"
+    monkeypatch.setattr(
+        websearch, "_transport", httpx.MockTransport(lambda _: httpx.Response(200, text=page))
+    )
+    found = asyncio.run(websearch.web("MAZAVALOHA PARC 2026"))
+    assert found == [
+        {"title": "PARC 2026", "url": "https://news.example/parc", "snippet": "Dakar & MAZAVALOHA"}
+    ]
+
+
+def test_only_a_recognizable_no_results_page_is_an_empty_success(monkeypatch):
+    monkeypatch.setattr(
+        websearch,
+        "_transport",
+        httpx.MockTransport(
+            lambda _: httpx.Response(200, text='<div class="no-results">No results</div>')
+        ),
+    )
+    assert asyncio.run(websearch.web("unfindable claim")) == []
