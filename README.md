@@ -285,6 +285,38 @@ Next.js 16 is newer than most tutorials and AI training data: read
 | AI routes return 503 `ai_unavailable` | no AI key in `.env`, or every provider failed (see `app.ai_call`) |
 | `npm` warns it blocked an install script | harmless |
 
+## Web app on Vercel
+
+Project **fanilo-mg** → https://fanilo-mg.vercel.app (`fanilo.vercel.app` belongs to someone
+else), in the team *tsioryjonathan's projects*, Root Directory `apps/web`, Node 26.
+`apps/web/vercel.json` runs the server code in Frankfurt (`fra1`), next to Neon.
+
+Deploys go through Vercel's GitHub integration (Settings → Git, repo `0nlyDevs/fanilo-base`):
+every push to `dev`, the production branch, goes live, and other branches and pull requests get
+a preview URL. It does not wait for CI. Vercel's **free plan cannot deploy a private repository
+owned by a GitHub organization** (neither from GitHub nor with the CLI), so this needs the team on
+Pro (on a trial since 1 Nov); back on the free plan, deploys stop. Teammates whose commits should
+deploy must be members of the Vercel team.
+
+Deploy by hand: `npx vercel@latest deploy --prod`, **from the repository root** (`.vercelignore`
+keeps `.env` files and the API out of the upload).
+
+In the project's **Settings → Environment Variables** (Production):
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | the Neon **direct** connection string (as `PROD_DATABASE_URL`, without quotes). Not the pooled one: `lib/auth.ts` sets `search_path` at connection start, which Neon's pooler refuses |
+| `BETTER_AUTH_SECRET` | a new one: `openssl rand -base64 32` |
+| `BETTER_AUTH_URL` | `https://fanilo-mg.vercel.app` |
+| `NEXT_PUBLIC_API_URL` | `https://fanilo-api.onrender.com` (built into the page: redeploy after changing it) |
+
+Before the first sign-in, in Neon's SQL editor: `DELETE FROM better_auth.jwks;`. Better Auth
+encrypts its signing key with `BETTER_AUTH_SECRET`; a key left from an older secret cannot be
+read and `/api/auth/token` fails. It makes a new one by itself; no account is lost.
+
+Preview URLs only show the pages: the API accepts calls from the production address alone
+(`CORS_ORIGINS`), and sign-in is tied to it (JWTs carry `BETTER_AUTH_URL` as issuer).
+
 ## API on Render
 
 [`render.yaml`](render.yaml) describes the service: free plan, Frankfurt, Render's own Python 3.13

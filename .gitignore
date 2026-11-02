@@ -26,3 +26,5 @@ scripts/.cache/
 
 # pitch kit: filmed demo and rendered cards
 docs/pitch/video/out/
+.vercel
+.env*

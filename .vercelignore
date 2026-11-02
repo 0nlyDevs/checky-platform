@@ -1,0 +1,21 @@
+# The Vercel CLI uploads from the repository root (the project's Root Directory is apps/web).
+# Never upload secrets.
+.env
+.env.*
+**/.env
+**/.env.*
+
+# Not needed to build the web app.
+apps/api
+docs
+scripts
+infra
+.github
+.claude
+.taste-skill
+.ruff_cache
+**/.impeccable/review
+**/.impeccable/mocks
+**/node_modules
+**/.next
+**/.turbo

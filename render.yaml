@@ -31,7 +31,7 @@ services:
       # Neon project fanilo, direct (non-pooled) connection string, as PROD_DATABASE_URL in .env.
       - key: DATABASE_URL
         sync: false
-      # All four are the web app's production address (Vercel), e.g. https://fanilo.vercel.app;
+      # All four are the web app's production address (Vercel), https://fanilo-mg.vercel.app;
       # AUTH_JWKS_URL adds /api/auth/jwks.
       - key: AUTH_JWKS_URL
         sync: false
