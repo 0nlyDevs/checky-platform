@@ -157,3 +157,47 @@ class AiCall(_Row):
     ok: Mapped[bool] = mapped_column(Boolean)
     error: Mapped[str | None] = mapped_column(Text)
     cached: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class File(_Row):
+    """An object uploaded to storage. `ready` once the browser's upload has been confirmed."""
+
+    __tablename__ = "file"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    uploaded_by: Mapped[str] = mapped_column(Text)
+    storage_key: Mapped[str] = mapped_column(String(400), unique=True)
+    filename: Mapped[str] = mapped_column(String(255))
+    mime: Mapped[str] = mapped_column(String(120))
+    size_bytes: Mapped[int]
+    sha256: Mapped[str | None] = mapped_column(String(64), index=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    # EXIF for images, page count for PDFs, duration for audio later.
+    meta: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+
+
+class Source(_Row):
+    """A piece of evidence: a web page, a document, an image, audio or pasted text."""
+
+    __tablename__ = "source"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.item.id", ondelete="SET NULL"), index=True
+    )
+    file_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.file.id", ondelete="SET NULL")
+    )
+    created_by: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(String(20))
+    status: Mapped[str] = mapped_column(String(20), default="queued")
+    title: Mapped[str] = mapped_column(String(500), default="")
+    url: Mapped[str | None] = mapped_column(Text)
+    author: Mapped[str | None] = mapped_column(String(300))
+    published_at: Mapped[str | None] = mapped_column(String(40))
+    text: Mapped[str] = mapped_column(Text, default="")
+    error: Mapped[str | None] = mapped_column(Text)

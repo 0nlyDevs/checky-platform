@@ -7,7 +7,7 @@ export type NavItem = { label: string; icon: LucideIcon; path?: string };
 export const NAV: NavItem[] = [
   { label: t.nav.claims, icon: ListChecks, path: "affirmations" },
   { label: t.nav.check, icon: Search },
-  { label: t.nav.sources, icon: Library },
+  { label: t.nav.sources, icon: Library, path: "sources" },
   { label: t.nav.transcriptions, icon: AudioLines },
   { label: t.nav.members, icon: Users, path: "membres" },
   { label: t.nav.settings, icon: Settings, path: "parametres" },

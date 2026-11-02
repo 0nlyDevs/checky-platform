@@ -61,12 +61,33 @@ def presign_upload(key: str, content_type: str, expires: int = UPLOAD_SECONDS) -
     )
 
 
-def presign_download(key: str, expires: int = DOWNLOAD_SECONDS) -> str:
-    return client().generate_presigned_url(
-        "get_object",
-        Params={"Bucket": get_settings().storage_bucket, "Key": key},
-        ExpiresIn=expires,
-    )
+def presign_download(key: str, filename: str | None = None, expires: int = DOWNLOAD_SECONDS) -> str:
+    params = {"Bucket": get_settings().storage_bucket, "Key": key}
+    if filename:
+        # Opens in the browser under its original name instead of the storage key.
+        safe = filename.replace('"', "")
+        params["ResponseContentDisposition"] = f'inline; filename="{safe}"'
+    return client().generate_presigned_url("get_object", Params=params, ExpiresIn=expires)
+
+
+async def head(key: str) -> dict[str, Any] | None:
+    """Size and type of an object, or None when it is not there."""
+    try:
+        r = await asyncio.to_thread(
+            client().head_object, Bucket=get_settings().storage_bucket, Key=key
+        )
+    except Exception:  # noqa: BLE001 - missing or unreadable is the same answer here
+        return None
+    return {"size": r.get("ContentLength", 0), "content_type": r.get("ContentType")}
+
+
+async def read(key: str) -> bytes:
+    r = await asyncio.to_thread(client().get_object, Bucket=get_settings().storage_bucket, Key=key)
+    return await asyncio.to_thread(r["Body"].read)
+
+
+async def delete(key: str) -> None:
+    await asyncio.to_thread(client().delete_object, Bucket=get_settings().storage_bucket, Key=key)
 
 
 async def check() -> dict[str, Any]:

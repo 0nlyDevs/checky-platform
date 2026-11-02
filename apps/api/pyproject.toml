@@ -12,10 +12,13 @@ dependencies = [
     "boto3>=1.43.118",
     "fastapi>=0.162.0",
     "httpx>=0.28.1",
+    "pillow>=13.0.0",
     "pydantic-settings>=2.16.1",
     "pyjwt[crypto]>=2.15.1",
+    "pypdf>=6.21.2",
     "python-socketio>=5.17.0",
     "sqlalchemy[asyncio]>=2.1.6",
+    "trafilatura>=2.3.1",
     "uvicorn[standard]>=0.54.0",
 ]
 

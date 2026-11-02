@@ -1,6 +1,8 @@
 # FANILO Hackathon Base Platform – PRD
 
-Oct 23, 2026 · @coco
+Oct 25, 2026 · @coco
+
+This replaces the PRD of 23 October. Since then the production database and file storage moved to one Neon project, Better Auth uses the `better_auth` schema, and the AI defaults are Groq `openai/gpt-oss-120b` then Gemini `gemini-3.5-flash-lite`.
 
 ## Overview
 
@@ -87,9 +89,9 @@ The hard limits come from the hackathon rules, the free tiers we rely on, and th
 
 ## Architecture and stack
 
-Two services share one Postgres database: Next.js owns the UI and authentication, FastAPI owns business logic, AI and realtime, and every call to FastAPI carries a Better Auth JWT.
+Two services share one Neon project: Next.js owns the UI and authentication, FastAPI owns business logic, AI and realtime, and every call to FastAPI carries a Better Auth JWT.
 
-&#91;embedded content: architecture · 2 services, 3 backing services\]
+&#91;embedded content: architecture · 2 services, Neon database and storage, AI providers\]
 
 The browser talks to both services; files go straight from the browser to Neon Object Storage through a presigned URL that FastAPI issues, so large uploads never pass through the API.
 
@@ -101,13 +103,13 @@ The browser talks to both services; files go straight from the browser to Neon O
 | API | FastAPI (Python), Pydantic, SQLAlchemy + Alembic | OpenAPI schema generates the TypeScript client |
 | Realtime | python-socketio on FastAPI; socket.io-client in the browser | SSE for streaming AI answers |
 | Database | Postgres 18 + pgvector (Neon free, project `fanilo` in the 0nlydevs org, Frankfurt) | Better Auth tables and app tables in one database, separate schemas. Chosen over Supabase Postgres on 25 Oct: wakes automatically instead of pausing, free branching |
-| File storage | Neon Object Storage (S3-compatible, private bucket `uploads`, same Neon project) | Never on the API server's disk; boto3 presigned URLs; branches with the database |
+| File storage | Neon Object Storage (S3-compatible, private buckets `uploads` and `uploads-dev`, same Neon project) | Never on the API server's disk; boto3 presigned URLs; branches with the database |
 | Background jobs | Postgres job table, worker loop in the API process | No extra service to host; queued jobs survive restarts |
-| Language models | Groq (primary), Gemini (fallback), NVIDIA NIM (third) | All called through one OpenAI-compatible gateway |
-| Embeddings | One provider, chosen after the 25 Oct test: Gemini Embedding or NVIDIA | Model name stored with every vector |
+| Language models | Groq `openai/gpt-oss-120b` (primary), Gemini `gemini-3.5-flash-lite` (fallback), NVIDIA NIM (third) | All called through one OpenAI-compatible gateway; models change often on free tiers, so they are set by env |
+| Embeddings | One provider, chosen after the embedding test: Gemini Embedding or NVIDIA | Model name stored with every vector |
 | Speech-to-text | Groq Whisper; local faster-whisper as backup | Test French and Malagasy first |
-| Parsing | PyMuPDF (PDF), trafilatura (web pages) |  |
-| API hosting | Render free (or Railway trial) | Wake it up before the pitch |
+| Parsing | pypdf (PDF, BSD), trafilatura (web pages), Pillow (EXIF) | pypdf rather than PyMuPDF, which is AGPL |
+| API hosting | Render free (or Railway trial), Frankfurt | Wake it up before the pitch |
 | Monorepo | npm workspaces + Turborepo | `apps/web`, `apps/api`, `packages/shared` |
 
 ## Functional requirements
@@ -248,15 +250,16 @@ We pre-build the two features most likely to match the problem (claim checker an
 
 ## UI and design
 
-The UI should look like a calm, trustworthy newsroom tool: one design system set up before any screen is built, so every screen added on day one looks finished automatically.
+The UI looks like a calm, trustworthy newsroom tool set as a Malagasy radio programme grid ("Grille d'antenne"): one design system, built first, so every screen added on day one looks finished automatically. The full rules live in `apps/web/DESIGN.md`.
 
-**Design system (built first, by 27 October)**
+**Design system (built 24 October)**
 
-- Tokens as CSS variables in the Tailwind theme: colors, radius, spacing, shadows, light and dark mode.
-- Palette: one neutral scale, one brand accent, and four verdict colors used everywhere the same way (`true` green, `misleading` amber, `false` red, `unverifiable` grey), always paired with a label or icon, never color alone.
-- Typography: one sans-serif family (for example Inter or Geist) with a fixed scale; tabular numbers for dates and counts.
-- Icons: one set only (lucide, which ships with shadcn/ui).
-- shadcn/ui components themed once with the tokens; no one-off styles in pages.
+- Tokens as CSS variables in the Tailwind theme, light and dark: deep antenna green rail `#0f3b36` on cool white `#f4f6f5`, green-black ink, hairline rules, 5 px corners.
+- One signal yellow `#f2c230`, only for "maintenant", keyboard focus and selection; never buttons, verdicts or status.
+- Four verdict colours used everywhere the same way (`true` green, `misleading` amber, `false` red, `unverifiable` grey), each with fill / on / soft / ink tokens at 4.5:1 contrast, always with an icon and a label, never colour alone. Workflow status uses ink icons only.
+- Typography: Public Sans for words; Barlow Condensed with tabular figures for hours, times, durations and FAN references.
+- Icons: one set only (lucide, which ships with shadcn/ui). shadcn/ui components themed once with the tokens; no one-off styles in pages.
+- Signature: the day grid, where each claim is a block from first seen to now, drawn to scale.
 
 **Component inventory**
 
@@ -300,7 +303,7 @@ Better Auth manages its own tables (`user`, `session`, `account`, `verification`
 | `item` | workspace\_id, author\_id, type, title, body, status, tags (text\[\]), data (JSONB) | The generic domain object; GIN index on tags and data |
 | `comment` | item\_id, author\_id, body |  |
 | `activity` | workspace\_id, actor\_id, entity, entity\_id, action, diff (JSONB) | Written on every create, update, delete |
-| `file` | workspace\_id, item\_id?, storage\_key, mime, size\_bytes, sha256, meta (JSONB) | EXIF and other metadata in meta |
+| `file` | workspace\_id, item\_id?, storage\_key, mime, size\_bytes, sha256, meta (JSONB) | Object in the Neon bucket; EXIF and other metadata in meta |
 | `source` | workspace\_id, kind (`pdf`, `url`, `text`, `transcript`), title, url?, file\_id?, author?, published\_at?, text | One row per ingested document |
 | `chunk` | source\_id, workspace\_id, ord, text, page?, start\_s?, end\_s?, embedding vector(N), embed\_model | HNSW index on embedding; N set by the chosen model |
 | `transcript` | file\_id, language, duration\_s, segments (JSONB) | Segments: start, end, text |
@@ -312,7 +315,7 @@ The user id in `app` tables is the Better Auth user id (text), referenced withou
 
 ## API specification
 
-All FastAPI routes live under `/api/v1`, require `Authorization: Bearer <jwt>` except `/health`, and are scoped by `{ws}` = workspace id. Errors use one shape: `{"error": {"code": "...", "message": "..."}}`.
+All FastAPI routes live under `/api/v1`, require `Authorization: Bearer <jwt>` except `/health`, and are scoped by `{ws}` = workspace id. Errors use one shape: `{"error": {"code": "...", "message": "..."}}`; someone outside a workspace gets 404, not 403.
 
 | Method | Path | Purpose | Role |
 | --- | --- | --- | --- |
@@ -327,17 +330,21 @@ All FastAPI routes live under `/api/v1`, require `Authorization: Bearer <jwt>` e
 | GET / PATCH / DELETE | `/workspaces/{ws}/items/{id}` | Read / update / delete | member / author or editor+ / editor+ |
 | GET / POST | `/workspaces/{ws}/items/{id}/comments` | Comments | any member |
 | GET | `/workspaces/{ws}/activity` | Activity log | any member |
-| POST | `/workspaces/{ws}/files/upload-url` | Get a signed upload URL | journalist+ |
-| POST | `/workspaces/{ws}/files` | Register an uploaded file | journalist+ |
-| POST | `/workspaces/{ws}/sources` | Add a source (file or URL); starts an ingest job | journalist+ |
+| POST | `/workspaces/{ws}/files/upload-url` | Get a presigned upload URL | journalist+ |
+| POST | `/workspaces/{ws}/files/{id}/complete` | Confirm an upload; creates the source and starts its analysis | journalist+ |
+| POST | `/workspaces/{ws}/sources` | Add a source (URL or pasted text); a URL starts an ingest job | journalist+ |
 | GET | `/workspaces/{ws}/sources` | List sources | any member |
 | POST | `/workspaces/{ws}/transcriptions` | Transcribe a file; starts a job | journalist+ |
 | GET | `/workspaces/{ws}/jobs/{id}` | Job status and result | any member |
 | POST | `/workspaces/{ws}/jobs/{id}/retry` | Retry a failed job | journalist+ |
+| POST | `/workspaces/{ws}/ai/complete` | One completion through the gateway (JSON) | any member |
+| POST | `/workspaces/{ws}/ai/stream` | The same, streamed as SSE | any member |
 | POST | `/workspaces/{ws}/search` | Semantic search over chunks | any member |
 | POST | `/workspaces/{ws}/ask` | RAG answer with citations, streamed as SSE | any member |
 | POST | `/workspaces/{ws}/agent` | Agent run, steps streamed as SSE | any member |
 | POST | `/workspaces/{ws}/demo/reset` | Reset seed data | admin |
+
+**SSE events for `/ai/stream`:** `delta` (`{text}`), then `done` (the full completion) or `error`.
 
 **SSE events for `/ask` and `/agent`:** `token` (text delta), `citation` (source id, passage, page or timestamp), `step` (tool name, input, short result), `done`, `error`.
 
@@ -353,7 +360,7 @@ The bar is a demo that never fails in front of the jury, on a phone, on a weak c
 | AI latency | First streamed token under 2 s; any AI call times out after 30 s and falls back |
 | Reliability | No single free tier can take the app down: AI fallback, retries with backoff, jobs retryable |
 | Resilience to network | Socket auto-reconnect; uploads resumable or retryable; clear offline and error messages |
-| Security | JWT verified on every API call; workspace isolation on every query; secrets only in environment variables; CORS limited to the web app's origin; upload type and size checked |
+| Security | JWT verified on every API call; workspace isolation on every query; secrets only in environment variables; CORS limited to the web app's origin; upload type and size checked; private bucket, presigned URLs only |
 | Privacy | Only public test data while on free AI tiers; no prompt text stored in logs |
 | Accessibility | Keyboard navigable, labeled form fields, contrast AA |
 | Languages | UI in French; content in French and Malagasy supported end to end (ingest, search, transcription) |
@@ -362,7 +369,7 @@ The bar is a demo that never fails in front of the jury, on a phone, on a weak c
 
 ## Repository, configuration and deployment
 
-One monorepo, one `docker compose up` for local development, and one push to `main` deploys both services.
+One monorepo, a local Postgres for development (Docker optional), and one push to `main` deploys both services. Setup steps for teammates are in the repository README.
 
 **Repository layout**
 
@@ -372,17 +379,17 @@ fanilo-base/
     web/            Next.js app, Better Auth, PWA
       app/          routes and pages
       lib/auth.ts   Better Auth config + JWT plugin
-      lib/api/      generated API client
+      lib/api.ts    API client (adds the JWT)
     api/            FastAPI
       app/
-        core/       config, db, security (JWT/JWKS), errors
+        core/       config, db, security (JWT/JWKS), errors, ai (gateway), storage (S3)
         modules/    workspaces, items, files, sources, jobs, ai, rag, stt, agent
         realtime/   Socket.IO server and events
         workers/    job handlers (Postgres queue)
       alembic/      migrations
       scripts/      seed.py, reembed_all.py
   packages/
-    shared/         generated types, constants, i18n strings
+    shared/         generated types, constants
   docker-compose.yml   postgres+pgvector (optional)
   THIRD_PARTY.md
   README.md
@@ -392,7 +399,7 @@ fanilo-base/
 
 | Variable | Used by | Example |
 | --- | --- | --- |
-| `DATABASE_URL` | web, api | Neon Postgres connection string (direct, not pooled; `sslmode=require` is translated for asyncpg) |
+| `DATABASE_URL` | web, api | Neon Postgres connection string (direct, not pooled; `sslmode=require` is translated for asyncpg); a local Postgres in development |
 | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` | web | random 32 bytes; web URL |
 | `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE` | api | `https://<web>/api/auth/jwks` |
 | `NEXT_PUBLIC_API_URL` | web | API base URL |
@@ -400,7 +407,7 @@ fanilo-base/
 | `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, `STORAGE_BUCKET` | api | Neon branch storage endpoint and credential; bucket `uploads` (production), `uploads-dev` (local) |
 | `LLM_PROVIDERS` | api | `groq,gemini,nvidia` (order = fallback order) |
 | `GROQ_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY` | api | one set per team member if needed |
-| `LLM_MODEL_GROQ`, `LLM_MODEL_GEMINI`, `LLM_MODEL_NVIDIA` | api | model names chosen after testing |
+| `LLM_MODEL_GROQ`, `LLM_MODEL_GEMINI`, `LLM_MODEL_NVIDIA` | api | empty = gateway defaults (`openai/gpt-oss-120b`, `gemini-3.5-flash-lite`) |
 | `EMBED_PROVIDER`, `EMBED_MODEL`, `EMBED_DIM` | api | set once, never changed during the event |
 | `STT_PROVIDER`, `STT_MODEL` | api | Groq Whisper |
 | `AI_CACHE` | api | `true` in development |
@@ -408,7 +415,7 @@ fanilo-base/
 **Deployment**
 
 - Web: Vercel Hobby, connected to the repo, root `apps/web`.
-- API + in-process worker: Render free web service (Docker), or Railway trial.
+- API + in-process worker: Render free web service (Docker), or Railway trial, in Frankfurt next to the database.
 - Database and file storage: one Neon free project (`fanilo`, org 0nlydevs); migrations run with Alembic on deploy.
 - A GitHub Action regenerates the TypeScript client when the OpenAPI schema changes, and fails the build if types are out of date.
 - Before the pitch: open the API health page 5 minutes ahead to wake the service, and open Paramètres so the Neon database wakes up.
@@ -458,10 +465,11 @@ The biggest risk is guessing the wrong features: time spent on F1 to F5 is lost 
 | The real problem does not match the pre-built features | Time spent on unused features | Generic modules first; F1 to F5 kept thin and built on M1 to M12, so their parts are reused anyway |
 | UI polish eats the time needed for the core | Beautiful screens on a broken flow | Design system first, then polish only screens whose flow already works end to end |
 | A free AI tier rate-limits or blocks us during the event | Features stop working | Three providers with automatic fallback; one key per member; response cache |
+| A free AI model is renamed or retired | Calls fail with model errors | Models set by env (`LLM_MODEL_*`); Paramètres shows each provider and model; already happened once (Groq Llama 3.3, Gemini 2.5 Flash) |
 | Render service asleep at pitch time | 1-minute blank screen in front of the jury | Wake it 5 minutes before; backup screen recording |
 | Neon database asleep at the first request | A few seconds' delay on the first screen | Open Paramètres a few minutes before the demo to wake it |
-| Weak Malagasy support in embeddings or transcription | Poor results on local content | Test on 25 Oct; pick the best provider; show French in the demo if Malagasy is weak |
-| Venue internet slow or down | Cannot deploy or call AI | Phone hotspot as backup; local Docker setup works offline except AI calls |
+| Weak Malagasy support in embeddings or transcription | Poor results on local content | Test before the freeze; pick the best provider; show French in the demo if Malagasy is weak |
+| Venue internet slow or down | Cannot deploy or call AI | Phone hotspot as backup; local setup works offline except AI calls |
 | Better Auth and FastAPI JWT setup breaks | Nothing works across services | Built and tested first (P1); one integration test in CI |
 | AI suggests a wrong verdict in the demo | Loss of trust with the jury | The journalist always confirms the verdict; evidence and citations always shown |
 | Embedding provider changed mid-event | All vectors invalid | Provider fixed by config; `reembed_all` script ready |
@@ -469,9 +477,10 @@ The biggest risk is guessing the wrong features: time spent on F1 to F5 is lost 
 ## Open questions
 
 - [x] Do the organizers allow work prepared before the event? Yes, confirmed with the IFM contact.
+- [x] Supabase or Neon? Neon, for both the database and file storage (decided 25 October).
 - [ ] Does the team registration page of the rules need to be submitted, or is the form enough?
 - [ ] What prizes are offered, and does that change what the jury values?
-- [ ] Which embedding provider wins the 25 October test: Gemini or NVIDIA?
+- [ ] Which embedding provider wins the test: Gemini or NVIDIA?
 - [ ] Is the Gemini free tier usable from Madagascar?
 - [ ] Is a free vision model available for screenshot OCR in F1?
 - [ ] Is a free web search API available for the agent's `web_search` tool, or do we leave it out?
@@ -481,6 +490,7 @@ The biggest risk is guessing the wrong features: time spent on F1 to F5 is lost 
 
 - [FANILO hackathon rules (PDF)](https://homemade.mg/media/img/reglement_hackathon_fanilo.pdf)
 - [Neon pricing](https://neon.com/pricing)
+- [Neon Object Storage](https://neon.com/docs/storage/overview)
 - [Vercel Hobby plan](https://vercel.com/docs/plans/hobby)
 - [Render free tier](https://render.com/docs/free)
 - [Railway plans](https://docs.railway.com/pricing/plans)

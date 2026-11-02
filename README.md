@@ -8,7 +8,7 @@ and the pitch is on **Wed 4 Nov**. This repo is built beforehand (allowed by the
 it must be declared in the pitch) so that on day one a new feature goes from idea to deployed
 demo in under 2 hours.
 
-- Product requirements: [`docs/PRD.md`](docs/PRD.md)
+- Product requirements: [`docs/PRD.md`](docs/PRD.md), a copy of the [PRD Claude Doc](https://claude.ai/artifact/XFypCd4WmGLBm6pMbGMwrv) (keep both in sync)
 - Design rules: [`apps/web/DESIGN.md`](apps/web/DESIGN.md) and [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md)
 - Full technical reference (architecture, API, status, next steps): [`CLAUDE.md`](CLAUDE.md).
   It is also what Claude Code reads, so keep it up to date when something changes.
@@ -200,6 +200,13 @@ reply.content, reply.provider
 For streaming to the browser, use `POST /api/v1/workspaces/{ws}/ai/stream` (Server-Sent Events:
 `delta` events with `{text}`, then `done`). The AI only **suggests** a verdict
 (`data.verdict_suggested`); a journalist always confirms it.
+
+### Files and sources
+
+Uploads never pass through the API: `lib/upload.ts` asks `…/files/upload-url` for a presigned
+URL, PUTs the file to Neon storage, then calls `…/files/{id}/complete`, which creates a source and
+queues `ingest_file`. In the UI, drop `<SourcesPanel ws={ws} itemId={id} />` anywhere to get
+add-link, upload and the live list. Server side, read a file with `storage.read(key)`.
 
 ### A slow task (transcription, ingestion…)
 

@@ -30,7 +30,7 @@ from app.core.config import get_settings
 from app.core.db import engine
 from app.main import api
 
-TABLES = "app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
+TABLES = "app.source, app.file, app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
 
 
 @pytest.fixture(scope="session", autouse=True)

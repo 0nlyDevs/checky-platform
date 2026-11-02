@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
+import { SourcesPanel } from "@/components/sources/sources-panel";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
@@ -40,6 +41,7 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
   if (a.action === "create") return t.detail.events.created;
   if (a.action === "comment") return t.detail.events.commented;
   if (a.action === "delete") return t.detail.events.deleted;
+  if (a.action === "source") return t.detail.events.sourceAdded;
   const diff = a.diff as Record<string, { from: unknown; to: unknown }>;
   if (diff.status) {
     const s = (v: unknown) => t.status[v as Status] ?? String(v);
@@ -346,6 +348,11 @@ export function ClaimDetail() {
               </button>
             )}
             {!canEdit && <p className="mt-3 text-sm text-muted-foreground">{t.detail.readOnly}</p>}
+          </Section>
+
+          <Section title={`${t.detail.sources}${claim.sources ? ` (${claim.sources})` : ""}`}>
+            <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.sources.panelLead}</p>
+            <SourcesPanel ws={ws} itemId={id} />
           </Section>
 
           <Section title={`${t.detail.comments}${comments?.length ? ` (${comments.length})` : ""}`}>

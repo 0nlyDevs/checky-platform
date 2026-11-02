@@ -1,6 +1,6 @@
 # FANILO base — project handoff
 
-Read this first. It is the single source of truth for how this repo works, what is done, and what comes next. The human onboarding guide is `README.md` (setup, env vars, access, recipes): update it too when setup, commands or conventions change. Product requirements live in `docs/PRD.md` (copy of the Claude Doc "FANILO Hackathon Base Platform – PRD", https://claude.ai/artifact/XyTrF9rjtMvjWksbUZKX2r). Keep both in sync when a decision changes.
+Read this first. It is the single source of truth for how this repo works, what is done, and what comes next. The human onboarding guide is `README.md` (setup, env vars, access, recipes): update it too when setup, commands or conventions change. Product requirements live in `docs/PRD.md` (copy of the Claude Doc "FANILO Hackathon Base Platform – PRD", https://claude.ai/artifact/XFypCd4WmGLBm6pMbGMwrv, created 25 Oct; the 23 Oct doc was deleted). Keep both in sync when a decision changes.
 
 ## The project in one paragraph
 
@@ -49,15 +49,15 @@ Key architecture decisions (all reflected in the PRD):
 
 ## API (FastAPI, prefix `/api/v1`)
 
-Implemented: `GET /health` (public; database, storage and each AI provider as `up|down|not_configured` with latency; providers checked via their free `/models` list; cached 15 s; `ok` = DB up, nothing configured down, at least one configured AI provider up) · `GET /me` (with memberships) · `POST /workspaces` · `GET /workspaces/{ws}/members` (with names/emails) · `PATCH|DELETE /workspaces/{ws}/members/{user}` (last-admin guarded) · `POST /workspaces/{ws}/invitations` · `POST /invitations/{token}/accept` (single use, 7 days) · items CRUD + filters `GET|POST /workspaces/{ws}/items`, `GET|PATCH|DELETE …/items/{id}` · `GET|POST …/items/{id}/comments` · `GET /workspaces/{ws}/activity?entity_id=` · `GET …/jobs/{id}`, `POST …/jobs/{id}/retry` · `POST /workspaces/{ws}/demo/reset` (admin; seeds 8 claims) · `POST /workspaces/{ws}/ai/complete` (JSON) and `POST …/ai/stream` (SSE: `delta` `{text}` events, then `done` with the full completion, or `error`).
+Implemented: `GET /health` (public; database, storage and each AI provider as `up|down|not_configured` with latency; providers checked via their free `/models` list; cached 15 s; `ok` = DB up, nothing configured down, at least one configured AI provider up) · `GET /me` (with memberships) · `POST /workspaces` · `GET /workspaces/{ws}/members` (with names/emails) · `PATCH|DELETE /workspaces/{ws}/members/{user}` (last-admin guarded) · `POST /workspaces/{ws}/invitations` · `POST /invitations/{token}/accept` (single use, 7 days) · items CRUD + filters `GET|POST /workspaces/{ws}/items`, `GET|PATCH|DELETE …/items/{id}` · `GET|POST …/items/{id}/comments` · `GET /workspaces/{ws}/activity?entity_id=` · `GET …/jobs/{id}`, `POST …/jobs/{id}/retry` · `POST /workspaces/{ws}/demo/reset` (admin; seeds 8 claims) · files and sources (M4): `POST …/files/upload-url` (presigned PUT; images, PDF, audio, 25 MB) → browser uploads to Neon → `POST …/files/{id}/complete {item_id?}` creates a source and queues `ingest_file` (SHA-256, EXIF via Pillow, PDF text via pypdf); `GET|POST …/sources` (`{url}` queues `ingest_url`: SSRF-guarded fetch with a browser user agent, trafilatura without tables; `{text}` is ready at once), `GET|DELETE …/sources/{id}`, `GET …/sources/{id}/text`; events `source.created|updated|deleted`; attaching to a claim keeps `data.source_count` in sync and logs an item `source` activity · `POST /workspaces/{ws}/ai/complete` (JSON) and `POST …/ai/stream` (SSE: `delta` `{text}` events, then `done` with the full completion, or `error`).
 
 Roles: journalist (create, edit own), editor (edit/delete all), admin (members, invites, demo reset). Dependencies `AnyMember`, `Editor`, `Admin` in `app/core/access.py`.
 
-Not yet: files/sources (M4), RAG `/search` `/ask` (M8), transcription (M9), agent (M10), M12 seed script (needs M4/M9).
+Not yet: RAG `/search` `/ask` (M8), transcription (M9), agent (M10), M12 seed script (needs M4/M9).
 
 ## Web app
 
-Routes: `/connexion`, `/inscription` (auth) · `/` (redirects to first workspace, or onboarding with optional demo data) · `/w/[ws]/affirmations` (day grid + table; `?vue=tableau` = board) · `/w/[ws]/affirmations/[id]` (detail) · `/w/[ws]/membres` · `/w/[ws]/parametres` (service health + admin demo reset) · `/invitation/[token]`. `proxy.ts` does the optimistic cookie redirect (Next 16 name for middleware).
+Routes: `/connexion`, `/inscription` (auth) · `/` (redirects to first workspace, or onboarding with optional demo data) · `/w/[ws]/affirmations` (day grid + table; `?vue=tableau` = board) · `/w/[ws]/affirmations/[id]` (detail) · `/w/[ws]/membres` · `/w/[ws]/sources` (all sources) · `/w/[ws]/parametres` (service health + admin demo reset); the claim detail has a Sources panel (`components/sources/sources-panel.tsx`: add link, upload with progress via `lib/upload.ts`, EXIF facts, duplicates, reverse image search links) · `/invitation/[token]`. `proxy.ts` does the optimistic cookie redirect (Next 16 name for middleware).
 
 Data: SWR + `lib/api.ts` (`api()` adds the JWT, caches it until 1 min before expiry). Realtime via `hooks/use-workspace-socket.ts` (refetches after reconnect). `hooks/use-workspace.ts` gives my role and a user-id → name map. Server-side session read: `lib/session.ts` (`'use cache: private'`, behind Suspense in `app/(app)/layout.tsx`).
 
@@ -119,7 +119,7 @@ Playwright browsers are installed in `~/.cache/ms-playwright`. Drive flows with 
 ## Status (25 Oct 2026)
 
 Done, on `dev`, CI green:
-- M1 auth + roles, M2 workspaces/members/invitations, M3 items/comments/activity, M5 realtime, M6 Postgres job queue, M7 AI gateway (tested for real on Gemini: complete, stream, tool calls), M12 health endpoint + Paramètres screen + admin demo reset button
+- M1 auth + roles, M2 workspaces/members/invitations, M3 items/comments/activity, M5 realtime, M6 Postgres job queue, M7 AI gateway (tested for real on Gemini: complete, stream, tool calls), M12 health endpoint + Paramètres screen + admin demo reset button, M4 files and sources (API + Sources page + claim panel, verified live on Neon storage)
 - Web: design system, auth pages, onboarding, app shell, claims day grid + table, claim detail (verdict confirm, comments, history, assignee, status), **F2 verification board** (drag/touch/keyboard + "Déplacer vers…"), members screen + invitation links, PWA manifest + icons
 - CI: API tests on pgvector Postgres, web typecheck/lint, generated API types and THIRD_PARTY.md up to date
 - **Neon project `fanilo`** (25 Oct): `vector`, `better_auth` (Better Auth CLI) and `app` (Alembic, head) created; sign-up → JWT → API → workspace verified end to end against it, test data removed.
@@ -129,7 +129,7 @@ Done, on `dev`, CI green:
 ## Next steps (in order)
 
 Not blocked:
-1. **M4 files/sources** on Neon storage (presigned upload, file rows attached to items, EXIF, trafilatura for URLs), then M8 RAG.
+1. **M8 RAG** on the sources' text (chunks + pgvector on Neon; pgvector is not installed locally) and **M9 transcription** of audio sources (Groq Whisper).
 2. **Embedding test** (Gemini now; NVIDIA when its key exists) and the M12 seed script after M4/M9.
 
 Blocked on the user:
