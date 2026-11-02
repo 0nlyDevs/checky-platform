@@ -306,3 +306,22 @@ def test_partner_radio_marks_a_flash_broadcast_with_its_token(as_user, client, m
         ).status_code
         == 404
     )
+
+
+def test_a_public_tip_is_the_rumours_first_stop(as_user, client):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    slug = alice.get(f"/api/v1/workspaces/{ws}").json()["slug"]
+    tip = {
+        "newsroom": slug,
+        "text": "Coupure de 72 heures à Toamasina, partagé partout",
+        "origin": "whatsapp",
+    }
+    assert client.post("/api/v1/public/tips", json=tip).status_code == 201
+    item = alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"][0]
+    out = alice.get(f"/api/v1/workspaces/{ws}/items/{item['id']}/trajet").json()
+    assert [(s["channel"], s["place"], s["derived"]) for s in out["rumour"]] == [
+        ("whatsapp", "Signalement du public", False)
+    ]
+    assert out["rumour"][0]["location"]["region"] == "Atsinanana"

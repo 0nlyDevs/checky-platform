@@ -237,6 +237,17 @@ async def create_tip(body: TipIn, request: Request, db: Db) -> TipOut:
     db.add(item)
     await db.flush()
     await record(db, ws.id, PUBLIC_AUTHOR, "item", item.id, "create")
+    try:  # where the visitor saw it is the rumour's first stop on « Le trajet »
+        from app.modules import trajet
+        from app.modules.directory import place_in
+
+        await trajet.add_stop(
+            db, ws.id, item.id, side="rumour", channel=body.origin, place="Signalement du public",
+            location=place_in(text) or {}, proof={"url": item.data["tip_url"], "tip": True},
+            added_by=PUBLIC_AUTHOR,
+        )  # fmt: skip
+    except (ImportError, AttributeError):
+        pass
     await db.commit()
     await db.refresh(item)
     from app.modules.items import _out  # the desk's live grid shows the tip at once
