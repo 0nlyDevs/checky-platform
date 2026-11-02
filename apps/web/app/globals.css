@@ -772,6 +772,19 @@
   outline-offset: 3px;
 }
 
+/* Toasts never sit under the corners: beside the dock on a computer, above the ink bar and the
+   Checky button on a phone. */
+@media (min-width: 641px) {
+  :root:has([data-app-shell]) [data-sonner-toaster][data-x-position="left"] {
+    left: calc(var(--inset) + 84px) !important;
+  }
+}
+@media (max-width: 640px) {
+  :root:has([data-app-shell]) [data-sonner-toaster][data-y-position="bottom"] {
+    bottom: calc(66px + 84px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
 /* Bottom-right: the Checky button, 60 px, its label slides out to the left on hover and focus. */
 .checky-fab {
   position: fixed;
