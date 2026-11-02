@@ -86,3 +86,19 @@ def test_demo_reset_is_admin_only_and_replaces_items(as_user):
     items = alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"]
     assert len(items) == n
     assert all(i["data"]["demo"] and i["data"]["first_seen_at"] for i in items)
+
+
+def test_demo_reset_seeds_sources_on_claims(as_user):
+    from tests.test_workspaces import _workspace
+
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    assert alice.post(f"/api/v1/workspaces/{ws}/demo/reset").json() == {"items": 8}
+    sources = alice.get(f"/api/v1/workspaces/{ws}/sources").json()
+    assert len(sources) == 7
+    assert all(s["title"].startswith("Démo ·") and "fictif" in s["title"] for s in sources)
+    items = alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"]
+    assert sum(i["data"]["source_count"] for i in items) == 7
+    # A second reset replaces them instead of piling up.
+    alice.post(f"/api/v1/workspaces/{ws}/demo/reset")
+    assert len(alice.get(f"/api/v1/workspaces/{ws}/sources").json()) == 7

@@ -1,0 +1,1 @@
+{"content": "{\"quotes\":[],\"claims\":[]}", "provider": "groq", "model": "openai/gpt-oss-120b", "tool_calls": null, "tokens_in": 253, "tokens_out": 88, "cached": false}

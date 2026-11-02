@@ -127,3 +127,44 @@ def test_outsiders_cannot_analyze(as_user, model):
         as_user("mallory").post(f"/api/v1/workspaces/{ws_m}/items/{item}/analyze").status_code
         == 404
     )
+
+
+def test_long_sources_send_their_relevant_passage_not_just_the_start(as_user, model, monkeypatch):
+    from app.core import embed
+    from tests.test_rag import fake_vector
+
+    answer, seen = model
+    answer["json"] = {"evidence": [], "verdict": "unverifiable", "reason": "x"}
+    s = get_settings()
+    monkeypatch.setattr(s, "embed_provider", "gemini")
+    monkeypatch.setattr(s, "embed_model", "fake-embed")
+    monkeypatch.setattr(s, "embed_dim", 768)
+    monkeypatch.setattr(s, "gemini_api_key", "k")
+
+    def embed_handler(request):
+        body = json.loads(request.content)
+        return httpx.Response(
+            200, json={"data": [{"embedding": fake_vector(t)} for t in body["input"]]}
+        )
+
+    monkeypatch.setattr(embed, "_transport", httpx.MockTransport(embed_handler))
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    item = alice.post(
+        f"/api/v1/workspaces/{ws}/items", json={"title": "Le pont de Mangasoavina est fermé"}
+    ).json()["id"]
+    filler = "\n\n".join(
+        f"Paragraphe {i} sur la météo et les cultures de la région." for i in range(200)
+    )
+    text = filler + "\n\nLe pont de Mangasoavina reste ouvert aux véhicules légers jusqu'à lundi."
+    alice.post(
+        f"/api/v1/workspaces/{ws}/sources",
+        json={"title": "Bulletin", "text": text, "item_id": item},
+    )
+    while asyncio.run(queue.run_once()):  # indexing
+        pass
+    alice.post(f"/api/v1/workspaces/{ws}/items/{item}/analyze")
+    asyncio.run(queue.run_once())
+    prompt = seen[-1]["messages"][1]["content"]
+    assert "reste ouvert aux véhicules légers" in prompt
+    assert len(prompt) < 16_000

@@ -1,0 +1,1 @@
+{"content": "", "provider": "groq", "model": "openai/gpt-oss-120b", "tool_calls": [{"id": "fc_17f882e2-1af7-4323-bd3d-3caf13ac0496", "type": "function", "function": {"name": "search_sources", "arguments": "{\"query\":\"prix du riz local octobre Madagascar\"}"}}], "tokens_in": 337, "tokens_out": 71, "cached": false}

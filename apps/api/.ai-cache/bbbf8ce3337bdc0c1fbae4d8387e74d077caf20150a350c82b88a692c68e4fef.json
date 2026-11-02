@@ -1,0 +1,1 @@
+{"content": "Non, le pont de Mangasoavina n’est pas fermé [1].  \nIl reste ouvert à la circulation, mais uniquement aux véhicules de moins de 3,5 tonnes [1].  \nCette restriction est valable jusqu’à lundi, le temps des travaux de consolidation [1].", "provider": "groq", "model": "openai/gpt-oss-120b", "tool_calls": null, "tokens_in": 386, "tokens_out": 385, "cached": false}

@@ -7,6 +7,7 @@ Every quote must appear word for word in its source, otherwise it is dropped.
 """
 
 import json
+import logging
 import re
 import unicodedata
 import uuid
@@ -24,12 +25,16 @@ from app.core.errors import ApiError
 from app.core.models import Item, Source
 from app.workers.queue import JobContext, enqueue, handler, job_payload
 
+log = logging.getLogger("fanilo.checker")
 router = APIRouter(tags=["checker"])
 
 VERDICTS = ("true", "misleading", "false", "unverifiable")
 STANCES = ("supports", "contradicts", "context")
 MAX_SOURCES = 8
-CHARS_PER_SOURCE = 6000
+# The prompt stays near 5 000 tokens so it fits Groq's free 8 000 tokens per minute: the best
+# passages of each source (RAG) when it is indexed, else the start of its text.
+CHARS_PER_SOURCE = 2500
+TOTAL_CHARS = 14_000
 
 SYSTEM = """Tu es l'assistant de vérification d'une rédaction à Madagascar. Tu aides un journaliste \
 à vérifier une affirmation qui circule (Facebook, WhatsApp, radio, presse).
@@ -65,16 +70,39 @@ def _parse(content: str) -> dict[str, Any]:
     return json.loads(m.group(0))
 
 
-def build_prompt(item: Item, sources: list[Source]) -> str:
+def build_prompt(
+    item: Item, sources: list[Source], excerpts: dict[uuid.UUID, str] | None = None
+) -> str:
+    """Numbered sources; each shows its relevant passages (`excerpts`) or the start of its text."""
     parts = [f"Affirmation : {item.title}"]
     if item.body:
         parts.append(f"Contexte : {item.body}")
     if not sources:
         parts.append("Sources : aucune source n'est jointe pour l'instant.")
+    budget = max(1000, TOTAL_CHARS // max(1, len(sources)))
     for i, s in enumerate(sources, 1):
         head = f"[{i}] {s.title}" + (f" ({s.url})" if s.url else "")
-        parts.append(f"{head}\n{s.text[:CHARS_PER_SOURCE]}")
+        body = (excerpts or {}).get(s.id) or s.text
+        parts.append(f"{head}\n{body[: min(CHARS_PER_SOURCE, budget)]}")
     return "\n\n".join(parts)
+
+
+async def relevant_excerpts(db, item: Item) -> dict[uuid.UUID, str]:
+    """The claim's closest passages per attached source, when the sources are indexed."""
+    from app.core import embed
+    from app.modules.rag import search
+
+    if not embed.configured():
+        return {}
+    try:
+        passages = await search(db, item.workspace_id, f"{item.title}\n{item.body}", 8, item.id)
+    except Exception:  # noqa: BLE001 - no excerpts just means the start of each text is used
+        log.warning("passage search failed for %s", item.id)
+        return {}
+    by_source: dict[uuid.UUID, list[str]] = {}
+    for p in passages:
+        by_source.setdefault(p.source_id, []).append(p.text)
+    return {sid: "\n[…]\n".join(texts[:2]) for sid, texts in by_source.items()}
 
 
 def clean(raw: dict[str, Any], sources: list[Source]) -> dict[str, Any]:
@@ -136,7 +164,7 @@ async def analyze_claim(ctx: JobContext) -> dict[str, Any]:
                 .limit(MAX_SOURCES)
             )
         )
-        prompt = build_prompt(item, sources)
+        prompt = build_prompt(item, sources, await relevant_excerpts(db, item))
     await ctx.progress(20)
     reply = await ai.complete(
         [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],

@@ -8,10 +8,12 @@
         ...
     stream.completion.provider   # set once the stream is finished
 
-Providers are tried in LLM_PROVIDERS order; one without an API key is skipped. On 429, 5xx
-or a timeout the call is retried with backoff, then the next provider takes over. A stream
-can only fall back before its first chunk. Every attempt is logged to app.ai_call (no prompt
-text). With AI_CACHE=true identical requests are answered from disk.
+Providers are tried in LLM_PROVIDERS order; one without an API key is skipped, and a key list
+(`GROQ_API_KEY=k1,k2`) is used in turn. A 429 sets that key aside for AI_COOLDOWN seconds and
+moves on at once; 5xx and timeouts are retried with backoff first. A prompt larger than a
+provider's LLM_MAX_PROMPT_TOKENS_* skips it. A stream can only fall back before its first
+chunk. Every attempt is logged to app.ai_call (no prompt text). With AI_CACHE=true identical
+requests are answered from app.ai_cache.
 """
 
 import asyncio
@@ -22,14 +24,13 @@ import time
 import uuid
 from collections.abc import AsyncIterator, Coroutine
 from dataclasses import asdict, dataclass, field
-from pathlib import Path
 from typing import Any, Literal, overload
 
 import httpx
 
 from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import AiCall
+from app.core.models import AiCacheEntry, AiCall
 
 log = logging.getLogger("fanilo.ai")
 
@@ -53,20 +54,60 @@ class Provider:
     model: str
 
 
-def providers() -> list[Provider]:
-    """Configured providers in fallback order, skipping unknown names and missing keys."""
+# In-process state: which key of each provider goes first next time, and keys set aside until
+# a monotonic time after a 429 or repeated failures.
+_turn: dict[str, int] = {}
+_cooldown: dict[tuple[str, str], float] = {}
+
+
+def _keys(name: str) -> list[str]:
+    raw = getattr(get_settings(), f"{name}_api_key", "") or ""
+    return [k.strip() for k in raw.split(",") if k.strip()]
+
+
+def providers(prompt_tokens: int | None = None) -> list[Provider]:
+    """Configured provider keys in fallback order.
+
+    Keys of one provider rotate between calls; keys cooling down after a 429 go last; a provider
+    whose LLM_MAX_PROMPT_TOKENS_* is below `prompt_tokens` is left out (unless that leaves none).
+    """
     s = get_settings()
-    out = []
+    out: list[Provider] = []
     for name in s.llm_provider_list:
         if name not in PROVIDERS:
             log.warning("unknown LLM provider %r in LLM_PROVIDERS", name)
             continue
-        key = getattr(s, f"{name}_api_key", "")
-        if key:
-            base_url, default_model = PROVIDERS[name]
-            model = getattr(s, f"llm_model_{name}", "") or default_model
-            out.append(Provider(name, base_url, key, model))
-    return out
+        keys = _keys(name)
+        if not keys:
+            continue
+        start = _turn.get(name, 0) % len(keys)
+        _turn[name] = start + 1
+        base_url, default_model = PROVIDERS[name]
+        model = getattr(s, f"llm_model_{name}", "") or default_model
+        out.extend(Provider(name, base_url, k, model) for k in keys[start:] + keys[:start])
+    if prompt_tokens:
+        fits = [
+            p
+            for p in out
+            if not (limit := getattr(s, f"llm_max_prompt_tokens_{p.name}", 0))
+            or prompt_tokens <= limit
+        ]
+        out = fits or out
+    now = time.monotonic()
+    ready = [p for p in out if _cooldown.get((p.name, p.api_key), 0) <= now]
+    cooling = sorted(
+        (p for p in out if p not in ready), key=lambda p: _cooldown[(p.name, p.api_key)]
+    )
+    return ready + cooling
+
+
+def estimate_tokens(messages: Any, tools: Any = None) -> int:
+    """Rough prompt size: about 3 characters per token for French JSON, on the safe side."""
+    return len(json.dumps([messages, tools], ensure_ascii=False)) // 3
+
+
+def _set_aside(p: Provider, seconds: float) -> None:
+    _cooldown[(p.name, p.api_key)] = time.monotonic() + seconds
 
 
 @dataclass
@@ -97,9 +138,10 @@ class AiUnavailable(Exception):
 
 
 class _Retryable(Exception):
-    def __init__(self, message: str, retry_after: float | None = None):
+    def __init__(self, message: str, retry_after: float | None = None, status: int = 0):
         super().__init__(message)
         self.retry_after = retry_after
+        self.status = status
 
 
 def _body(provider: Provider, messages, tools, stream: bool, params) -> dict[str, Any]:
@@ -121,7 +163,7 @@ def _check(resp: httpx.Response, text: str) -> None:
             retry_after = float(resp.headers.get("retry-after", ""))
         except ValueError:
             retry_after = None
-        raise _Retryable(msg, retry_after)
+        raise _Retryable(msg, retry_after, resp.status_code)
     raise RuntimeError(msg)
 
 
@@ -159,11 +201,12 @@ async def _log(
         log.exception("could not log ai call")
 
 
-async def _attempts(workspace_id: uuid.UUID | None, attempt):
-    """Run `attempt(provider)` over providers with retries; return the first success."""
+async def _attempts(workspace_id: uuid.UUID | None, attempt, prompt_tokens: int | None = None):
+    """Run `attempt(provider)` over provider keys with retries; return the first success."""
+    s = get_settings()
     errors: list[str] = []
-    tries = max(1, get_settings().ai_attempts)
-    for provider in providers():
+    tries = max(1, s.ai_attempts)
+    for provider in providers(prompt_tokens):
         for i in range(tries):
             started = time.monotonic()
             try:
@@ -172,9 +215,16 @@ async def _attempts(workspace_id: uuid.UUID | None, attempt):
                 error = f"{type(e).__name__}: {e}"
                 await _log(provider, started, error, workspace_id)
                 errors.append(f"{provider.name}: {error}")
+                if getattr(e, "status", 0) == 429:
+                    # Rate limited: waiting would only make the user wait; set the key aside.
+                    wait = getattr(e, "retry_after", None) or s.ai_cooldown
+                    _set_aside(provider, min(max(wait, 5.0), 120.0))
+                    break
                 if i + 1 < tries:
                     delay = getattr(e, "retry_after", None) or 0.5 * 2**i
                     await _sleep(min(delay, 8.0))
+                else:
+                    _set_aside(provider, s.ai_cooldown)
             except Exception as e:  # noqa: BLE001 - bad key, bad request: try the next provider
                 error = f"{type(e).__name__}: {e}"
                 await _log(provider, started, error, workspace_id)
@@ -208,39 +258,45 @@ async def check_providers() -> dict[str, dict[str, Any]]:
     return dict(await asyncio.gather(*(check(n) for n in names)))
 
 
-# --- dev cache --------------------------------------------------------------------------
+# --- cache ------------------------------------------------------------------------------
 
 
-def _cache_path(messages, tools, params) -> Path | None:
-    s = get_settings()
-    if not s.ai_cache:
+def _cache_key(messages, tools, params) -> str | None:
+    if not get_settings().ai_cache:
         return None
     raw = json.dumps({"m": messages, "t": tools, "p": params}, sort_keys=True, default=str)
-    return Path(s.ai_cache_dir) / f"{hashlib.sha256(raw.encode()).hexdigest()}.json"
+    return hashlib.sha256(raw.encode()).hexdigest()
 
 
-def _cache_get(path: Path | None) -> Completion | None:
-    if path is None or not path.exists():
+async def _cache_get(key: str | None) -> Completion | None:
+    if key is None:
         return None
     try:
-        return Completion(**{**json.loads(path.read_text()), "cached": True})
-    except Exception:  # noqa: BLE001 - a corrupt entry is just a miss
+        async with SessionLocal() as db:
+            entry = await db.get(AiCacheEntry, key)
+        return Completion(**{**entry.value, "cached": True}) if entry else None
+    except Exception:
+        log.exception("ai cache read failed")
         return None
 
 
-def _cache_put(path: Path | None, completion: Completion) -> None:
-    if path is None:
+async def _cache_put(key: str | None, completion: Completion) -> None:
+    if key is None:
         return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(asdict(completion), ensure_ascii=False))
+    try:
+        async with SessionLocal() as db:
+            await db.merge(AiCacheEntry(key=key, value=asdict(completion)))
+            await db.commit()
+    except Exception:
+        log.exception("ai cache write failed")
 
 
 # --- non-streaming ----------------------------------------------------------------------
 
 
 async def _complete(messages, tools, workspace_id, params) -> Completion:
-    path = _cache_path(messages, tools, params)
-    if hit := _cache_get(path):
+    key = _cache_key(messages, tools, params)
+    if hit := await _cache_get(key):
         return hit
 
     async def attempt(provider: Provider, started: float) -> Completion:
@@ -265,8 +321,8 @@ async def _complete(messages, tools, workspace_id, params) -> Completion:
         await _log(provider, started, None, workspace_id, result.tokens_in, result.tokens_out)
         return result
 
-    result = await _attempts(workspace_id, attempt)
-    _cache_put(path, result)
+    result = await _attempts(workspace_id, attempt, estimate_tokens(messages, tools))
+    await _cache_put(key, result)
     return result
 
 
@@ -287,8 +343,8 @@ class Stream:
         return self._run()
 
     async def _run(self) -> AsyncIterator[str]:
-        path = _cache_path(self.messages, self.tools, {**self.params, "stream": True})
-        if hit := _cache_get(path):
+        key = _cache_key(self.messages, self.tools, {**self.params, "stream": True})
+        if hit := await _cache_get(key):
             self.completion = hit
             if hit.content:
                 yield hit.content
@@ -314,7 +370,9 @@ class Stream:
                 raise
             return provider, started, http, events, first
 
-        provider, started, http, events, first = await _attempts(self.workspace_id, attempt)
+        provider, started, http, events, first = await _attempts(
+            self.workspace_id, attempt, estimate_tokens(self.messages, self.tools)
+        )
         content: list[str] = []
         calls: dict[int, dict[str, Any]] = {}
         model, usage = provider.model, {}
@@ -351,7 +409,7 @@ class Stream:
             tokens_in=usage.get("prompt_tokens"),
             tokens_out=usage.get("completion_tokens"),
         )
-        _cache_put(path, self.completion)
+        await _cache_put(key, self.completion)
 
 
 async def _sse_events(resp: httpx.Response) -> AsyncIterator[dict[str, Any]]:

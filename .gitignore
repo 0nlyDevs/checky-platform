@@ -16,5 +16,3 @@ apps/web/.impeccable/review/
 apps/web/.impeccable/decision-payload.json
 apps/web/.impeccable/*.local.json
 
-# AI gateway dev cache
-apps/api/.ai-cache/

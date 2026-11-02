@@ -120,7 +120,9 @@ export function AnalysisPanel({ ws, item, sourceCount }: { ws: string; item: Ite
           )}
           <div className="space-y-0.5 text-sm text-muted-foreground">
             {analysis.dropped_quotes > 0 && <p>{t.analysis.dropped(analysis.dropped_quotes)}</p>}
-            <p className="tabular">{t.analysis.meta(analysis.sources_used, analysis.model, whenFmt.format(new Date(analysis.at)))}</p>
+            <p className="tabular" title={analysis.model}>
+              {t.analysis.meta(analysis.sources_used, whenFmt.format(new Date(analysis.at)))}
+            </p>
           </div>
         </div>
       )}

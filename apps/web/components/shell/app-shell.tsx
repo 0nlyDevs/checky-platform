@@ -7,7 +7,7 @@ import { useTheme } from "next-themes";
 import useSWR from "swr";
 import { Check, ChevronsUpDown, LogOut, Monitor, Moon, Plus, Sun } from "lucide-react";
 import { Wordmark } from "@/components/brand/logo";
-import { NAV } from "@/components/shell/nav";
+import { NAV, WORKSPACE_NAV, type NavItem } from "@/components/shell/nav";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,6 +55,19 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
             </Link>
           </DropdownMenuItem>
         ))}
+        {current && (
+          <>
+            <DropdownMenuSeparator />
+            {WORKSPACE_NAV.map(({ label, icon: Icon, path }) => (
+              <DropdownMenuItem key={path} asChild>
+                <Link href={`/w/${current}/${path}`}>
+                  <Icon className="size-4" aria-hidden />
+                  {label}
+                </Link>
+              </DropdownMenuItem>
+            ))}
+          </>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/?nouveau=1">
@@ -119,12 +132,10 @@ function UserMenu({ user, compact = false }: { user: SessionUser; compact?: bool
   );
 }
 
-function NavLinks({ ws, variant }: { ws?: string; variant: "rail" | "bar" }) {
+function NavLinks({ ws, variant, items = NAV }: { ws?: string; variant: "rail" | "bar"; items?: NavItem[] }) {
   const pathname = usePathname();
-  // The phone bar has room for four: built screens first, so none is out of reach.
-  const items = variant === "bar" ? [...NAV].sort((x, y) => Number(!x.path) - Number(!y.path)).slice(0, 4) : NAV;
   return (
-    <ul className={variant === "rail" ? "space-y-0.5" : "grid grid-cols-4"}>
+    <ul className={variant === "rail" ? "space-y-0.5" : "grid grid-cols-3"}>
       {items.map(({ label, icon: Icon, path }) => {
         const href = ws && path ? `/w/${ws}/${path}` : undefined;
         const active = href ? pathname.startsWith(href) : false;
@@ -176,6 +187,12 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[15.5rem_minmax(0,1fr)]">
+      <a
+        href="#contenu"
+        className="sr-only z-50 rounded-md bg-card px-3 py-2 font-medium text-foreground focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:ring-2 focus:ring-ring"
+      >
+        {t.nav.skip}
+      </a>
       <aside className="sticky top-0 hidden h-dvh flex-col bg-sidebar p-3 text-sidebar-foreground lg:flex">
         <Link href="/" className="px-2.5 pt-2 pb-5 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring">
           <Wordmark />
@@ -184,6 +201,11 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
         <nav aria-label="Navigation principale" className="mt-4 flex-1">
           <NavLinks ws={ws} variant="rail" />
         </nav>
+        {ws && (
+          <nav aria-label={t.nav.workspace} className="pb-3">
+            <NavLinks ws={ws} variant="rail" items={WORKSPACE_NAV} />
+          </nav>
+        )}
         <div className="border-t border-sidebar-border pt-3">
           <UserMenu user={user} />
         </div>
@@ -197,7 +219,9 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
         <UserMenu user={user} compact />
       </header>
 
-      <div className="min-w-0 pb-20 lg:pb-0">{children}</div>
+      <main id="contenu" tabIndex={-1} className="min-w-0 pb-20 outline-none lg:pb-0">
+        {children}
+      </main>
 
       <nav
         aria-label="Navigation principale"

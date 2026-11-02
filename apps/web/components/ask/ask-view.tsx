@@ -3,10 +3,13 @@
 import type { components } from "@fanilo/shared";
 import { useParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
-import { ArrowUp, AudioLines, Bot, ExternalLink, FileText, ImageIcon, Link2, LoaderCircle, Type, type LucideIcon } from "lucide-react";
+import { ArrowUp, AudioLines, Bot, Paperclip, ExternalLink, FileText, ImageIcon, Link2, LoaderCircle, Type, type LucideIcon } from "lucide-react";
+import useSWR from "swr";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { ApiError } from "@/lib/api";
+import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { postStream } from "@/lib/sse";
 import { cn } from "@/lib/utils";
@@ -67,6 +70,94 @@ function PassageCard({ p, id, highlighted }: { p: Passage; id: string; highlight
   );
 }
 
+/** Numbers the answer actually cites, in order of first mention ([1] and 【1…】 alike). */
+function cited(answer: string): Set<number> {
+  return new Set([...answer.matchAll(/\[(\d+)\]|【(\d+)[^】]*】/g)].map((m) => Number(m[1] ?? m[2])));
+}
+
+/** What the answer rests on, first; what was read but not used, folded away. */
+function Passages({ x, highlight }: { x: Exchange; highlight: string | null }) {
+  const used = cited(x.answer);
+  const main = x.state === "done" && used.size ? x.passages.filter((p) => used.has(p.n)) : x.passages;
+  const rest = x.state === "done" && used.size ? x.passages.filter((p) => !used.has(p.n)) : [];
+  const card = (p: Passage) => (
+    <PassageCard key={p.chunk_id ?? `${x.id}-${p.n}`} p={p} id={`ex-${x.id}-p-${p.n}`} highlighted={highlight === `ex-${x.id}-p-${p.n}`} />
+  );
+  return (
+    <div className="space-y-3">
+      <h3 className="text-sm font-medium text-muted-foreground">{x.deep ? t.ask.readPages : t.ask.passages}</h3>
+      <ol className="grid gap-2 sm:grid-cols-2">{main.map(card)}</ol>
+      {rest.length > 0 && (
+        <details className="group">
+          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground">{t.ask.otherPassages(rest.length)}</summary>
+          <ol className="mt-2 grid gap-2 sm:grid-cols-2">{rest.map(card)}</ol>
+        </details>
+      )}
+    </div>
+  );
+}
+
+/** Keep an answer: it becomes a text source on a claim, with its passages, so the check goes on there. */
+function AttachToClaim({ ws, x }: { ws: string; x: Exchange }) {
+  const [open, setOpen] = useState(false);
+  const [itemId, setItemId] = useState<string>("");
+  const [done, setDone] = useState(false);
+  const { data } = useSWR<components["schemas"]["ItemPage"]>(open ? `/workspaces/${ws}/items?limit=100` : null, fetcher);
+
+  async function attach() {
+    if (!itemId) return;
+    const used = cited(x.answer);
+    const passages = x.passages
+      .filter((p) => !used.size || used.has(p.n))
+      .map((p) => `[${p.n}] ${p.title}${p.url ? ` (${p.url})` : ""}\n${p.text}`)
+      .join("\n\n");
+    try {
+      await api(`/workspaces/${ws}/sources`, {
+        method: "POST",
+        body: JSON.stringify({ item_id: itemId, title: t.ask.attachTitle(x.question), text: `${x.answer}\n\n${passages}` }),
+      });
+      setDone(true);
+      toast.success(t.ask.attached);
+    } catch {
+      toast.error(t.ask.errors.generic);
+    }
+  }
+
+  if (done) return <p className="text-sm text-muted-foreground">{t.ask.attached}</p>;
+  if (!open)
+    return (
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
+        <Paperclip aria-hidden />
+        {t.ask.attach}
+      </Button>
+    );
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <Label htmlFor={`attach-${x.id}`} className="sr-only">
+        {t.ask.attachPick}
+      </Label>
+      <Select value={itemId} onValueChange={setItemId}>
+        <SelectTrigger id={`attach-${x.id}`} className="h-9 min-w-0 flex-1 basis-64 bg-card">
+          <SelectValue placeholder={t.ask.attachPick} />
+        </SelectTrigger>
+        <SelectContent>
+          {data?.items.map((i) => (
+            <SelectItem key={i.id} value={i.id}>
+              {((i.data as { ref?: string }).ref ? `${(i.data as { ref?: string }).ref} · ` : "") + i.title.slice(0, 80)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button size="sm" onClick={attach} disabled={!itemId}>
+        {t.ask.attachConfirm}
+      </Button>
+      <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+        {t.detail.cancel}
+      </Button>
+    </div>
+  );
+}
+
 export function AskView() {
   const { ws } = useParams<{ ws: string }>();
   const [question, setQuestion] = useState("");
@@ -89,7 +180,7 @@ export function AskView() {
     setQuestion("");
     try {
       const path = deep ? `/workspaces/${ws}/agent` : `/workspaces/${ws}/ask`;
-      await postStream(path, deep ? { question: q } : { question: q, k: 6 }, (event, data) => {
+      await postStream(path, deep ? { question: q } : { question: q, k: 4 }, (event, data) => {
         if (event === "citations") update(id, () => ({ passages: data as Passage[], state: "answering" }));
         else if (event === "step") update(id, (x) => ({ steps: [...x.steps, data as Step] }));
         else if (event === "answer") {
@@ -194,19 +285,8 @@ export function AskView() {
             {x.state !== "searching" && x.passages.length === 0 && x.state !== "error" && (
               <p className="text-sm text-muted-foreground">{t.ask.noPassages}</p>
             )}
-            {x.passages.length > 0 && (
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  {x.deep ? t.ask.readPages : t.ask.passages}
-                  {x.model && <span className="font-normal"> · {x.model}</span>}
-                </h3>
-                <ol className="mt-2 grid gap-2 sm:grid-cols-2">
-                  {x.passages.map((p) => (
-                    <PassageCard key={p.chunk_id ?? `${x.id}-${p.n}`} p={p} id={`ex-${x.id}-p-${p.n}`} highlighted={highlight === `ex-${x.id}-p-${p.n}`} />
-                  ))}
-                </ol>
-              </div>
-            )}
+            {x.passages.length > 0 && <Passages x={x} highlight={highlight} />}
+            {x.state === "done" && x.answer && <AttachToClaim ws={ws} x={x} />}
           </section>
         ))}
       </div>

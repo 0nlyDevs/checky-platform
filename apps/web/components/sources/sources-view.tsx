@@ -1,18 +1,41 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import Link from "next/link";
+import { useParams, useSearchParams } from "next/navigation";
 import { SourcesPanel } from "@/components/sources/sources-panel";
 import { t } from "@/lib/i18n/fr";
+import { cn } from "@/lib/utils";
 
+/** All sources, with recordings as a tab (they are sources too; the transcript lives on each one). */
 export function SourcesView() {
   const { ws } = useParams<{ ws: string }>();
+  const audio = useSearchParams().get("vue") === "enregistrements";
+  const tabs = [
+    { key: "all", label: t.sources.tabs.all, href: `/w/${ws}/sources`, active: !audio },
+    { key: "audio", label: t.sources.tabs.audio, href: `/w/${ws}/sources?vue=enregistrements`, active: audio },
+  ];
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
-      <header className="pb-6">
+      <header className="pb-5">
         <h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight">{t.sources.title}</h1>
-        <p className="mt-1 max-w-prose text-muted-foreground">{t.sources.lead}</p>
+        <p className="mt-1 max-w-prose text-muted-foreground">{audio ? t.transcriptions.lead : t.sources.lead}</p>
       </header>
-      <SourcesPanel ws={ws} />
+      <nav aria-label={t.sources.tabsLabel} className="mb-5 flex gap-1 border-b border-border">
+        {tabs.map((tab) => (
+          <Link
+            key={tab.key}
+            href={tab.href}
+            aria-current={tab.active ? "page" : undefined}
+            className={cn(
+              "-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors duration-150",
+              tab.active ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {tab.label}
+          </Link>
+        ))}
+      </nav>
+      {audio ? <SourcesPanel key="audio" ws={ws} kind="audio" /> : <SourcesPanel key="all" ws={ws} />}
     </div>
   );
 }

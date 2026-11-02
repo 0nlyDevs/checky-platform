@@ -247,3 +247,14 @@ class Chunk(_Row):
     end_s: Mapped[float | None]
     embedding: Mapped[list[float]] = mapped_column(Vector(get_settings().embed_dim))
     embed_model: Mapped[str] = mapped_column(String(80))
+
+
+class AiCacheEntry(Base):
+    """A cached AI answer, keyed on the SHA-256 of the request (messages, tools, parameters)."""
+
+    __tablename__ = "ai_cache"
+    __table_args__ = {"schema": "app"}  # noqa: RUF012 - SQLAlchemy convention
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

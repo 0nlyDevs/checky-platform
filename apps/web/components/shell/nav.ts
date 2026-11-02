@@ -1,14 +1,17 @@
-import { AudioLines, Library, ListChecks, Search, Settings, Users, type LucideIcon } from "lucide-react";
+import { Library, ListChecks, Search, Settings, Users, type LucideIcon } from "lucide-react";
 import { t } from "@/lib/i18n/fr";
 
 export type NavItem = { label: string; icon: LucideIcon; path?: string };
 
-// `path` is relative to /w/[ws]; items without one are not built yet.
+// `path` is relative to /w/[ws]. Three destinations a journalist uses every day; recordings live
+// under Sources (they are sources), and the workspace's own pages sit in WORKSPACE_NAV.
 export const NAV: NavItem[] = [
   { label: t.nav.claims, icon: ListChecks, path: "affirmations" },
   { label: t.nav.check, icon: Search, path: "verifier" },
   { label: t.nav.sources, icon: Library, path: "sources" },
-  { label: t.nav.transcriptions, icon: AudioLines, path: "transcriptions" },
+];
+
+export const WORKSPACE_NAV: NavItem[] = [
   { label: t.nav.members, icon: Users, path: "membres" },
   { label: t.nav.settings, icon: Settings, path: "parametres" },
 ];

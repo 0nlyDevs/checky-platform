@@ -166,14 +166,15 @@ export function SettingsView() {
         <h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight">{t.settings.title}</h1>
         <p className="mt-1 text-muted-foreground">{t.settings.lead}</p>
       </header>
-      <div className="space-y-8">
-        <HealthSection />
-        {role === "admin" ? (
+      {/* Service health is for whoever runs the desk; journalists only need to know who to ask. */}
+      {role === "admin" ? (
+        <div className="space-y-8">
+          <HealthSection />
           <DemoSection ws={ws} />
-        ) : (
-          role && <p className="text-sm text-muted-foreground">{t.settings.adminOnly}</p>
-        )}
-      </div>
+        </div>
+      ) : (
+        role && <p className="max-w-prose text-muted-foreground">{t.settings.adminOnly}</p>
+      )}
     </div>
   );
 }

@@ -78,7 +78,7 @@ function Card({ item, verdict, reason, sources, lang, desk }: { item: Item; verd
 }
 
 /** F5: the shareable card (PNG) and its post text, once a journalist has confirmed the verdict. */
-export function VerdictCard({ ws, item, verdict }: { ws: string; item: Item; verdict: Verdict }) {
+export function VerdictCard({ ws, item, verdict, onShared }: { ws: string; item: Item; verdict: Verdict; onShared?: () => void }) {
   const [lang, setLang] = useState<Lang>("fr");
   const analysisReason = ((item.data as { analysis?: { reason?: string } }).analysis?.reason ?? "").slice(0, 280);
   const [reason, setReason] = useState(analysisReason);
@@ -114,6 +114,7 @@ export function VerdictCard({ ws, item, verdict }: { ws: string; item: Item; ver
       a.href = url;
       a.download = `${(item.data as { ref?: string }).ref ?? "verdict"}-${lang}.png`;
       a.click();
+      onShared?.();
     } catch {
       toast.error(t.card.exportFailed);
     } finally {

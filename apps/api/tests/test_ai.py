@@ -77,18 +77,61 @@ def test_primary_answers(fake):
     assert (row.provider, row.ok, row.tokens_in) == ("groq", True, 5)
 
 
-def test_failing_primary_falls_back_after_retries(fake):
+def test_rate_limited_primary_falls_back_at_once_and_is_set_aside(fake):
     routes, calls = fake
-    routes["groq"] = httpx.Response(429, text="rate limited")
+    routes["groq"] = httpx.Response(429, text="rate limited", headers={"retry-after": "20"})
     routes["gemini"] = httpx.Response(200, json=_reply("Depuis Gemini"))
     reply = asyncio.run(ai.complete(MSGS))
     assert reply.provider == "gemini"
+    # No retry on a 429: waiting would only make the journalist wait.
+    assert calls == ["groq", "gemini"]
+    assert [(r.provider, r.ok) for r in _logged()] == [("groq", False), ("gemini", True)]
+    # While Groq cools down, the next call goes straight to Gemini.
+    calls.clear()
+    asyncio.run(ai.complete(MSGS))
+    assert calls == ["gemini"]
+
+
+def test_server_errors_are_retried_then_set_aside(fake):
+    routes, calls = fake
+    routes["groq"] = httpx.Response(503)
+    routes["gemini"] = httpx.Response(200, json=_reply("ok"))
+    asyncio.run(ai.complete(MSGS))
     assert calls == ["groq", "groq", "gemini"]
-    assert [(r.provider, r.ok) for r in _logged()] == [
-        ("groq", False),
-        ("groq", False),
-        ("gemini", True),
-    ]
+    calls.clear()
+    asyncio.run(ai.complete(MSGS))
+    assert calls == ["gemini"]
+
+
+def test_several_keys_take_turns_and_a_limited_key_is_skipped(fake, monkeypatch):
+    routes, calls = fake
+    monkeypatch.setattr(get_settings(), "groq_api_key", "mock-key-a, mock-key-b")
+    used = []
+
+    def handler(request):
+        used.append(request.headers["authorization"].removeprefix("Bearer "))
+        if used[-1] == "mock-key-a" and len(used) > 2:
+            return httpx.Response(429)
+        return httpx.Response(200, json=_reply("ok"))
+
+    routes["groq"] = handler
+    for _ in range(3):
+        asyncio.run(ai.complete(MSGS))
+    # a, b, then a is limited so b takes over within the same call.
+    assert used == ["mock-key-a", "mock-key-b", "mock-key-a", "mock-key-b"]
+    assert calls == ["groq"] * 4
+
+
+def test_oversized_prompt_skips_a_small_quota_provider(fake, monkeypatch):
+    routes, calls = fake
+    monkeypatch.setattr(get_settings(), "llm_max_prompt_tokens_groq", 100)
+    routes["gemini"] = httpx.Response(200, json=_reply("long"))
+    big = [{"role": "user", "content": "mot " * 500}]
+    assert asyncio.run(ai.complete(big)).provider == "gemini"
+    assert calls == ["gemini"]
+    routes["groq"] = httpx.Response(200, json=_reply("court"))
+    calls.clear()
+    assert asyncio.run(ai.complete(MSGS)).provider == "groq"
 
 
 def test_timeout_is_retried_then_falls_back(fake):
@@ -143,10 +186,9 @@ def test_request_carries_model_tools_and_params(fake, monkeypatch):
     assert reply.message == {"role": "assistant", "content": "", "tool_calls": [{"id": "t1"}]}
 
 
-def test_cache_answers_repeat_requests(fake, monkeypatch, tmp_path):
+def test_cache_answers_repeat_requests(fake, monkeypatch):
     routes, calls = fake
     monkeypatch.setattr(get_settings(), "ai_cache", True)
-    monkeypatch.setattr(get_settings(), "ai_cache_dir", str(tmp_path))
     routes["groq"] = httpx.Response(200, json=_reply("une fois"))
     first = asyncio.run(ai.complete(MSGS))
     second = asyncio.run(ai.complete(MSGS))

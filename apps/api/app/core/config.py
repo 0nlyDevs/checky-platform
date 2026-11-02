@@ -25,7 +25,8 @@ class Settings(BaseSettings):
     storage_secret_access_key: str = ""
     storage_bucket: str = "uploads"
 
-    # AI gateway: providers are tried in this order; one without a key is skipped.
+    # AI gateway: providers are tried in this order; one without a key is skipped. Each *_API_KEY
+    # may hold several keys separated by commas (one per teammate); they are used in turn.
     llm_providers: str = "groq,gemini,nvidia"
     groq_api_key: str = ""
     gemini_api_key: str = ""
@@ -46,9 +47,17 @@ class Settings(BaseSettings):
     stt_timeout: float = 120.0
     # Attempts per provider on 429, 5xx or timeout before falling back to the next one.
     ai_attempts: int = 2
-    # Development cache keyed on the request, so reloads do not burn free-tier quota.
+    # Cache keyed on the request (stored in app.ai_cache), so reloads and demo rehearsals do
+    # not burn free-tier quota.
     ai_cache: bool = False
-    ai_cache_dir: str = ".ai-cache"
+    # Largest estimated prompt (tokens) a provider is sent; bigger ones go straight to the next
+    # provider. Groq's free tier allows 8 000 tokens per minute, so a 12 000-token prompt can only
+    # fail there. 0 = no limit.
+    llm_max_prompt_tokens_groq: int = 6000
+    llm_max_prompt_tokens_gemini: int = 0
+    llm_max_prompt_tokens_nvidia: int = 0
+    # How long a provider key is set aside after a 429 or repeated failures (seconds).
+    ai_cooldown: float = 30.0
 
     @property
     def async_database_url(self) -> str:

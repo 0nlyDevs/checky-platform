@@ -1,0 +1,1 @@
+{"content": "", "provider": "groq", "model": "openai/gpt-oss-120b", "tool_calls": [{"id": "fc_ce223538-3edf-41af-a6f6-da07cf6ac9d1", "type": "function", "function": {"name": "fetch_url", "arguments": "{\"url\":\"https://fr.wikipedia.org/wiki/Toamasina\"}"}}], "tokens_in": 344, "tokens_out": 58, "cached": false}

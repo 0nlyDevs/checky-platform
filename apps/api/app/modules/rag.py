@@ -194,6 +194,8 @@ async def search_route(body: SearchIn, member: AnyMember, db: Db) -> list[Passag
 ASK_SYSTEM = """Tu réponds aux questions d'un journaliste à partir des passages numérotés fournis, \
 et UNIQUEMENT à partir d'eux.
 - Après chaque phrase, cite le ou les passages qui la justifient : [1], [2]…
+- Chaque phrase dit seulement ce qu'un passage dit : aucune déduction, prévision ou généralisation \
+de ta part. Mieux vaut une réponse courte qu'une phrase non soutenue.
 - Si les passages ne permettent pas de répondre, dis-le clairement en une phrase \
 ("Les sources réunies ne permettent pas de répondre.") et n'invente rien.
 - Réponds dans la langue de la question (français ou malgache), en 3 à 6 phrases courtes."""
@@ -201,7 +203,8 @@ et UNIQUEMENT à partir d'eux.
 
 class AskIn(BaseModel):
     question: str = Field(min_length=2, max_length=2000)
-    k: int = Field(default=6, ge=1, le=12)
+    # 4 passages ≈ 3 000 tokens of context: room for the answer within Groq's free per-minute quota.
+    k: int = Field(default=4, ge=1, le=12)
     item_id: uuid.UUID | None = None
 
 

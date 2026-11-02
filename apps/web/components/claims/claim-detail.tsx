@@ -1,18 +1,19 @@
 "use client";
 
 import type { Activity, Comment, Item, ItemPatch, Status, Verdict } from "@fanilo/shared";
-import { STATUSES, VERDICTS } from "@fanilo/shared";
+import { STATUSES } from "@fanilo/shared";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { ArrowLeft, LoaderCircle, Pencil, Sparkles } from "lucide-react";
+import { ArrowLeft, ImageIcon, LoaderCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { AirtimeStrip } from "@/components/claims/airtime-strip";
 import { AnalysisPanel } from "@/components/claims/analysis-panel";
 import { VerdictCard } from "@/components/claims/verdict-card";
 import { formatTime } from "@/components/claims/day-grid";
-import { StatusLabel, toClaim, VERDICT_META, VerdictBadge } from "@/components/claims/verdict";
+import { StatusLabel, toClaim, VERDICT_META } from "@/components/claims/verdict";
+import { statusAfter, VerdictDecision } from "@/components/claims/verdict-decision";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +50,13 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
     return t.detail.events.analysed(v && v in VERDICT_META ? VERDICT_META[v as Verdict].label : "—");
   }
   const diff = a.diff as Record<string, { from: unknown; to: unknown }>;
+  const verdictFrom = (diff.data?.from as Record<string, unknown> | null)?.verdict;
+  const verdictTo = (diff.data?.to as Record<string, unknown> | null)?.verdict;
+  if (diff.data && verdictFrom !== verdictTo) {
+    return typeof verdictTo === "string" && verdictTo in VERDICT_META
+      ? t.detail.events.verdictSet(VERDICT_META[verdictTo as Verdict].label)
+      : t.detail.events.verdictCleared;
+  }
   if (diff.status) {
     const s = (v: unknown) => t.status[v as Status] ?? String(v);
     return t.detail.events.status(s(diff.status.from), s(diff.status.to));
@@ -70,13 +78,12 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
   return t.detail.events.edited;
 }
 
-function Section({ title, children, aside }: { title: string; children: React.ReactNode; aside?: React.ReactNode }) {
+function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
-    <section className="border-t border-border pt-5">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="font-semibold">{title}</h2>
-        {aside}
-      </div>
+    <section aria-labelledby={id} className="border-t border-border pt-5">
+      <h2 id={id} className="mb-4 font-semibold">
+        {title}
+      </h2>
       {children}
     </section>
   );
@@ -98,6 +105,7 @@ export function ClaimDetail() {
   const [saving, setSaving] = useState(false);
   const [comment, setComment] = useState("");
   const [posting, setPosting] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
@@ -150,8 +158,37 @@ export function ClaimDetail() {
     }
   }
 
-  const setVerdict = (verdict: Verdict | null) =>
-    patch({ data: { verdict } }, { data: { ...item!.data, verdict } });
+  /** Verdict and status move together; a toast offers to put both back. */
+  async function decide(verdict: Verdict | null) {
+    if (!item || !claim) return;
+    const before = { verdict: claim.verdict, status: claim.status };
+    const status = statusAfter(verdict, claim.status);
+    const ok = await patch({ status, data: { verdict } }, { status, data: { ...item.data, verdict } });
+    if (!ok) return;
+    const label = verdict ? t.detail.decision.done(VERDICT_META[verdict].label) : t.detail.decision.cleared;
+    toast.success(label, {
+      duration: 8000,
+      action: {
+        label: t.detail.decision.undo,
+        onClick: async () => {
+          const res = await api<Item>(base, {
+            method: "PATCH",
+            body: JSON.stringify({ status: before.status, data: { verdict: before.verdict } }),
+          }).catch(() => null);
+          if (res) {
+            mutate(res, { revalidate: false });
+            mutateHistory();
+            toast(t.detail.decision.undone);
+          }
+        },
+      },
+    });
+  }
+
+  /** Downloading the card is what publishing means here: a verified claim becomes Publié. */
+  function markShared() {
+    if (claim?.status === "verified") patch({ status: "published" }, { status: "published" });
+  }
 
   async function saveText(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -219,7 +256,12 @@ export function ClaimDetail() {
       : t.detail.seenOn(dayFmt.format(seen), formatTime(seen))
     : null;
   const originLabel = claim.origin ? (t.origins[claim.origin as keyof typeof t.origins] ?? claim.origin) : null;
-  const pendingSuggestion = claim.suggested && !claim.verdict ? claim.suggested : null;
+  const thread = [
+    ...(comments ?? []).map((c) => ({ kind: "comment" as const, id: c.id, at: c.created_at, actor: c.author_id, body: c.body })),
+    ...(history ?? [])
+      .filter((a) => a.action !== "comment")
+      .map((a) => ({ kind: "event" as const, id: a.id, at: a.created_at, actor: a.actor_id, body: describe(a, (uid) => names.get(uid) ?? t.detail.someone) })),
+  ].sort((x, y) => y.at.localeCompare(x.at));
 
   return (
     <div className="mx-auto max-w-[90rem] px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
@@ -252,174 +294,84 @@ export function ClaimDetail() {
             </div>
           </form>
         ) : (
-          <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <h1 className="max-w-4xl text-2xl leading-snug font-semibold tracking-tight text-balance lg:text-[1.75rem]">
-              {item.title}
-            </h1>
-            <div className="flex shrink-0 items-center gap-2">
-              <Label htmlFor="claim-status" className="sr-only">
-                {t.detail.status}
-              </Label>
-              <Select
-                value={claim.status}
-                disabled={!canEdit}
-                onValueChange={(status) => patch({ status }, { status })}
-              >
-                <SelectTrigger id="claim-status" aria-label={t.detail.status} className="h-9 min-w-40 flex-1 bg-card lg:flex-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {STATUSES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      <StatusLabel status={s} />
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {canEdit && (
-                <Button variant="outline" className="h-9 shrink-0" onClick={() => setEditing(true)}>
-                  <Pencil aria-hidden />
-                  {t.detail.edit}
-                </Button>
-              )}
+          <>
+            <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <h1 className="max-w-4xl text-2xl leading-snug font-semibold tracking-tight text-balance lg:text-[1.75rem]">
+                {item.title}
+              </h1>
+              <div className="flex shrink-0 items-center gap-2">
+                <Label htmlFor="claim-status" className="sr-only">
+                  {t.detail.status}
+                </Label>
+                <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => patch({ status }, { status })}>
+                  <SelectTrigger id="claim-status" aria-label={t.detail.status} className="h-9 min-w-40 flex-1 bg-card lg:flex-none">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((st) => (
+                      <SelectItem key={st} value={st}>
+                        <StatusLabel status={st} />
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {canEdit && (
+                  <Button variant="outline" className="h-9 shrink-0" onClick={() => setEditing(true)}>
+                    <Pencil aria-hidden />
+                    {t.detail.edit}
+                  </Button>
+                )}
+              </div>
             </div>
-          </div>
+            {/* Context belongs with the claim it explains; when there is none, nothing takes its place. */}
+            {item.body && <p className="mt-3 max-w-[70ch] whitespace-pre-line text-pretty text-muted-foreground">{item.body}</p>}
+          </>
         )}
         <div className="max-w-4xl">
           <AirtimeStrip claim={claim} now={now} />
         </div>
       </header>
 
-      <div className="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12">
+      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12">
+        {/* The journalist's order: look at the evidence, then decide. */}
         <div className="min-w-0 space-y-8">
-          {!editing && (
-            <Section title={t.detail.context}>
-              {item.body ? (
-                <p className="max-w-[70ch] whitespace-pre-line text-pretty">{item.body}</p>
-              ) : (
-                <p className="text-muted-foreground">{t.detail.noContext}</p>
-              )}
-            </Section>
-          )}
-
-          <Section title={t.detail.verdictTitle} aside={<VerdictBadge claim={claim} />}>
-            <p className="text-sm text-muted-foreground">{t.detail.verdictLead}</p>
-
-            {pendingSuggestion && (
-              <div className={cn("mt-4 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-md border border-dashed p-3.5", VERDICT_META[pendingSuggestion].soft, VERDICT_META[pendingSuggestion].ink, "border-current")}>
-                <Sparkles className="size-4 shrink-0" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium">{t.detail.suggestion(VERDICT_META[pendingSuggestion].label)}</p>
-                  <p className="text-sm opacity-90">{t.detail.suggestionLead}</p>
-                </div>
-                {canEdit && (
-                  <Button size="sm" onClick={() => setVerdict(pendingSuggestion)}>
-                    {t.detail.confirm}
-                  </Button>
-                )}
-              </div>
-            )}
-
-            <div role="radiogroup" aria-label={t.detail.verdictTitle} className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {VERDICTS.map((v) => {
-                const m = VERDICT_META[v];
-                const Icon = m.icon;
-                const active = claim.verdict === v;
-                return (
-                  <button
-                    key={v}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    disabled={!canEdit}
-                    onClick={() => setVerdict(v)}
-                    className={cn(
-                      "flex h-11 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
-                      active ? cn(m.fill, m.on, "border-transparent") : cn("border-border bg-card hover:bg-accent", m.ink),
-                    )}
-                  >
-                    <Icon className="size-4" aria-hidden />
-                    {m.label}
-                  </button>
-                );
-              })}
-            </div>
-            {canEdit && claim.verdict && (
-              <button
-                type="button"
-                onClick={() => setVerdict(null)}
-                className="mt-3 text-sm text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
-              >
-                {t.detail.clearVerdict}
-              </button>
-            )}
-            {!canEdit && <p className="mt-3 text-sm text-muted-foreground">{t.detail.readOnly}</p>}
-          </Section>
-
-          <Section title={`${t.detail.sources}${claim.sources ? ` (${claim.sources})` : ""}`}>
-            <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.sources.panelLead}</p>
+          <Section id="evidence" title={`${t.detail.evidence}${claim.sources ? ` (${claim.sources})` : ""}`}>
             <SourcesPanel ws={ws} itemId={id} />
+            <div className="mt-8">
+              <h3 className="mb-3 text-sm font-semibold">{t.detail.analysisTitle}</h3>
+              <AnalysisPanel ws={ws} item={item} sourceCount={claim.sources} />
+            </div>
           </Section>
 
-          <Section title={t.analysis.title}>
-            <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.analysis.lead}</p>
-            <AnalysisPanel ws={ws} item={item} sourceCount={claim.sources} />
+          <Section id="verdict" title={t.detail.verdictTitle}>
+            <VerdictDecision claim={claim} canEdit={canEdit} sourceCount={claim.sources} onDecide={decide} />
           </Section>
 
           {claim.verdict && (
-            <Section title={t.card.title}>
-              <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.card.lead}</p>
-              <VerdictCard key={claim.verdict} ws={ws} item={item} verdict={claim.verdict} />
+            <Section id="card" title={t.card.title}>
+              {cardOpen ? (
+                <div className="space-y-4">
+                  <VerdictCard key={claim.verdict} ws={ws} item={item} verdict={claim.verdict} onShared={markShared} />
+                  <Button variant="ghost" onClick={() => setCardOpen(false)}>
+                    {t.detail.hideCard}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                  <p className="min-w-0 flex-1 text-muted-foreground">{t.detail.cardReady}</p>
+                  <Button variant="outline" onClick={() => setCardOpen(true)}>
+                    <ImageIcon aria-hidden />
+                    {t.detail.makeCard}
+                  </Button>
+                </div>
+              )}
             </Section>
           )}
-
-          <Section title={`${t.detail.comments}${comments?.length ? ` (${comments.length})` : ""}`}>
-            {comments && comments.length === 0 && <p className="text-muted-foreground">{t.detail.noComments}</p>}
-            <ol className="space-y-4">
-              {comments?.map((c) => (
-                <li key={c.id} className="animate-in fade-in-0 duration-200">
-                  <p className="flex items-baseline gap-2 text-sm">
-                    <span className="font-medium">{name(c.author_id)}</span>
-                    <time dateTime={c.created_at} className="text-muted-foreground tabular">
-                      {ago(c.created_at, now)}
-                    </time>
-                  </p>
-                  <p className="mt-0.5 max-w-[70ch] whitespace-pre-line text-pretty">{c.body}</p>
-                </li>
-              ))}
-            </ol>
-            <form onSubmit={postComment} className="mt-5 space-y-2">
-              <Label htmlFor="new-comment" className="sr-only">
-                {t.detail.commentPlaceholder}
-              </Label>
-              <textarea
-                id="new-comment"
-                rows={3}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
-                }}
-                placeholder={t.detail.commentPlaceholder}
-                className={textareaClass}
-              />
-              <div className="flex justify-end">
-                <Button type="submit" disabled={posting || !comment.trim()}>
-                  {posting && <LoaderCircle className="animate-spin" aria-hidden />}
-                  {t.detail.post}
-                </Button>
-              </div>
-            </form>
-          </Section>
         </div>
 
         <aside className="space-y-8">
-          <Section title={t.detail.details}>
+          <Section id="details" title={t.detail.details}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
-              <dt className="text-muted-foreground">{t.claims.columns.ref}</dt>
-              <dd className="font-display text-base font-semibold tracking-wide tabular">{claim.ref}</dd>
-              <dt className="text-muted-foreground">{t.detail.addedBy}</dt>
-              <dd>{name(item.author_id)}</dd>
               <dt className="self-center text-muted-foreground">
                 <label htmlFor="claim-assignee">{t.detail.assignee}</label>
               </dt>
@@ -445,39 +397,65 @@ export function ClaimDetail() {
                   </SelectContent>
                 </Select>
               </dd>
-              {seenText && (
+              <dt className="text-muted-foreground">{t.detail.addedBy}</dt>
+              <dd>{name(item.author_id)}</dd>
+              {item.tags.length > 0 && (
                 <>
-                  <dt className="text-muted-foreground">{t.claims.columns.seenAt}</dt>
-                  <dd className="font-display text-base tabular">{seenText.replace(/^vue (à |le )/, "")}</dd>
+                  <dt className="text-muted-foreground">{t.detail.tags}</dt>
+                  <dd>{item.tags.join(" · ")}</dd>
                 </>
               )}
-              {originLabel && (
-                <>
-                  <dt className="text-muted-foreground">{t.detail.origin}</dt>
-                  <dd>{originLabel}</dd>
-                </>
-              )}
-              <dt className="text-muted-foreground">{t.detail.sources}</dt>
-              <dd className="tabular">{t.claims.sources(claim.sources)}</dd>
-              <dt className="text-muted-foreground">{t.detail.tags}</dt>
-              <dd>{item.tags.length ? item.tags.join(" · ") : <span className="text-muted-foreground">{t.detail.noTags}</span>}</dd>
             </dl>
           </Section>
 
-          <Section title={t.detail.history}>
-            {!history ? (
-              <Skeleton className="h-24 w-full" />
+          <Section id="thread" title={t.detail.thread}>
+            <form onSubmit={postComment} className="space-y-2">
+              <Label htmlFor="new-comment" className="sr-only">
+                {t.detail.commentPlaceholder}
+              </Label>
+              <textarea
+                id="new-comment"
+                rows={2}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
+                }}
+                placeholder={t.detail.commentPlaceholder}
+                className={textareaClass}
+              />
+              {comment.trim() && (
+                <div className="flex justify-end">
+                  <Button type="submit" size="sm" disabled={posting}>
+                    {posting && <LoaderCircle className="animate-spin" aria-hidden />}
+                    {t.detail.post}
+                  </Button>
+                </div>
+              )}
+            </form>
+            {!history || !comments ? (
+              <Skeleton className="mt-4 h-24 w-full" />
+            ) : thread.length === 0 ? (
+              <p className="mt-4 text-sm text-muted-foreground">{t.detail.noThread}</p>
             ) : (
-              <ol className="space-y-3 border-l border-border pl-4">
-                {history.map((a) => (
-                  <li key={a.id} className="relative text-sm">
-                    <span className="absolute top-1.5 -left-[1.3125rem] size-2 rounded-full border border-border bg-card" aria-hidden />
-                    <p>
-                      <span className="font-medium">{name(a.actor_id)}</span> {describe(a, (id) => names.get(id) ?? t.detail.someone)}
+              <ol className="mt-5 space-y-3.5 border-l border-border pl-4">
+                {thread.map((e) => (
+                  <li key={`${e.kind}-${e.id}`} className="relative text-sm">
+                    <span
+                      className={cn(
+                        "absolute top-1.5 -left-[1.3125rem] size-2 rounded-full border border-border",
+                        e.kind === "comment" ? "bg-foreground" : "bg-card",
+                      )}
+                      aria-hidden
+                    />
+                    <p className="flex flex-wrap items-baseline gap-x-2">
+                      <span className="font-medium">{name(e.actor)}</span>
+                      {e.kind === "event" && <span>{e.body}</span>}
+                      <time dateTime={e.at} className="text-muted-foreground tabular">
+                        {ago(e.at, now)}
+                      </time>
                     </p>
-                    <time dateTime={a.created_at} className="text-muted-foreground tabular">
-                      {ago(a.created_at, now)}
-                    </time>
+                    {e.kind === "comment" && <p className="mt-0.5 whitespace-pre-line text-pretty">{e.body}</p>}
                   </li>
                 ))}
               </ol>

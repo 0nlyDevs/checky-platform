@@ -32,7 +32,7 @@ from app.core.config import get_settings
 from app.core.db import engine
 from app.main import api
 
-TABLES = "app.chunk, app.transcript, app.source, app.file, app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
+TABLES = "app.ai_cache, app.chunk, app.transcript, app.source, app.file, app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -61,6 +61,11 @@ def _migrate():
 
 @pytest.fixture(autouse=True)
 def _clean_db():
+    from app.core import ai
+
+    # The gateway keeps per-process key rotation and cooldowns; each test starts fresh.
+    ai._turn.clear()
+    ai._cooldown.clear()
     yield
 
     async def truncate():

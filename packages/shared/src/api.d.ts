@@ -559,7 +559,7 @@ export interface components {
             question: string;
             /**
              * K
-             * @default 6
+             * @default 4
              */
             k: number;
             /** Item Id */

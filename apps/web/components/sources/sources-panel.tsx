@@ -321,11 +321,11 @@ function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRem
           <div className="min-w-0 flex-1">
             {href ? (
               <a href={href} target="_blank" rel="noreferrer" className="group inline-flex max-w-full items-baseline gap-1.5 font-medium hover:underline">
-                <span className="truncate">{source.title}</span>
+                <span className="line-clamp-2 text-pretty">{source.title}</span>
                 <ExternalLink className="size-3.5 shrink-0 self-center text-muted-foreground" aria-label={t.sources.open} />
               </a>
             ) : (
-              <p className="truncate font-medium">{source.title}</p>
+              <p className="line-clamp-2 font-medium text-pretty">{source.title}</p>
             )}
             <p className="truncate text-sm text-muted-foreground">{details.join(" · ")}</p>
           </div>
