@@ -26,6 +26,7 @@ from app.modules import (
     jobs,
     linkcheck,
     me,
+    official,
     public,
     quotes,
     rag,
@@ -99,6 +100,7 @@ api.include_router(veille.router, prefix="/api/v1")
 api.include_router(verify_public.router, prefix="/api/v1")
 api.include_router(sms.router, prefix="/api/v1")
 api.include_router(verification.router, prefix="/api/v1")
+api.include_router(official.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)

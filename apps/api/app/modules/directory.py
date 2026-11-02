@@ -244,7 +244,9 @@ async def official_hosts(db: AsyncSession, workspace_id: uuid.UUID) -> set[str]:
                 hosts.add(h)
         if h := host(c.website):
             hosts.add(h)
-    return hosts
+    from app.modules.official import country_hosts
+
+    return hosts | await country_hosts(db, workspace_id)
 
 
 # --- « Qui peut le prouver ? » --------------------------------------------------------------

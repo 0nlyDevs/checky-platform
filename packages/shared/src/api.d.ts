@@ -2039,7 +2039,8 @@ export interface paths {
         /**
          * Veille Map
          * @description Where rumours circulate: per region, the claims, clips, press items and questions of the
-         *     last 24 hours and 7 days, and how many dossiers were judged high-risk.
+         *     last 24 hours and 7 days, and how many dossiers were judged high-risk. `country` (a name, or
+         *     « monde ») picks the country shown; the newsroom's own country by default.
          */
         get: operations["veille_map_api_v1_workspaces__ws__veille_map_get"];
         put?: never;
@@ -2286,6 +2287,41 @@ export interface paths {
         /** Refuse */
         post: operations["refuse_api_v1_platform_requests__ws__refuse_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/official-sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Official */
+        get: operations["list_official_api_v1_workspaces__ws__official_sources_get"];
+        put?: never;
+        /** Add Official */
+        post: operations["add_official_api_v1_workspaces__ws__official_sources_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/official-sources/{source_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Remove Official */
+        delete: operations["remove_official_api_v1_workspaces__ws__official_sources__source_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3144,6 +3180,13 @@ export interface components {
              */
             own: boolean;
         };
+        /** CountryCount */
+        CountryCount: {
+            /** Country */
+            country: string;
+            /** Last 7D */
+            last_7d: number;
+        };
         /** CountryOut */
         CountryOut: {
             /** Code */
@@ -3878,6 +3921,18 @@ export interface components {
             unplaced: number;
             /** Total */
             total: number;
+            /**
+             * Country
+             * @default Madagascar
+             */
+            country: string;
+            /**
+             * Home
+             * @default Madagascar
+             */
+            home: string;
+            /** Countries */
+            countries?: components["schemas"]["CountryCount"][];
         };
         /** MatchOut */
         MatchOut: {
@@ -3984,62 +4039,12 @@ export interface components {
             /** Followed */
             followed: boolean;
         };
-        /** OfficialOut */
-        OfficialOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "original" | "fake_caught";
-            /** Issuer */
-            issuer: string;
-            /** Number */
-            number: string | null;
-            /** Issued On */
-            issued_on: string | null;
-            /** Title */
-            title: string;
-            /** Text */
-            text: string;
+        /** OfficialIn */
+        OfficialIn: {
             /** Url */
-            url: string | null;
-            /** Is Demo */
-            is_demo: boolean;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            newsroom: components["schemas"]["NewsroomOut"];
-            /** Confirmed */
-            confirmed: boolean;
-            /** Sealed */
-            sealed: boolean;
-            /** Seal Url */
-            seal_url: string | null;
-            /**
-             * Fakes
-             * @default 0
-             */
-            fakes: number;
-            original?: components["schemas"]["OriginalRef"] | null;
-            /**
-             * Diff
-             * @default []
-             */
-            diff: components["schemas"]["DiffOp"][];
-            /**
-             * Changed Numbers
-             * @default []
-             */
-            changed_numbers: components["schemas"]["ChangedNumber"][];
-            /** Summary */
-            summary?: string | null;
+            url: string;
+            /** Name */
+            name: string;
         };
         /** OfficialPage */
         "OfficialPage-Input": {
@@ -4057,7 +4062,7 @@ export interface components {
         /** OfficialPage */
         "OfficialPage-Output": {
             /** Items */
-            items: components["schemas"]["OfficialOut"][];
+            items: components["schemas"]["app__modules__registry__OfficialOut"][];
             /** Total */
             total: number;
         };
@@ -4578,6 +4583,8 @@ export interface components {
         RegionCount: {
             /** Region */
             region: string;
+            /** Country */
+            country?: string | null;
             /** Lat */
             lat: number | null;
             /** Lng */
@@ -5372,6 +5379,24 @@ export interface components {
             verification: string;
             settings?: components["schemas"]["NewsroomSettings"];
         };
+        /** OfficialOut */
+        app__modules__official__OfficialOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Host */
+            host: string;
+            /** Name */
+            name: string;
+            /** Country */
+            country: string;
+            /** Mine */
+            mine: boolean;
+            /** Shared */
+            shared: boolean;
+        };
         /** AskIn */
         app__modules__public__AskIn: {
             /** Question */
@@ -5398,6 +5423,63 @@ export interface components {
         app__modules__registry__MatchIn: {
             /** Text */
             text: string;
+        };
+        /** OfficialOut */
+        app__modules__registry__OfficialOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "original" | "fake_caught";
+            /** Issuer */
+            issuer: string;
+            /** Number */
+            number: string | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+            /** Url */
+            url: string | null;
+            /** Is Demo */
+            is_demo: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            newsroom: components["schemas"]["NewsroomOut"];
+            /** Confirmed */
+            confirmed: boolean;
+            /** Sealed */
+            sealed: boolean;
+            /** Seal Url */
+            seal_url: string | null;
+            /**
+             * Fakes
+             * @default 0
+             */
+            fakes: number;
+            original?: components["schemas"]["OriginalRef"] | null;
+            /**
+             * Diff
+             * @default []
+             */
+            diff: components["schemas"]["DiffOp"][];
+            /**
+             * Changed Numbers
+             * @default []
+             */
+            changed_numbers: components["schemas"]["ChangedNumber"][];
+            /** Summary */
+            summary?: string | null;
         };
         /** VerifyIn */
         app__modules__registry__VerifyIn: {
@@ -9710,7 +9792,9 @@ export interface operations {
     };
     veille_map_api_v1_workspaces__ws__veille_map_get: {
         parameters: {
-            query?: never;
+            query?: {
+                country?: string | null;
+            };
             header?: never;
             path: {
                 ws: string;
@@ -10181,6 +10265,102 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["VerificationOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_official_api_v1_workspaces__ws__official_sources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__official__OfficialOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_official_api_v1_workspaces__ws__official_sources_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfficialIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__official__OfficialOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_official_api_v1_workspaces__ws__official_sources__source_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

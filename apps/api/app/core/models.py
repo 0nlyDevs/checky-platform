@@ -649,3 +649,19 @@ class AiCacheEntry(Base):
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[dict[str, Any]] = mapped_column(JSONB)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class OfficialSource(_Row):
+    """A site a newsroom declared official for its country (« Sources officielles » in Réglages).
+    Shared with every newsroom of that country, but only counted from verified newsrooms."""
+
+    __tablename__ = "official_source"
+    __table_args__ = (UniqueConstraint("country", "host"), {"schema": "app"})
+
+    country: Mapped[str] = mapped_column(String(80), index=True)  # as in workspace.settings
+    host: Mapped[str] = mapped_column(String(253))
+    name: Mapped[str] = mapped_column(String(160))
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    added_by: Mapped[str] = mapped_column(Text)

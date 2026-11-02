@@ -21,6 +21,7 @@ newsroom that holds its own registry, figures and archives):
 The Contradicteur's quoted concerns each take 5 points off (15 at most). Pure function.
 """
 
+import re
 from datetime import date, datetime
 from typing import Any
 from urllib.parse import urlsplit
@@ -32,9 +33,16 @@ MAXIMA = {"agreement": 30, "official": 25, "dates": 15, "outside": 10, "attached
 CONCERN_PENALTY, CONCERN_MAX = 5, 15
 HIGH, MEDIUM = 70, 40
 
-# Hosts official by their suffix, anywhere (a newsroom's Annuaire adds its own).
-OFFICIAL_SUFFIXES = (".gov.mg", ".gouv.mg", ".gov", ".gouv.fr", ".gov.uk", ".gob.es", ".int")
-OFFICIAL_HOSTS = {"instat.mg", "banque-centrale.mg", "presidence.gov.mg", "who.int", "un.org"}
+# Official anywhere, by rule: a government second level under a country code (gov.mg, gouv.sn,
+# gob.mx, go.ke, govt.nz, gv.at…), plus .gov and .int. A newsroom's Annuaire and its country's
+# « Sources officielles » (app/modules/official.py) add the rest.
+OFFICIAL_SUFFIXES = (".gov", ".int")
+GOVERNMENT = re.compile(r"(?:^|\.)(?:gov|gouv|gob|go|govt|gv|gub)\.[a-z]{2}$")
+# Official sites a rule cannot see (statistics institutes, central banks, international bodies).
+OFFICIAL_HOSTS = {
+    "instat.mg", "banque-centrale.mg", "un.org", "worldbank.org", "imf.org", "unicef.org",
+    "europa.eu", "afdb.org", "ansd.sn", "insee.fr", "statssa.gov.za", "knbs.or.ke",
+}  # fmt: skip
 # What each kind of source is worth as authority, and how it is named in the reasons.
 AUTHORITY = {
     "registry": (25, "le communiqué original déposé au registre"),
@@ -66,7 +74,9 @@ def is_official(url: str | None, official_hosts: set[str] | None = None) -> bool
         host in declared
         or any(host.endswith("." + h) for h in declared)
         or host in OFFICIAL_HOSTS
+        or any(host.endswith("." + h) for h in OFFICIAL_HOSTS)
         or host.endswith(OFFICIAL_SUFFIXES)
+        or bool(GOVERNMENT.search(host))
     )
 
 

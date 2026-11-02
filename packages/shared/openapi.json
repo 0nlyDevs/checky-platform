@@ -7595,7 +7595,7 @@
           "veille"
         ],
         "summary": "Veille Map",
-        "description": "Where rumours circulate: per region, the claims, clips, press items and questions of the\nlast 24 hours and 7 days, and how many dossiers were judged high-risk.",
+        "description": "Where rumours circulate: per region, the claims, clips, press items and questions of the\nlast 24 hours and 7 days, and how many dossiers were judged high-risk. `country` (a name, or\n« monde ») picks the country shown; the newsroom's own country by default.",
         "operationId": "veille_map_api_v1_workspaces__ws__veille_map_get",
         "security": [
           {
@@ -7611,6 +7611,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Ws"
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Country"
             }
           }
         ],
@@ -8404,6 +8420,165 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/official-sources": {
+      "get": {
+        "tags": [
+          "official"
+        ],
+        "summary": "List Official",
+        "operationId": "list_official_api_v1_workspaces__ws__official_sources_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/app__modules__official__OfficialOut"
+                  },
+                  "title": "Response List Official Api V1 Workspaces  Ws  Official Sources Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "official"
+        ],
+        "summary": "Add Official",
+        "operationId": "add_official_api_v1_workspaces__ws__official_sources_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OfficialIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__official__OfficialOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/official-sources/{source_id}": {
+      "delete": {
+        "tags": [
+          "official"
+        ],
+        "summary": "Remove Official",
+        "operationId": "remove_official_api_v1_workspaces__ws__official_sources__source_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -10948,6 +11123,24 @@
         ],
         "title": "ContactOut"
       },
+      "CountryCount": {
+        "properties": {
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "last_7d": {
+            "type": "integer",
+            "title": "Last 7D"
+          }
+        },
+        "type": "object",
+        "required": [
+          "country",
+          "last_7d"
+        ],
+        "title": "CountryCount"
+      },
       "CountryOut": {
         "properties": {
           "code": {
@@ -13039,6 +13232,23 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "default": "Madagascar"
+          },
+          "home": {
+            "type": "string",
+            "title": "Home",
+            "default": "Madagascar"
+          },
+          "countries": {
+            "items": {
+              "$ref": "#/components/schemas/CountryCount"
+            },
+            "type": "array",
+            "title": "Countries"
           }
         },
         "type": "object",
@@ -13313,158 +13523,27 @@
         ],
         "title": "NotifyOut"
       },
-      "OfficialOut": {
+      "OfficialIn": {
         "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "kind": {
-            "type": "string",
-            "enum": [
-              "original",
-              "fake_caught"
-            ],
-            "title": "Kind"
-          },
-          "issuer": {
-            "type": "string",
-            "title": "Issuer"
-          },
-          "number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Number"
-          },
-          "issued_on": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Issued On"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "text": {
-            "type": "string",
-            "title": "Text"
-          },
           "url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 4,
             "title": "Url"
           },
-          "is_demo": {
-            "type": "boolean",
-            "title": "Is Demo"
-          },
-          "created_at": {
+          "name": {
             "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "newsroom": {
-            "$ref": "#/components/schemas/NewsroomOut"
-          },
-          "confirmed": {
-            "type": "boolean",
-            "title": "Confirmed"
-          },
-          "sealed": {
-            "type": "boolean",
-            "title": "Sealed"
-          },
-          "seal_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Seal Url"
-          },
-          "fakes": {
-            "type": "integer",
-            "title": "Fakes",
-            "default": 0
-          },
-          "original": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/OriginalRef"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "diff": {
-            "items": {
-              "$ref": "#/components/schemas/DiffOp"
-            },
-            "type": "array",
-            "title": "Diff",
-            "default": []
-          },
-          "changed_numbers": {
-            "items": {
-              "$ref": "#/components/schemas/ChangedNumber"
-            },
-            "type": "array",
-            "title": "Changed Numbers",
-            "default": []
-          },
-          "summary": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Summary"
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Name"
           }
         },
         "type": "object",
         "required": [
-          "id",
-          "kind",
-          "issuer",
-          "number",
-          "issued_on",
-          "title",
-          "text",
           "url",
-          "is_demo",
-          "created_at",
-          "newsroom",
-          "confirmed",
-          "sealed",
-          "seal_url"
+          "name"
         ],
-        "title": "OfficialOut"
+        "title": "OfficialIn"
       },
       "OfficialPage-Input": {
         "properties": {
@@ -13493,7 +13572,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/OfficialOut"
+              "$ref": "#/components/schemas/app__modules__registry__OfficialOut"
             },
             "type": "array",
             "title": "Items"
@@ -15052,6 +15131,17 @@
           "region": {
             "type": "string",
             "title": "Region"
+          },
+          "country": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Country"
           },
           "lat": {
             "anyOf": [
@@ -17362,6 +17452,45 @@
         ],
         "title": "WorkspaceSettingsOut"
       },
+      "app__modules__official__OfficialOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "host": {
+            "type": "string",
+            "title": "Host"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "mine": {
+            "type": "boolean",
+            "title": "Mine"
+          },
+          "shared": {
+            "type": "boolean",
+            "title": "Shared"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "host",
+          "name",
+          "country",
+          "mine",
+          "shared"
+        ],
+        "title": "OfficialOut"
+      },
       "app__modules__public__AskIn": {
         "properties": {
           "question": {
@@ -17441,6 +17570,159 @@
           "text"
         ],
         "title": "MatchIn"
+      },
+      "app__modules__registry__OfficialOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "original",
+              "fake_caught"
+            ],
+            "title": "Kind"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "title": "Confirmed"
+          },
+          "sealed": {
+            "type": "boolean",
+            "title": "Sealed"
+          },
+          "seal_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seal Url"
+          },
+          "fakes": {
+            "type": "integer",
+            "title": "Fakes",
+            "default": 0
+          },
+          "original": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OriginalRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DiffOp"
+            },
+            "type": "array",
+            "title": "Diff",
+            "default": []
+          },
+          "changed_numbers": {
+            "items": {
+              "$ref": "#/components/schemas/ChangedNumber"
+            },
+            "type": "array",
+            "title": "Changed Numbers",
+            "default": []
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "issuer",
+          "number",
+          "issued_on",
+          "title",
+          "text",
+          "url",
+          "is_demo",
+          "created_at",
+          "newsroom",
+          "confirmed",
+          "sealed",
+          "seal_url"
+        ],
+        "title": "OfficialOut"
       },
       "app__modules__registry__VerifyIn": {
         "properties": {
