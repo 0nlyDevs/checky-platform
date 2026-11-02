@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from sqlalchemy import delete
 
 from app.core.access import Admin, Db
-from app.core.activity import broadcast
+from app.core.activity import broadcast, record
 from app.core.models import Item
 
 router = APIRouter(tags=["demo"])
@@ -103,25 +103,27 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
     for i, (ago, title, status, verdict, suggested, origin, sources, tags) in enumerate(
         DEMO_CLAIMS
     ):
-        db.add(
-            Item(
-                workspace_id=admin.workspace_id,
-                author_id=admin.user.id,
-                type="claim",
-                title=title,
-                status=status,
-                tags=tags,
-                data={
-                    "ref": f"FAN-{137 + i:04d}",
-                    "first_seen_at": (now - timedelta(minutes=ago)).isoformat(),
-                    "origin": origin,
-                    "verdict": verdict,
-                    "verdict_suggested": suggested,
-                    "source_count": sources,
-                    "demo": True,
-                },
-            )
+        item = Item(
+            workspace_id=admin.workspace_id,
+            author_id=admin.user.id,
+            type="claim",
+            title=title,
+            status=status,
+            tags=tags,
+            data={
+                "ref": f"FAN-{137 + i:04d}",
+                "first_seen_at": (now - timedelta(minutes=ago)).isoformat(),
+                "origin": origin,
+                "verdict": verdict,
+                "verdict_suggested": suggested,
+                "source_count": sources,
+                "assignee_id": admin.user.id if status == "in_progress" else None,
+                "demo": True,
+            },
         )
+        db.add(item)
+        await db.flush()
+        await record(db, admin.workspace_id, admin.user.id, "item", item.id, "create")
     await db.commit()
     await broadcast(admin.workspace_id, "demo.reset", {})
     return {"items": len(DEMO_CLAIMS)}

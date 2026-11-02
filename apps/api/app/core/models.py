@@ -4,11 +4,31 @@ import uuid
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import DateTime, ForeignKey, Index, String, Text, UniqueConstraint, func
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
+
+# Better Auth's user table (schema `auth`), read-only here and never migrated by Alembic.
+auth_user = Table(
+    "user",
+    Base.metadata,
+    Column("id", Text, primary_key=True),
+    Column("name", Text),
+    Column("email", Text),
+    schema="auth",
+)
 
 ROLES = ("admin", "editor", "journalist")
 

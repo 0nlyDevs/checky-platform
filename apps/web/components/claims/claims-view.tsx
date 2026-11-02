@@ -2,20 +2,24 @@
 
 import type { Item, ItemPage, Status, Verdict } from "@fanilo/shared";
 import { STATUSES, VERDICTS } from "@fanilo/shared";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { ListChecks, Search, WifiOff } from "lucide-react";
+import { Columns3, ListChecks, Rows3, Search, WifiOff } from "lucide-react";
 import { toast } from "sonner";
+import { Board } from "@/components/claims/board";
 import { ClaimsTable } from "@/components/claims/claims-table";
 import { DayGrid } from "@/components/claims/day-grid";
 import { NewClaimSheet } from "@/components/claims/new-claim-sheet";
 import { type ClaimView, toClaim, VERDICT_META } from "@/components/claims/verdict";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
-import { fetcher } from "@/lib/api";
+import { useWorkspace } from "@/hooks/use-workspace";
+import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 
 const ALL = "all";
@@ -47,13 +51,22 @@ function Empty({ title, lead, action }: { title: string; lead: string; action?: 
   );
 }
 
-export function ClaimsView({ ws }: { ws: string }) {
+export function ClaimsView() {
+  const { ws } = useParams<{ ws: string }>();
   const key = `/workspaces/${ws}/items?limit=200`;
   const { data, error, isLoading, mutate } = useSWR<ItemPage>(key, fetcher);
   const now = useNow();
   const [q, setQ] = useState("");
   const [status, setStatus] = useState<string>(ALL);
   const [verdict, setVerdict] = useState<string>(ALL);
+  const [assignee, setAssignee] = useState<string>(ALL);
+  const { me, role, members, names } = useWorkspace(ws);
+  const router = useRouter();
+  const pathname = usePathname();
+  const params = useSearchParams();
+  const view = params.get("vue") === "tableau" ? "board" : "grid";
+  const setView = (v: "grid" | "board") =>
+    router.replace(v === "board" ? `${pathname}?vue=tableau` : pathname, { scroll: false });
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -62,11 +75,16 @@ export function ClaimsView({ ws }: { ws: string }) {
     const needle = q.trim().toLowerCase();
     return all.filter(
       (c) =>
-        (status === ALL || c.status === status) &&
+        // The board's columns are the statuses, so the status filter only applies to the grid.
+        (view === "board" || status === ALL || c.status === status) &&
         (verdict === ALL || (c.verdict ?? c.suggested) === verdict) &&
+        (assignee === ALL ||
+          (assignee === "me" && c.assigneeId === me?.id) ||
+          (assignee === "none" && !c.assigneeId) ||
+          c.assigneeId === assignee) &&
         (!needle || `${c.ref} ${c.item.title} ${c.item.tags.join(" ")}`.toLowerCase().includes(needle)),
     );
-  }, [all, q, status, verdict]);
+  }, [all, q, status, verdict, assignee, view, me?.id]);
   const hasDemo = all.some((c) => (c.item.data as { demo?: boolean }).demo);
 
   const upsert = useCallback(
@@ -98,16 +116,44 @@ export function ClaimsView({ ws }: { ws: string }) {
     reconnected: () => mutate(),
   });
 
-  const select = useCallback((id: string) => {
-    setSelectedId(id);
-    const row = document.getElementById(`claim-${id}`) ?? document.getElementById(`claim-m-${id}`);
-    row?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, []);
+  const canMove = useCallback(
+    (c: ClaimView) => Boolean(me && (c.item.author_id === me.id || role === "editor" || role === "admin")),
+    [me, role],
+  );
+
+  /** Optimistic: the card lands in its new column now; the server confirms or it goes back. */
+  const move = useCallback(
+    async (c: ClaimView, to: Status) => {
+      const previous = c.item;
+      upsert({ ...previous, status: to });
+      try {
+        upsert(
+          await api<Item>(`/workspaces/${ws}/items/${previous.id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ status: to }),
+          }),
+        );
+      } catch (e) {
+        upsert(previous);
+        toast.error(e instanceof ApiError && e.status === 403 ? t.claims.board.cannotMove : t.detail.saveFailed);
+      }
+    },
+    [upsert, ws],
+  );
+
+  const select = useCallback(
+    (id: string) => {
+      setSelectedId(id);
+      router.push(`/w/${ws}/affirmations/${id}`);
+    },
+    [router, ws],
+  );
 
   const clear = () => {
     setQ("");
     setStatus(ALL);
     setVerdict(ALL);
+    setAssignee(ALL);
   };
 
   return (
@@ -150,6 +196,7 @@ export function ClaimsView({ ws }: { ws: string }) {
             className="h-10 bg-card pl-9"
           />
         </div>
+        {view === "grid" && (
         <Select value={status} onValueChange={setStatus}>
           <SelectTrigger aria-label={t.claims.columns.status} className="h-10 flex-1 bg-card sm:w-44 sm:flex-none">
             <SelectValue />
@@ -163,6 +210,7 @@ export function ClaimsView({ ws }: { ws: string }) {
             ))}
           </SelectContent>
         </Select>
+        )}
         <Select value={verdict} onValueChange={setVerdict}>
           <SelectTrigger aria-label={t.claims.columns.verdict} className="h-10 flex-1 bg-card sm:w-44 sm:flex-none">
             <SelectValue />
@@ -180,6 +228,50 @@ export function ClaimsView({ ws }: { ws: string }) {
             })}
           </SelectContent>
         </Select>
+        <Select value={assignee} onValueChange={setAssignee}>
+          <SelectTrigger aria-label={t.detail.assignee} className="h-10 flex-1 bg-card sm:w-48 sm:flex-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>{t.claims.allAssignees}</SelectItem>
+            <SelectItem value="me">{t.claims.mine}</SelectItem>
+            <SelectItem value="none">{t.claims.unassigned}</SelectItem>
+            {members
+              ?.filter((m) => m.user_id !== me?.id)
+              .map((m) => (
+                <SelectItem key={m.user_id} value={m.user_id}>
+                  {m.name ?? m.email ?? m.user_id}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <div
+          role="radiogroup"
+          aria-label={t.claims.views.label}
+          className="flex h-10 shrink-0 rounded-md border border-input bg-card p-0.5 sm:ml-auto"
+        >
+          {(
+            [
+              ["grid", t.claims.views.grid, Rows3],
+              ["board", t.claims.views.board, Columns3],
+            ] as const
+          ).map(([v, label, Icon]) => (
+            <button
+              key={v}
+              type="button"
+              role="radio"
+              aria-checked={view === v}
+              onClick={() => setView(v)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-[3px] px-3 text-sm font-medium outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring",
+                view === v ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Icon className="size-4" aria-hidden />
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {error ? (
@@ -209,6 +301,8 @@ export function ClaimsView({ ws }: { ws: string }) {
             </Button>
           }
         />
+      ) : view === "board" ? (
+        <Board ws={ws} claims={claims} now={now} names={names} canMove={canMove} onMove={move} />
       ) : (
         <div className="space-y-5">
           <DayGrid
@@ -219,6 +313,7 @@ export function ClaimsView({ ws }: { ws: string }) {
             onSelect={select}
           />
           <ClaimsTable
+            ws={ws}
             claims={claims}
             now={now}
             focusedId={focusedId}

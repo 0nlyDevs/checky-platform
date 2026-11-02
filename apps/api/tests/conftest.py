@@ -39,6 +39,25 @@ TABLES = (
 def _migrate():
     subprocess.run(["alembic", "upgrade", "head"], check=True, cwd=Path(__file__).parents[1])
 
+    # Better Auth owns auth."user" in real deployments; tests need a stand-in to join on.
+    async def auth_table():
+        async with engine.begin() as conn:
+            await conn.execute(text("CREATE SCHEMA IF NOT EXISTS auth"))
+            await conn.execute(
+                text(
+                    'CREATE TABLE IF NOT EXISTS auth."user" (id text PRIMARY KEY, name text, email text)'
+                )
+            )
+            await conn.execute(
+                text(
+                    """INSERT INTO auth."user" (id, name, email) VALUES
+                    ('alice', 'Alice Rabe', 'alice@example.test'), ('bob', 'Bob Rakoto', 'bob@example.test')
+                    ON CONFLICT (id) DO NOTHING"""
+                )
+            )
+
+    asyncio.run(auth_table())
+
 
 @pytest.fixture(autouse=True)
 def _clean_db():

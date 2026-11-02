@@ -32,10 +32,12 @@ def test_invitation_flow_and_single_use(as_user):
     ]
     assert bob.post(f"/api/v1/invitations/{token}/accept").json()["role"] == "editor"
     assert carol.post(f"/api/v1/invitations/{token}/accept").status_code == 404
-    members = {
-        m["user_id"]: m["role"] for m in alice.get(f"/api/v1/workspaces/{ws}/members").json()
+    members = alice.get(f"/api/v1/workspaces/{ws}/members").json()
+    assert {m["user_id"]: m["role"] for m in members} == {"alice": "admin", "bob": "editor"}
+    assert {m["user_id"]: m["name"] for m in members} == {
+        "alice": "Alice Rabe",
+        "bob": "Bob Rakoto",
     }
-    assert members == {"alice": "admin", "bob": "editor"}
 
 
 def test_journalist_cannot_call_admin_routes(as_user):

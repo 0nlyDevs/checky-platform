@@ -10,7 +10,7 @@ from sqlalchemy import select
 
 from app.core.access import Admin, AnyMember, Db, get_membership
 from app.core.errors import ApiError
-from app.core.models import Invitation, Membership, Workspace
+from app.core.models import Invitation, Membership, Workspace, auth_user
 from app.core.security import User
 
 router = APIRouter(tags=["workspaces"])
@@ -32,6 +32,8 @@ class WorkspaceOut(BaseModel):
 class MemberOut(BaseModel):
     user_id: str
     role: Role
+    name: str | None = None
+    email: str | None = None
 
 
 class InvitationIn(BaseModel):
@@ -65,10 +67,15 @@ async def create_workspace(body: WorkspaceIn, user: User, db: Db) -> WorkspaceOu
 
 @router.get("/workspaces/{ws}/members")
 async def list_members(member: AnyMember, db: Db) -> list[MemberOut]:
-    rows = await db.scalars(
-        select(Membership).where(Membership.workspace_id == member.workspace_id)
+    rows = await db.execute(
+        select(Membership, auth_user.c.name, auth_user.c.email)
+        .outerjoin(auth_user, auth_user.c.id == Membership.user_id)
+        .where(Membership.workspace_id == member.workspace_id)
+        .order_by(Membership.created_at)
     )
-    return [MemberOut(user_id=m.user_id, role=m.role) for m in rows]
+    return [
+        MemberOut(user_id=m.user_id, role=m.role, name=name, email=email) for m, name, email in rows
+    ]
 
 
 @router.post("/workspaces/{ws}/invitations", status_code=201)

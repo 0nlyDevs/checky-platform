@@ -28,7 +28,7 @@ export function formatDuration(ms: number) {
   return rest ? `${h} h ${String(rest).padStart(2, "0")}` : `${h} h`;
 }
 
-function dayRange(now: Date) {
+export function dayRange(now: Date) {
   const start = new Date(now);
   start.setHours(Math.min(DAY_START, now.getHours()), 0, 0, 0);
   const end = new Date(now);

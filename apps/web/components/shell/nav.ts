@@ -9,6 +9,6 @@ export const NAV: NavItem[] = [
   { label: t.nav.check, icon: Search },
   { label: t.nav.sources, icon: Library },
   { label: t.nav.transcriptions, icon: AudioLines },
-  { label: t.nav.members, icon: Users },
+  { label: t.nav.members, icon: Users, path: "membres" },
   { label: t.nav.settings, icon: Settings },
 ];

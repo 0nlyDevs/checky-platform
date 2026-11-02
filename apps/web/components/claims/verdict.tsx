@@ -60,6 +60,7 @@ export type ClaimView = {
   suggested: Verdict | null;
   sources: number;
   status: Status;
+  assigneeId: string | null;
 };
 
 function isVerdict(v: unknown): v is Verdict {
@@ -79,11 +80,13 @@ export function toClaim(item: Item): ClaimView {
     suggested: isVerdict(d.verdict_suggested) ? d.verdict_suggested : null,
     sources: typeof d.source_count === "number" ? d.source_count : 0,
     status: item.status as Status,
+    assigneeId: typeof d.assignee_id === "string" ? d.assignee_id : null,
   };
 }
 
 /** The confirmed verdict, or the AI suggestion marked as such. Never colour alone. */
-export function VerdictBadge({ claim, className }: { claim: ClaimView; className?: string }) {
+/** `compact` drops the visible "suggéré" (the dashed outline already says it) but keeps it for screen readers. */
+export function VerdictBadge({ claim, className, compact = false }: { claim: ClaimView; className?: string; compact?: boolean }) {
   const v = claim.verdict ?? claim.suggested;
   if (!v) {
     return <span className={cn("text-sm text-muted-foreground", className)}>{t.verdict.none}</span>;
@@ -102,13 +105,38 @@ export function VerdictBadge({ claim, className }: { claim: ClaimView; className
     >
       <Icon className="size-3.5 shrink-0" aria-hidden />
       {m.label}
-      {suggested && <span className="font-normal opacity-80">· {t.verdict.suggested}</span>}
+      {suggested && (
+        <span className={cn("font-normal opacity-80", compact && "sr-only")}>· {t.verdict.suggested}</span>
+      )}
+    </span>
+  );
+}
+
+export function initials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
+}
+
+export function Avatar({ name, className }: { name: string; className?: string }) {
+  return (
+    <span
+      title={name}
+      className={cn(
+        "grid size-6 shrink-0 place-items-center rounded-full bg-secondary font-display text-xs font-semibold text-secondary-foreground ring-1 ring-border",
+        className,
+      )}
+    >
+      {initials(name)}
     </span>
   );
 }
 
 // Status is workflow, not truth: ink icons only, so it never reads as a verdict colour.
-const STATUS_ICON: Record<Status, LucideIcon> = {
+export const STATUS_ICON: Record<Status, LucideIcon> = {
   to_check: CircleDashed,
   in_progress: Timer,
   verified: ShieldCheck,

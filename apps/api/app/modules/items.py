@@ -182,7 +182,16 @@ async def add_comment(item_id: uuid.UUID, body: CommentIn, member: AnyMember, db
     c = Comment(item_id=item_id, author_id=member.user.id, body=body.body)
     db.add(c)
     await db.flush()
-    await record(db, member.workspace_id, member.user.id, "comment", c.id, "create")
+    # Logged against the claim, so its history reads as one thread.
+    await record(
+        db,
+        member.workspace_id,
+        member.user.id,
+        "item",
+        item_id,
+        "comment",
+        {"comment_id": str(c.id)},
+    )
     await db.commit()
     await db.refresh(c)
     out = CommentOut.model_validate(c)
@@ -192,12 +201,15 @@ async def add_comment(item_id: uuid.UUID, body: CommentIn, member: AnyMember, db
 
 @router.get("/workspaces/{ws}/activity")
 async def list_activity(
-    member: AnyMember, db: Db, limit: int = Query(50, ge=1, le=200)
+    member: AnyMember,
+    db: Db,
+    entity_id: uuid.UUID | None = None,
+    limit: int = Query(50, ge=1, le=200),
 ) -> list[ActivityOut]:
+    where = [Activity.workspace_id == member.workspace_id]
+    if entity_id:
+        where.append(Activity.entity_id == entity_id)
     rows = await db.scalars(
-        select(Activity)
-        .where(Activity.workspace_id == member.workspace_id)
-        .order_by(Activity.created_at.desc())
-        .limit(limit)
+        select(Activity).where(*where).order_by(Activity.created_at.desc()).limit(limit)
     )
     return [ActivityOut.model_validate(a) for a in rows]

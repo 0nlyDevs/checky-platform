@@ -64,11 +64,16 @@ def test_comments_and_activity_log(as_user):
     assert [c["body"] for c in alice.get(f"{url}/comments").json()] == ["Calling the ministry"]
     log = alice.get(f"/api/v1/workspaces/{ws}/activity").json()
     assert [(a["entity"], a["action"]) for a in log] == [
-        ("comment", "create"),
+        ("item", "comment"),
         ("item", "update"),
         ("item", "create"),
     ]
     assert log[1]["diff"] == {"status": {"from": "to_check", "to": "in_progress"}}
+    # One claim's history, comments included.
+    other = _item(alice, ws, title="Other")
+    scoped = alice.get(f"/api/v1/workspaces/{ws}/activity", params={"entity_id": item["id"]}).json()
+    assert len(scoped) == 3
+    assert other["id"] not in {a["entity_id"] for a in scoped}
 
 
 def test_demo_reset_is_admin_only_and_replaces_items(as_user):

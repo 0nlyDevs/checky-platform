@@ -121,7 +121,8 @@ function UserMenu({ user, compact = false }: { user: SessionUser; compact?: bool
 
 function NavLinks({ ws, variant }: { ws?: string; variant: "rail" | "bar" }) {
   const pathname = usePathname();
-  const items = variant === "bar" ? NAV.slice(0, 4) : NAV;
+  // The phone bar has room for four: built screens first, so none is out of reach.
+  const items = variant === "bar" ? [...NAV].sort((x, y) => Number(!x.path) - Number(!y.path)).slice(0, 4) : NAV;
   return (
     <ul className={variant === "rail" ? "space-y-0.5" : "grid grid-cols-4"}>
       {items.map(({ label, icon: Icon, path }) => {
@@ -139,7 +140,7 @@ function NavLinks({ ws, variant }: { ws?: string; variant: "rail" | "bar" }) {
                 <Icon className="size-[1.125rem] shrink-0" aria-hidden />
                 <span className="truncate">{label}</span>
                 {variant === "rail" && !path && (
-                  <span className="ml-auto text-[0.6875rem] uppercase tracking-wider">{t.nav.comingSoon}</span>
+                  <span className="ml-auto text-xs uppercase tracking-wider">{t.nav.comingSoon}</span>
                 )}
               </span>
             </li>

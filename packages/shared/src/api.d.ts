@@ -450,6 +450,10 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "editor" | "journalist";
+            /** Name */
+            name?: string | null;
+            /** Email */
+            email?: string | null;
         };
         /** MembershipOut */
         MembershipOut: {
@@ -1000,6 +1004,7 @@ export interface operations {
     list_activity_api_v1_workspaces__ws__activity_get: {
         parameters: {
             query?: {
+                entity_id?: string | null;
                 limit?: number;
             };
             header?: never;

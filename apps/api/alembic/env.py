@@ -35,6 +35,11 @@ def include_name(name, type_, parent_names):
     return True
 
 
+def include_object(obj, name, type_, reflected, compare_to):
+    # auth."user" is declared for joins only; Better Auth creates and owns it.
+    return not (type_ == "table" and getattr(obj, "schema", None) == "auth")
+
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
@@ -59,6 +64,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         include_schemas=True,
         include_name=include_name,
+        include_object=include_object,
         version_table_schema="app",
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -77,6 +83,7 @@ def do_run_migrations(connection: Connection) -> None:
         target_metadata=target_metadata,
         include_schemas=True,
         include_name=include_name,
+        include_object=include_object,
         version_table_schema="app",
     )
 

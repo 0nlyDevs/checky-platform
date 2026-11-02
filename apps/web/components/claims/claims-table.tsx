@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { formatTime } from "@/components/claims/day-grid";
@@ -57,6 +58,7 @@ function SortHeader({
 }
 
 type Props = {
+  ws: string;
   claims: ClaimView[];
   now: Date;
   focusedId: string | null;
@@ -64,7 +66,8 @@ type Props = {
   onFocusChange: (id: string | null) => void;
 };
 
-export function ClaimsTable({ claims, now, focusedId, selectedId, onFocusChange }: Props) {
+export function ClaimsTable({ ws, claims, now, focusedId, selectedId, onFocusChange }: Props) {
+  const href = (id: string) => `/w/${ws}/affirmations/${id}`;
   const [sort, setSort] = useState<Sort>({ key: "seen", dir: "desc" });
   const rows = useMemo(() => {
     const sign = sort.dir === "asc" ? 1 : -1;
@@ -115,9 +118,13 @@ export function ClaimsTable({ claims, now, focusedId, selectedId, onFocusChange 
               >
                 <td className="font-display text-base font-semibold tracking-wide whitespace-nowrap tabular">{c.ref}</td>
                 <td>
-                  <p className="max-w-[44rem] truncate font-medium" title={c.item.title}>
+                  <Link
+                    href={href(c.item.id)}
+                    title={c.item.title}
+                    className="block max-w-[44rem] truncate rounded-sm font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring"
+                  >
                     {c.item.title}
-                  </p>
+                  </Link>
                   {(c.origin || c.item.tags.length > 0) && (
                     <p className="mt-0.5 text-sm text-muted-foreground">
                       {[c.origin && (t.origins[c.origin as keyof typeof t.origins] ?? c.origin), ...c.item.tags]
@@ -145,14 +152,19 @@ export function ClaimsTable({ claims, now, focusedId, selectedId, onFocusChange 
       {/* Phone: one stacked row per claim */}
       <ul className="divide-y divide-border border-y border-border bg-card md:hidden">
         {rows.map((c) => (
-          <li key={c.item.id} id={`claim-m-${c.item.id}`} className={cn(rowState(c.item.id), "px-4 py-3.5")}>
+          <li key={c.item.id} id={`claim-m-${c.item.id}`} className={cn(rowState(c.item.id), "relative px-4 py-3.5")}>
             <div className="flex items-baseline justify-between gap-3 text-sm text-muted-foreground">
               <span className="font-display text-base font-semibold tracking-wide text-foreground tabular">{c.ref}</span>
               <time dateTime={c.firstSeen?.toISOString()} className="font-display text-base font-medium text-foreground tabular">
                 {seenLabel(c.firstSeen, now)}
               </time>
             </div>
-            <p className="mt-1 font-medium text-pretty">{c.item.title}</p>
+            <Link
+              href={href(c.item.id)}
+              className="mt-1 block font-medium text-pretty after:absolute after:inset-0 focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
+            >
+              {c.item.title}
+            </Link>
             <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
               <StatusLabel status={c.status} />
               <VerdictBadge claim={c} />
