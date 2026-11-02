@@ -120,7 +120,7 @@ export function frenchDay(iso: string | null | undefined): string {
   return d === 1 ? text.replace(/^1 /, "1er ") : text;
 }
 
-/** « N° 2026-118 de JIRAMA » */
+/** « le communiqué N° 2026-118 (JIRAMA) »: the issuer in brackets reads right whatever its name. */
 export function communiqueRef(c: { issuer: string; number: string | null }): string {
-  return c.number ? `N° ${c.number} de ${c.issuer}` : c.issuer;
+  return c.number ? `le communiqué N° ${c.number} (${c.issuer})` : `un communiqué de l'émetteur ${c.issuer}`;
 }

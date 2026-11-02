@@ -90,7 +90,7 @@ export const registre = {
     proves: "Un sceau prouve qui a signé ces mots, pas que leur contenu est vrai.",
     notPublic: "Votre rédaction ne publie pas encore : la page du sceau ne s'ouvrira au public qu'après « Publier nos verdicts » dans les paramètres.",
     unavailable: "Le scellement n'est pas configuré sur ce serveur (SEAL_SECRET manquant).",
-    qrAlt: (ref: string) => `QR du sceau, ${ref}`,
+    qrAlt: (ref: string) => `QR du sceau pour ${ref}`,
     download: "Télécharger le QR",
     open: "Ouvrir la page de vérification",
     copy: "Copier le lien",

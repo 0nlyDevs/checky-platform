@@ -873,13 +873,14 @@ def changed_numbers(original: str, submitted: str) -> list[dict[str, Any]]:
 
 
 def reference(c: Communique) -> str:
-    """« le communiqué N° 2026-118 de JIRAMA du 1er novembre 2026 »"""
+    """« le communiqué N° 2026-118 du 1er novembre 2026 (JIRAMA) »: the issuer goes in brackets, so
+    the sentence reads right whatever its name (« de JIRAMA », « de Ministère … » would not)."""
     parts = ["le communiqué"]
     if c.number:
         parts.append(f"N° {c.number}")
-    parts.append(f"de {c.issuer}")
     if day := dates.parse(c.issued_on):
         parts.append(f"du {dates.fr(day)}")
+    parts.append(f"({c.issuer})")
     return " ".join(parts)
 
 
