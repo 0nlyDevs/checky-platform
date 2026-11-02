@@ -57,9 +57,22 @@ Roles: journalist (create, edit own), editor (edit/delete all), admin (members, 
 
 Not yet: conversation history; a seed script with several users (the demo reset covers claims and sources).
 
-Browser extension (`0nlyDevs/fanilo-extension`, separate sibling repo): uses the website session
-through a credentialed `GET /api/auth/token`, with host permissions limited to FANILO. Selected
-text is sent to `link-check` as `text` only, never silently combined with its entire source page.
+Browser extension (`0nlyDevs/fanilo-extension`, separate sibling repo): **public by default**, with
+no token request or login gate. `POST /public/check {text?,url?}` (`extension_public.py`) returns
+related published verdicts and external search results, never a new AI verdict or private data.
+`POST /public/image-check {url}` returns the same cautious image examination without membership.
+Both share per-process budgets (`core/public_checks.py`): 12 requests/IP/10 min, 1,000 requests
+per 24-hour budget period and 2 concurrent requests; configurable via `PUBLIC_CHECKS_*`. Address
+storage is bounded; there is no persistent visitor ID. These limits are not distributed: use an
+edge limiter before scaling to multiple API workers. Public check timeouts are 45 s (text) and
+35 s (image). No public LLM calls. Private detector access is not enabled anonymously unless
+`PUBLIC_IMAGE_DETECTOR_ENABLED=true` as well as the existing validation gate.
+Public URL downloads pin a checked public IP for each redirect, preserving Host/TLS SNI, so
+the HTTP transport cannot re-resolve an attacker-controlled domain to an internal address.
+Connection is optional for saving a dossier or choosing newsroom analysis: the extension uses
+the website session through a credentialed `GET /api/auth/token`, with host permissions limited
+to FANILO. Public results survive optional connection. Selected text is sent as `text` only,
+never silently combined with its entire source page; private failures never fall back publicly.
 `POST /workspaces/{ws}/image-check {url}` (`app/modules/imagecheck.py`) fetches a public raster
 image (5 MB, 20 MP max), returns metadata hints, cautious `detected|none|inconclusive` assessment,
 reverse-search links and a separate optional pixel detector result. No image or dossier is

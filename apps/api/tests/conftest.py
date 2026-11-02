@@ -87,6 +87,9 @@ def _clean_db():
     from app.modules import imagecheck
 
     imagecheck._IMAGES.clear()
+    from app.core.public_checks import budget
+
+    budget.reset()
     from app.core import websearch
 
     websearch._cache.clear()

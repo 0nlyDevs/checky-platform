@@ -162,6 +162,11 @@ def _limited(request: Request) -> None:
 
 @router.post("/workspaces/{ws}/image-check", dependencies=[Depends(_limited)])
 async def image_check(body: ImageIn, _member: AnyMember) -> ImageOut:
+    return await inspect_image(body)
+
+
+async def inspect_image(body: ImageIn, *, allow_detector: bool = True) -> ImageOut:
+    """Shared read-only examination; callers provide their own authorization and budget."""
     try:
         final, declared_mime, raw, _ = await ingest.fetch_raw(body.url)
         if not declared_mime.startswith("image/"):
@@ -176,7 +181,9 @@ async def image_check(body: ImageIn, _member: AnyMember) -> ImageOut:
         httpx.HTTPError,
     ) as exc:
         raise ApiError(422, "image_unreadable", "The public image could not be read") from exc
-    detector = await detect_pixels(raw, mime)
+    detector = (
+        await detect_pixels(raw, mime) if allow_detector else DetectorOut(status="not_configured")
+    )
     assessment: Assessment = (
         "detected"
         if facts.ai_markers or detector.assessment == "detected"

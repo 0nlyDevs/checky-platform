@@ -259,18 +259,25 @@ Five features cover the journalist's main verification tasks, from checking a cl
 
 ### F7. Browser extension
 
-- A separate Manifest V3 extension (`0nlyDevs/fanilo-extension`) for journalists connected to a
-  newsroom: selected text, a public link or image → explicit confirmation → side-panel analysis.
+- A separate Manifest V3 extension (`0nlyDevs/fanilo-extension`), usable without an account:
+  selected text, a public link or image → explicit confirmation → side-panel checks.
+- Anonymous text checks return related, journalist-confirmed published verdicts and external
+  sources. Matches are candidates to compare with the original claim, not automatic verdicts on
+  the submitted passage. New subjects receive evidence to examine, never an invented AI verdict.
 - Selected text is checked independently of the surrounding page. No passive page reading,
   content scripts, browsing history, provider keys or cookie-reading permission.
-- Reuses the website session JWT, the newsroom `link-check` stream and confirmed copilot actions
-  for saving a dossier. Sources can be selected; the extension never confirms or publishes a verdict.
+- Connection is optional at save time or for newsroom analysis. It reuses the website session JWT,
+  the private `link-check` stream and confirmed copilot actions. Public results survive connection;
+  no write happens until confirmation. Private errors never silently fall back to public processing.
 - Image provenance is separate from factual truth: metadata generator hints, unverified Content
   Credentials presence, reverse-search links, a persistent fallibility warning, and no invented
   confidence percentage. An image caption can be checked as text, not inferred from its pixels.
 - `POST /workspaces/{ws}/image-check {url}` reads public raster images only (5 MB and 20 MP max).
   An optional pixel-detector adapter remains disabled until configured and evaluated by an operator.
   No external pixel detector is enabled or claimed to be reliable by default.
+- `POST /public/check {text?,url?}` and `/public/image-check {url}` require no JWT. They share
+  per-process limits: 12 requests/IP/10 minutes, 1,000/24-hour budget period, 2 in flight. No LLM
+  calls on the public text route. Public detector use needs an additional operator opt-in.
 - Initial distribution is an unpacked Chromium extension. Browser-store publication, OCR,
   screenshots, private images and Firefox/Safari are not included. Production login and Edge/Brave
   behaviour require manual validation before distribution.

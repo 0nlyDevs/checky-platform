@@ -43,9 +43,10 @@ How the pieces talk:
   uploaded, transcribed and checked through the same API. It signs in through Better Auth's Expo
   plugin (`apps/web/lib/auth.ts`, trusted scheme `fanilo://`).
 - **Browser extension:** [`0nlyDevs/fanilo-extension`](https://github.com/0nlyDevs/fanilo-extension)
-  checks selected text and public links/images in a side panel. It uses the website's session
-  JWT and the existing newsroom routes, plus `POST /workspaces/{ws}/image-check` for image
-  provenance hints. It never confirms or publishes a verdict. Its README covers local installation.
+  checks selected text and public links/images in a side panel **without an account**. Public
+  routes return published verdict candidates, external sources and image provenance hints, not
+  new AI verdicts or private dossiers. Connection is optional for saving into a newsroom or using
+  its authenticated analysis. It never confirms or publishes a verdict. Its README covers installation.
   The optional pixel-detector contract and evaluation gate are in [`docs/IMAGE_DETECTOR.md`](docs/IMAGE_DETECTOR.md).
 
 ## Access you need

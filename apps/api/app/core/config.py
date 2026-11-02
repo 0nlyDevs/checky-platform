@@ -81,6 +81,12 @@ class Settings(BaseSettings):
     image_detector_url: str = ""
     image_detector_token: str = ""
     image_detector_validated: bool = False
+    # Anonymous checks have no LLM verdict generation. Both routes share these per-process caps.
+    public_checks_per_window: int = 12  # requests per address, per 10 minutes
+    public_checks_per_day: int = 1000  # all addresses, per 24-hour budget period
+    public_checks_concurrency: int = 2
+    # Separate opt-in: a validated private detector is not automatically offered anonymously.
+    public_image_detector_enabled: bool = False
 
     @property
     def async_database_url(self) -> str:

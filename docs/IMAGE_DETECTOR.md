@@ -17,6 +17,8 @@ IMAGE_DETECTOR_VALIDATED=false
 
 Until `IMAGE_DETECTOR_VALIDATED=true`, **no image is sent to that service**. It is an explicit
 operational gate, not an automatic certification or evidence that an evaluation has happened.
+Anonymous image checks also require `PUBLIC_IMAGE_DETECTOR_ENABLED=true`; validating a private
+detector does not automatically expose its costs or data processing to anonymous visitors.
 
 When enabled, FANILO sends:
 
