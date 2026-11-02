@@ -11,7 +11,7 @@ export function VerifiesView() {
   const p = t.site.pub;
   return (
     <div className="mx-auto max-w-[88rem] px-4 pt-10 pb-20 lg:px-10 lg:pt-14">
-      <div className="grid gap-x-16 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,38rem)]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-x-16 gap-y-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,38rem)]">
         <div>
           <h1 id="check-title" className="page-title">
             {c.title}

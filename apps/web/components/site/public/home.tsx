@@ -17,7 +17,7 @@ export function HomeView() {
   const top = t.publicLayer.home;
   return (
     <>
-      <section className="mx-auto grid max-w-[88rem] gap-x-16 gap-y-12 px-4 pt-10 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:px-10 lg:pt-12 lg:pb-24" aria-labelledby="home-title">
+      <section className="mx-auto grid max-w-[88rem] grid-cols-[minmax(0,1fr)] gap-x-16 gap-y-12 px-4 pt-10 pb-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:px-10 lg:pt-12 lg:pb-24" aria-labelledby="home-title">
         <div>
           <h1 id="home-title" className="font-display text-[clamp(2.5rem,1.4rem+3.6vw,4.6rem)] leading-[0.95] font-extrabold tracking-[-0.03em]">
             <span className="block">{top.top}</span>
