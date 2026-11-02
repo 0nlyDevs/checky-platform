@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { NewsroomRules } from "@/components/claims/publication-panel";
 import { BeatsSection, PlaceSection } from "@/components/settings/newsroom-sections";
 import { PeopleAsk } from "@/components/settings/people-ask";
+import { RadiosSection } from "@/components/settings/radios-section";
 import { SmsSimulator } from "@/components/settings/sms-simulator";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -228,6 +229,7 @@ export function SettingsView() {
           )}
           {desk && <PeopleAsk ws={ws} />}
           {admin && <SmsSimulator ws={ws} />}
+          {desk && <RadiosSection ws={ws} canEdit={admin || role === "editor"} />}
           {admin ? (
             <>
               <HealthSection />
