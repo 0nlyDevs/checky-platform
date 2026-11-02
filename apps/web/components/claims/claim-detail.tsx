@@ -5,17 +5,21 @@ import { STATUSES } from "@fanilo/shared";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import useSWR from "swr";
-import { IconArrowLeft, IconCircleNotch, IconImage, IconPencilSimple } from "@/lib/icons";
+import useSWR, { useSWRConfig } from "swr";
+import { IconArrowLeft, IconCircleNotch, IconImage, IconPencilSimple, IconWarning } from "@/lib/icons";
 import { toast } from "sonner";
 import { RoutePanel } from "@/components/claims/route-panel";
-import { PublicationPanel } from "@/components/claims/publication-panel";
-import { AnalysisPanel } from "@/components/claims/analysis-panel";
 import { VerdictCard } from "@/components/claims/verdict-card";
+import { CarnetPanel } from "@/components/dossier/carnet";
+import { DiffusePanel, type RouteDraft } from "@/components/dossier/diffuse-panel";
+import { FactsPanel } from "@/components/dossier/facts-panel";
+import { ReadingPanel } from "@/components/dossier/reading-panel";
+import { hasResearch, type NewsroomSettings, readByline, readReading, readResearch, readRisk } from "@/components/dossier/types";
+import { WhoPanel } from "@/components/dossier/who-panel";
 import { claimSteps, StepDisc, type StepState } from "@/components/flow/step-line";
 import { formatDuration, formatTime } from "@/lib/time";
 import { StatusLabel, toClaim, VERDICT_META } from "@/components/claims/verdict";
-import { statusAfter, VerdictDecision } from "@/components/claims/verdict-decision";
+import { VerdictDecision } from "@/components/claims/verdict-decision";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,6 +51,19 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
   if (a.action === "comment") return t.detail.events.commented;
   if (a.action === "delete") return t.detail.events.deleted;
   if (a.action === "source") return t.detail.events.sourceAdded;
+  const ev = t.dossier.events;
+  const word = (v: unknown) => (typeof v === "string" && v in VERDICT_META ? VERDICT_META[v as Verdict].label : "—");
+  if (a.action === "sign") {
+    const diff = a.diff as { verdict?: string; status?: string; adopted?: boolean };
+    if (diff.adopted) return ev.adopt(word(diff.verdict));
+    return diff.status === "published" ? ev.signPublish(word(diff.verdict)) : ev.sign(word(diff.verdict));
+  }
+  if (a.action === "publish") return ev.publish;
+  if (a.action === "question") return ev.question;
+  if (a.action === "answer") return ev.answer;
+  if (a.action === "route") return ev.route;
+  if (a.action === "diffuse") return ev.diffuse;
+  if (a.action === "broadcast") return ev.broadcast;
   if (a.action === "analysis") {
     const v = (a.diff as { verdict_suggested?: string }).verdict_suggested;
     return t.detail.events.analysed(v && v in VERDICT_META ? VERDICT_META[v as Verdict].label : "—");
@@ -121,6 +138,23 @@ function StepTitle({ id, title, state }: { id: string; title: string; state: Ste
   );
 }
 
+/** « Risque élevé »: the danger the reading spotted in the wording, in ink (it is not a verdict). */
+function RiskBadge({ item }: { item: Item }) {
+  const risk = readRisk(item);
+  if (!risk || risk.level === "low") return null;
+  const kinds = [...new Set(risk.reasons.map((r) => t.dossier.risk.kinds[r.kind]).filter(Boolean))];
+  return (
+    <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+      <span className={cn("inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 font-bold", risk.level === "high" ? "border-2 border-foreground" : "border-border")}>
+        <IconWarning className="size-4" aria-hidden />
+        {t.dossier.risk.level[risk.level]}
+      </span>
+      {kinds.length > 0 && <span>{kinds.join(" · ")}</span>}
+      <span className="text-muted-foreground">· {t.dossier.risk.lead}</span>
+    </p>
+  );
+}
+
 export function ClaimDetail() {
   const { ws, id } = useParams<{ ws: string; id: string }>();
   const router = useRouter();
@@ -131,6 +165,8 @@ export function ClaimDetail() {
     `/workspaces/${ws}/activity?entity_id=${id}&limit=50`,
     fetcher,
   );
+  const { data: newsroom } = useSWR<NewsroomSettings>(`/workspaces/${ws}`, fetcher);
+  const { mutate: revalidate } = useSWRConfig();
   const { me, role, names, members } = useWorkspace(ws);
   const [now, setNow] = useState(() => new Date());
   const [editing, setEditing] = useState(false);
@@ -138,17 +174,21 @@ export function ClaimDetail() {
   const [comment, setComment] = useState("");
   const [posting, setPosting] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
+  const [readingJob, setReadingJob] = useState<string | null>(null);
+  const [routes, setRoutes] = useState<RouteDraft[]>([]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(timer);
   }, []);
 
+  // One socket for the whole dossier; panels refetch through SWR keys.
   useWorkspaceSocket(ws, {
     "item.updated": (updated: Item) => {
       if (updated.id !== id) return;
       mutate(updated, { revalidate: false });
       mutateHistory();
+      revalidate(`${base}/trajet`);
     },
     "item.deleted": ({ id: gone }: { id: string }) => {
       if (gone !== id) return;
@@ -162,6 +202,18 @@ export function ClaimDetail() {
       });
       mutateHistory();
     },
+    "question.created": () => revalidate(`${base}/who`),
+    "source.created": () => {
+      revalidate(`${base}/who`);
+      mutateHistory();
+    },
+    "route.added": () => revalidate(`${base}/trajet`),
+    "job.done": (j: { id: string }) => j.id === readingJob && setReadingJob(null),
+    "job.failed": (j: { id: string }) => {
+      if (j.id !== readingJob) return;
+      setReadingJob(null);
+      toast.error(t.dossier.reading.failed);
+    },
     reconnected: () => {
       mutate();
       mutateComments();
@@ -170,8 +222,12 @@ export function ClaimDetail() {
   });
 
   const claim = useMemo(() => (item ? toClaim(item) : null), [item]);
+  const research = useMemo(() => (item ? readResearch(item) : null), [item]);
+  const reading = useMemo(() => (item ? readReading(item) : null), [item]);
   const canEdit = Boolean(item && me && (item.author_id === me.id || role === "editor" || role === "admin"));
-  const name = (userId: string) => (userId === me?.id ? t.detail.you : (names.get(userId) ?? t.detail.someone));
+  const isEditor = role === "editor" || role === "admin";
+  const name = (userId: string) =>
+    userId === me?.id ? t.detail.you : userId === "public" ? t.dossier.events.public : userId === "system" ? "Checky" : (names.get(userId) ?? t.detail.someone);
 
   /** Optimistic patch: the screen changes now, the server confirms or we roll back. */
   async function patch(change: ItemPatch, optimistic: Partial<Item>) {
@@ -190,36 +246,19 @@ export function ClaimDetail() {
     }
   }
 
-  /** Verdict and status move together; a toast offers to put both back. */
-  async function decide(verdict: Verdict | null) {
-    if (!item || !claim) return;
-    const before = { verdict: claim.verdict, status: claim.status };
-    const status = statusAfter(verdict, claim.status);
-    const ok = await patch({ status, data: { verdict } }, { status, data: { ...item.data, verdict } });
-    if (!ok) return;
-    const label = verdict ? t.detail.decision.done(VERDICT_META[verdict].label) : t.detail.decision.cleared;
-    toast.success(label, {
-      duration: 8000,
-      action: {
-        label: t.detail.decision.undo,
-        onClick: async () => {
-          const res = await api<Item>(base, {
-            method: "PATCH",
-            body: JSON.stringify({ status: before.status, data: { verdict: before.verdict } }),
-          }).catch(() => null);
-          if (res) {
-            mutate(res, { revalidate: false });
-            mutateHistory();
-            toast(t.detail.decision.undone);
-          }
-        },
-      },
-    });
+  function saved(next: Item) {
+    mutate(next, { revalidate: false });
+    mutateHistory();
+    revalidate(`${base}/trajet`);
   }
 
-  /** Downloading the card is what publishing means here: a verified claim becomes Publié. */
-  function markShared() {
-    if (claim?.status === "verified") patch({ status: "published" }, { status: "published" });
+  async function runReading() {
+    try {
+      const job = await api<{ id: string }>(`${base}/analyze`, { method: "POST" });
+      setReadingJob(job.id);
+    } catch {
+      toast.error(t.dossier.reading.failed);
+    }
   }
 
   async function saveText(e: React.FormEvent<HTMLFormElement>) {
@@ -270,7 +309,7 @@ export function ClaimDetail() {
     );
   }
 
-  if (!item || !claim) {
+  if (!item || !claim || !research) {
     return (
       <div className="mx-auto max-w-[90rem] space-y-5 px-4 py-8 lg:px-8" aria-busy aria-label={t.common.loading}>
         <Skeleton className="h-5 w-32" />
@@ -289,6 +328,11 @@ export function ClaimDetail() {
     : null;
   const steps = claimSteps(claim);
   const originLabel = claim.origin ? (t.origins[claim.origin as keyof typeof t.origins] ?? claim.origin) : null;
+  const signedBy = typeof item.data.signed_by === "string" ? item.data.signed_by : null;
+  const canSign = Boolean(me && (item.author_id === me.id || claim.assigneeId === me.id || isEditor));
+  const double = Boolean(newsroom?.settings?.double_signature);
+  const aiEnabled = newsroom?.settings?.ai_enabled ?? true;
+  const analysisReason = typeof (item.data.analysis as { reason?: unknown } | undefined)?.reason === "string" ? String((item.data.analysis as { reason: string }).reason) : "";
   const thread = [
     ...(comments ?? []).map((c) => ({ kind: "comment" as const, id: c.id, at: c.created_at, actor: c.author_id, body: c.body })),
     ...(history ?? [])
@@ -300,8 +344,8 @@ export function ClaimDetail() {
     <div className="mx-auto max-w-[90rem] px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <BackLink ws={ws} />
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12">
-        {/* The dossier follows the numbered line: what is claimed, what the sources say, the conclusion. */}
+      <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12">
+        {/* The dossier follows the numbered line: what is claimed, what is known, the signed conclusion. */}
         <div className="min-w-0">
           <Step n={1} state={steps.claim} next={steps.evidence}>
             <header>
@@ -328,12 +372,13 @@ export function ClaimDetail() {
               ) : (
                 <>
                   <h1 className="max-w-4xl font-display text-2xl leading-tight font-extrabold tracking-tight text-balance md:pt-0.5 lg:text-[2rem]">{item.title}</h1>
-              <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-muted-foreground">
-                <span className="font-display font-bold text-foreground tabular">{claim.ref}</span>
-                {seenText && <span className="tabular">· {seenText}</span>}
-                {originLabel && <span>· {originLabel}</span>}
-                {seen && <span className="tabular">· {t.claims.board.circulating(formatDuration(now.getTime() - seen.getTime()))}</span>}
-              </p>
+                  <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-muted-foreground">
+                    <span className="font-display font-bold text-foreground tabular">{claim.ref}</span>
+                    {seenText && <span className="tabular">· {seenText}</span>}
+                    {originLabel && <span>· {originLabel}</span>}
+                    {seen && <span className="tabular">· {t.claims.board.circulating(formatDuration(now.getTime() - seen.getTime()))}</span>}
+                  </p>
+                  <RiskBadge item={item} />
                   {/* Context belongs with the claim it explains; when there is none, nothing takes its place. */}
                   {item.body && <p className="mt-3 max-w-[70ch] whitespace-pre-line text-pretty">{item.body}</p>}
                   <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -365,48 +410,36 @@ export function ClaimDetail() {
           </Step>
 
           <Step n={2} state={steps.evidence} next={steps.conclusion}>
-            <section aria-labelledby="evidence">
+            <section aria-labelledby="evidence" className="space-y-8">
               <StepTitle id="evidence" title={`${t.flow.steps.evidence}${claim.sources ? ` (${claim.sources})` : ""}`} state={steps.evidence} />
+              {hasResearch(research) && <FactsPanel ws={ws} item={item} research={research} canSign={canSign} onSigned={saved} />}
               <SourcesPanel ws={ws} itemId={id} />
-              <div className="mt-8">
-                <h3 className="mb-3 font-bold">{t.detail.analysisTitle}</h3>
-                <AnalysisPanel ws={ws} item={item} sourceCount={claim.sources} />
-              </div>
+              <ReadingPanel reading={reading} running={Boolean(readingJob)} canRun={canEdit || canSign} aiEnabled={aiEnabled} onRun={runReading} />
             </section>
           </Step>
 
           <Step n={3} state={steps.conclusion}>
             <section aria-labelledby="verdict">
-              <StepTitle id="verdict" title={t.flow.steps.conclusion} state={steps.conclusion} />
-              <VerdictDecision claim={claim} canEdit={canEdit} sourceCount={claim.sources} onDecide={decide} />
+              <StepTitle id="verdict" title={t.dossier.sign.title} state={steps.conclusion} />
+              <VerdictDecision
+                key={`${item.id}-${String(item.data.signed_at ?? "")}-${item.status}`}
+                ws={ws}
+                item={item}
+                suggested={claim.suggested}
+                reasonDraft={analysisReason}
+                byline={readByline(item)}
+                canSign={canSign}
+                canRelease={double && isEditor && Boolean(signedBy) && signedBy !== me?.id}
+                doubleSignature={double}
+                isPublic={Boolean(newsroom?.is_public)}
+                onSaved={saved}
+              />
             </section>
           </Step>
-
-          {claim.verdict && (
-            <Section id="card" title={t.card.title}>
-              {cardOpen ? (
-                <div className="space-y-4">
-                  <VerdictCard key={claim.verdict} ws={ws} item={item} verdict={claim.verdict} onShared={markShared} />
-                  <Button variant="ghost" onClick={() => setCardOpen(false)}>
-                    {t.detail.hideCard}
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-                  <p className="min-w-0 flex-1 text-muted-foreground">{t.detail.cardReady}</p>
-                  <Button variant="outline" onClick={() => setCardOpen(true)}>
-                    <IconImage aria-hidden />
-                    {t.detail.makeCard}
-                  </Button>
-                </div>
-              )}
-            </Section>
-          )}
         </div>
 
         <aside className="space-y-8">
-          <RoutePanel item={item} />
-          {canEdit && <PublicationPanel key={item.id} item={item} onSaved={(saved) => { mutate(saved, { revalidate: false }); mutateHistory(); }} />}
+          <WhoPanel ws={ws} itemId={id} />
           <Section id="details" title={t.detail.details}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
               <dt className="self-center text-muted-foreground">
@@ -499,6 +532,45 @@ export function ClaimDetail() {
             )}
           </Section>
         </aside>
+      </div>
+
+      {/* After the conclusion: where the rumour went and where the truth must follow. */}
+      <div className="mt-4 space-y-12 border-t border-foreground pt-8">
+        <RoutePanel
+          ws={ws}
+          item={item}
+          onDiffuseHere={(gap) => {
+            setRoutes((list) => (list.some((r) => r.channel === gap.channel && r.place === gap.place) ? list : [...list, { channel: gap.channel, place: gap.place, location: gap.location }]));
+            document.getElementById("diffuser")?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+        <DiffusePanel ws={ws} item={item} routes={routes} onRoutes={setRoutes} />
+
+        {claim.verdict && (
+          <section aria-labelledby="card" className="space-y-3">
+            <h2 id="card" className="font-display text-xl font-bold">
+              {t.card.title}
+            </h2>
+            {cardOpen ? (
+              <div className="space-y-4">
+                <VerdictCard key={claim.verdict} ws={ws} item={item} verdict={claim.verdict} onShared={() => mutateHistory()} />
+                <Button variant="ghost" onClick={() => setCardOpen(false)}>
+                  {t.detail.hideCard}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
+                <p className="min-w-0 flex-1 text-muted-foreground">{t.detail.cardReady}</p>
+                <Button variant="outline" onClick={() => setCardOpen(true)}>
+                  <IconImage aria-hidden />
+                  {t.detail.makeCard}
+                </Button>
+              </div>
+            )}
+          </section>
+        )}
+
+        <CarnetPanel ws={ws} item={item} />
       </div>
     </div>
   );

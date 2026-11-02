@@ -1,42 +1,41 @@
 "use client";
-import type { Item, Verdict } from "@fanilo/shared";
-import { VERDICTS } from "@fanilo/shared";
 import { useState } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { api, fetcher } from "@/lib/api";
+import { dossier } from "@/lib/i18n/fr/dossier";
 import { publication as t } from "@/lib/i18n/fr/publication";
-import { VERDICT_META } from "./verdict";
+import { IconBroadcast, IconMinusCircle, IconStamp } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
 type Settings = { settings: { double_signature: boolean; ai_enabled: boolean } };
-export function PublicationPanel({ item, onSaved }: { item: Item; onSaved: (item: Item) => void }) {
-  const base = `/workspaces/${item.workspace_id}`;
-  const { data: workspace } = useSWR<Settings>(base, fetcher);
-  const initial = item.data.verdict ?? item.data.verdict_suggested;
-  const [verdict, setVerdict] = useState<Verdict>(VERDICTS.includes(initial as Verdict) ? initial as Verdict : "unverifiable");
-  const [reason, setReason] = useState(typeof item.data.reason === "string" ? item.data.reason : "");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState(false);
-  async function sign(publish: boolean) {
-    setBusy(true); setError(false);
-    try { onSaved(await api<Item>(`${base}/items/${item.id}/sign`, { method: "POST", body: JSON.stringify({ verdict, reason, publish }) })); }
-    catch { setError(true); } finally { setBusy(false); }
-  }
-  async function release() {
-    setBusy(true); setError(false);
-    try { onSaved(await api<Item>(`${base}/items/${item.id}`, { method: "PATCH", body: JSON.stringify({ status: "published" }) })); }
-    catch { setError(true); } finally { setBusy(false); }
-  }
-  return <section className="mt-6 space-y-3 border-t border-border pt-5"><h3 className="font-display text-lg font-bold">{t.title}</h3><p className="text-sm text-muted-foreground">{t.lead}</p>
-    <label className="block text-sm font-semibold">{t.verdict}<select value={verdict} onChange={e => setVerdict(e.target.value as Verdict)} className="mt-1 block w-full rounded-md border border-input bg-background p-3">{VERDICTS.map(v => <option key={v} value={v}>{VERDICT_META[v].label}</option>)}</select></label>
-    <label className="block text-sm font-semibold">{t.reason}<textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={2000} className="mt-1 block w-full rounded-md border border-input bg-background p-3" /></label>
-    {workspace?.settings.double_signature && <p className="text-sm">{t.double}</p>}
-    {typeof item.data.signed_by === "string" && <p className="text-sm">{t.signed} · {String(item.data.signed_at || "")}</p>}
-    {error && <p role="alert">{t.failed}</p>}
-    <div className="flex flex-wrap gap-3"><Button disabled={busy || reason.trim().length < 10} onClick={() => void sign(!workspace?.settings.double_signature)}>{busy ? t.saving : workspace?.settings.double_signature ? t.sign : t.publish}</Button>
-      {workspace?.settings.double_signature && !!item.data.signed_by && item.status !== "published" && <Button variant="outline" disabled={busy} onClick={() => void release()}>{t.release}</Button>}
-    </div>
-  </section>;
+
+const s = dossier.sign.strip;
+
+/**
+ * What leaves the newsroom, in three tiers: what the public can already see, what this signature
+ * adds, and what never leaves (the reading, its percentage, the dossier, its questions).
+ */
+export function PublicStrip({ className }: { className?: string }) {
+  const rows = [
+    { icon: IconBroadcast, label: s.visible, text: s.visibleText },
+    { icon: IconStamp, label: s.after, text: s.afterText },
+    { icon: IconMinusCircle, label: s.never, text: s.neverText },
+  ];
+  return (
+    <section aria-label={s.label} className={cn("rounded-md border border-border bg-card", className)}>
+      <ul className="grid divide-y divide-border md:grid-cols-3 md:divide-x md:divide-y-0">
+        {rows.map(({ icon: Icon, label, text }) => (
+          <li key={label} className="flex gap-2.5 p-3 text-sm">
+            <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <p className="text-pretty">
+              <span className="font-bold">{label}</span> : {text}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 export function NewsroomRules({ ws }: { ws: string }) {

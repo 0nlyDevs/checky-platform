@@ -1,41 +1,97 @@
 "use client";
 
-import type { Status, Verdict } from "@fanilo/shared";
+import type { Item, Verdict } from "@fanilo/shared";
 import { VERDICTS } from "@fanilo/shared";
 import { useRef, useState } from "react";
-import { IconSparkle, IconWarning } from "@/lib/icons";
-import { type ClaimView, VERDICT_META } from "@/components/claims/verdict";
+import { toast } from "sonner";
+import { PublicStrip } from "@/components/claims/publication-panel";
+import { VERDICT_META } from "@/components/claims/verdict";
+import { type Byline, fmtWhen } from "@/components/dossier/types";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { api, ApiError } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
+import { IconCircleNotch, IconSparkle, IconStamp, IconWarning } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
-/** The status a verdict moves the claim to: confirmed → Vérifié, cleared → back to En cours. */
-export function statusAfter(verdict: Verdict | null, status: Status): Status {
-  if (verdict) return status === "to_check" || status === "in_progress" ? "verified" : status;
-  return status === "verified" ? "in_progress" : status;
+const s = t.dossier.sign;
+
+/**
+ * A verdict as the dossier states it: icon and word in Bricolage Grotesque, on its soft ground. Dashed while it
+ * is only a suggestion; solid, with the newsroom's and the journalist's names, once signed.
+ */
+export function VerdictBlock({
+  verdict,
+  suggested,
+  byline,
+  children,
+}: {
+  verdict: Verdict;
+  suggested: boolean;
+  byline?: Byline | null;
+  children?: React.ReactNode;
+}) {
+  const m = VERDICT_META[verdict];
+  const Icon = m.icon;
+  return (
+    <div className={cn("verdict-land rounded-md border-2 border-current p-4 md:p-5", suggested ? "border-dashed bg-card" : m.soft, m.ink)}>
+      <p className="flex items-center gap-2.5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
+        <Icon className="size-8 shrink-0" aria-hidden />
+        {m.label}
+      </p>
+      <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold">
+        {suggested ? <IconSparkle className="size-3.5" aria-hidden /> : <IconStamp className="size-3.5" aria-hidden />}
+        {suggested ? t.verify.suggestedBy : byline ? s.signedBy(byline.journalist, byline.newsroom, fmtWhen(byline.signedAt) ?? "") : t.site.pub.file.confirmed}
+      </p>
+      {children}
+    </div>
+  );
+}
+
+function errorText(e: unknown) {
+  return e instanceof ApiError ? (s.errors[e.code] ?? s.failed) : s.failed;
 }
 
 /**
- * The one consequential act on a claim. Choosing a verdict never commits on its own: a recap says
- * what it will change (team, card, status) and warns when it goes against the AI's suggestion.
- * Arrow keys move between the four verdicts (one Tab stop); Enter or a click opens the recap.
+ * 03 La conclusion. Knowing is not publishing: the reading only suggests, the journalist picks the
+ * verdict, writes the public explanation and signs. « Signer et publier » is the screen's one
+ * citron action; under double signature a journalist signs and another editor publishes.
  */
 export function VerdictDecision({
-  claim,
-  canEdit,
-  sourceCount,
-  onDecide,
+  ws,
+  item,
+  suggested,
+  reasonDraft,
+  byline,
+  canSign,
+  canRelease,
+  doubleSignature,
+  isPublic,
+  onSaved,
 }: {
-  claim: ClaimView;
-  canEdit: boolean;
-  sourceCount: number;
-  onDecide: (verdict: Verdict | null) => Promise<void>;
+  ws: string;
+  item: Item;
+  suggested: Verdict | null;
+  reasonDraft: string;
+  byline: Byline | null;
+  canSign: boolean;
+  /** An editor who did not sign it, under double signature. */
+  canRelease: boolean;
+  doubleSignature: boolean;
+  isPublic: boolean;
+  onSaved: (item: Item) => void;
 }) {
-  const [pending, setPending] = useState<Verdict | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [focusIndex, setFocusIndex] = useState(() => Math.max(0, VERDICTS.indexOf((claim.verdict ?? "true") as Verdict)));
+  const signedVerdict = typeof item.data.verdict === "string" && item.data.verdict in VERDICT_META ? (item.data.verdict as Verdict) : null;
+  const signed = Boolean(signedVerdict && item.data.signed_by);
+  const published = item.status === "published";
+  const [editing, setEditing] = useState(!signed);
+  const [choice, setChoice] = useState<Verdict | null>(signedVerdict ?? suggested);
+  const [picking, setPicking] = useState(!suggested && !signedVerdict);
+  const [reason, setReason] = useState(typeof item.data.reason === "string" && item.data.reason ? item.data.reason : reasonDraft);
+  const [busy, setBusy] = useState(false);
+  const [focusIndex, setFocusIndex] = useState(() => Math.max(0, VERDICTS.indexOf(choice ?? "true")));
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
-  const suggestion = claim.suggested && !claim.verdict ? claim.suggested : null;
+  const base = `/workspaces/${ws}/items/${item.id}`;
 
   function move(e: React.KeyboardEvent, i: number) {
     const step = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : e.key === "ArrowLeft" || e.key === "ArrowUp" ? -1 : 0;
@@ -46,118 +102,173 @@ export function VerdictDecision({
     refs.current[next]?.focus();
   }
 
-  async function confirm() {
-    if (!pending) return;
-    setSaving(true);
-    await onDecide(pending);
-    setSaving(false);
-    setPending(null);
+  async function sign(publish: boolean, verdict: Verdict | null = choice, text: string = reason) {
+    if (!verdict) return;
+    setBusy(true);
+    try {
+      const saved = await api<Item>(`${base}/sign`, { method: "POST", body: JSON.stringify({ verdict, reason: text.trim(), publish }) });
+      onSaved(saved);
+      setEditing(false);
+      const word = VERDICT_META[verdict].label;
+      toast.success(saved.status === "published" ? s.published(word) : s.done(word));
+    } catch (e) {
+      toast.error(errorText(e));
+    } finally {
+      setBusy(false);
+    }
   }
 
-  const nextStatus = pending ? statusAfter(pending, claim.status as Status) : null;
+  async function release() {
+    setBusy(true);
+    try {
+      onSaved(await api<Item>(`${base}/release`, { method: "POST" }));
+      toast.success(s.released);
+    } catch (e) {
+      toast.error(errorText(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // Signed: the solid block, the byline, and publication when it is still to come.
+  if (signed && signedVerdict && !editing) {
+    const signedReason = typeof item.data.reason === "string" ? item.data.reason : "";
+    return (
+      <div className="space-y-4">
+        <VerdictBlock verdict={signedVerdict} suggested={false} byline={byline}>
+          {signedReason && <p className="mt-3 max-w-[70ch] text-pretty text-foreground">{signedReason}</p>}
+        </VerdictBlock>
+        {published && <p className="text-sm text-muted-foreground">{isPublic ? s.publishedNote : s.privateNote}</p>}
+        {!published && doubleSignature &&
+          (canRelease ? (
+            <Button variant="action" size="xl" onClick={release} disabled={busy}>
+              {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
+              {s.release}
+            </Button>
+          ) : (
+            <p className="text-sm">{s.waitingRelease}</p>
+          ))}
+        {!published && !doubleSignature && canSign && (
+          <Button variant="action" size="xl" onClick={() => sign(true, signedVerdict, signedReason)} disabled={busy || signedReason.trim().length < 10}>
+            {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
+            {s.signPublish}
+          </Button>
+        )}
+        {canSign && (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="block text-sm text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+          >
+            {s.change}
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  const tooShort = reason.trim().length < 10;
+  const against = suggested && choice && choice !== suggested ? suggested : null;
 
   return (
-    <div className="space-y-4">
-      {/* The conclusion as a block: dashed while it is the AI's suggestion, solid once a journalist confirmed it. */}
-      {(claim.verdict ?? suggestion) && (
-        <VerdictBlock verdict={(claim.verdict ?? suggestion)!} suggested={!claim.verdict}>
-          {suggestion && canEdit && !pending && (
-            <Button variant="action" size="lg" className="mt-4 h-11 px-4" onClick={() => setPending(suggestion)}>
-              {t.detail.decision.review(VERDICT_META[suggestion].label)}
-            </Button>
+    <div className="space-y-5">
+      <p className="max-w-[70ch] text-pretty text-muted-foreground">{s.lead}</p>
+
+      {choice && !picking ? (
+        <VerdictBlock verdict={choice} suggested={choice === suggested && !signedVerdict}>
+          {canSign && (
+            <button
+              type="button"
+              onClick={() => setPicking(true)}
+              className="mt-3 text-sm font-medium text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground"
+            >
+              {s.other}
+            </button>
           )}
         </VerdictBlock>
-      )}
-
-      <div role="radiogroup" aria-label={t.detail.verdictTitle} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {VERDICTS.map((v, i) => {
-          const m = VERDICT_META[v];
-          const Icon = m.icon;
-          const active = claim.verdict === v;
-          const chosen = pending === v;
-          return (
-            <button
-              key={v}
-              ref={(el) => {
-                refs.current[i] = el;
-              }}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              tabIndex={i === focusIndex ? 0 : -1}
-              disabled={!canEdit}
-              onKeyDown={(e) => move(e, i)}
-              onFocus={() => setFocusIndex(i)}
-              onClick={() => setPending(active ? null : v)}
-              className={cn(
-                "flex h-11 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
-                active ? cn(m.soft, m.ink, "border-2 border-current font-bold") : cn("border-border bg-card hover:bg-accent", m.ink),
-                chosen && !active && "border-current ring-2 ring-current/25",
-              )}
-            >
-              <Icon className="size-4" aria-hidden />
-              {m.label}
-            </button>
-          );
-        })}
-      </div>
-
-      {pending && (
-        <div role="alertdialog" aria-labelledby="decision-title" className="rounded-lg border border-border bg-card p-4">
-          <p id="decision-title" className="font-semibold">
-            {t.detail.decision.title(VERDICT_META[pending].label)}
-          </p>
-          <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
-            <li>{t.detail.decision.visible}</li>
-            {nextStatus && nextStatus !== claim.status && <li>{t.detail.decision.status(t.status[nextStatus])}</li>}
-            <li>{t.detail.decision.sources(sourceCount)}</li>
-          </ul>
-          {claim.suggested && claim.suggested !== pending && (
-            <p className="mt-3 flex items-start gap-2 rounded-md bg-verdict-misleading-soft px-3 py-2 text-sm text-verdict-misleading-ink">
-              <IconWarning className="mt-0.5 size-4 shrink-0" aria-hidden />
-              {t.detail.decision.againstAi(VERDICT_META[claim.suggested].label)}
-            </p>
-          )}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button onClick={confirm} disabled={saving} autoFocus>
-              {t.detail.decision.confirm(VERDICT_META[pending].label)}
-            </Button>
-            <Button variant="ghost" onClick={() => setPending(null)} disabled={saving}>
-              {t.detail.cancel}
-            </Button>
-          </div>
+      ) : (
+        <div role="radiogroup" aria-label={s.verdict} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {VERDICTS.map((v, i) => {
+            const m = VERDICT_META[v];
+            const Icon = m.icon;
+            const on = choice === v;
+            return (
+              <button
+                key={v}
+                ref={(el) => {
+                  refs.current[i] = el;
+                }}
+                type="button"
+                role="radio"
+                aria-checked={on}
+                tabIndex={i === focusIndex ? 0 : -1}
+                disabled={!canSign}
+                onKeyDown={(e) => move(e, i)}
+                onFocus={() => setFocusIndex(i)}
+                onClick={() => {
+                  setChoice(v);
+                  setPicking(false);
+                }}
+                className={cn(
+                  "flex h-12 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+                  m.ink,
+                  on ? cn(m.soft, "border-2 border-current font-bold") : "border-border bg-card hover:bg-muted",
+                )}
+              >
+                <Icon className="size-4" aria-hidden />
+                {m.label}
+              </button>
+            );
+          })}
         </div>
       )}
 
-      {canEdit && claim.verdict && !pending && (
-        <button
-          type="button"
-          onClick={() => onDecide(null)}
-          className="text-sm text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
-        >
-          {t.detail.clearVerdict}
-        </button>
+      {against && (
+        <p className="flex items-start gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm">
+          <IconWarning className="mt-0.5 size-4 shrink-0" aria-hidden />
+          {s.againstAi(VERDICT_META[against].label)}
+        </p>
       )}
-      {!canEdit && <p className="text-sm text-muted-foreground">{t.detail.readOnly}</p>}
-    </div>
-  );
-}
 
-/** A verdict as the dossier states it: icon and word in Bricolage Grotesque, on its soft ground. */
-function VerdictBlock({ verdict, suggested, children }: { verdict: Verdict; suggested: boolean; children?: React.ReactNode }) {
-  const m = VERDICT_META[verdict];
-  const Icon = m.icon;
-  return (
-    <div className={cn("verdict-land rounded-md border-2 border-current p-4 md:p-5", suggested && "border-dashed", m.soft, m.ink)}>
-      <p className="flex items-center gap-2.5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
-        <Icon className="size-8 shrink-0" aria-hidden />
-        {m.label}
-      </p>
-      <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold">
-        {suggested && <IconSparkle className="size-3.5" aria-hidden />}
-        {suggested ? t.verify.suggestedBy : t.site.pub.file.confirmed}
-      </p>
-      {children}
+      {canSign ? (
+        <>
+          <div className="space-y-1.5">
+            <Label htmlFor="public-reason" className="font-bold">
+              {s.reason}
+            </Label>
+            <p id="public-reason-hint" className="text-sm text-muted-foreground">
+              {s.reasonHint}
+            </p>
+            <textarea
+              id="public-reason"
+              aria-describedby="public-reason-hint"
+              rows={4}
+              maxLength={2000}
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              className="w-full resize-y rounded-md border border-input bg-card px-3 py-2 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
+            />
+          </div>
+
+          <PublicStrip />
+
+          {doubleSignature && <p className="text-sm text-muted-foreground">{s.double}</p>}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button variant="action" size="xl" disabled={busy || !choice || tooShort} onClick={() => sign(!doubleSignature)}>
+              {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
+              {busy ? s.signing : doubleSignature ? s.signOnly : s.signPublish}
+            </Button>
+            {signed && (
+              <Button variant="ghost" onClick={() => setEditing(false)} disabled={busy}>
+                {s.cancel}
+              </Button>
+            )}
+            {tooShort && choice && <span className="text-sm text-muted-foreground">{s.reasonShort}</span>}
+          </div>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">{s.cannot}</p>
+      )}
     </div>
   );
 }
