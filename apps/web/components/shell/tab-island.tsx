@@ -48,7 +48,8 @@ export function TabIsland({ ws, items }: { ws?: string; items: NavItem[] }) {
     if (!placed.current) p.style.transition = "none";
     p.style.opacity = "1";
     p.style.width = `${el.offsetWidth}px`;
-    p.style.transform = `translateX(${el.offsetLeft}px)`;
+    // the tab is measured inside the list, the pill inside the island: add the island's padding
+    p.style.transform = `translateX(${el.offsetLeft + (island.current?.offsetLeft ?? 0)}px)`;
     if (!placed.current) {
       void p.offsetWidth;
       p.style.transition = "";
