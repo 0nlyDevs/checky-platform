@@ -229,3 +229,33 @@ def test_speak_uses_elevenlabs_once_per_answer_and_falls_back_without_a_key(monk
     assert (
         len(calls) == 1 and calls[0]["text"] == "C'est faux." and calls[0]["language_code"] == "fr"
     )
+
+
+def test_flashes_of_the_day_and_short_links(as_user, monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "public_web_url", "https://checky.example")
+    alice = as_user("alice")
+    ws, slug = _newsroom(alice)
+    first = _claim(
+        alice,
+        ws,
+        "Une vidéo montre l'inondation d'Analakely ce matin",
+        reason="Images de 2019. Elles circulent chaque année.",
+    )
+    alice.patch(f"/api/v1/workspaces/{ws}/items/{first}", json={"data": {"ref": "FAN-0142"}})
+    _claim(alice, ws, "Le bac est reporté", status="in_progress")
+    anon = TestClient(app)
+    out = anon.get(f"/api/v1/public/flashs?newsroom={slug}").json()
+    assert out["newsroom"]["slug"] == slug and len(out["items"]) == 1
+    line = out["items"][0]
+    assert line["fr"] == (
+        "1. Faux — Une vidéo montre l'inondation d'Analakely ce matin. Images de 2019. "
+        "https://checky.example/v/142"
+    )
+    assert line["mg"].startswith("1. Diso — ") and line["link"] == "https://checky.example/v/142"
+    assert anon.get("/api/v1/public/flashs").json()["items"][0]["id"] == first
+    assert anon.get("/api/v1/public/flashs?newsroom=nope").status_code == 404
+    assert anon.get("/api/v1/public/v/142").json()["id"] == first
+    assert anon.get("/api/v1/public/v/FAN-0142").json()["id"] == first
+    assert anon.get("/api/v1/public/v/143").status_code == 404

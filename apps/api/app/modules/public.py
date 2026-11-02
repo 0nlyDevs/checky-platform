@@ -366,6 +366,93 @@ async def tip_status(token: str, db: Db) -> TipStatusOut:
     )
 
 
+# --- « Flashs du jour »: today's signed verdicts as lines to read on air or print, and short links
+class FlashLine(BaseModel):
+    n: int
+    id: uuid.UUID
+    ref: str | None
+    verdict: str
+    title: str
+    newsroom: str
+    link: str
+    fr: str
+    mg: str  # the verdict word in Malagasy; the newsroom's own words stay as written
+
+
+class FlashsOut(BaseModel):
+    date: str
+    newsroom: NewsroomOut | None
+    items: list[FlashLine]
+
+
+def _published_on(item: Item) -> datetime:
+    d = item.data or {}
+    for key in ("published_at", "signed_at"):
+        if moment := dates.parse_moment(d.get(key)):
+            return moment
+    return item.updated_at
+
+
+@router.get("/flashs")
+async def flashs(db: Db, newsroom: str | None = None) -> FlashsOut:
+    from zoneinfo import ZoneInfo
+
+    from app.modules.sms import short_link, verdict_line
+
+    query = _published().order_by(Item.updated_at.desc()).limit(300)
+    room, zone = None, dates.EAT
+    if newsroom:
+        ws = await db.scalar(
+            select(Workspace).where(Workspace.slug == newsroom, Workspace.is_public.is_(True))
+        )
+        if ws is None:
+            raise ApiError(404, "not_found", "Newsroom not found")
+        query, room = query.where(Workspace.id == ws.id), NewsroomOut(slug=ws.slug, name=ws.name)
+        try:  # the newsroom's own day
+            zone = ZoneInfo((ws.settings or {}).get("timezone") or "Indian/Antananarivo")
+        except (ValueError, KeyError):
+            zone = dates.EAT
+    today = datetime.now(zone).date()
+    rows = [
+        (i, w)
+        for i, w in _distinct((await db.execute(query)).all())
+        if _published_on(i).astimezone(zone).date() == today
+    ]
+    items = []
+    for n, (item, ws) in enumerate(rows[:20], 1):
+        v = await _verdict(db, item, ws)
+        items.append(
+            FlashLine(
+                n=n,
+                id=v.id,
+                ref=v.ref,
+                verdict=v.verdict,
+                title=v.title,
+                newsroom=ws.name,
+                link=short_link(v),
+                fr=f"{n}. {verdict_line(v, 'fr')}",
+                mg=f"{n}. {verdict_line(v, 'mg')}",
+            )
+        )
+    return FlashsOut(date=today.isoformat(), newsroom=room, items=items)
+
+
+@router.get("/v/{ref}")
+async def short_verdict(ref: str, db: Db) -> VerdictOut:
+    """`/v/145` → the newest public verdict whose reference ends with that number (FAN-0145)."""
+    m = re.search(r"(\d{1,8})$", ref.strip())
+    if m is None:
+        raise ApiError(404, "not_found", "Verdict not found")
+    wanted = int(m[1])
+    for item, ws in (
+        await db.execute(_published().order_by(Item.updated_at.desc()).limit(2000))
+    ).all():
+        found = re.search(r"(\d+)$", (item.data or {}).get("ref") or "")
+        if found and int(found[1]) == wanted:
+            return await _verdict(db, item, ws)
+    raise ApiError(404, "not_found", "Verdict not found")
+
+
 # --- a partner radio's token link (no account): who it is, for the flashes page it reads on air
 class RadioPublicOut(BaseModel):
     name: str
