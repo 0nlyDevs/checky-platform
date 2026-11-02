@@ -20,13 +20,14 @@ kept as `simulated` and never handed to the gateway.
 import hmac
 import logging
 import re
+import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Header, Query
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 
 from app.core import contact, places
 from app.core.access import Admin, Db
@@ -36,6 +37,7 @@ from app.core.errors import ApiError
 from app.core.models import (
     Item,
     PublicQuestion,
+    RadioPartner,
     Route,
     SmsMessage,
     SmsSubscriber,
@@ -529,3 +531,92 @@ async def messages(
         .limit(limit)
     )
     return [_sms_out(m) for m in rows]
+
+
+# --- demo: fictional subscribers and askers on the pitch rumour, and one partner radio
+DEMO_SUBSCRIBERS = (
+    ("+261340000001", "Atsimo-Andrefana", "mg"),
+    ("+261340000002", "Analamanga", "fr"),
+)
+DEMO_QUESTIONS = (
+    ("+261340000003", "Marina ve fa 72 ora tsy hisy jiro eto Toliara ?", "Toliara", "mg", "sms"),
+    (
+        "+261340000004",
+        "72 heures de délestage, c'est vrai ? On est à Toliara",
+        "Toliara",
+        "fr",
+        "sms",
+    ),
+    (
+        "+261340000005",
+        "Délestage de 72 heures selon la JIRAMA, vrai ou faux ?",
+        "Toliara",
+        "fr",
+        "sms",
+    ),
+    (
+        "+261340000006",
+        "La JIRAMA coupe vraiment 72 heures à Antananarivo ?",
+        "Antananarivo",
+        "fr",
+        "web",
+    ),
+)
+
+
+async def seed_demo(db, workspace_id: uuid.UUID, user_id: str, items: dict[str, Item]) -> None:
+    """Idempotent: the demo radio and the demo questions of this newsroom are replaced; the two
+    fictional subscribers are updated in place. Without SEAL_SECRET no contact is hashed, so the
+    subscribers are skipped and the questions carry no contact (they still count for the desk)."""
+    rumour = items.get("FAN-0145")
+    await db.execute(
+        delete(PublicQuestion).where(
+            PublicQuestion.workspace_id == workspace_id,
+            PublicQuestion.location["demo"].astext == "true",
+        )
+    )
+    await db.execute(
+        delete(RadioPartner).where(
+            RadioPartner.workspace_id == workspace_id, RadioPartner.is_demo.is_(True)
+        )
+    )
+    db.add(
+        RadioPartner(
+            workspace_id=workspace_id,
+            name="Radio Fanambarana (démo)",
+            frequency="FM 98.4 (démo)",
+            location=places.gazetteer("Toamasina") or {},
+            languages=["mg", "fr"],
+            contact_role="Rédaction en chef (démo)",
+            whatsapp="+261 34 00 000 07",
+            format_pref="script",
+            hours="06:00, 12:00, 18:00",
+            token=secrets.token_urlsafe(24),
+            is_demo=True,
+        )
+    )
+    protected = contact.configured()
+    if protected:
+        for number, region, lang in DEMO_SUBSCRIBERS:
+            digest = contact.digest("phone", number)
+            sub = await db.get(SmsSubscriber, digest)
+            if sub is None:
+                sub = SmsSubscriber(phone_hash=digest, phone_masked=contact.mask("phone", number))
+                db.add(sub)
+            sub.region, sub.language, sub.active = region, lang, True
+    else:
+        log.info("demo: SEAL_SECRET is empty, no demo SMS subscribers")
+    for number, text, town, lang, channel in DEMO_QUESTIONS:
+        where = places.gazetteer(town) or {}
+        db.add(
+            PublicQuestion(
+                workspace_id=workspace_id,
+                item_id=rumour.id if rumour else None,
+                text=text,
+                channel=channel,
+                location={**where, "lang": lang, "kind": "phone", "demo": True},
+                contact_hash=contact.digest("phone", number) if protected else None,
+                contact_masked=contact.mask("phone", number),
+            )
+        )
+    await db.flush()

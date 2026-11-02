@@ -232,3 +232,27 @@ def test_the_simulator_answers_from_a_fictional_number_and_never_sends(as_user, 
     assert bob.post(url, json={"text": "AIDE"}).status_code == 403
     monkeypatch.setattr(get_settings(), "sms_gateway_secret", "")
     assert alice.post(url, json={"text": "AIDE"}).status_code == 503
+
+
+def test_demo_reset_seeds_the_line_twice_without_duplicates(as_user):
+    import asyncio
+
+    alice = as_user("alice")
+    ws = alice.post("/api/v1/workspaces", json={"name": "Démo"}).json()["id"]
+    for _ in range(2):
+        assert alice.post(f"/api/v1/workspaces/{ws}/demo/reset").status_code == 200
+    radios = alice.get(f"/api/v1/workspaces/{ws}/radios").json()
+    assert [r["name"] for r in radios] == ["Radio Fanambarana (démo)"] and radios[0]["is_demo"]
+    groups = alice.get(f"/api/v1/workspaces/{ws}/questions").json()
+    rumour = next(g for g in groups if g["item_ref"] == "FAN-0145")
+    assert rumour["count"] == 4 and rumour["regions"]["Atsimo-Andrefana"] == 3
+    assert rumour["channels"] == {"sms": 3, "web": 1}
+    # signing and publishing the pitch rumour texts the askers and the Toliara subscriber
+    item = rumour["item_id"]
+    alice.patch(
+        f"/api/v1/workspaces/{ws}/items/{item}",
+        json={"status": "published", "data": {"verdict": "false", "reason": "Quatre heures."}},
+    )
+    assert asyncio.run(_notify(item)) == 4  # 4 askers; the Toliara subscriber needs a route
+    log = alice.get(f"/api/v1/workspaces/{ws}/sms/messages").json()
+    assert {m["status"] for m in log} == {"simulated"}  # fictional numbers: never sent
