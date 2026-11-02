@@ -143,7 +143,7 @@ export function VerdictDecision({
   );
 }
 
-/** A verdict as the dossier states it: icon and word in Archivo, on its soft ground. */
+/** A verdict as the dossier states it: icon and word in Bricolage Grotesque, on its soft ground. */
 function VerdictBlock({ verdict, suggested, children }: { verdict: Verdict; suggested: boolean; children?: React.ReactNode }) {
   const m = VERDICT_META[verdict];
   const Icon = m.icon;

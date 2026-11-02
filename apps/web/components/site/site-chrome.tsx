@@ -60,7 +60,7 @@ function Bar({ pathname }: { pathname: string }) {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <AssistantLauncher variant="header" />
-          <Link href="/connexion" className="hidden h-10 items-center rounded-md bg-foreground px-3.5 text-sm font-bold text-background outline-none hover:bg-foreground/85 focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex">
+          <Link href="/connexion" className="hidden h-10 items-center rounded-md bg-foreground px-3.5 text-sm font-bold text-background outline-none hover:bg-foreground/85 hover:text-background focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex">
             {s.nav.newsroom}
           </Link>
         </div>

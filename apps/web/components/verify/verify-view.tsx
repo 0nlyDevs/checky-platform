@@ -466,7 +466,7 @@ function Board({
               <ul className="mt-2 space-y-2">
                 {result.signals.map((s, i) => (
                   <li key={i} className="arrive text-sm" style={{ "--i": i } as React.CSSProperties}>
-                    <span className="font-bold">{c.signal[s.type] ?? s.type}</span> · <span className="text-muted-foreground">« {s.quote} »</span>
+                    <span className="font-bold">{c.signal[s.type] ?? s.type}</span> · <span className="quote text-muted-foreground">« {s.quote} »</span>
                     {s.why && <span className="block text-pretty text-muted-foreground">{s.why}</span>}
                   </li>
                 ))}
@@ -609,7 +609,7 @@ function Conclusion({ r }: { r: Result }) {
                       <span>{c.result(e.result)}</span>
                     )}
                   </p>
-                  <blockquote className="mt-1.5 text-pretty text-muted-foreground">« {e.quote} »</blockquote>
+                  <blockquote className="quote mt-1.5 text-pretty text-muted-foreground">« {e.quote} »</blockquote>
                 </li>
               );
             })}
