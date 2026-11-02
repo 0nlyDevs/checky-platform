@@ -42,7 +42,7 @@ export function PermissionsMatrix({ ws }: { ws: string }) {
       ) : (
         <>
           {/* Phones scroll the grid sideways; the action column stays put. */}
-          <div className="mt-4 overflow-x-auto rounded-md border border-border">
+          <div className="relative mt-4 overflow-x-auto rounded-md border border-border">
             <table className="w-full min-w-[38rem] border-collapse text-sm">
               <caption className="sr-only">{m.title}</caption>
               <thead>
