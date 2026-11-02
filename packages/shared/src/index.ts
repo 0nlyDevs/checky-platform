@@ -13,6 +13,8 @@ export type ItemIn = Schemas["ItemIn"];
 export type ItemPatch = Schemas["ItemPatch"];
 export type Comment = Schemas["CommentOut"];
 export type Activity = Schemas["ActivityOut"];
+export type AiCompleteIn = Schemas["CompleteIn"];
+export type AiCompletion = Schemas["CompleteOut"];
 
 export const ROLES = ["admin", "editor", "journalist"] as const;
 export type Role = (typeof ROLES)[number];

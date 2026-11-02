@@ -17,10 +17,30 @@ class Settings(BaseSettings):
     auth_audience: str = "http://localhost:3000"
     cors_origins: str = "http://localhost:3000"
 
+    # AI gateway: providers are tried in this order; one without a key is skipped.
+    llm_providers: str = "groq,gemini,nvidia"
+    groq_api_key: str = ""
+    gemini_api_key: str = ""
+    nvidia_api_key: str = ""
+    # Empty means the gateway's default model for that provider.
+    llm_model_groq: str = ""
+    llm_model_gemini: str = ""
+    llm_model_nvidia: str = ""
+    ai_timeout: float = 30.0
+    # Attempts per provider on 429, 5xx or timeout before falling back to the next one.
+    ai_attempts: int = 2
+    # Development cache keyed on the request, so reloads do not burn free-tier quota.
+    ai_cache: bool = False
+    ai_cache_dir: str = ".ai-cache"
+
     @property
     def async_database_url(self) -> str:
         # Same DATABASE_URL as the web app, with the asyncpg driver for SQLAlchemy.
         return self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+    @property
+    def llm_provider_list(self) -> list[str]:
+        return [p.strip() for p in self.llm_providers.split(",") if p.strip()]
 
     @property
     def cors_origin_list(self) -> list[str]:

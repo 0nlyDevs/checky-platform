@@ -16,7 +16,7 @@ SessionLocal = async_sessionmaker(engine, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
-    """All app tables live in the `app` schema; Better Auth owns `auth`."""
+    """All app tables live in the `app` schema; Better Auth owns `better_auth`."""
 
 
 async def get_db() -> AsyncIterator[AsyncSession]:

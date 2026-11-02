@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any
 
 from sqlalchemy import (
+    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -20,14 +21,14 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
 
-# Better Auth's user table (schema `auth`), read-only here and never migrated by Alembic.
+# Better Auth's user table (schema `better_auth`; Supabase reserves `auth`), read-only here and never migrated by Alembic.
 auth_user = Table(
     "user",
     Base.metadata,
     Column("id", Text, primary_key=True),
     Column("name", Text),
     Column("email", Text),
-    schema="auth",
+    schema="better_auth",
 )
 
 ROLES = ("admin", "editor", "journalist")
@@ -66,7 +67,7 @@ class Invitation(_Row):
     __tablename__ = "invitation"
 
     workspace_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("app.workspace.id", ondelete="CASCADE")
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
     )
     token: Mapped[str] = mapped_column(String(64), unique=True)
     role: Mapped[str] = mapped_column(String(20))
@@ -138,3 +139,21 @@ class Job(_Row):
     error: Mapped[str | None] = mapped_column(Text)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class AiCall(_Row):
+    """One provider attempt through the AI gateway. Never stores prompt or answer text."""
+
+    __tablename__ = "ai_call"
+
+    workspace_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="SET NULL"), index=True
+    )
+    provider: Mapped[str] = mapped_column(String(40))
+    model: Mapped[str] = mapped_column(String(120))
+    latency_ms: Mapped[int]
+    tokens_in: Mapped[int | None]
+    tokens_out: Mapped[int | None]
+    ok: Mapped[bool] = mapped_column(Boolean)
+    error: Mapped[str | None] = mapped_column(Text)
+    cached: Mapped[bool] = mapped_column(Boolean, default=False)

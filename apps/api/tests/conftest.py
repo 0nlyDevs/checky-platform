@@ -30,27 +30,25 @@ from app.core.config import get_settings
 from app.core.db import engine
 from app.main import api
 
-TABLES = (
-    "app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
-)
+TABLES = "app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _migrate():
     subprocess.run(["alembic", "upgrade", "head"], check=True, cwd=Path(__file__).parents[1])
 
-    # Better Auth owns auth."user" in real deployments; tests need a stand-in to join on.
+    # Better Auth owns better_auth."user" in real deployments; tests need a stand-in to join on.
     async def auth_table():
         async with engine.begin() as conn:
-            await conn.execute(text("CREATE SCHEMA IF NOT EXISTS auth"))
+            await conn.execute(text("CREATE SCHEMA IF NOT EXISTS better_auth"))
             await conn.execute(
                 text(
-                    'CREATE TABLE IF NOT EXISTS auth."user" (id text PRIMARY KEY, name text, email text)'
+                    'CREATE TABLE IF NOT EXISTS better_auth."user" (id text PRIMARY KEY, name text, email text)'
                 )
             )
             await conn.execute(
                 text(
-                    """INSERT INTO auth."user" (id, name, email) VALUES
+                    """INSERT INTO better_auth."user" (id, name, email) VALUES
                     ('alice', 'Alice Rabe', 'alice@example.test'), ('bob', 'Bob Rakoto', 'bob@example.test')
                     ON CONFLICT (id) DO NOTHING"""
                 )

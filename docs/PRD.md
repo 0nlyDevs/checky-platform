@@ -290,7 +290,7 @@ The UI should look like a calm, trustworthy newsroom tool: one design system set
 
 ## Data model
 
-Better Auth manages its own tables (`user`, `session`, `account`, `verification`, `jwks`) in the `auth` schema; our tables live in the `app` schema, all with UUID primary keys and `created_at` / `updated_at`.
+Better Auth manages its own tables (`user`, `session`, `account`, `verification`, `jwks`) in the `better_auth` schema (Supabase reserves `auth` for its own auth service); our tables live in the `app` schema, all with UUID primary keys and `created_at` / `updated_at`.
 
 | Table | Key fields | Notes |
 | --- | --- | --- |

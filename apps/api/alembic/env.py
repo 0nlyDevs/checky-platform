@@ -29,15 +29,15 @@ config.set_main_option("sqlalchemy.url", get_settings().async_database_url)
 
 
 def include_name(name, type_, parent_names):
-    # Only manage our own schema; Better Auth owns `auth`.
+    # Only manage our own schema; Better Auth owns `better_auth`.
     if type_ == "schema":
         return name == "app"
     return True
 
 
 def include_object(obj, name, type_, reflected, compare_to):
-    # auth."user" is declared for joins only; Better Auth creates and owns it.
-    return not (type_ == "table" and getattr(obj, "schema", None) == "auth")
+    # better_auth."user" is declared for joins only; Better Auth creates and owns it.
+    return not (type_ == "table" and getattr(obj, "schema", None) == "better_auth")
 
 
 # other values from the config, defined by the needs of env.py,
