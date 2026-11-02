@@ -114,3 +114,38 @@ async def test_parallel_nodes_cannot_modify_sibling_or_callers_nested_state():
         .run(original)
     )
     assert result["observed"] == original["nested"]["value"] == "original"
+
+
+async def test_a_loop_reruns_only_the_nodes_that_ask_for_it():
+    runs = {"web": 0, "registry": 0, "synthesis": 0}
+
+    def counting(name):
+        async def fn(state):
+            runs[name] += 1
+            return {name: runs[name]}
+
+        return fn
+
+    g = (
+        Graph()
+        .stage(
+            "facts",
+            [Node("Web", counting("web")), Node("Registre", counting("registry"), rerun=False)],
+        )
+        .stage("synthesis", [Node("Synthèse", counting("synthesis"), llm=True, rerun=False)])
+        .stage(
+            "critique",
+            [Node("Contradicteur", _ok, llm=True, rerun=False)],
+            loop_to="facts",
+            should_loop=lambda s: True,
+        )
+    )
+    events = []
+
+    async def emit(event, data):
+        events.append(data)
+
+    state = await g.run({}, emit=emit)
+    assert runs == {"web": 2, "registry": 1, "synthesis": 1}
+    assert state["web"] == 2 and state["registry"] == 1
+    assert [e["agent"] for e in events if e["status"] == "running"].count("Registre") == 1

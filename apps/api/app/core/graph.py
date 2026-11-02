@@ -11,6 +11,8 @@ the product's rules:
   others.
 - Every node reports through `emit("agent", {...})` as it starts and ends, so the live log on
   Vérifier shows the checks racing side by side.
+- A stage may send the graph back once (`loop_to`); on that second pass only the nodes marked
+  `rerun=True` run again, so a loop costs one targeted search, not another round of model calls.
 - `checkpoint(state)` is awaited after every stage, so a caller can store stage snapshots. Automatic resume is not implemented.
 - The last node of a verification is the journalist (« Signer et publier »): the graph can end in a
   reading, never in a publication. That node is not run here; it is the person.
@@ -52,6 +54,9 @@ class Node:
     llm: bool = False
     # seconds before the node is reported as failed (timed out) and the graph moves on
     timeout: float = 25.0
+    # False: when a loop sends the graph back through this node's stage, the node is not run
+    # again (its first answer stands). The Contradicteur's loop re-runs the Web search only.
+    rerun: bool = True
 
 
 @dataclass
@@ -99,10 +104,13 @@ class Graph:
     ) -> dict[str, Any]:
         state = {**state, "trace": list(state.get("trace") or []), "ai_enabled": ai_enabled}
         loops: dict[str, int] = {}
+        seen: set[str] = set()
         i = 0
         while i < len(self.stages):
             stage = self.stages[i]
-            await self._run_stage(stage, state, emit, ai_enabled)
+            again = stage.name in seen
+            seen.add(stage.name)
+            await self._run_stage(stage, state, emit, ai_enabled, again)
             if checkpoint:
                 await checkpoint(state)
             if (
@@ -119,10 +127,16 @@ class Graph:
         return state
 
     async def _run_stage(
-        self, stage: Stage, state: dict[str, Any], emit: Emit | None, ai_enabled: bool
+        self,
+        stage: Stage,
+        state: dict[str, Any],
+        emit: Emit | None,
+        ai_enabled: bool,
+        again: bool = False,
     ) -> None:
+        nodes = [node for node in stage.nodes if node.rerun or not again]
         results = await asyncio.gather(
-            *(self._run_node(stage, node, state, emit, ai_enabled) for node in stage.nodes)
+            *(self._run_node(stage, node, state, emit, ai_enabled) for node in nodes)
         )
         # Merge after the whole stage, so parallel nodes never read each other's half-written keys.
         for update in results:
