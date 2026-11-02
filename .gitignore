@@ -9,3 +9,9 @@ __pycache__/
 .venv/
 .pytest_cache/
 .ruff_cache/
+
+# Impeccable working files (config, PRODUCT.md, DESIGN.md and surface briefs are committed)
+apps/web/.impeccable/mocks/
+apps/web/.impeccable/review/
+apps/web/.impeccable/decision-payload.json
+apps/web/.impeccable/*.local.json

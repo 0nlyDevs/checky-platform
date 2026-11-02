@@ -1,0 +1,115 @@
+"use client";
+
+import type { Me, Workspace } from "@fanilo/shared";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import useSWR, { mutate as globalMutate } from "swr";
+import { LoaderCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api, fetcher } from "@/lib/api";
+import { t } from "@/lib/i18n/fr";
+
+function Onboarding() {
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    setPending(true);
+    setError(null);
+    try {
+      const ws = await api<Workspace>("/workspaces", {
+        method: "POST",
+        body: JSON.stringify({ name: String(form.get("name")) }),
+      });
+      if (form.get("demo")) await api(`/workspaces/${ws.id}/demo/reset`, { method: "POST" });
+      await globalMutate("/me");
+      router.replace(`/w/${ws.id}/affirmations`);
+    } catch {
+      setError(t.auth.errors.generic);
+      setPending(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-lg px-5 py-12 lg:py-20">
+      <h1 className="text-2xl font-semibold tracking-tight text-balance">{t.onboarding.title}</h1>
+      <p className="mt-2 text-muted-foreground">{t.onboarding.lead}</p>
+      <form onSubmit={onSubmit} className="mt-8 space-y-5">
+        <div className="space-y-2">
+          <Label htmlFor="ws-name">{t.onboarding.nameLabel}</Label>
+          <Input
+            id="ws-name"
+            name="name"
+            required
+            maxLength={120}
+            placeholder={t.onboarding.namePlaceholder}
+            className="h-11"
+          />
+        </div>
+        <label className="flex items-start gap-3 text-sm">
+          <input type="checkbox" name="demo" defaultChecked className="mt-0.5 size-4 accent-primary" />
+          <span>
+            <span className="font-medium">{t.common.demoData}</span>
+            <span className="block text-muted-foreground">
+              Ajouter quelques affirmations d&apos;exemple pour découvrir l&apos;outil.
+            </span>
+          </span>
+        </label>
+        {error && (
+          <p role="alert" className="rounded-md bg-verdict-false-soft px-3 py-2.5 text-sm text-verdict-false-ink">
+            {error}
+          </p>
+        )}
+        <Button type="submit" size="lg" className="h-11" disabled={pending}>
+          {pending && <LoaderCircle className="animate-spin" aria-hidden />}
+          {t.onboarding.create}
+        </Button>
+      </form>
+    </div>
+  );
+}
+
+function Home() {
+  const router = useRouter();
+  const wantsNew = useSearchParams().has("nouveau");
+  const { data: me, error, mutate } = useSWR<Me>("/me", fetcher);
+  const first = me?.memberships[0];
+
+  useEffect(() => {
+    if (first && !wantsNew) router.replace(`/w/${first.workspace_id}/affirmations`);
+  }, [first, wantsNew, router]);
+
+  if (error) {
+    return (
+      <div className="p-8">
+        <p className="text-muted-foreground">{t.claims.errorTitle}</p>
+        <Button variant="outline" className="mt-4" onClick={() => mutate()}>
+          {t.claims.retry}
+        </Button>
+      </div>
+    );
+  }
+  if (!me || (first && !wantsNew)) {
+    return (
+      <div className="space-y-6 p-5 lg:p-8">
+        <Skeleton className="h-8 w-56" />
+        <Skeleton className="h-56 w-full" />
+      </div>
+    );
+  }
+  return <Onboarding />;
+}
+
+export default function HomePage() {
+  return (
+    <Suspense>
+      <Home />
+    </Suspense>
+  );
+}
