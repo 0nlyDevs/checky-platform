@@ -2602,7 +2602,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MatchIn"
+                "$ref": "#/components/schemas/app__modules__public__MatchIn"
               }
             }
           },
@@ -3541,6 +3541,28 @@
               "default": "",
               "title": "Q"
             }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 60,
+              "default": "",
+              "title": "Topic"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 120,
+              "default": "",
+              "title": "Region"
+            }
           }
         ],
         "responses": {
@@ -3693,6 +3715,393 @@
             }
           }
         }
+      },
+      "delete": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Delete Contact",
+        "operationId": "delete_contact_api_v1_workspaces__ws__contacts__contact_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/contacts/{contact_id}/verify": {
+      "post": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Verify Contact",
+        "description": "An editor checked the channels and the official pages (called the switchboard, matched the\npage to the institution): the pages now count as official in « Fiabilité de la source ».",
+        "operationId": "verify_contact_api_v1_workspaces__ws__contacts__contact_id__verify_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "contact_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contact Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContactOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/who": {
+      "get": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Who",
+        "operationId": "who_api_v1_workspaces__ws__items__item_id__who_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/questions": {
+      "get": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "List Questions",
+        "operationId": "list_questions_api_v1_workspaces__ws__items__item_id__questions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionOut"
+                  },
+                  "title": "Response List Questions Api V1 Workspaces  Ws  Items  Item Id  Questions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Ask Contact",
+        "operationId": "ask_contact_api_v1_workspaces__ws__items__item_id__questions_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuestionOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/reponse/{token}": {
+      "get": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Reponse",
+        "operationId": "reponse_api_v1_public_reponse__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReponseOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "directory"
+        ],
+        "summary": "Answer",
+        "description": "The answer becomes a dated source of the dossier, the contact's track record is updated\nand the checker reads the dossier again (unless the newsroom runs without AI).",
+        "operationId": "answer_api_v1_public_reponse__token__post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReponseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReponseOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/workspaces/{ws}/figures": {
@@ -3727,6 +4136,28 @@
               "maxLength": 200,
               "default": "",
               "title": "Q"
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "default": "",
+              "title": "Topic"
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 80,
+              "default": "",
+              "title": "Country"
             }
           }
         ],
@@ -3814,12 +4245,128 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/figures/check": {
+      "post": {
+        "tags": [
+          "figures"
+        ],
+        "summary": "Check",
+        "description": "The numbers of a text against the official figures (no model involved).",
+        "operationId": "check_api_v1_workspaces__ws__figures_check_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Check Api V1 Workspaces  Ws  Figures Check Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/figures/refresh": {
+      "post": {
+        "tags": [
+          "figures"
+        ],
+        "summary": "Refresh",
+        "description": "Seed the shared figures if they are missing, then fetch the World Bank's latest values.",
+        "operationId": "refresh_api_v1_workspaces__ws__figures_refresh_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Refresh Api V1 Workspaces  Ws  Figures Refresh Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/registry": {
       "get": {
         "tags": [
           "registry"
         ],
         "summary": "Originals",
+        "description": "`mine`: this newsroom's registry (an issuer sees only what it registered). `network`: the\noriginals of the other public newsrooms, to confirm them.",
         "operationId": "originals_api_v1_workspaces__ws__registry_get",
         "security": [
           {
@@ -3847,6 +4394,40 @@
               "default": "",
               "title": "Q"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "original",
+                    "fake_caught"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "mine",
+                "network"
+              ],
+              "type": "string",
+              "default": "mine",
+              "title": "Scope"
+            }
           }
         ],
         "responses": {
@@ -3857,7 +4438,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/OriginalOut"
+                    "$ref": "#/components/schemas/CommuniqueOut"
                   },
                   "title": "Response Originals Api V1 Workspaces  Ws  Registry Get"
                 }
@@ -3915,7 +4496,762 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OriginalOut"
+                  "$ref": "#/components/schemas/CommuniqueOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/keys": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Seal Keys",
+        "operationId": "seal_keys_api_v1_workspaces__ws__registry_keys_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/KeyOut"
+                  },
+                  "title": "Response Seal Keys Api V1 Workspaces  Ws  Registry Keys Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/keys/{key_id}/revoke": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Revoke Key",
+        "description": "A lost or leaked key: its seals still check out mathematically but every page shows them\nas revoked; the next seal creates a new key.",
+        "operationId": "revoke_key_api_v1_workspaces__ws__registry_keys__key_id__revoke_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KeyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/{cid}": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Get Original",
+        "operationId": "get_original_api_v1_workspaces__ws__registry__cid__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommuniqueOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/{cid}/fakes": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Fakes Of",
+        "description": "The fakes caught that imitate this original, newest first (from every visible newsroom).",
+        "operationId": "fakes_of_api_v1_workspaces__ws__registry__cid__fakes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CommuniqueOut"
+                  },
+                  "title": "Response Fakes Of Api V1 Workspaces  Ws  Registry  Cid  Fakes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/{cid}/confirm": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Confirm",
+        "description": "Another newsroom vouches for the entry (it checked with the issuer). The registering newsroom\ncannot confirm its own entry; confirming twice changes nothing.",
+        "operationId": "confirm_api_v1_workspaces__ws__registry__cid__confirm_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommuniqueOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/{cid}/fake": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Record Fake",
+        "description": "« Faux repéré »: a circulating copy that imitates this original, kept with its word diff so\nthe next newsroom (and the Fil officiel) sees at once what was changed.",
+        "operationId": "record_fake_api_v1_workspaces__ws__registry__cid__fake_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FakeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommuniqueOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/{cid}/seal": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Seal Original",
+        "description": "The issuer signs its original: Ed25519 over issuer, number, date, title and the text's\nfingerprint. Sealing an entry already sealed with a valid key returns the same seal.",
+        "operationId": "seal_original_api_v1_workspaces__ws__registry__cid__seal_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SealResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Seal Of",
+        "description": "The seal and its QR again (to print or download it later).",
+        "operationId": "seal_of_api_v1_workspaces__ws__registry__cid__seal_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SealResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/sceau/{cid}": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Public Seal",
+        "description": "Everything a phone needs to check the seal itself: the signed fields, the exact message,\nthe signature and the issuer's public key. Only public newsrooms' seals are served.",
+        "operationId": "public_seal_api_v1_public_sceau__cid__get",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicSeal"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/sceau/{cid}/verify": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Verify Public Seal",
+        "description": "The server-side check, for browsers without Ed25519 in WebCrypto.",
+        "operationId": "verify_public_seal_api_v1_public_sceau__cid__verify_post",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__registry__VerifyIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__registry__VerifyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/seal-keys": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Public Seal Keys",
+        "description": "The issuers' public keys (to check seals offline) and the revoked ones.",
+        "operationId": "public_seal_keys_api_v1_public_seal_keys_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SealKeysOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/registry": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Official Feed",
+        "description": "« Fil officiel »: what the institutions really published and the fakes caught imitating it,\nnewest first. Only newsrooms that publish (`is_public`) appear; a fake whose original is not\npublic is left out (its diff would show the original's words).",
+        "operationId": "official_feed_api_v1_public_registry_get",
+        "parameters": [
+          {
+            "name": "newsroom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 140,
+              "default": "",
+              "title": "Newsroom"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "default": "",
+              "title": "Q"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "original",
+                    "fake_caught"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfficialPage-Output"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/registry/match": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Match",
+        "description": "Compare a circulating text with the registered originals (no model involved).",
+        "operationId": "match_api_v1_workspaces__ws__registry_match_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__registry__MatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Match Api V1 Workspaces  Ws  Registry Match Post"
                 }
               }
             }
@@ -4105,6 +5441,412 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/items/{item_id}/release": {
+      "post": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Release",
+        "description": "« Publier la version signée »: an editor publishes what a journalist signed, as long as\nnothing changed since (same digest) and, under double signature, someone else signed it.",
+        "operationId": "release_api_v1_workspaces__ws__items__item_id__release_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/sign": {
+      "post": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Sign Many",
+        "description": "Each dossier is signed with its own verdict, or the suggested one, and its explanation, or\nthe analysis reason. One that cannot be signed is skipped with the reason, never guessed.",
+        "operationId": "sign_many_api_v1_workspaces__ws__items_sign_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/ratings": {
+      "get": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Read Rating",
+        "description": "How « Reprendre ce verdict » would read a fact-checker's rating, shown before signing.",
+        "operationId": "read_rating_api_v1_workspaces__ws__ratings_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "rating",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 200,
+              "title": "Rating"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RatingOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/adopt": {
+      "post": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Adopt",
+        "description": "The review is relayed as the fact-checker's, with its date and link: it becomes the\ndossier's source [1] and the newsroom signs the matching verdict under its own byline.",
+        "operationId": "adopt_api_v1_workspaces__ws__items__item_id__adopt_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdoptIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/carnet": {
+      "get": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Carnet",
+        "description": "Everything done on the dossier, dated: checks, sources, questions and answers, routes,\nsignatures. Printed as « Exporter le carnet ».",
+        "operationId": "carnet_api_v1_workspaces__ws__items__item_id__carnet_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CarnetOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/attestation": {
+      "get": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Attestation",
+        "description": "« Attestation de vérification »: the carnet's summary signed with the server's key, so a\npartner, a court or a reader can check that this newsroom did this work on this version.",
+        "operationId": "attestation_api_v1_workspaces__ws__items__item_id__attestation_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttestationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/attestations/verify": {
+      "post": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Verify Attestation",
+        "description": "Anyone can check an attestation against the server's key (no account).",
+        "operationId": "verify_attestation_api_v1_public_attestations_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__signing__VerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__signing__VerifyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/items/{item_id}/routes": {
       "get": {
         "tags": [
@@ -4233,13 +5975,116 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/items/{item_id}/trajet": {
+      "get": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Trajet",
+        "operationId": "trajet_api_v1_workspaces__ws__items__item_id__trajet_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrajetOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/verdicts/{item_id}/trajet": {
+      "get": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Public Trajet",
+        "description": "« Où la correction est passée »: the truth side only (no proof, no notes) and the counts.\nSame visibility as `/public/verdicts/{id}`: a public newsroom's published claim with a\nconfirmed verdict, nothing else.",
+        "operationId": "public_trajet_api_v1_public_verdicts__item_id__trajet_get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTrajetOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/items/{item_id}/diffusion": {
       "get": {
         "tags": [
           "trajet"
         ],
-        "summary": "Formats",
-        "operationId": "formats_api_v1_workspaces__ws__items__item_id__diffusion_get",
+        "summary": "Diffusion",
+        "description": "Every format of the signed verdict, written once by the model (one call, kept in memory\nuntil the verdict or its explanation change) or by templates when AI is off or busy.",
+        "operationId": "diffusion_api_v1_workspaces__ws__items__item_id__diffusion_get",
         "security": [
           {
             "HTTPBearer": []
@@ -4274,6 +6119,128 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/FormatsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/diffuse": {
+      "post": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Diffuse",
+        "description": "The journalist sent the formats down these routes (from their own phone, radio or print\nshop): each becomes a truth stop `sent`. Malagasy formats go only once a speaker reread them.",
+        "operationId": "diffuse_api_v1_workspaces__ws__items__item_id__diffuse_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DiffuseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiffuseOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/radios/{token}/diffuse": {
+      "post": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Radio Diffused",
+        "description": "A partner radio marks a flash « Diffusé » from its token link (no account): the truth\nstop for that station becomes `broadcast`.",
+        "operationId": "radio_diffused_api_v1_public_radios__token__diffuse_post",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RadioDiffuseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadioDiffuseOut"
                 }
               }
             }
@@ -4570,6 +6537,53 @@
         ],
         "title": "ActivityOut"
       },
+      "AdoptIn": {
+        "properties": {
+          "review": {
+            "$ref": "#/components/schemas/Review"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "true",
+                  "false",
+                  "misleading",
+                  "unverifiable"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000,
+                "minLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "publish": {
+            "type": "boolean",
+            "title": "Publish",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "review"
+        ],
+        "title": "AdoptIn"
+      },
       "AgentIn": {
         "properties": {
           "question": {
@@ -4617,6 +6631,443 @@
           "checked"
         ],
         "title": "AskOut"
+      },
+      "AttestationOut": {
+        "properties": {
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "issued_at": {
+            "type": "string",
+            "title": "Issued At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "payload",
+          "sha256",
+          "signature",
+          "key_id",
+          "public_key",
+          "issued_at"
+        ],
+        "title": "AttestationOut"
+      },
+      "BatchIn": {
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 50,
+            "minItems": 1,
+            "title": "Ids"
+          },
+          "publish": {
+            "type": "boolean",
+            "title": "Publish",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "ids"
+        ],
+        "title": "BatchIn"
+      },
+      "BatchOut": {
+        "properties": {
+          "signed": {
+            "items": {
+              "$ref": "#/components/schemas/ItemOut"
+            },
+            "type": "array",
+            "title": "Signed"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/Skipped"
+            },
+            "type": "array",
+            "title": "Skipped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "signed",
+          "skipped"
+        ],
+        "title": "BatchOut"
+      },
+      "CarnetEntry": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "actor": {
+            "type": "string",
+            "title": "Actor"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "kind",
+          "actor",
+          "text"
+        ],
+        "title": "CarnetEntry"
+      },
+      "CarnetOut": {
+        "properties": {
+          "newsroom": {
+            "type": "string",
+            "title": "Newsroom"
+          },
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "first_seen_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Seen At"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "verdict_suggested": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict Suggested"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "byline": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Byline"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/CarnetEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CarnetSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/CarnetQuestion"
+            },
+            "type": "array",
+            "title": "Questions"
+          },
+          "checks": {
+            "type": "integer",
+            "title": "Checks"
+          },
+          "routes": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Routes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "newsroom",
+          "item_id",
+          "ref",
+          "title",
+          "status",
+          "first_seen_at",
+          "verdict",
+          "verdict_suggested",
+          "reason",
+          "byline",
+          "generated_at",
+          "entries",
+          "sources",
+          "questions",
+          "checks",
+          "routes"
+        ],
+        "title": "CarnetOut"
+      },
+      "CarnetQuestion": {
+        "properties": {
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "answered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered At"
+          },
+          "stance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact",
+          "institution",
+          "channel",
+          "sent_at",
+          "answered_at",
+          "stance"
+        ],
+        "title": "CarnetQuestion"
+      },
+      "CarnetSource": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "added_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Added At"
+          },
+          "added_by": {
+            "type": "string",
+            "title": "Added By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "url",
+          "published_at",
+          "added_at",
+          "added_by"
+        ],
+        "title": "CarnetSource"
+      },
+      "ChangedNumber": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "original": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original"
+          },
+          "submitted": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "original",
+          "submitted"
+        ],
+        "title": "ChangedNumber"
       },
       "Check": {
         "properties": {
@@ -4668,6 +7119,34 @@
           "status"
         ],
         "title": "Check"
+      },
+      "CheckIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 30000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "CheckIn"
       },
       "ClipIn": {
         "properties": {
@@ -4826,6 +7305,208 @@
         ],
         "title": "CommentOut"
       },
+      "CommuniqueOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "file_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fingerprint"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "original",
+              "fake_caught"
+            ],
+            "title": "Status"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
+          },
+          "own": {
+            "type": "boolean",
+            "title": "Own"
+          },
+          "newsroom": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewsroomOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "confirmations": {
+            "type": "integer",
+            "title": "Confirmations"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "title": "Confirmed"
+          },
+          "confirmed_by_us": {
+            "type": "boolean",
+            "title": "Confirmed By Us"
+          },
+          "sealed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SealOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "original_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Id"
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DiffOp"
+            },
+            "type": "array",
+            "title": "Diff",
+            "default": []
+          },
+          "changed_numbers": {
+            "items": {
+              "$ref": "#/components/schemas/ChangedNumber"
+            },
+            "type": "array",
+            "title": "Changed Numbers",
+            "default": []
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "fakes": {
+            "type": "integer",
+            "title": "Fakes",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "issuer",
+          "number",
+          "issued_on",
+          "title",
+          "text",
+          "url",
+          "file_id",
+          "fingerprint",
+          "status",
+          "is_demo",
+          "created_at",
+          "location",
+          "own",
+          "newsroom",
+          "confirmations",
+          "confirmed",
+          "confirmed_by_us",
+          "sealed"
+        ],
+        "title": "CommuniqueOut"
+      },
       "CompleteIn": {
         "properties": {
           "messages": {
@@ -4958,6 +7639,16 @@
             "minLength": 1,
             "title": "Name"
           },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "institution",
+              "officer",
+              "expert"
+            ],
+            "title": "Kind",
+            "default": "institution"
+          },
           "role": {
             "type": "string",
             "maxLength": 200,
@@ -4978,6 +7669,38 @@
             "maxItems": 20,
             "title": "Topics"
           },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Languages"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
           "phone": {
             "anyOf": [
               {
@@ -4990,6 +7713,19 @@
               }
             ],
             "title": "Phone"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60,
+                "pattern": "^\\+?[0-9 ()-]{3,60}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
           },
           "email": {
             "anyOf": [
@@ -5017,6 +7753,31 @@
               }
             ],
             "title": "Website"
+          },
+          "official_pages": {
+            "items": {
+              "$ref": "#/components/schemas/OfficialPage-Input"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Official Pages"
+          },
+          "hours": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          },
+          "shared": {
+            "type": "boolean",
+            "title": "Shared",
+            "default": false
           }
         },
         "additionalProperties": false,
@@ -5028,38 +7789,50 @@
       },
       "ContactOut": {
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "name": {
             "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
             "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
           },
           "role": {
             "type": "string",
-            "maxLength": 200,
-            "title": "Role",
-            "default": ""
+            "title": "Role"
           },
           "institution": {
             "type": "string",
-            "maxLength": 200,
-            "title": "Institution",
-            "default": ""
+            "title": "Institution"
           },
           "topics": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "maxItems": 20,
             "title": "Topics"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
           },
           "phone": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 60,
-                "pattern": "^\\+?[0-9 ()-]{3,60}$"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5067,12 +7840,21 @@
             ],
             "title": "Phone"
           },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
           "email": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 200,
-                "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5083,10 +7865,7 @@
           "website": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 2083,
-                "minLength": 1,
-                "format": "uri"
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5094,10 +7873,28 @@
             ],
             "title": "Website"
           },
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
+          "official_pages": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Official Pages"
+          },
+          "hours": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          },
+          "shared": {
+            "type": "boolean",
+            "title": "Shared"
           },
           "verified_at": {
             "anyOf": [
@@ -5121,15 +7918,43 @@
               }
             ],
             "title": "Verified By"
+          },
+          "stats": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Stats"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "own": {
+            "type": "boolean",
+            "title": "Own",
+            "default": true
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
-          "name",
           "id",
+          "name",
+          "kind",
+          "role",
+          "institution",
+          "topics",
+          "languages",
+          "location",
+          "phone",
+          "whatsapp",
+          "email",
+          "website",
+          "official_pages",
+          "hours",
+          "shared",
           "verified_at",
-          "verified_by"
+          "verified_by",
+          "stats",
+          "is_demo"
         ],
         "title": "ContactOut"
       },
@@ -5256,6 +8081,170 @@
         ],
         "title": "DictationOut"
       },
+      "DiffOp": {
+        "properties": {
+          "op": {
+            "type": "string",
+            "enum": [
+              "equal",
+              "insert",
+              "delete",
+              "replace"
+            ],
+            "title": "Op"
+          },
+          "a": {
+            "type": "string",
+            "title": "A"
+          },
+          "b": {
+            "type": "string",
+            "title": "B"
+          }
+        },
+        "type": "object",
+        "required": [
+          "op",
+          "a",
+          "b"
+        ],
+        "title": "DiffOp"
+      },
+      "DiffuseIn": {
+        "properties": {
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/DiffuseRoute"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Routes"
+          },
+          "formats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "title": "Formats"
+          },
+          "relu_mg": {
+            "type": "boolean",
+            "title": "Relu Mg",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "routes"
+        ],
+        "title": "DiffuseIn"
+      },
+      "DiffuseOut": {
+        "properties": {
+          "trajet": {
+            "$ref": "#/components/schemas/TrajetOut"
+          },
+          "formats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Formats"
+          },
+          "dropped": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dropped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "trajet",
+          "formats",
+          "dropped"
+        ],
+        "title": "DiffuseOut"
+      },
+      "DiffuseRoute": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "facebook",
+              "whatsapp",
+              "tiktok",
+              "radio",
+              "sms",
+              "press",
+              "web",
+              "poster",
+              "institution",
+              "voice",
+              "other"
+            ],
+            "title": "Channel"
+          },
+          "place": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Place"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "channel",
+          "place"
+        ],
+        "title": "DiffuseRoute"
+      },
+      "FakeIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 30000,
+            "minLength": 5,
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "FakeIn"
+      },
       "FigureIn": {
         "properties": {
           "topic": {
@@ -5306,6 +8295,18 @@
             ],
             "title": "Country"
           },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
           "source_name": {
             "type": "string",
             "maxLength": 200,
@@ -5318,6 +8319,14 @@
             "minLength": 1,
             "format": "uri",
             "title": "Source Url"
+          },
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Keywords"
           }
         },
         "additionalProperties": false,
@@ -5334,29 +8343,27 @@
       },
       "FigureOut": {
         "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
           "topic": {
             "type": "string",
-            "maxLength": 80,
-            "minLength": 1,
             "title": "Topic"
           },
           "label": {
             "type": "string",
-            "maxLength": 300,
-            "minLength": 1,
             "title": "Label"
           },
           "value": {
             "type": "string",
-            "maxLength": 80,
-            "minLength": 1,
             "title": "Value"
           },
           "unit": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 40
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5365,16 +8372,24 @@
             "title": "Unit"
           },
           "as_of": {
-            "type": "string",
-            "maxLength": 10,
-            "minLength": 4,
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "As Of"
+          },
+          "as_of_label": {
+            "type": "string",
+            "title": "As Of Label"
           },
           "country": {
             "anyOf": [
               {
-                "type": "string",
-                "maxLength": 80
+                "type": "string"
               },
               {
                 "type": "null"
@@ -5382,35 +8397,94 @@
             ],
             "title": "Country"
           },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
+          },
           "source_name": {
             "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
             "title": "Source Name"
           },
           "source_url": {
-            "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Source Url"
           },
-          "id": {
+          "keywords": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Keywords"
+          },
+          "communique_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Communique Id"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "shared": {
+            "type": "boolean",
+            "title": "Shared"
+          },
+          "age_days": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Age Days"
+          },
+          "old": {
+            "type": "boolean",
+            "title": "Old"
+          },
+          "created_at": {
             "type": "string",
-            "format": "uuid",
-            "title": "Id"
+            "format": "date-time",
+            "title": "Created At"
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
+          "id",
           "topic",
           "label",
           "value",
+          "unit",
           "as_of",
+          "as_of_label",
+          "country",
+          "location",
           "source_name",
           "source_url",
-          "id"
+          "keywords",
+          "communique_id",
+          "is_demo",
+          "shared",
+          "age_days",
+          "old",
+          "created_at"
         ],
         "title": "FigureOut"
       },
@@ -5475,13 +8549,90 @@
       },
       "FormatsOut": {
         "properties": {
-          "radio": {
+          "card": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Card"
+          },
+          "radio_line": {
             "type": "string",
-            "title": "Radio"
+            "title": "Radio Line"
+          },
+          "flash": {
+            "type": "string",
+            "title": "Flash"
           },
           "sms": {
             "type": "string",
             "title": "Sms"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "institution_alert": {
+            "type": "string",
+            "title": "Institution Alert"
+          },
+          "permalink": {
+            "type": "string",
+            "title": "Permalink"
+          },
+          "short_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Link"
+          },
+          "poster": {
+            "$ref": "#/components/schemas/PosterOut"
+          },
+          "mg": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mg"
+          },
+          "written_by": {
+            "type": "string",
+            "enum": [
+              "ai",
+              "template"
+            ],
+            "title": "Written By"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/GapOut"
+            },
+            "type": "array",
+            "title": "Gaps"
+          },
+          "radio": {
+            "type": "string",
+            "title": "Radio"
           },
           "social": {
             "type": "string",
@@ -5500,12 +8651,60 @@
         },
         "type": "object",
         "required": [
-          "radio",
+          "card",
+          "radio_line",
+          "flash",
           "sms",
+          "text",
+          "institution_alert",
+          "permalink",
+          "short_link",
+          "poster",
+          "mg",
+          "written_by",
+          "gaps",
+          "radio",
           "social",
           "url"
         ],
         "title": "FormatsOut"
+      },
+      "GapOut": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "place": {
+            "type": "string",
+            "title": "Place"
+          },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
+          },
+          "rumour_stop_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rumour Stop Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel",
+          "place",
+          "location",
+          "rumour_stop_id"
+        ],
+        "title": "GapOut"
       },
       "GuideIn": {
         "properties": {
@@ -6003,6 +9202,53 @@
         "type": "object",
         "title": "ItemPatch"
       },
+      "KeyOut": {
+        "properties": {
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "seals": {
+            "type": "integer",
+            "title": "Seals"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_id",
+          "issuer",
+          "public_key",
+          "created_at",
+          "revoked_at",
+          "seals"
+        ],
+        "title": "KeyOut"
+      },
       "LinkIn": {
         "properties": {
           "url": {
@@ -6044,21 +9290,6 @@
         },
         "type": "object",
         "title": "LinkIn"
-      },
-      "MatchIn": {
-        "properties": {
-          "text": {
-            "type": "string",
-            "maxLength": 4000,
-            "minLength": 3,
-            "title": "Text"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "title": "MatchIn"
       },
       "MatchOut": {
         "properties": {
@@ -6239,6 +9470,208 @@
         "type": "object",
         "title": "NewsroomSettings"
       },
+      "OfficialOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "original",
+              "fake_caught"
+            ],
+            "title": "Kind"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "title": "Confirmed"
+          },
+          "sealed": {
+            "type": "boolean",
+            "title": "Sealed"
+          },
+          "seal_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seal Url"
+          },
+          "fakes": {
+            "type": "integer",
+            "title": "Fakes",
+            "default": 0
+          },
+          "original": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OriginalRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "diff": {
+            "items": {
+              "$ref": "#/components/schemas/DiffOp"
+            },
+            "type": "array",
+            "title": "Diff",
+            "default": []
+          },
+          "changed_numbers": {
+            "items": {
+              "$ref": "#/components/schemas/ChangedNumber"
+            },
+            "type": "array",
+            "title": "Changed Numbers",
+            "default": []
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "issuer",
+          "number",
+          "issued_on",
+          "title",
+          "text",
+          "url",
+          "is_demo",
+          "created_at",
+          "newsroom",
+          "confirmed",
+          "sealed",
+          "seal_url"
+        ],
+        "title": "OfficialOut"
+      },
+      "OfficialPage-Input": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "maxLength": 30,
+            "title": "Kind",
+            "default": "site"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url"
+          },
+          "verified": {
+            "type": "boolean",
+            "title": "Verified",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "OfficialPage"
+      },
+      "OfficialPage-Output": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OfficialOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "OfficialPage"
+      },
       "OriginalIn": {
         "properties": {
           "issuer": {
@@ -6265,6 +9698,18 @@
             ],
             "title": "Number"
           },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
           "text": {
             "type": "string",
             "maxLength": 30000,
@@ -6272,11 +9717,42 @@
             "title": "Text"
           },
           "url": {
-            "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Url"
+          },
+          "file_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
           },
           "is_demo": {
             "type": "boolean",
@@ -6289,61 +9765,22 @@
         "required": [
           "issuer",
           "title",
-          "text",
-          "url"
+          "text"
         ],
         "title": "OriginalIn"
       },
-      "OriginalOut": {
+      "OriginalRef": {
         "properties": {
-          "issuer": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
-            "title": "Issuer"
-          },
-          "title": {
-            "type": "string",
-            "maxLength": 500,
-            "minLength": 1,
-            "title": "Title"
-          },
-          "number": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 60
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Number"
-          },
-          "text": {
-            "type": "string",
-            "maxLength": 30000,
-            "minLength": 20,
-            "title": "Text"
-          },
-          "url": {
-            "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
-            "title": "Url"
-          },
-          "is_demo": {
-            "type": "boolean",
-            "title": "Is Demo",
-            "default": false
-          },
           "id": {
             "type": "string",
             "format": "uuid",
             "title": "Id"
           },
-          "fingerprint": {
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "number": {
             "anyOf": [
               {
                 "type": "string"
@@ -6352,20 +9789,33 @@
                 "type": "null"
               }
             ],
-            "title": "Fingerprint"
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
           }
         },
-        "additionalProperties": false,
         "type": "object",
         "required": [
-          "issuer",
-          "title",
-          "text",
-          "url",
           "id",
-          "fingerprint"
+          "issuer",
+          "number",
+          "issued_on",
+          "title"
         ],
-        "title": "OriginalOut"
+        "title": "OriginalRef"
       },
       "Passage": {
         "properties": {
@@ -6491,6 +9941,85 @@
           "text"
         ],
         "title": "PostOut"
+      },
+      "PosterOut": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "verdict_word": {
+            "type": "string",
+            "title": "Verdict Word"
+          },
+          "verdict_word_mg": {
+            "type": "string",
+            "title": "Verdict Word Mg"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "newsroom": {
+            "type": "string",
+            "title": "Newsroom"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "qr_url": {
+            "type": "string",
+            "title": "Qr Url"
+          },
+          "short_link": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Short Link"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "verdict",
+          "verdict_word",
+          "verdict_word_mg",
+          "reason",
+          "newsroom",
+          "ref",
+          "date",
+          "qr_url",
+          "short_link"
+        ],
+        "title": "PosterOut"
       },
       "Preparation": {
         "properties": {
@@ -6687,6 +10216,135 @@
         ],
         "title": "PublicCheckOut"
       },
+      "PublicKeyOut": {
+        "properties": {
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "alg": {
+            "type": "string",
+            "title": "Alg"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_id",
+          "issuer",
+          "alg",
+          "public_key",
+          "created_at",
+          "newsroom"
+        ],
+        "title": "PublicKeyOut"
+      },
+      "PublicSeal": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "alg": {
+            "type": "string",
+            "title": "Alg"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "sealed_at": {
+            "type": "string",
+            "title": "Sealed At"
+          },
+          "sealed_by": {
+            "type": "string",
+            "enum": [
+              "issuer",
+              "newsroom"
+            ],
+            "title": "Sealed By"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "alg",
+          "payload",
+          "message",
+          "signature",
+          "key_id",
+          "public_key",
+          "sealed_at",
+          "sealed_by",
+          "revoked_at",
+          "is_demo",
+          "newsroom",
+          "url",
+          "text"
+        ],
+        "title": "PublicSeal"
+      },
       "PublicSource": {
         "properties": {
           "n": {
@@ -6766,6 +10424,514 @@
           "snippet"
         ],
         "title": "PublicSource"
+      },
+      "PublicStopOut": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "place": {
+            "type": "string",
+            "title": "Place"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel",
+          "place",
+          "region",
+          "status",
+          "at"
+        ],
+        "title": "PublicStopOut"
+      },
+      "PublicTrajetOut": {
+        "properties": {
+          "truth": {
+            "items": {
+              "$ref": "#/components/schemas/PublicStopOut"
+            },
+            "type": "array",
+            "title": "Truth"
+          },
+          "rumour_routes": {
+            "type": "integer",
+            "title": "Rumour Routes"
+          },
+          "truth_routes": {
+            "type": "integer",
+            "title": "Truth Routes"
+          },
+          "covered": {
+            "type": "integer",
+            "title": "Covered"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "truth",
+          "rumour_routes",
+          "truth_routes",
+          "covered",
+          "summary"
+        ],
+        "title": "PublicTrajetOut"
+      },
+      "QuestionIn": {
+        "properties": {
+          "contact_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contact Id"
+          },
+          "question": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Question"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "whatsapp",
+              "sms",
+              "email",
+              "call"
+            ],
+            "title": "Channel",
+            "default": "whatsapp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact_id",
+          "question"
+        ],
+        "title": "QuestionIn"
+      },
+      "QuestionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "contact_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Id"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "answer_url": {
+            "type": "string",
+            "title": "Answer Url"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "links": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Links"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "answered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered At"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "contact_id",
+          "contact",
+          "institution",
+          "channel",
+          "question",
+          "answer_url",
+          "message",
+          "links",
+          "sent_at",
+          "answered_at",
+          "answer",
+          "source_id"
+        ],
+        "title": "QuestionOut"
+      },
+      "RadioDiffuseIn": {
+        "properties": {
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id"
+        ],
+        "title": "RadioDiffuseIn"
+      },
+      "RadioDiffuseOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "station": {
+            "type": "string",
+            "title": "Station"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "station",
+          "at"
+        ],
+        "title": "RadioDiffuseOut"
+      },
+      "RatingOut": {
+        "properties": {
+          "rating": {
+            "type": "string",
+            "title": "Rating"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rating",
+          "verdict"
+        ],
+        "title": "RatingOut"
+      },
+      "ReponseIn": {
+        "properties": {
+          "stance": {
+            "type": "string",
+            "enum": [
+              "confirms",
+              "denies",
+              "unknown"
+            ],
+            "title": "Stance"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 2,
+            "title": "Text"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stance",
+          "text",
+          "name"
+        ],
+        "title": "ReponseIn"
+      },
+      "ReponseOut": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "claim": {
+            "type": "string",
+            "title": "Claim"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "newsroom": {
+            "type": "string",
+            "title": "Newsroom"
+          },
+          "contact": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "asked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Asked At"
+          },
+          "answered_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered At"
+          },
+          "stance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "claim",
+          "ref",
+          "newsroom",
+          "contact",
+          "institution",
+          "asked_at",
+          "answered_at",
+          "stance"
+        ],
+        "title": "ReponseOut"
+      },
+      "Review": {
+        "properties": {
+          "publisher": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Publisher"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2083,
+            "minLength": 1,
+            "format": "uri",
+            "title": "Url"
+          },
+          "rating": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Rating"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Title",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "publisher",
+          "url",
+          "rating"
+        ],
+        "title": "Review"
+      },
+      "RevokedKeyOut": {
+        "properties": {
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "revoked_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Revoked At"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_id",
+          "issuer",
+          "revoked_at",
+          "newsroom"
+        ],
+        "title": "RevokedKeyOut"
       },
       "RoleIn": {
         "properties": {
@@ -6860,8 +11026,15 @@
       "RouteOut": {
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Id"
           },
           "side": {
@@ -6876,6 +11049,11 @@
             "type": "string",
             "title": "Place"
           },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
+          },
           "status": {
             "type": "string",
             "title": "Status"
@@ -6889,6 +11067,21 @@
             "type": "string",
             "format": "date-time",
             "title": "At"
+          },
+          "auto": {
+            "type": "boolean",
+            "title": "Auto",
+            "default": true
+          },
+          "added_by": {
+            "type": "string",
+            "title": "Added By",
+            "default": "system"
+          },
+          "derived": {
+            "type": "boolean",
+            "title": "Derived",
+            "default": false
           }
         },
         "type": "object",
@@ -6922,6 +11115,91 @@
           "items"
         ],
         "title": "RubriqueOut"
+      },
+      "SealKeysOut": {
+        "properties": {
+          "keys": {
+            "items": {
+              "$ref": "#/components/schemas/PublicKeyOut"
+            },
+            "type": "array",
+            "title": "Keys"
+          },
+          "revoked": {
+            "items": {
+              "$ref": "#/components/schemas/RevokedKeyOut"
+            },
+            "type": "array",
+            "title": "Revoked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "keys",
+          "revoked"
+        ],
+        "title": "SealKeysOut"
+      },
+      "SealOut": {
+        "properties": {
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          },
+          "sealed_at": {
+            "type": "string",
+            "title": "Sealed At"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key_id",
+          "signature",
+          "sealed_at",
+          "url"
+        ],
+        "title": "SealOut"
+      },
+      "SealResult": {
+        "properties": {
+          "sealed": {
+            "$ref": "#/components/schemas/SealOut"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "qr_svg": {
+            "type": "string",
+            "title": "Qr Svg"
+          },
+          "public": {
+            "type": "boolean",
+            "title": "Public"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sealed",
+          "payload",
+          "public_key",
+          "qr_svg",
+          "public"
+        ],
+        "title": "SealResult"
       },
       "SearchAttempt": {
         "properties": {
@@ -7090,6 +11368,25 @@
           "item"
         ],
         "title": "SimilarOut"
+      },
+      "Skipped": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "code"
+        ],
+        "title": "Skipped"
       },
       "SourceIn": {
         "properties": {
@@ -7458,6 +11755,48 @@
         ],
         "title": "TipStatusOut"
       },
+      "TrajetOut": {
+        "properties": {
+          "rumour": {
+            "items": {
+              "$ref": "#/components/schemas/RouteOut"
+            },
+            "type": "array",
+            "title": "Rumour"
+          },
+          "truth": {
+            "items": {
+              "$ref": "#/components/schemas/RouteOut"
+            },
+            "type": "array",
+            "title": "Truth"
+          },
+          "gaps": {
+            "items": {
+              "$ref": "#/components/schemas/GapOut"
+            },
+            "type": "array",
+            "title": "Gaps"
+          },
+          "covered": {
+            "type": "integer",
+            "title": "Covered"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rumour",
+          "truth",
+          "gaps",
+          "covered",
+          "summary"
+        ],
+        "title": "TrajetOut"
+      },
       "TranscribeIn": {
         "properties": {
           "language": {
@@ -7814,6 +12153,121 @@
         ],
         "title": "VerdictPage"
       },
+      "WhoContact": {
+        "properties": {
+          "contact": {
+            "$ref": "#/components/schemas/ContactOut"
+          },
+          "why": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Why"
+          },
+          "track": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Track"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact",
+          "why",
+          "track",
+          "question",
+          "score"
+        ],
+        "title": "WhoContact"
+      },
+      "WhoOut": {
+        "properties": {
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/WhoPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          },
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Beats"
+          },
+          "place": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Place"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionOut"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "points",
+          "beats",
+          "place",
+          "questions"
+        ],
+        "title": "WhoOut"
+      },
+      "WhoPoint": {
+        "properties": {
+          "point": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Point"
+          },
+          "contacts": {
+            "items": {
+              "$ref": "#/components/schemas/WhoContact"
+            },
+            "type": "array",
+            "title": "Contacts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "point",
+          "contacts"
+        ],
+        "title": "WhoPoint"
+      },
       "WorkspaceIn": {
         "properties": {
           "name": {
@@ -7952,6 +12406,21 @@
         ],
         "title": "AskIn"
       },
+      "app__modules__public__MatchIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 3,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "MatchIn"
+      },
       "app__modules__rag__AskIn": {
         "properties": {
           "question": {
@@ -7985,6 +12454,125 @@
           "question"
         ],
         "title": "AskIn"
+      },
+      "app__modules__registry__MatchIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 30000,
+            "minLength": 3,
+            "title": "Text"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "MatchIn"
+      },
+      "app__modules__registry__VerifyIn": {
+        "properties": {
+          "signature": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VerifyIn"
+      },
+      "app__modules__registry__VerifyOut": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "revoked": {
+            "type": "boolean",
+            "title": "Revoked"
+          },
+          "matches_record": {
+            "type": "boolean",
+            "title": "Matches Record"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "revoked",
+          "matches_record",
+          "key_id"
+        ],
+        "title": "VerifyOut"
+      },
+      "app__modules__signing__VerifyIn": {
+        "properties": {
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "signature": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Signature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payload",
+          "signature"
+        ],
+        "title": "VerifyIn"
+      },
+      "app__modules__signing__VerifyOut": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "key_id",
+          "sha256",
+          "summary"
+        ],
+        "title": "VerifyOut"
       }
     },
     "securitySchemes": {

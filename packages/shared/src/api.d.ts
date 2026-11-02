@@ -934,11 +934,90 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Contact */
+        delete: operations["delete_contact_api_v1_workspaces__ws__contacts__contact_id__delete"];
         options?: never;
         head?: never;
         /** Edit Contact */
         patch: operations["edit_contact_api_v1_workspaces__ws__contacts__contact_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/contacts/{contact_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Contact
+         * @description An editor checked the channels and the official pages (called the switchboard, matched the
+         *     page to the institution): the pages now count as official in « Fiabilité de la source ».
+         */
+        post: operations["verify_contact_api_v1_workspaces__ws__contacts__contact_id__verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/who": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who */
+        get: operations["who_api_v1_workspaces__ws__items__item_id__who_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Questions */
+        get: operations["list_questions_api_v1_workspaces__ws__items__item_id__questions_get"];
+        put?: never;
+        /** Ask Contact */
+        post: operations["ask_contact_api_v1_workspaces__ws__items__item_id__questions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/reponse/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reponse */
+        get: operations["reponse_api_v1_public_reponse__token__get"];
+        put?: never;
+        /**
+         * Answer
+         * @description The answer becomes a dated source of the dossier, the contact's track record is updated
+         *     and the checker reads the dossier again (unless the newsroom runs without AI).
+         */
+        post: operations["answer_api_v1_public_reponse__token__post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/workspaces/{ws}/figures": {
@@ -959,6 +1038,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/figures/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check
+         * @description The numbers of a text against the official figures (no model involved).
+         */
+        post: operations["check_api_v1_workspaces__ws__figures_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/figures/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh
+         * @description Seed the shared figures if they are missing, then fetch the World Bank's latest values.
+         */
+        post: operations["refresh_api_v1_workspaces__ws__figures_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/registry": {
         parameters: {
             query?: never;
@@ -966,11 +1085,260 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Originals */
+        /**
+         * Originals
+         * @description `mine`: this newsroom's registry (an issuer sees only what it registered). `network`: the
+         *     originals of the other public newsrooms, to confirm them.
+         */
         get: operations["originals_api_v1_workspaces__ws__registry_get"];
         put?: never;
         /** Register */
         post: operations["register_api_v1_workspaces__ws__registry_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Seal Keys */
+        get: operations["seal_keys_api_v1_workspaces__ws__registry_keys_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/keys/{key_id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke Key
+         * @description A lost or leaked key: its seals still check out mathematically but every page shows them
+         *     as revoked; the next seal creates a new key.
+         */
+        post: operations["revoke_key_api_v1_workspaces__ws__registry_keys__key_id__revoke_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/{cid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Original */
+        get: operations["get_original_api_v1_workspaces__ws__registry__cid__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/{cid}/fakes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Fakes Of
+         * @description The fakes caught that imitate this original, newest first (from every visible newsroom).
+         */
+        get: operations["fakes_of_api_v1_workspaces__ws__registry__cid__fakes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/{cid}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm
+         * @description Another newsroom vouches for the entry (it checked with the issuer). The registering newsroom
+         *     cannot confirm its own entry; confirming twice changes nothing.
+         */
+        post: operations["confirm_api_v1_workspaces__ws__registry__cid__confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/{cid}/fake": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record Fake
+         * @description « Faux repéré »: a circulating copy that imitates this original, kept with its word diff so
+         *     the next newsroom (and the Fil officiel) sees at once what was changed.
+         */
+        post: operations["record_fake_api_v1_workspaces__ws__registry__cid__fake_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/{cid}/seal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Seal Of
+         * @description The seal and its QR again (to print or download it later).
+         */
+        get: operations["seal_of_api_v1_workspaces__ws__registry__cid__seal_get"];
+        put?: never;
+        /**
+         * Seal Original
+         * @description The issuer signs its original: Ed25519 over issuer, number, date, title and the text's
+         *     fingerprint. Sealing an entry already sealed with a valid key returns the same seal.
+         */
+        post: operations["seal_original_api_v1_workspaces__ws__registry__cid__seal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/sceau/{cid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Seal
+         * @description Everything a phone needs to check the seal itself: the signed fields, the exact message,
+         *     the signature and the issuer's public key. Only public newsrooms' seals are served.
+         */
+        get: operations["public_seal_api_v1_public_sceau__cid__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/sceau/{cid}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Public Seal
+         * @description The server-side check, for browsers without Ed25519 in WebCrypto.
+         */
+        post: operations["verify_public_seal_api_v1_public_sceau__cid__verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/seal-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Seal Keys
+         * @description The issuers' public keys (to check seals offline) and the revoked ones.
+         */
+        get: operations["public_seal_keys_api_v1_public_seal_keys_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/registry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Official Feed
+         * @description « Fil officiel »: what the institutions really published and the fakes caught imitating it,
+         *     newest first. Only newsrooms that publish (`is_public`) appear; a fake whose original is not
+         *     public is left out (its diff would show the original's words).
+         */
+        get: operations["official_feed_api_v1_public_registry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/registry/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Match
+         * @description Compare a circulating text with the registered originals (no model involved).
+         */
+        post: operations["match_api_v1_workspaces__ws__registry_match_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1012,6 +1380,151 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/items/{item_id}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Release
+         * @description « Publier la version signée »: an editor publishes what a journalist signed, as long as
+         *     nothing changed since (same digest) and, under double signature, someone else signed it.
+         */
+        post: operations["release_api_v1_workspaces__ws__items__item_id__release_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/sign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign Many
+         * @description Each dossier is signed with its own verdict, or the suggested one, and its explanation, or
+         *     the analysis reason. One that cannot be signed is skipped with the reason, never guessed.
+         */
+        post: operations["sign_many_api_v1_workspaces__ws__items_sign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read Rating
+         * @description How « Reprendre ce verdict » would read a fact-checker's rating, shown before signing.
+         */
+        get: operations["read_rating_api_v1_workspaces__ws__ratings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/adopt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Adopt
+         * @description The review is relayed as the fact-checker's, with its date and link: it becomes the
+         *     dossier's source [1] and the newsroom signs the matching verdict under its own byline.
+         */
+        post: operations["adopt_api_v1_workspaces__ws__items__item_id__adopt_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/carnet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Carnet
+         * @description Everything done on the dossier, dated: checks, sources, questions and answers, routes,
+         *     signatures. Printed as « Exporter le carnet ».
+         */
+        get: operations["carnet_api_v1_workspaces__ws__items__item_id__carnet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/attestation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Attestation
+         * @description « Attestation de vérification »: the carnet's summary signed with the server's key, so a
+         *     partner, a court or a reader can check that this newsroom did this work on this version.
+         */
+        get: operations["attestation_api_v1_workspaces__ws__items__item_id__attestation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/attestations/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Attestation
+         * @description Anyone can check an attestation against the server's key (no account).
+         */
+        post: operations["verify_attestation_api_v1_public_attestations_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/items/{item_id}/routes": {
         parameters: {
             query?: never;
@@ -1030,6 +1543,45 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/items/{item_id}/trajet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Trajet */
+        get: operations["trajet_api_v1_workspaces__ws__items__item_id__trajet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/verdicts/{item_id}/trajet": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Trajet
+         * @description « Où la correction est passée »: the truth side only (no proof, no notes) and the counts.
+         *     Same visibility as `/public/verdicts/{id}`: a public newsroom's published claim with a
+         *     confirmed verdict, nothing else.
+         */
+        get: operations["public_trajet_api_v1_public_verdicts__item_id__trajet_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/items/{item_id}/diffusion": {
         parameters: {
             query?: never;
@@ -1037,10 +1589,56 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Formats */
-        get: operations["formats_api_v1_workspaces__ws__items__item_id__diffusion_get"];
+        /**
+         * Diffusion
+         * @description Every format of the signed verdict, written once by the model (one call, kept in memory
+         *     until the verdict or its explanation change) or by templates when AI is off or busy.
+         */
+        get: operations["diffusion_api_v1_workspaces__ws__items__item_id__diffusion_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/diffuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Diffuse
+         * @description The journalist sent the formats down these routes (from their own phone, radio or print
+         *     shop): each becomes a truth stop `sent`. Malagasy formats go only once a speaker reread them.
+         */
+        post: operations["diffuse_api_v1_workspaces__ws__items__item_id__diffuse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/radios/{token}/diffuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Radio Diffused
+         * @description A partner radio marks a flash « Diffusé » from its token link (no account): the truth
+         *     stop for that station becomes `broadcast`.
+         */
+        post: operations["radio_diffused_api_v1_public_radios__token__diffuse_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1136,6 +1734,19 @@ export interface components {
              */
             created_at: string;
         };
+        /** AdoptIn */
+        AdoptIn: {
+            review: components["schemas"]["Review"];
+            /** Verdict */
+            verdict?: ("true" | "false" | "misleading" | "unverifiable") | null;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Publish
+             * @default false
+             */
+            publish: boolean;
+        };
         /** AgentIn */
         AgentIn: {
             /** Question */
@@ -1150,6 +1761,148 @@ export interface components {
             /** Checked */
             checked: boolean;
         };
+        /** AttestationOut */
+        AttestationOut: {
+            /** Summary */
+            summary: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Sha256 */
+            sha256: string;
+            /** Signature */
+            signature: string;
+            /** Key Id */
+            key_id: string;
+            /** Public Key */
+            public_key: string;
+            /** Issued At */
+            issued_at: string;
+        };
+        /** BatchIn */
+        BatchIn: {
+            /** Ids */
+            ids: string[];
+            /**
+             * Publish
+             * @default true
+             */
+            publish: boolean;
+        };
+        /** BatchOut */
+        BatchOut: {
+            /** Signed */
+            signed: components["schemas"]["ItemOut"][];
+            /** Skipped */
+            skipped: components["schemas"]["Skipped"][];
+        };
+        /** CarnetEntry */
+        CarnetEntry: {
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Kind */
+            kind: string;
+            /** Actor */
+            actor: string;
+            /** Text */
+            text: string;
+        };
+        /** CarnetOut */
+        CarnetOut: {
+            /** Newsroom */
+            newsroom: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+            /** First Seen At */
+            first_seen_at: string | null;
+            /** Verdict */
+            verdict: string | null;
+            /** Verdict Suggested */
+            verdict_suggested: string | null;
+            /** Reason */
+            reason: string | null;
+            /** Byline */
+            byline: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /** Entries */
+            entries: components["schemas"]["CarnetEntry"][];
+            /** Sources */
+            sources: components["schemas"]["CarnetSource"][];
+            /** Questions */
+            questions: components["schemas"]["CarnetQuestion"][];
+            /** Checks */
+            checks: number;
+            /** Routes */
+            routes: {
+                [key: string]: number;
+            };
+        };
+        /** CarnetQuestion */
+        CarnetQuestion: {
+            /** Contact */
+            contact: string | null;
+            /** Institution */
+            institution: string | null;
+            /** Channel */
+            channel: string;
+            /** Sent At */
+            sent_at: string | null;
+            /** Answered At */
+            answered_at: string | null;
+            /** Stance */
+            stance: string | null;
+        };
+        /** CarnetSource */
+        CarnetSource: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Kind */
+            kind: string;
+            /** Url */
+            url: string | null;
+            /** Published At */
+            published_at: string | null;
+            /**
+             * Added At
+             * Format: date-time
+             */
+            added_at: string;
+            /** Added By */
+            added_by: string;
+        };
+        /** ChangedNumber */
+        ChangedNumber: {
+            /** Kind */
+            kind: string;
+            /** Original */
+            original: string | null;
+            /** Submitted */
+            submitted: string | null;
+        };
         /** Check */
         Check: {
             /**
@@ -1163,6 +1916,13 @@ export interface components {
             detail?: string | null;
             /** Model */
             model?: string | null;
+        };
+        /** CheckIn */
+        CheckIn: {
+            /** Text */
+            text: string;
+            /** Place */
+            place?: string | null;
         };
         /** ClipIn */
         ClipIn: {
@@ -1236,6 +1996,75 @@ export interface components {
              */
             created_at: string;
         };
+        /** CommuniqueOut */
+        CommuniqueOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Issuer */
+            issuer: string;
+            /** Number */
+            number: string | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+            /** Url */
+            url: string | null;
+            /** File Id */
+            file_id: string | null;
+            /** Fingerprint */
+            fingerprint: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "original" | "fake_caught";
+            /** Is Demo */
+            is_demo: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Location */
+            location: {
+                [key: string]: unknown;
+            };
+            /** Own */
+            own: boolean;
+            newsroom: components["schemas"]["NewsroomOut"] | null;
+            /** Confirmations */
+            confirmations: number;
+            /** Confirmed */
+            confirmed: boolean;
+            /** Confirmed By Us */
+            confirmed_by_us: boolean;
+            sealed: components["schemas"]["SealOut"] | null;
+            /** Original Id */
+            original_id?: string | null;
+            /**
+             * Diff
+             * @default []
+             */
+            diff: components["schemas"]["DiffOp"][];
+            /**
+             * Changed Numbers
+             * @default []
+             */
+            changed_numbers: components["schemas"]["ChangedNumber"][];
+            /** Summary */
+            summary?: string | null;
+            /**
+             * Fakes
+             * @default 0
+             */
+            fakes: number;
+        };
         /** CompleteIn */
         CompleteIn: {
             /** Messages */
@@ -1275,6 +2104,12 @@ export interface components {
             /** Name */
             name: string;
             /**
+             * Kind
+             * @default institution
+             * @enum {string}
+             */
+            kind: "institution" | "officer" | "expert";
+            /**
              * Role
              * @default
              */
@@ -1286,44 +2121,86 @@ export interface components {
             institution: string;
             /** Topics */
             topics?: string[];
+            /** Languages */
+            languages?: string[];
+            /** Place */
+            place?: string | null;
+            /** Location */
+            location?: {
+                [key: string]: unknown;
+            } | null;
             /** Phone */
             phone?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
             /** Email */
             email?: string | null;
             /** Website */
             website?: string | null;
+            /** Official Pages */
+            official_pages?: components["schemas"]["OfficialPage-Input"][];
+            /** Hours */
+            hours?: string | null;
+            /**
+             * Shared
+             * @default false
+             */
+            shared: boolean;
         };
         /** ContactOut */
         ContactOut: {
-            /** Name */
-            name: string;
-            /**
-             * Role
-             * @default
-             */
-            role: string;
-            /**
-             * Institution
-             * @default
-             */
-            institution: string;
-            /** Topics */
-            topics?: string[];
-            /** Phone */
-            phone?: string | null;
-            /** Email */
-            email?: string | null;
-            /** Website */
-            website?: string | null;
             /**
              * Id
              * Format: uuid
              */
             id: string;
+            /** Name */
+            name: string;
+            /** Kind */
+            kind: string;
+            /** Role */
+            role: string;
+            /** Institution */
+            institution: string;
+            /** Topics */
+            topics: string[];
+            /** Languages */
+            languages: string[];
+            /** Location */
+            location: {
+                [key: string]: unknown;
+            };
+            /** Phone */
+            phone: string | null;
+            /** Whatsapp */
+            whatsapp: string | null;
+            /** Email */
+            email: string | null;
+            /** Website */
+            website: string | null;
+            /** Official Pages */
+            official_pages: {
+                [key: string]: unknown;
+            }[];
+            /** Hours */
+            hours: string | null;
+            /** Shared */
+            shared: boolean;
             /** Verified At */
             verified_at: string | null;
             /** Verified By */
             verified_by: string | null;
+            /** Stats */
+            stats: {
+                [key: string]: unknown;
+            };
+            /** Is Demo */
+            is_demo: boolean;
+            /**
+             * Own
+             * @default true
+             */
+            own: boolean;
         };
         /** CrewIn */
         CrewIn: {
@@ -1364,6 +2241,59 @@ export interface components {
             /** Language */
             language: string | null;
         };
+        /** DiffOp */
+        DiffOp: {
+            /**
+             * Op
+             * @enum {string}
+             */
+            op: "equal" | "insert" | "delete" | "replace";
+            /** A */
+            a: string;
+            /** B */
+            b: string;
+        };
+        /** DiffuseIn */
+        DiffuseIn: {
+            /** Routes */
+            routes: components["schemas"]["DiffuseRoute"][];
+            /** Formats */
+            formats?: string[];
+            /**
+             * Relu Mg
+             * @default false
+             */
+            relu_mg: boolean;
+        };
+        /** DiffuseOut */
+        DiffuseOut: {
+            trajet: components["schemas"]["TrajetOut"];
+            /** Formats */
+            formats: string[];
+            /** Dropped */
+            dropped: string[];
+        };
+        /** DiffuseRoute */
+        DiffuseRoute: {
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "facebook" | "whatsapp" | "tiktok" | "radio" | "sms" | "press" | "web" | "poster" | "institution" | "voice" | "other";
+            /** Place */
+            place: string;
+            /** Location */
+            location?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** FakeIn */
+        FakeIn: {
+            /** Text */
+            text: string;
+            /** Url */
+            url?: string | null;
+        };
         /** FigureIn */
         FigureIn: {
             /** Topic */
@@ -1378,6 +2308,8 @@ export interface components {
             as_of: string;
             /** Country */
             country?: string | null;
+            /** Place */
+            place?: string | null;
             /** Source Name */
             source_name: string;
             /**
@@ -1385,9 +2317,16 @@ export interface components {
              * Format: uri
              */
             source_url: string;
+            /** Keywords */
+            keywords?: string[];
         };
         /** FigureOut */
         FigureOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
             /** Topic */
             topic: string;
             /** Label */
@@ -1395,23 +2334,38 @@ export interface components {
             /** Value */
             value: string;
             /** Unit */
-            unit?: string | null;
+            unit: string | null;
             /** As Of */
-            as_of: string;
+            as_of: string | null;
+            /** As Of Label */
+            as_of_label: string;
             /** Country */
-            country?: string | null;
+            country: string | null;
+            /** Location */
+            location: {
+                [key: string]: unknown;
+            };
             /** Source Name */
             source_name: string;
+            /** Source Url */
+            source_url: string | null;
+            /** Keywords */
+            keywords: string[];
+            /** Communique Id */
+            communique_id: string | null;
+            /** Is Demo */
+            is_demo: boolean;
+            /** Shared */
+            shared: boolean;
+            /** Age Days */
+            age_days: number | null;
+            /** Old */
+            old: boolean;
             /**
-             * Source Url
-             * Format: uri
+             * Created At
+             * Format: date-time
              */
-            source_url: string;
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
+            created_at: string;
         };
         /** FileOut */
         FileOut: {
@@ -1437,10 +2391,38 @@ export interface components {
         };
         /** FormatsOut */
         FormatsOut: {
-            /** Radio */
-            radio: string;
+            /** Card */
+            card: {
+                [key: string]: string | null;
+            };
+            /** Radio Line */
+            radio_line: string;
+            /** Flash */
+            flash: string;
             /** Sms */
             sms: string;
+            /** Text */
+            text: string;
+            /** Institution Alert */
+            institution_alert: string;
+            /** Permalink */
+            permalink: string;
+            /** Short Link */
+            short_link: string | null;
+            poster: components["schemas"]["PosterOut"];
+            /** Mg */
+            mg: {
+                [key: string]: string;
+            } | null;
+            /**
+             * Written By
+             * @enum {string}
+             */
+            written_by: "ai" | "template";
+            /** Gaps */
+            gaps: components["schemas"]["GapOut"][];
+            /** Radio */
+            radio: string;
             /** Social */
             social: string;
             /** Url */
@@ -1451,6 +2433,19 @@ export interface components {
              * @constant
              */
             delivery: "draft_only";
+        };
+        /** GapOut */
+        GapOut: {
+            /** Channel */
+            channel: string;
+            /** Place */
+            place: string;
+            /** Location */
+            location: {
+                [key: string]: unknown;
+            };
+            /** Rumour Stop Id */
+            rumour_stop_id: string | null;
         };
         /** GuideIn */
         GuideIn: {
@@ -1666,6 +2661,24 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** KeyOut */
+        KeyOut: {
+            /** Key Id */
+            key_id: string;
+            /** Issuer */
+            issuer: string;
+            /** Public Key */
+            public_key: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Seals */
+            seals: number;
+        };
         /** LinkIn */
         LinkIn: {
             /** Url */
@@ -1674,11 +2687,6 @@ export interface components {
             text?: string | null;
             /** Source Id */
             source_id?: string | null;
-        };
-        /** MatchIn */
-        MatchIn: {
-            /** Text */
-            text: string;
         };
         /** MatchOut */
         MatchOut: {
@@ -1748,6 +2756,88 @@ export interface components {
              */
             ai_enabled: boolean;
         };
+        /** OfficialOut */
+        OfficialOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "original" | "fake_caught";
+            /** Issuer */
+            issuer: string;
+            /** Number */
+            number: string | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+            /** Url */
+            url: string | null;
+            /** Is Demo */
+            is_demo: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            newsroom: components["schemas"]["NewsroomOut"];
+            /** Confirmed */
+            confirmed: boolean;
+            /** Sealed */
+            sealed: boolean;
+            /** Seal Url */
+            seal_url: string | null;
+            /**
+             * Fakes
+             * @default 0
+             */
+            fakes: number;
+            original?: components["schemas"]["OriginalRef"] | null;
+            /**
+             * Diff
+             * @default []
+             */
+            diff: components["schemas"]["DiffOp"][];
+            /**
+             * Changed Numbers
+             * @default []
+             */
+            changed_numbers: components["schemas"]["ChangedNumber"][];
+            /** Summary */
+            summary?: string | null;
+        };
+        /** OfficialPage */
+        "OfficialPage-Input": {
+            /**
+             * Kind
+             * @default site
+             */
+            kind: string;
+            /**
+             * Url
+             * Format: uri
+             */
+            url: string;
+            /**
+             * Verified
+             * @default false
+             */
+            verified: boolean;
+        };
+        /** OfficialPage */
+        "OfficialPage-Output": {
+            /** Items */
+            items: components["schemas"]["OfficialOut"][];
+            /** Total */
+            total: number;
+        };
         /** OriginalIn */
         OriginalIn: {
             /** Issuer */
@@ -1756,46 +2846,37 @@ export interface components {
             title: string;
             /** Number */
             number?: string | null;
+            /** Issued On */
+            issued_on?: string | null;
             /** Text */
             text: string;
-            /**
-             * Url
-             * Format: uri
-             */
-            url: string;
+            /** Url */
+            url?: string | null;
+            /** File Id */
+            file_id?: string | null;
+            /** Place */
+            place?: string | null;
             /**
              * Is Demo
              * @default false
              */
             is_demo: boolean;
         };
-        /** OriginalOut */
-        OriginalOut: {
-            /** Issuer */
-            issuer: string;
-            /** Title */
-            title: string;
-            /** Number */
-            number?: string | null;
-            /** Text */
-            text: string;
-            /**
-             * Url
-             * Format: uri
-             */
-            url: string;
-            /**
-             * Is Demo
-             * @default false
-             */
-            is_demo: boolean;
+        /** OriginalRef */
+        OriginalRef: {
             /**
              * Id
              * Format: uuid
              */
             id: string;
-            /** Fingerprint */
-            fingerprint: string | null;
+            /** Issuer */
+            issuer: string;
+            /** Number */
+            number: string | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Title */
+            title: string;
         };
         /** Passage */
         Passage: {
@@ -1843,6 +2924,29 @@ export interface components {
             language: string;
             /** Text */
             text: string;
+        };
+        /** PosterOut */
+        PosterOut: {
+            /** Title */
+            title: string;
+            /** Verdict */
+            verdict: string;
+            /** Verdict Word */
+            verdict_word: string;
+            /** Verdict Word Mg */
+            verdict_word_mg: string;
+            /** Reason */
+            reason: string;
+            /** Newsroom */
+            newsroom: string;
+            /** Ref */
+            ref: string | null;
+            /** Date */
+            date: string | null;
+            /** Qr Url */
+            qr_url: string;
+            /** Short Link */
+            short_link: string | null;
         };
         /** Preparation */
         Preparation: {
@@ -1909,6 +3013,61 @@ export interface components {
             /** Searches */
             searches?: components["schemas"]["SearchAttempt"][];
         };
+        /** PublicKeyOut */
+        PublicKeyOut: {
+            /** Key Id */
+            key_id: string;
+            /** Issuer */
+            issuer: string;
+            /** Alg */
+            alg: string;
+            /** Public Key */
+            public_key: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            newsroom: components["schemas"]["NewsroomOut"];
+        };
+        /** PublicSeal */
+        PublicSeal: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Alg */
+            alg: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Message */
+            message: string;
+            /** Signature */
+            signature: string;
+            /** Key Id */
+            key_id: string;
+            /** Public Key */
+            public_key: string;
+            /** Sealed At */
+            sealed_at: string;
+            /**
+             * Sealed By
+             * @enum {string}
+             */
+            sealed_by: "issuer" | "newsroom";
+            /** Revoked At */
+            revoked_at: string | null;
+            /** Is Demo */
+            is_demo: boolean;
+            newsroom: components["schemas"]["NewsroomOut"];
+            /** Url */
+            url: string;
+            /** Text */
+            text: string;
+        };
         /** PublicSource */
         PublicSource: {
             /** N */
@@ -1944,6 +3103,179 @@ export interface components {
              */
             older_than_claim: boolean;
         };
+        /** PublicStopOut */
+        PublicStopOut: {
+            /** Channel */
+            channel: string;
+            /** Place */
+            place: string;
+            /** Region */
+            region: string | null;
+            /** Status */
+            status: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
+        /** PublicTrajetOut */
+        PublicTrajetOut: {
+            /** Truth */
+            truth: components["schemas"]["PublicStopOut"][];
+            /** Rumour Routes */
+            rumour_routes: number;
+            /** Truth Routes */
+            truth_routes: number;
+            /** Covered */
+            covered: number;
+            /** Summary */
+            summary: string;
+        };
+        /** QuestionIn */
+        QuestionIn: {
+            /**
+             * Contact Id
+             * Format: uuid
+             */
+            contact_id: string;
+            /** Question */
+            question: string;
+            /**
+             * Channel
+             * @default whatsapp
+             * @enum {string}
+             */
+            channel: "whatsapp" | "sms" | "email" | "call";
+        };
+        /** QuestionOut */
+        QuestionOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Contact Id */
+            contact_id: string | null;
+            /** Contact */
+            contact: string | null;
+            /** Institution */
+            institution: string | null;
+            /** Channel */
+            channel: string;
+            /** Question */
+            question: string;
+            /** Answer Url */
+            answer_url: string;
+            /** Message */
+            message: string;
+            /** Links */
+            links: {
+                [key: string]: string;
+            };
+            /** Sent At */
+            sent_at: string | null;
+            /** Answered At */
+            answered_at: string | null;
+            /** Answer */
+            answer: {
+                [key: string]: unknown;
+            } | null;
+            /** Source Id */
+            source_id: string | null;
+        };
+        /** RadioDiffuseIn */
+        RadioDiffuseIn: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+        };
+        /** RadioDiffuseOut */
+        RadioDiffuseOut: {
+            /** Status */
+            status: string;
+            /** Station */
+            station: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+        };
+        /** RatingOut */
+        RatingOut: {
+            /** Rating */
+            rating: string;
+            /** Verdict */
+            verdict: string | null;
+        };
+        /** ReponseIn */
+        ReponseIn: {
+            /**
+             * Stance
+             * @enum {string}
+             */
+            stance: "confirms" | "denies" | "unknown";
+            /** Text */
+            text: string;
+            /** Name */
+            name: string;
+        };
+        /** ReponseOut */
+        ReponseOut: {
+            /** Question */
+            question: string;
+            /** Claim */
+            claim: string;
+            /** Ref */
+            ref: string | null;
+            /** Newsroom */
+            newsroom: string;
+            /** Contact */
+            contact: string | null;
+            /** Institution */
+            institution: string | null;
+            /** Asked At */
+            asked_at: string | null;
+            /** Answered At */
+            answered_at: string | null;
+            /** Stance */
+            stance: string | null;
+        };
+        /** Review */
+        Review: {
+            /** Publisher */
+            publisher: string;
+            /**
+             * Url
+             * Format: uri
+             */
+            url: string;
+            /** Rating */
+            rating: string;
+            /** Date */
+            date?: string | null;
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+        };
+        /** RevokedKeyOut */
+        RevokedKeyOut: {
+            /** Key Id */
+            key_id: string;
+            /** Issuer */
+            issuer: string;
+            /**
+             * Revoked At
+             * Format: date-time
+             */
+            revoked_at: string;
+            newsroom: components["schemas"]["NewsroomOut"];
+        };
         /** RoleIn */
         RoleIn: {
             /**
@@ -1978,17 +3310,18 @@ export interface components {
         };
         /** RouteOut */
         RouteOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
+            /** Id */
+            id: string | null;
             /** Side */
             side: string;
             /** Channel */
             channel: string;
             /** Place */
             place: string;
+            /** Location */
+            location?: {
+                [key: string]: unknown;
+            };
             /** Status */
             status: string;
             /** Proof */
@@ -2000,12 +3333,59 @@ export interface components {
              * Format: date-time
              */
             at: string;
+            /**
+             * Auto
+             * @default true
+             */
+            auto: boolean;
+            /**
+             * Added By
+             * @default system
+             */
+            added_by: string;
+            /**
+             * Derived
+             * @default false
+             */
+            derived: boolean;
         };
         /** RubriqueOut */
         RubriqueOut: {
             interests: components["schemas"]["Interests"];
             /** Items */
             items: components["schemas"]["ItemOut"][];
+        };
+        /** SealKeysOut */
+        SealKeysOut: {
+            /** Keys */
+            keys: components["schemas"]["PublicKeyOut"][];
+            /** Revoked */
+            revoked: components["schemas"]["RevokedKeyOut"][];
+        };
+        /** SealOut */
+        SealOut: {
+            /** Key Id */
+            key_id: string;
+            /** Signature */
+            signature: string;
+            /** Sealed At */
+            sealed_at: string;
+            /** Url */
+            url: string;
+        };
+        /** SealResult */
+        SealResult: {
+            sealed: components["schemas"]["SealOut"];
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Public Key */
+            public_key: string;
+            /** Qr Svg */
+            qr_svg: string;
+            /** Public */
+            public: boolean;
         };
         /** SearchAttempt */
         SearchAttempt: {
@@ -2080,6 +3460,16 @@ export interface components {
             /** Score */
             score: number;
             item: components["schemas"]["ItemOut"];
+        };
+        /** Skipped */
+        Skipped: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Code */
+            code: string;
         };
         /** SourceIn */
         SourceIn: {
@@ -2196,6 +3586,19 @@ export interface components {
             received_at: string;
             newsroom: components["schemas"]["NewsroomOut"];
             verdict: components["schemas"]["VerdictOut"] | null;
+        };
+        /** TrajetOut */
+        TrajetOut: {
+            /** Rumour */
+            rumour: components["schemas"]["RouteOut"][];
+            /** Truth */
+            truth: components["schemas"]["RouteOut"][];
+            /** Gaps */
+            gaps: components["schemas"]["GapOut"][];
+            /** Covered */
+            covered: number;
+            /** Summary */
+            summary: string;
         };
         /** TranscribeIn */
         TranscribeIn: {
@@ -2314,6 +3717,38 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** WhoContact */
+        WhoContact: {
+            contact: components["schemas"]["ContactOut"];
+            /** Why */
+            why: string[];
+            /** Track */
+            track: string | null;
+            /** Question */
+            question: string;
+            /** Score */
+            score: number;
+        };
+        /** WhoOut */
+        WhoOut: {
+            /** Points */
+            points: components["schemas"]["WhoPoint"][];
+            /** Beats */
+            beats: string[];
+            /** Place */
+            place: {
+                [key: string]: unknown;
+            } | null;
+            /** Questions */
+            questions: components["schemas"]["QuestionOut"][];
+        };
+        /** WhoPoint */
+        WhoPoint: {
+            /** Point */
+            point: string | null;
+            /** Contacts */
+            contacts: components["schemas"]["WhoContact"][];
+        };
         /** WorkspaceIn */
         WorkspaceIn: {
             /** Name */
@@ -2364,6 +3799,11 @@ export interface components {
             /** Question */
             question: string;
         };
+        /** MatchIn */
+        app__modules__public__MatchIn: {
+            /** Text */
+            text: string;
+        };
         /** AskIn */
         app__modules__rag__AskIn: {
             /** Question */
@@ -2375,6 +3815,47 @@ export interface components {
             k: number;
             /** Item Id */
             item_id?: string | null;
+        };
+        /** MatchIn */
+        app__modules__registry__MatchIn: {
+            /** Text */
+            text: string;
+        };
+        /** VerifyIn */
+        app__modules__registry__VerifyIn: {
+            /** Signature */
+            signature?: string | null;
+        };
+        /** VerifyOut */
+        app__modules__registry__VerifyOut: {
+            /** Valid */
+            valid: boolean;
+            /** Revoked */
+            revoked: boolean;
+            /** Matches Record */
+            matches_record: boolean;
+            /** Key Id */
+            key_id: string;
+        };
+        /** VerifyIn */
+        app__modules__signing__VerifyIn: {
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Signature */
+            signature: string;
+        };
+        /** VerifyOut */
+        app__modules__signing__VerifyOut: {
+            /** Valid */
+            valid: boolean;
+            /** Key Id */
+            key_id: string;
+            /** Sha256 */
+            sha256: string;
+            /** Summary */
+            summary: string | null;
         };
     };
     responses: never;
@@ -3807,7 +5288,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["MatchIn"];
+                "application/json": components["schemas"]["app__modules__public__MatchIn"];
             };
         };
         responses: {
@@ -4368,6 +5849,8 @@ export interface operations {
         parameters: {
             query?: {
                 q?: string;
+                topic?: string;
+                region?: string;
             };
             header?: never;
             path: {
@@ -4432,6 +5915,36 @@ export interface operations {
             };
         };
     };
+    delete_contact_api_v1_workspaces__ws__contacts__contact_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contact_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     edit_contact_api_v1_workspaces__ws__contacts__contact_id__patch: {
         parameters: {
             query?: never;
@@ -4468,10 +5981,210 @@ export interface operations {
             };
         };
     };
+    verify_contact_api_v1_workspaces__ws__contacts__contact_id__verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contact_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    who_api_v1_workspaces__ws__items__item_id__who_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WhoOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_questions_api_v1_workspaces__ws__items__item_id__questions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_contact_api_v1_workspaces__ws__items__item_id__questions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reponse_api_v1_public_reponse__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReponseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    answer_api_v1_public_reponse__token__post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReponseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReponseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     figures_api_v1_workspaces__ws__figures_get: {
         parameters: {
             query?: {
                 q?: string;
+                topic?: string;
+                country?: string;
             };
             header?: never;
             path: {
@@ -4536,10 +6249,82 @@ export interface operations {
             };
         };
     };
+    check_api_v1_workspaces__ws__figures_check_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    }[];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_api_v1_workspaces__ws__figures_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     originals_api_v1_workspaces__ws__registry_get: {
         parameters: {
             query?: {
                 q?: string;
+                status?: ("original" | "fake_caught") | null;
+                scope?: "mine" | "network";
             };
             header?: never;
             path: {
@@ -4555,7 +6340,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OriginalOut"][];
+                    "application/json": components["schemas"]["CommuniqueOut"][];
                 };
             };
             /** @description Validation Error */
@@ -4590,7 +6375,424 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OriginalOut"];
+                    "application/json": components["schemas"]["CommuniqueOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    seal_keys_api_v1_workspaces__ws__registry_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KeyOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_key_api_v1_workspaces__ws__registry_keys__key_id__revoke_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KeyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_original_api_v1_workspaces__ws__registry__cid__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommuniqueOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fakes_of_api_v1_workspaces__ws__registry__cid__fakes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommuniqueOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_api_v1_workspaces__ws__registry__cid__confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommuniqueOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_fake_api_v1_workspaces__ws__registry__cid__fake_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FakeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CommuniqueOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    seal_of_api_v1_workspaces__ws__registry__cid__seal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SealResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    seal_original_api_v1_workspaces__ws__registry__cid__seal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SealResult"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_seal_api_v1_public_sceau__cid__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicSeal"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_public_seal_api_v1_public_sceau__cid__verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__modules__registry__VerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__registry__VerifyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_seal_keys_api_v1_public_seal_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SealKeysOut"];
+                };
+            };
+        };
+    };
+    official_feed_api_v1_public_registry_get: {
+        parameters: {
+            query?: {
+                newsroom?: string;
+                q?: string;
+                kind?: ("original" | "fake_caught") | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OfficialPage-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_api_v1_workspaces__ws__registry_match_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__modules__registry__MatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
             /** @description Validation Error */
@@ -4706,6 +6908,239 @@ export interface operations {
             };
         };
     };
+    release_api_v1_workspaces__ws__items__item_id__release_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sign_many_api_v1_workspaces__ws__items_sign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BatchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_rating_api_v1_workspaces__ws__ratings_get: {
+        parameters: {
+            query: {
+                rating: string;
+            };
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RatingOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    adopt_api_v1_workspaces__ws__items__item_id__adopt_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdoptIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    carnet_api_v1_workspaces__ws__items__item_id__carnet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CarnetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attestation_api_v1_workspaces__ws__items__item_id__attestation_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttestationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_attestation_api_v1_public_attestations_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__modules__signing__VerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__signing__VerifyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     routes_api_v1_workspaces__ws__items__item_id__routes_get: {
         parameters: {
             query?: never;
@@ -4774,7 +7209,70 @@ export interface operations {
             };
         };
     };
-    formats_api_v1_workspaces__ws__items__item_id__diffusion_get: {
+    trajet_api_v1_workspaces__ws__items__item_id__trajet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrajetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_trajet_api_v1_public_verdicts__item_id__trajet_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicTrajetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    diffusion_api_v1_workspaces__ws__items__item_id__diffusion_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -4793,6 +7291,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FormatsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    diffuse_api_v1_workspaces__ws__items__item_id__diffuse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DiffuseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiffuseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    radio_diffused_api_v1_public_radios__token__diffuse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RadioDiffuseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadioDiffuseOut"];
                 };
             };
             /** @description Validation Error */
