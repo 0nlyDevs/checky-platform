@@ -9,8 +9,8 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground",
-        // The one action of a screen, in citron (never a verdict, never decoration).
-        action: "bg-action font-bold text-action-foreground hover:bg-[color-mix(in_oklch,var(--action),var(--foreground)_8%)]",
+        // The one action of a screen: the ink primary (paper in dark), never a verdict, never decoration.
+        action: "bg-action font-bold text-action-foreground hover:bg-primary-hover hover:text-primary-foreground",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
