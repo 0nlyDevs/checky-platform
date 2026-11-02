@@ -558,6 +558,8 @@ async def _publishable(db: AsyncSession, member, item_id: uuid.UUID) -> tuple[It
     if item.status != "published" or item.data.get("verdict") not in VERDICT_FR:
         raise ApiError(409, "not_published", "Publish a newsroom verdict first")
     ws = await db.get(Workspace, member.workspace_id)
+    if ws.verification != "approved":
+        raise ApiError(409, "not_verified", "Checky has not verified this newsroom yet")
     if not ws.is_public:
         raise ApiError(
             409, "private_workspace", "Enable public verdicts before preparing public links"

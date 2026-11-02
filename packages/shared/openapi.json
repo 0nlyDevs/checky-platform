@@ -8116,6 +8116,281 @@
           }
         }
       }
+    },
+    "/api/v1/workspaces/{ws}/verification": {
+      "get": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Get Verification",
+        "operationId": "get_verification_api_v1_workspaces__ws__verification_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Request Verification",
+        "description": "Send (or correct and send again) the request. An approved newsroom stays approved.",
+        "operationId": "request_verification_api_v1_workspaces__ws__verification_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/requests": {
+      "get": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "List Requests",
+        "operationId": "list_requests_api_v1_platform_requests_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "none",
+                    "pending",
+                    "approved",
+                    "refused"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AdminRequestOut"
+                  },
+                  "title": "Response List Requests Api V1 Platform Requests Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/requests/{ws}/approve": {
+      "post": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Approve",
+        "operationId": "approve_api_v1_platform_requests__ws__approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/platform/requests/{ws}/refuse": {
+      "post": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Refuse",
+        "operationId": "refuse_api_v1_platform_requests__ws__refuse_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefuseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8287,6 +8562,82 @@
           "created_at"
         ],
         "title": "ActivityOut"
+      },
+      "AdminRequestOut": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id"
+          },
+          "newsroom": {
+            "type": "string",
+            "title": "Newsroom"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "none",
+              "pending",
+              "approved",
+              "refused"
+            ],
+            "title": "Status"
+          },
+          "members": {
+            "type": "integer",
+            "title": "Members"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "request": {
+            "$ref": "#/components/schemas/RequestOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "newsroom",
+          "status",
+          "members",
+          "created_at",
+          "submitted_at",
+          "reason",
+          "reviewed_at",
+          "request"
+        ],
+        "title": "AdminRequestOut"
       },
       "AdoptIn": {
         "properties": {
@@ -12705,6 +13056,11 @@
             },
             "type": "array",
             "title": "Memberships"
+          },
+          "platform_admin": {
+            "type": "boolean",
+            "title": "Platform Admin",
+            "default": false
           }
         },
         "type": "object",
@@ -12765,13 +13121,18 @@
           "slug": {
             "type": "string",
             "title": "Slug"
+          },
+          "verification": {
+            "type": "string",
+            "title": "Verification"
           }
         },
         "type": "object",
         "required": [
           "workspace_id",
           "name",
-          "slug"
+          "slug",
+          "verification"
         ],
         "title": "MembershipOut"
       },
@@ -14627,6 +14988,21 @@
         ],
         "title": "RatingOut"
       },
+      "RefuseIn": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "RefuseIn"
+      },
       "RegionCount": {
         "properties": {
           "region": {
@@ -14815,6 +15191,186 @@
           "stance"
         ],
         "title": "ReponseOut"
+      },
+      "RequestIn": {
+        "properties": {
+          "outlet": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Outlet"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "radio",
+              "tv",
+              "press",
+              "online"
+            ],
+            "title": "Kind"
+          },
+          "city": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "City"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Country"
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 4,
+            "title": "Website"
+          },
+          "full_name": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 3,
+            "title": "Full Name"
+          },
+          "job_title": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 2,
+            "title": "Job Title"
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 6,
+            "title": "Phone"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 254,
+            "title": "Email"
+          },
+          "press_card": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Press Card"
+          }
+        },
+        "type": "object",
+        "required": [
+          "outlet",
+          "kind",
+          "city",
+          "country",
+          "website",
+          "full_name",
+          "job_title",
+          "phone",
+          "email"
+        ],
+        "title": "RequestIn"
+      },
+      "RequestOut": {
+        "properties": {
+          "outlet": {
+            "type": "string",
+            "title": "Outlet"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "city": {
+            "type": "string",
+            "title": "City"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "country_name": {
+            "type": "string",
+            "title": "Country Name"
+          },
+          "website": {
+            "type": "string",
+            "title": "Website"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "job_title": {
+            "type": "string",
+            "title": "Job Title"
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "press_card": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Press Card"
+          }
+        },
+        "type": "object",
+        "required": [
+          "outlet",
+          "kind",
+          "city",
+          "region",
+          "country",
+          "country_name",
+          "website",
+          "full_name",
+          "job_title",
+          "phone",
+          "email",
+          "press_card"
+        ],
+        "title": "RequestOut"
       },
       "Review": {
         "properties": {
@@ -16467,6 +17023,70 @@
         ],
         "title": "VerdictPage"
       },
+      "VerificationOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "none",
+              "pending",
+              "approved",
+              "refused"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "reviewed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed At"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RequestOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "VerificationOut"
+      },
       "WhoContact": {
         "properties": {
           "contact": {
@@ -16679,6 +17299,11 @@
           "is_public": {
             "type": "boolean",
             "title": "Is Public"
+          },
+          "verification": {
+            "type": "string",
+            "title": "Verification",
+            "default": "none"
           },
           "settings": {
             "$ref": "#/components/schemas/NewsroomSettings"

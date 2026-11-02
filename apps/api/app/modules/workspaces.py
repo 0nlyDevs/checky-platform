@@ -105,6 +105,8 @@ class WorkspaceSettingsOut(BaseModel):
     name: str
     slug: str
     is_public: bool
+    # none | pending | approved | refused (set by the Checky team, see verification.py)
+    verification: str = "none"
     settings: NewsroomSettings = Field(default_factory=NewsroomSettings)
 
 
@@ -137,6 +139,7 @@ async def get_workspace(member: AnyMember, db: Db) -> WorkspaceSettingsOut:
         name=ws.name,
         slug=ws.slug,
         is_public=ws.is_public,
+        verification=ws.verification,
         settings=newsroom_settings(ws),
     )
 
@@ -156,6 +159,7 @@ async def update_workspace(body: WorkspacePatch, member: AnyMember, db: Db) -> W
         name=ws.name,
         slug=ws.slug,
         is_public=ws.is_public,
+        verification=ws.verification,
         settings=newsroom_settings(ws),
     )
 

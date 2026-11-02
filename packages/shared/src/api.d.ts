@@ -2199,6 +2199,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Verification */
+        get: operations["get_verification_api_v1_workspaces__ws__verification_get"];
+        /**
+         * Request Verification
+         * @description Send (or correct and send again) the request. An approved newsroom stays approved.
+         */
+        put: operations["request_verification_api_v1_workspaces__ws__verification_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Requests */
+        get: operations["list_requests_api_v1_platform_requests_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/requests/{ws}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Approve */
+        post: operations["approve_api_v1_platform_requests__ws__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/requests/{ws}/refuse": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refuse */
+        post: operations["refuse_api_v1_platform_requests__ws__refuse_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2269,6 +2341,38 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** AdminRequestOut */
+        AdminRequestOut: {
+            /**
+             * Workspace Id
+             * Format: uuid
+             */
+            workspace_id: string;
+            /** Newsroom */
+            newsroom: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "none" | "pending" | "approved" | "refused";
+            /** Members */
+            members: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Submitted At
+             * Format: date-time
+             */
+            submitted_at: string;
+            /** Reason */
+            reason: string | null;
+            /** Reviewed At */
+            reviewed_at: string | null;
+            request: components["schemas"]["RequestOut"];
         };
         /** AdoptIn */
         AdoptIn: {
@@ -3764,6 +3868,11 @@ export interface components {
             name: string | null;
             /** Memberships */
             memberships: components["schemas"]["MembershipOut"][];
+            /**
+             * Platform Admin
+             * @default false
+             */
+            platform_admin: boolean;
         };
         /** MemberOut */
         MemberOut: {
@@ -3785,6 +3894,8 @@ export interface components {
             name: string;
             /** Slug */
             slug: string;
+            /** Verification */
+            verification: string;
         };
         /** NewsroomOut */
         NewsroomOut: {
@@ -4431,6 +4542,11 @@ export interface components {
             /** Verdict */
             verdict: string | null;
         };
+        /** RefuseIn */
+        RefuseIn: {
+            /** Reason */
+            reason: string;
+        };
         /** RegionCount */
         RegionCount: {
             /** Region */
@@ -4482,6 +4598,61 @@ export interface components {
             answered_at: string | null;
             /** Stance */
             stance: string | null;
+        };
+        /** RequestIn */
+        RequestIn: {
+            /** Outlet */
+            outlet: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "radio" | "tv" | "press" | "online";
+            /** City */
+            city: string;
+            /** Region */
+            region?: string | null;
+            /** Country */
+            country: string;
+            /** Website */
+            website: string;
+            /** Full Name */
+            full_name: string;
+            /** Job Title */
+            job_title: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string;
+            /** Press Card */
+            press_card?: string | null;
+        };
+        /** RequestOut */
+        RequestOut: {
+            /** Outlet */
+            outlet: string;
+            /** Kind */
+            kind: string;
+            /** City */
+            city: string;
+            /** Region */
+            region: string | null;
+            /** Country */
+            country: string;
+            /** Country Name */
+            country_name: string;
+            /** Website */
+            website: string;
+            /** Full Name */
+            full_name: string;
+            /** Job Title */
+            job_title: string;
+            /** Phone */
+            phone: string;
+            /** Email */
+            email: string;
+            /** Press Card */
+            press_card: string | null;
         };
         /** Review */
         Review: {
@@ -5082,6 +5253,21 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** VerificationOut */
+        VerificationOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "none" | "pending" | "approved" | "refused";
+            /** Reason */
+            reason?: string | null;
+            /** Submitted At */
+            submitted_at?: string | null;
+            /** Reviewed At */
+            reviewed_at?: string | null;
+            request?: components["schemas"]["RequestOut"] | null;
+        };
         /** WhoContact */
         WhoContact: {
             contact: components["schemas"]["ContactOut"];
@@ -5152,6 +5338,11 @@ export interface components {
             slug: string;
             /** Is Public */
             is_public: boolean;
+            /**
+             * Verification
+             * @default none
+             */
+            verification: string;
             settings?: components["schemas"]["NewsroomSettings"];
         };
         /** AskIn */
@@ -9779,6 +9970,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SmsOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_verification_api_v1_workspaces__ws__verification_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    request_verification_api_v1_workspaces__ws__verification_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequestIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requests_api_v1_platform_requests_get: {
+        parameters: {
+            query?: {
+                status?: ("none" | "pending" | "approved" | "refused") | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminRequestOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_api_v1_platform_requests__ws__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refuse_api_v1_platform_requests__ws__refuse_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefuseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationOut"];
                 };
             };
             /** @description Validation Error */

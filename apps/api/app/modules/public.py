@@ -114,7 +114,7 @@ def _published():
         select(Item, Workspace)
         .join(Workspace, Workspace.id == Item.workspace_id)
         .where(
-            Workspace.is_public.is_(True),
+            Workspace.publishes,
             Item.type == "claim",
             Item.status == "published",
             Item.data["verdict"].astext.in_(["true", "misleading", "false", "unverifiable"]),
@@ -226,7 +226,7 @@ async def public_newsrooms(db: Db) -> list[Workspace]:
         (
             await db.scalars(
                 select(Workspace)
-                .where(Workspace.is_public.is_(True))
+                .where(Workspace.publishes)
                 .order_by(Workspace.created_at)
                 .limit(50)
             )
@@ -236,9 +236,7 @@ async def public_newsrooms(db: Db) -> list[Workspace]:
 
 @router.get("/newsrooms")
 async def newsrooms(db: Db) -> list[NewsroomOut]:
-    rows = await db.scalars(
-        select(Workspace).where(Workspace.is_public.is_(True)).order_by(Workspace.name)
-    )
+    rows = await db.scalars(select(Workspace).where(Workspace.publishes).order_by(Workspace.name))
     return [NewsroomOut(slug=w.slug, name=w.name) for w in rows]
 
 
@@ -296,7 +294,7 @@ async def create_tip(body: TipIn, request: Request, db: Db) -> TipOut:
     if not _allow_tip(request.client.host if request.client else "unknown"):
         raise ApiError(429, "too_many_tips", "Too many tips, try again in a few minutes")
     ws = await db.scalar(
-        select(Workspace).where(Workspace.slug == body.newsroom, Workspace.is_public.is_(True))
+        select(Workspace).where(Workspace.slug == body.newsroom, Workspace.publishes)
     )
     if ws is None:
         raise ApiError(404, "not_found", "Newsroom not found")
@@ -349,7 +347,7 @@ async def tip_status(token: str, db: Db) -> TipStatusOut:
         await db.execute(
             select(Item, Workspace)
             .join(Workspace, Workspace.id == Item.workspace_id)
-            .where(Item.data["tip_token"].astext == token, Workspace.is_public.is_(True))
+            .where(Item.data["tip_token"].astext == token, Workspace.publishes)
         )
     ).first()
     if row is None:
@@ -403,7 +401,7 @@ async def flashs(db: Db, newsroom: str | None = None) -> FlashsOut:
     room, zone = None, dates.EAT
     if newsroom:
         ws = await db.scalar(
-            select(Workspace).where(Workspace.slug == newsroom, Workspace.is_public.is_(True))
+            select(Workspace).where(Workspace.slug == newsroom, Workspace.publishes)
         )
         if ws is None:
             raise ApiError(404, "not_found", "Newsroom not found")

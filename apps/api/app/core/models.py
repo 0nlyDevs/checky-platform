@@ -15,9 +15,11 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    and_,
     func,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.config import get_settings
@@ -64,6 +66,45 @@ class Workspace(_Row):
     # `timezone` (IANA, default Indian/Antananarivo), `ai_enabled` (off = only the fact checks
     # run, « Mode sans IA »), `country`.
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
+    # Set by the Checky team (PLATFORM_ADMINS), never by the newsroom: none | pending | approved |
+    # refused. Until it is approved the newsroom works privately and nothing of it leaves.
+    verification: Mapped[str] = mapped_column(String(16), default="none", server_default="none")
+
+    @hybrid_property
+    def publishes(self) -> bool:
+        """Its verdicts, tips, SMS and registry may reach the public: opted in and verified."""
+        return bool(self.is_public and self.verification == "approved")
+
+    @publishes.inplace.expression
+    @classmethod
+    def _publishes(cls):
+        return and_(cls.is_public.is_(True), cls.verification == "approved")
+
+
+class NewsroomRequest(_Row):
+    """A newsroom's request to be verified, read only by the Checky team (personal data)."""
+
+    __tablename__ = "newsroom_request"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), unique=True
+    )
+    outlet: Mapped[str] = mapped_column(String(160))
+    # radio | tv | press | online
+    kind: Mapped[str] = mapped_column(String(16))
+    city: Mapped[str] = mapped_column(String(120))
+    region: Mapped[str | None] = mapped_column(String(120))
+    country: Mapped[str] = mapped_column(String(2))  # ISO 3166-1 alpha-2
+    website: Mapped[str] = mapped_column(String(500))
+    full_name: Mapped[str] = mapped_column(String(160))
+    job_title: Mapped[str] = mapped_column(String(120))
+    phone: Mapped[str] = mapped_column(String(32))  # E.164
+    email: Mapped[str] = mapped_column(String(254))
+    press_card: Mapped[str | None] = mapped_column(String(120))
+    submitted_by: Mapped[str] = mapped_column(Text)
+    reason: Mapped[str | None] = mapped_column(Text)
+    reviewed_by: Mapped[str | None] = mapped_column(Text)
+    reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Membership(_Row):

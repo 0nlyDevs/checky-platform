@@ -126,7 +126,7 @@ async def search_verdicts(ctx: GuideContext, query: str) -> tuple[str, str]:
 async def _newsrooms() -> list[Workspace]:
     async with SessionLocal() as db:
         rows = await db.scalars(
-            select(Workspace).where(Workspace.is_public.is_(True)).order_by(Workspace.name)
+            select(Workspace).where(Workspace.publishes).order_by(Workspace.name)
         )
         return list(rows)
 

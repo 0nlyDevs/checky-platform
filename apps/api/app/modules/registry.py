@@ -150,7 +150,7 @@ def out(c: Communique, ws: Workspace | None, viewer: uuid.UUID, fakes: int = 0) 
         created_at=c.created_at,
         location={k: v for k, v in loc.items() if k in PLACE_KEYS},
         own=c.workspace_id == viewer,
-        newsroom=NewsroomOut(slug=ws.slug, name=ws.name) if ws and ws.is_public else None,
+        newsroom=NewsroomOut(slug=ws.slug, name=ws.name) if ws and ws.publishes else None,
         confirmations=confirmations,
         confirmed=confirmations >= CONFIRMED_AT,
         confirmed_by_us=str(viewer) in (c.confirmed_by or []),
@@ -175,7 +175,7 @@ async def _fake_counts(db: AsyncSession, viewer: uuid.UUID, ids: list[uuid.UUID]
         .where(
             Communique.status == "fake_caught",
             key.in_([str(i) for i in ids]),
-            or_(Communique.workspace_id == viewer, Workspace.is_public.is_(True)),
+            or_(Communique.workspace_id == viewer, Workspace.publishes),
         )
         .group_by(key)
     )
@@ -187,7 +187,7 @@ def _visible(viewer: uuid.UUID):
     return (
         select(Communique, Workspace)
         .join(Workspace, Workspace.id == Communique.workspace_id)
-        .where(or_(Communique.workspace_id == viewer, Workspace.is_public.is_(True)))
+        .where(or_(Communique.workspace_id == viewer, Workspace.publishes))
     )
 
 
@@ -446,7 +446,7 @@ async def _seal_result(db: AsyncSession, c: Communique) -> SealResult:
         payload=c.sealed["payload"],
         public_key=key.public_key if key else "",
         qr_svg=seal.qr_svg(url),
-        public=bool(ws and ws.is_public),
+        public=bool(ws and ws.publishes),
     )
 
 
@@ -521,7 +521,7 @@ async def _public_sealed(db: AsyncSession, cid: uuid.UUID):
         await db.execute(
             select(Communique, Workspace)
             .join(Workspace, Workspace.id == Communique.workspace_id)
-            .where(Communique.id == cid, Workspace.is_public.is_(True))
+            .where(Communique.id == cid, Workspace.publishes)
         )
     ).first()
     if row is None or not (row[0].sealed and row[0].sealed.get("signature")):
@@ -612,7 +612,7 @@ async def public_seal_keys(db: Db) -> SealKeysOut:
         await db.execute(
             select(SealKey, Workspace)
             .join(Workspace, Workspace.id == SealKey.workspace_id)
-            .where(Workspace.is_public.is_(True))
+            .where(Workspace.publishes)
             .order_by(SealKey.created_at.desc())
             .limit(1000)
         )
@@ -693,7 +693,7 @@ async def official_feed(
     stmt = (
         select(Communique, Workspace)
         .join(Workspace, Workspace.id == Communique.workspace_id)
-        .where(Workspace.is_public.is_(True))
+        .where(Workspace.publishes)
     )
     if newsroom:
         stmt = stmt.where(Workspace.slug == newsroom)
@@ -718,7 +718,7 @@ async def official_feed(
                 select(Communique, Workspace)
                 .join(Workspace, Workspace.id == Communique.workspace_id)
                 .where(
-                    Workspace.is_public.is_(True),
+                    Workspace.publishes,
                     Communique.id.in_([uuid.UUID(i) for i in wanted if i]),
                 )
             )
@@ -780,7 +780,7 @@ async def _public_fake_counts(db: AsyncSession, ids: list[uuid.UUID]) -> dict[st
         .where(
             Communique.status == "fake_caught",
             key.in_([str(i) for i in ids]),
-            Workspace.is_public.is_(True),
+            Workspace.publishes,
         )
         .group_by(key)
     )

@@ -173,7 +173,7 @@ async def followed(db: Db, text: str) -> tuple[Item, Workspace] | None:
     rows = await db.execute(
         select(Item, Workspace)
         .join(Workspace, Workspace.id == Item.workspace_id)
-        .where(Workspace.is_public.is_(True), Item.type == "claim", Item.status != "published")
+        .where(Workspace.publishes, Item.type == "claim", Item.status != "published")
         .order_by(Item.created_at.desc())
         .limit(500)
     )
@@ -539,7 +539,7 @@ async def notify(body: NotifyIn, request: Request, db: Db) -> NotifyOut:
         item = await db.scalar(
             select(Item)
             .join(Workspace, Workspace.id == Item.workspace_id)
-            .where(Item.id == body.item_id, Workspace.is_public.is_(True), Item.type == "claim")
+            .where(Item.id == body.item_id, Workspace.publishes, Item.type == "claim")
         )
         if item is None:
             raise ApiError(404, "not_found", "Claim not found")

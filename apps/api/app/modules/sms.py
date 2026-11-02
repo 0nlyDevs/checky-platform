@@ -427,7 +427,7 @@ async def notify_signed(db, item: Item) -> int:
     if item.status != "published" or d.get("verdict") not in VERDICT_WORDS["fr"]:
         return 0
     ws = await db.get(Workspace, item.workspace_id)
-    if ws is None or not ws.is_public:
+    if ws is None or not ws.publishes:
         return 0
     verdict = await public._verdict(db, item, ws)
     done = set(

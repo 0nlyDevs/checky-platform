@@ -12,7 +12,7 @@ from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
 from app.core.models import Communique, SealKey
-from tests.test_workspaces import _workspace
+from tests.test_workspaces import _verify, _workspace
 
 SECRET = "test-seal-secret-that-is-long-enough"
 
@@ -110,6 +110,7 @@ def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
     assert anyone.get(f"/api/v1/public/sceau/{cid}").status_code == 404
     assert anyone.get("/api/v1/public/seal-keys").json() == {"keys": [], "revoked": []}
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    _verify(ws)
     public = anyone.get(f"/api/v1/public/sceau/{cid}").json()
     assert public["alg"] == "Ed25519" and public["sealed_by"] == "newsroom"
     assert public["message"] == seal.canonical(public["payload"]) and public["revoked_at"] is None

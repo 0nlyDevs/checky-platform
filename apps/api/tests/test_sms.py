@@ -13,6 +13,7 @@ RUMOUR = "délestage de 72 heures sur tout Antananarivo selon la JIRAMA, partage
 # Never sent anywhere: the test outbox stops at the API.
 PHONE = "+261 32 99 999 91"
 GW = {"X-Gateway-Secret": "gw-test-secret"}
+from tests.test_workspaces import _verify
 
 
 @pytest.fixture(autouse=True)
@@ -25,6 +26,7 @@ def secrets(monkeypatch):
 def _newsroom(c, name="Desk du matin", **settings):
     ws = c.post("/api/v1/workspaces", json={"name": name}).json()["id"]
     c.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True, "settings": settings})
+    _verify(ws)
     return ws
 
 
@@ -248,6 +250,7 @@ def test_demo_reset_seeds_the_line_twice_without_duplicates(as_user):
     # publishing the pitch rumour texts the askers and the subscribers of the regions its demo
     # road crosses (Antananarivo's radio, then SMS from Atsimo-Andrefana)
     item = rumour["item_id"]
+    _verify(ws)  # the demo reset never verifies a newsroom: only the Checky team does
     alice.patch(
         f"/api/v1/workspaces/{ws}/items/{item}",
         json={"status": "published", "data": {"verdict": "false", "reason": "Quatre heures."}},

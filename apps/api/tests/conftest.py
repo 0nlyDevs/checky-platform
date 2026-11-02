@@ -24,6 +24,7 @@ os.environ["DB_POOL"] = "false"
 os.environ["JOB_WORKERS"] = "0"
 # Indexing is opt-in per test (tests/test_rag.py), so other tests never call a real provider.
 os.environ["EMBED_PROVIDER"] = "none"
+os.environ["PLATFORM_ADMINS"] = "checky@example.test"
 
 import jwt
 import pytest
@@ -41,7 +42,7 @@ TABLES = (
     "app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace, "
     "app.place, app.contact, app.contact_request, app.communique, app.seal_key, app.figure, "
     "app.signal, app.route, app.radio_clip, app.radio_partner, app.public_question, "
-    "app.member_pref, app.sms_subscriber, app.sms_message, app.season"
+    "app.member_pref, app.sms_subscriber, app.sms_message, app.season, app.newsroom_request"
 )
 
 

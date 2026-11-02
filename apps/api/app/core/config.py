@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     auth_issuer: str = "http://localhost:3000"
     auth_audience: str = "http://localhost:3000"
     cors_origins: str = "http://localhost:3000"
+    # The Checky team: comma-separated emails of the accounts that verify newsrooms. Not a role in
+    # the app; register these addresses before anyone else can.
+    platform_admins: str = ""
 
     # S3-compatible object storage (Neon Object Storage); private bucket, presigned URLs only.
     storage_endpoint: str = ""

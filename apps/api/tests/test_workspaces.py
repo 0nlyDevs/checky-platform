@@ -11,6 +11,22 @@ def _workspace(c, name="Desk"):
     return r.json()["id"]
 
 
+def _verify(ws):
+    """Stand in for the Checky team approving the newsroom (see test_verification.py)."""
+    from sqlalchemy import text
+
+    from app.core.db import engine
+
+    async def run():
+        async with engine.begin() as conn:
+            await conn.execute(
+                text("UPDATE app.workspace SET verification = 'approved' WHERE id = :id"),
+                {"id": ws},
+            )
+
+    asyncio.run(run())
+
+
 def _join(member, user, ws):
     token = member.post(f"/api/v1/workspaces/{ws}/invitations").json()["token"]
     assert user.post(f"/api/v1/invitations/{token}/accept").status_code == 200
@@ -21,7 +37,12 @@ def test_creator_is_a_member_listed_in_me(as_user):
     ws = _workspace(alice)
     me = alice.get("/api/v1/me").json()
     assert me["memberships"] == [
-        {"workspace_id": ws, "name": "Desk", "slug": me["memberships"][0]["slug"]}
+        {
+            "workspace_id": ws,
+            "name": "Desk",
+            "slug": me["memberships"][0]["slug"],
+            "verification": "none",
+        }
     ]
 
 
@@ -53,6 +74,7 @@ def test_every_member_can_do_what_the_newsroom_does(as_user):
     _join(alice, bob, ws)
     assert bob.post(f"/api/v1/workspaces/{ws}/invitations").status_code == 201
     assert bob.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True}).status_code == 200
+    _verify(ws)
     item = alice.post(f"/api/v1/workspaces/{ws}/items", json={"title": "Le bac est reporté"})
     path = f"/api/v1/workspaces/{ws}/items/{item.json()['id']}"
     assert bob.patch(path, json={"title": "Le bac est reporté à lundi"}).status_code == 200

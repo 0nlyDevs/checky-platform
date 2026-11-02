@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from app.core.db import SessionLocal
 from app.core.models import Item
 from app.modules import trajet
-from tests.test_workspaces import _workspace
+from tests.test_workspaces import _verify, _workspace
 
 
 def _claim(c, ws, **data):
@@ -86,6 +86,7 @@ def test_public_trajet_shows_the_truth_side_of_published_verdicts_only(as_user, 
     _stop(ws, item, side="rumour", channel="facebook", place="Page")
     assert client.get(f"/api/v1/public/verdicts/{item}/trajet").status_code == 404
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    _verify(ws)
     alice.post(
         f"/api/v1/workspaces/{ws}/items/{item}/sign",
         json={
@@ -126,6 +127,7 @@ def test_public_trajet_hides_a_published_claim_without_a_confirmed_verdict(as_us
     alice = as_user("alice")
     ws = _workspace(alice)
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    _verify(ws)
     item = _claim(alice, ws, verdict_suggested="false")
 
     async def force_published():
@@ -182,6 +184,7 @@ def model(monkeypatch):
 
 def _published(alice, ws, **data):
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    _verify(ws)
     seen = (datetime.now(UTC) - timedelta(hours=8)).isoformat()
     item = _claim(alice, ws, ref="FAN-0145", origin="facebook", first_seen_at=seen, **data)
     r = alice.post(
@@ -202,6 +205,8 @@ def test_diffusion_needs_a_published_public_verdict(as_user, model):
         f"/api/v1/workspaces/{ws}/items/{item}/sign",
         json={"verdict": "false", "reason": REASON, "publish": True},
     )
+    assert alice.get(path).json()["error"]["code"] == "not_verified"
+    _verify(ws)
     assert alice.get(path).json()["error"]["code"] == "private_workspace"
     assert model == []
 
@@ -312,6 +317,7 @@ def test_a_public_tip_is_the_rumours_first_stop(as_user, client):
     alice = as_user("alice")
     ws = _workspace(alice)
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    _verify(ws)
     slug = alice.get(f"/api/v1/workspaces/{ws}").json()["slug"]
     tip = {
         "newsroom": slug,

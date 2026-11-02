@@ -7,7 +7,7 @@ from app.core.db import SessionLocal
 from app.core.models import Route, Source
 from app.modules.signing import rating_verdict
 from tests.test_newsroom_resources import invite
-from tests.test_workspaces import _workspace
+from tests.test_workspaces import _verify, _workspace
 
 
 def _claim(c, ws, title="72 heures de délestage à Antananarivo", **data):
@@ -28,6 +28,7 @@ def test_sign_and_publish_writes_the_byline_and_the_first_truth_stop(as_user):
     alice = as_user("alice")
     ws = _workspace(alice, "Rédaction démo")
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    _verify(ws)
     item = _claim(alice, ws)
     path = f"/api/v1/workspaces/{ws}/items/{item}"
     out = alice.post(
@@ -201,6 +202,7 @@ def test_carnet_lists_the_diligence_and_the_attestation_verifies(as_user, client
     alice = as_user("alice")
     ws = _workspace(alice, "Rédaction démo")
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    _verify(ws)
     item = _claim(alice, ws, ref="FAN-0145")
     base = f"/api/v1/workspaces/{ws}/items/{item}"
     alice.post(

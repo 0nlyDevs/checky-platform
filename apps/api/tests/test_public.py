@@ -3,12 +3,14 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from tests.test_workspaces import _verify
 
 
 def _newsroom(c, public=True):
     ws = c.post("/api/v1/workspaces", json={"name": "Desk du matin"}).json()["id"]
     if public:
         assert c.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True}).json()["is_public"]
+        _verify(ws)
     return ws, c.get(f"/api/v1/workspaces/{ws}").json()["slug"]
 
 
@@ -123,6 +125,7 @@ def test_any_member_opens_the_newsroom(as_user):
     token = alice.post(f"/api/v1/workspaces/{ws}/invitations").json()["token"]
     bob.post(f"/api/v1/invitations/{token}/accept")
     assert bob.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True}).json()["is_public"]
+    _verify(ws)
 
 
 def test_ask_answers_only_from_published_files(as_user, monkeypatch):

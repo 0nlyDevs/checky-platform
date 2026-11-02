@@ -1,7 +1,7 @@
 """Registre: originals, confirmations by another newsroom, fakes caught, and the word-by-word match."""
 
 from tests.test_newsroom_resources import invite
-from tests.test_workspaces import _workspace
+from tests.test_workspaces import _verify, _workspace
 
 ORIGINAL_TEXT = (
     "COMMUNIQUÉ N° 2026-118. La JIRAMA informe ses abonnés d'Antananarivo qu'en raison de travaux "
@@ -25,6 +25,7 @@ ORIGINAL = {
 
 def _public(client, ws):
     assert client.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True}).status_code == 200
+    _verify(ws)
 
 
 def test_an_original_is_registered_read_and_confirmed_by_another_newsroom(as_user):
@@ -237,7 +238,8 @@ def test_the_demo_reset_seeds_the_sealed_original_its_fake_and_the_pitch_figures
     assert len(figures) == 1 and figures[0]["is_demo"]
     assert figures[0]["communique_id"] == jirama["id"]
     assert figures[0]["source_url"] == jirama["sealed"]["url"]
-    # The public can check the demo seal: the demo newsroom publishes.
+    # The public can check the demo seal once Checky has verified the demo newsroom.
+    _verify(ws)
     public = alice.get(f"/api/v1/public/sceau/{jirama['id']}").json()
     assert public["is_demo"] and public["payload"]["number"] == "2026-118"
     feed = alice.get("/api/v1/public/registry").json()

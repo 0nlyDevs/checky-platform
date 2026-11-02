@@ -248,7 +248,7 @@ async def returning(
                 or_(
                     (Item.workspace_id == workspace_id)
                     & Item.status.in_(["verified", "published"]),
-                    Workspace.is_public.is_(True) & (Item.status == "published"),
+                    Workspace.publishes & (Item.status == "published"),
                 ),
             )
             .limit(2000)
@@ -269,7 +269,7 @@ async def returning(
                 "seen_on": seen.isoformat(),
                 "newsroom": ws.name,
                 "mine": ws.id == workspace_id,
-                "public": bool(ws.is_public and item.status == "published"),
+                "public": bool(ws.publishes and item.status == "published"),
                 "demo": bool((item.data or {}).get("demo")),
             }
         )

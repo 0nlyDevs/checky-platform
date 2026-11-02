@@ -166,7 +166,7 @@ async def _apply(
 
 async def _first_truth_stop(db: AsyncSession, ws: Workspace, item: Item, user_id: str) -> None:
     """The public page is the truth's first stop, when the newsroom shows its verdicts."""
-    if not ws.is_public:
+    if not ws.publishes:
         return
     try:
         from app.modules import trajet

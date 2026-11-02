@@ -15,6 +15,7 @@ RUMOUR = (
     "sur tout Antananarivo, hausse de 40 % du tarif en décembre. Partagez à tous vos contacts !!!"
 )
 CLAIM = "72 heures de délestage dès demain sur tout Antananarivo, selon la JIRAMA"
+from tests.test_workspaces import _verify
 
 
 @pytest.fixture(autouse=True)
@@ -41,6 +42,7 @@ def _newsroom(c, public=True):
     ws = c.post("/api/v1/workspaces", json={"name": "Desk du matin"}).json()["id"]
     if public:
         c.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+        _verify(ws)
     return ws
 
 
