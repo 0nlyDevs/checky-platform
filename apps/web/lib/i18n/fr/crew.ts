@@ -43,6 +43,7 @@ export const crew = {
   noLecture: {
     no_ai: "Sans IA : pas de lecture",
     no_evidence: "Pas de lecture : trop peu d'éléments lus",
+    ai_failed: "Pas de lecture : les modèles d'IA n'ont pas répondu",
   } as Record<string, string>,
 
   // « Sans IA » for one run

@@ -48,7 +48,8 @@ function List({ title, items }: { title: string; items: string[] }) {
 /** No reading (AI off, or too little read): the code's strength of the facts, solid, never a verdict. */
 function FactsStrength({ r }: { r: CrewResult }) {
   const conf = r.confidence;
-  const reason = r.ai_enabled === false ? "no_ai" : "no_evidence";
+  const synthesis = r.trace?.find((x) => x.agent === "Synthèse")?.status;
+  const reason = r.ai_enabled === false ? "no_ai" : synthesis === "failed" || synthesis === "timeout" ? "ai_failed" : "no_evidence";
   return (
     <section className="space-y-3">
       <p className="text-muted-foreground">{t.crew.noLecture[reason]}. {t.verify.noConclusion}</p>
