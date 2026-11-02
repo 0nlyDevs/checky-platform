@@ -17,7 +17,7 @@ export function SourcesView() {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <header className="pb-5">
-        <h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight">{t.sources.title}</h1>
+        <h1 className="page-title">{t.sources.title}</h1>
         <p className="mt-1 max-w-prose text-muted-foreground">{audio ? t.transcriptions.lead : t.sources.lead}</p>
       </header>
       <nav aria-label={t.sources.tabsLabel} className="mb-5 flex gap-1 border-b border-border">

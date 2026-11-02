@@ -1,49 +1,45 @@
-import { Wordmark } from "@/components/brand/logo";
+import Image from "next/image";
+import Link from "next/link";
+import { anton, specialElite } from "@/app/fonts/site";
 import { brand } from "@/lib/brand";
+import { t } from "@/lib/i18n/fr";
 
-const LANES = [
-  { from: 4, to: 62, tone: "bg-verdict-true" },
-  { from: 18, to: 88, tone: "bg-verdict-misleading" },
-  { from: 30, to: 88, tone: "border border-sidebar-foreground/60" },
-  { from: 9, to: 48, tone: "bg-verdict-false" },
-  { from: 52, to: 88, tone: "bg-verdict-unverifiable" },
-];
-
+// The doors into the app share the case file: the form on an index card, the night's pieces beside it
+// (desktop only). The form itself is the app's, in the app's own colours.
 export default function AuthLayout({ children }: LayoutProps<"/">) {
+  const frames = t.site.hero.frames;
   return (
-    <div className="grid min-h-dvh lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-      <aside className="relative hidden flex-col justify-between overflow-hidden bg-sidebar p-10 text-sidebar-foreground lg:flex">
-        <Wordmark />
-        {/* The programme grid, as a quiet promise of what is inside. */}
-        <div aria-hidden className="relative my-12">
-          <div className="mb-3 flex justify-between font-display text-sm tracking-wide text-sidebar-muted tabular">
-            {["06h", "09h", "12h", "15h", "18h", "21h"].map((h) => (
-              <span key={h}>{h}</span>
-            ))}
+    <div className={`site ${anton.variable} ${specialElite.variable}`}>
+      <div className="dossier-auth">
+        <main className="flex flex-col">
+          <div className="flex items-center justify-between gap-4">
+            <Link href="/" className="disp text-2xl tracking-[0.06em]">
+              {brand.name}
+            </Link>
+            <span className="typed text-[15px] text-ink-soft">{t.site.status.open}</span>
           </div>
-          <div className="relative space-y-3">
-            {LANES.map((l, i) => (
-              <div key={i} className="relative h-7 border-t border-sidebar-border">
-                <div
-                  className={`absolute top-1.5 h-5 rounded-sm ${l.tone}`}
-                  style={{ left: `${l.from}%`, width: `${l.to - l.from}%` }}
-                />
+          <div className="flex w-full max-w-md flex-1 flex-col justify-center py-12">
+            <div className="dossier-fiche" style={{ transform: "none" }}>
+              <div data-ui className="rounded-md border border-border bg-card p-6 text-foreground sm:p-8">
+                {children}
               </div>
-            ))}
-            <div className="absolute -top-2 bottom-0 w-0.5 bg-signal" style={{ left: "88%" }} />
+            </div>
           </div>
-        </div>
-        <div className="max-w-md">
-          <p className="text-2xl font-semibold leading-snug text-balance">
-            Voir ce qui circule, depuis quand, et ce qui est vérifié.
-          </p>
-          <p className="mt-3 text-sidebar-muted">{brand.description}</p>
-        </div>
-      </aside>
-      <main className="flex flex-col px-5 py-8 sm:px-10">
-        <Wordmark className="lg:hidden" />
-        <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">{children}</div>
-      </main>
+          <p className="disp text-[clamp(28px,3vw,44px)] leading-none">{t.site.auth.tagline}</p>
+        </main>
+        <section className="side" aria-label={t.site.affaire.title}>
+          {frames.map((f, i) => (
+            <figure key={f.time} className="dossier-frame">
+              <span className="tc tabular">{f.time}</span>
+              <Image src={`/site/dossier/piece-${i + 1}.jpg`} alt={f.alt} width={900} height={600} sizes="28vw" priority={i === 0} />
+              <figcaption>
+                <span>{f.label}</span>
+              </figcaption>
+            </figure>
+          ))}
+          <span className="stamp" data-on="true" aria-hidden data-label={t.site.hero.stamp} />
+        </section>
+      </div>
     </div>
   );
 }

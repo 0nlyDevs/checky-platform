@@ -31,7 +31,6 @@ The base succeeds if, on Monday at 8:30, a new feature can go from idea to deplo
 **Non-goals**
 
 - No native mobile app. The PWA covers phones; Expo may come later on the same API.
-- No landing or marketing page: the app itself is what the jury sees.
 - No production hardening beyond what a 3-minute demo needs (no SSO, no multi-region, no audit compliance).
 - No conversational voice agent until everything in Priority 2 works.
 - No guessed feature built deeper than its core flow: depth goes into whatever the real problem turns out to be.
@@ -260,6 +259,24 @@ The UI looks like a calm, trustworthy newsroom tool set as a Malagasy radio prog
 - Typography: Public Sans for words; Barlow Condensed with tabular figures for hours, times, durations and FAN references.
 - Icons: one set only (lucide, which ships with shadcn/ui). shadcn/ui components themed once with the tokens; no one-off styles in pages.
 - Signature: the day grid, where each claim is a block from first seen to now, drawn to scale.
+
+**Public pages (rebuilt 27 October)**
+
+The landing and the sign-in and sign-up pages have their own world, "Le dossier": every rumour gets a case file. Its contract lives in `apps/web/.impeccable/surfaces/app-site-accueil-page-tsx.md`.
+
+- Landing at `/accueil`, served at `/` to signed-out visitors. The first screen is one screen: four halftoned surveillance frames of the night (WhatsApp 23:47, Facebook 00:31, voice note 04:50, weather bulletin), a reticle that follows them while their captions type in, the stamp « Faux », the case card filling in beside « Chaque rumeur a son dossier. » and one action. On a phone it becomes a viewfinder: piece 1 recording, three thumbnails, the title and the action.
+- Then the affair in four pieces with the desk's notes, the method as a redacted report whose black bars lift as it is read (it reads plainly without script), what leaves at 7 behind folder tabs (the app's real verdict card, post and quotes), and an opening card (« Fiche d'ouverture ») whose choice pre-fills the onboarding after sign-up.
+- Palette: manila, ink, one alarm red for stamps. Type: Anton for headlines, Special Elite only for the file's labels, Public Sans for reading. Every rumour shown is fictional and labelled; no organiser logos; the footer credits the photographs (Wikimedia Commons, CC BY-SA and CC0).
+- No 3D and no heavy script: the page is HTML and CSS with three small client components.
+- Sign-in and sign-up use the same case card for the app's form, with the pieces beside it on desktop. The app shell shares the world lightly (ink rail, Anton page titles, folder logo) and keeps its verdict colours and day grid.
+
+**Public features (27 October)**
+
+Ordinary people can use FANILO without an account, in the same case-file world:
+- « Est-ce déjà vérifié ? » (`/verifies`): paste a message received on WhatsApp or Facebook; FANILO finds the matching verdicts already published by newsrooms. It never makes up a verdict: only verdicts confirmed by a journalist and published are shown.
+- The archive of published verdicts, searchable, each with its reason, sources and a shareable page.
+- « Signaler une rumeur » (`/signaler`): send a message or link to a newsroom; it lands in its « à vérifier » list, tagged « signalement », live. No personal data is asked; a follow-up link (`/suivi/…`) shows the steps and the verdict once published.
+- Each newsroom opts in (admin setting « Publier nos verdicts »); the demo newsroom is public after a demo reset.
 
 **Component inventory**
 

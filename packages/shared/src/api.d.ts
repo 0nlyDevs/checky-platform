@@ -61,6 +61,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Workspace */
+        get: operations["get_workspace_api_v1_workspaces__ws__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Workspace */
+        patch: operations["update_workspace_api_v1_workspaces__ws__patch"];
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/members": {
         parameters: {
             query?: never;
@@ -516,6 +534,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/newsrooms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Newsrooms */
+        get: operations["newsrooms_api_v1_public_newsrooms_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/verdicts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Verdicts */
+        get: operations["list_verdicts_api_v1_public_verdicts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/verdicts/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Verdict */
+        get: operations["get_verdict_api_v1_public_verdicts__item_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match */
+        post: operations["match_api_v1_public_match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Tip */
+        post: operations["create_tip_api_v1_public_tips_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tips/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tip Status */
+        get: operations["tip_status_api_v1_public_tips__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -799,6 +919,17 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
+        /** MatchIn */
+        MatchIn: {
+            /** Text */
+            text: string;
+        };
+        /** MatchOut */
+        MatchOut: {
+            /** Score */
+            score: number;
+            verdict: components["schemas"]["VerdictOut"];
+        };
         /** MeOut */
         MeOut: {
             /** Id */
@@ -840,6 +971,13 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "editor" | "journalist";
+        };
+        /** NewsroomOut */
+        NewsroomOut: {
+            /** Slug */
+            slug: string;
+            /** Name */
+            name: string;
         };
         /** Passage */
         Passage: {
@@ -970,6 +1108,44 @@ export interface components {
              */
             duplicates: number;
         };
+        /** TipIn */
+        TipIn: {
+            /** Newsroom */
+            newsroom: string;
+            /** Text */
+            text: string;
+            /** Url */
+            url?: string | null;
+            /**
+             * Origin
+             * @default other
+             * @enum {string}
+             */
+            origin: "facebook" | "whatsapp" | "tiktok" | "radio" | "press" | "other";
+        };
+        /** TipOut */
+        TipOut: {
+            /** Token */
+            token: string;
+            /** Ref */
+            ref: string;
+        };
+        /** TipStatusOut */
+        TipStatusOut: {
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
+            /**
+             * Received At
+             * Format: date-time
+             */
+            received_at: string;
+            newsroom: components["schemas"]["NewsroomOut"];
+            verdict: components["schemas"]["VerdictOut"] | null;
+        };
         /** TranscribeIn */
         TranscribeIn: {
             /** Language */
@@ -1040,6 +1216,43 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** VerdictOut */
+        VerdictOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /** Verdict */
+            verdict: string;
+            /** Reason */
+            reason: string | null;
+            /** Post */
+            post: string | null;
+            /** Sources */
+            sources: string[];
+            /** Origin */
+            origin: string | null;
+            /** First Seen At */
+            first_seen_at: string | null;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            newsroom: components["schemas"]["NewsroomOut"];
+        };
+        /** VerdictPage */
+        VerdictPage: {
+            /** Items */
+            items: components["schemas"]["VerdictOut"][];
+            /** Total */
+            total: number;
+        };
         /** WorkspaceIn */
         WorkspaceIn: {
             /** Name */
@@ -1061,6 +1274,27 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "editor" | "journalist";
+        };
+        /** WorkspacePatch */
+        WorkspacePatch: {
+            /** Name */
+            name?: string | null;
+            /** Is Public */
+            is_public?: boolean | null;
+        };
+        /** WorkspaceSettingsOut */
+        WorkspaceSettingsOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Slug */
+            slug: string;
+            /** Is Public */
+            is_public: boolean;
         };
     };
     responses: never;
@@ -1131,6 +1365,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkspaceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_workspace_api_v1_workspaces__ws__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceSettingsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_workspace_api_v1_workspaces__ws__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspacePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceSettingsOut"];
                 };
             };
             /** @description Validation Error */
@@ -2251,6 +2551,188 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PostOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    newsrooms_api_v1_public_newsrooms_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewsroomOut"][];
+                };
+            };
+        };
+    };
+    list_verdicts_api_v1_public_verdicts_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                newsroom?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictPage"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_verdict_api_v1_public_verdicts__item_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_api_v1_public_match_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MatchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MatchOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_tip_api_v1_public_tips_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TipIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TipOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tip_status_api_v1_public_tips__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TipStatusOut"];
                 };
             };
             /** @description Validation Error */

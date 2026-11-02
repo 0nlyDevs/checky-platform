@@ -231,7 +231,7 @@ export function ClaimsView() {
     <div className="mx-auto max-w-[90rem] pb-10 lg:px-8">
       <header className="flex flex-wrap items-end justify-between gap-4 px-4 pt-6 pb-5 lg:px-0 lg:pt-8">
         <div>
-          <h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight">
+          <h1 className="page-title">
             {t.claims.title}
           </h1>
           <p className="mt-1 text-muted-foreground first-letter:uppercase">

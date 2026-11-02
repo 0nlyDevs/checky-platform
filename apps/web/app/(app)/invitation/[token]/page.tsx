@@ -29,7 +29,7 @@ export default function InvitationPage() {
 
   return (
     <div className="mx-auto max-w-lg px-5 py-16">
-      <h1 className="text-2xl font-semibold tracking-tight">{t.invitation.title}</h1>
+      <h1 className="page-title">{t.invitation.title}</h1>
       {failed ? (
         <>
           <p className="mt-3 text-muted-foreground">{t.invitation.invalid}</p>

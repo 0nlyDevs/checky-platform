@@ -22,6 +22,9 @@ SERVICES = [
     ("Google Gemini API", "Hosted API, free tier", "https://ai.google.dev/gemini-api/terms"),
     ("NVIDIA NIM API", "Hosted API, free tier", "https://www.nvidia.com/en-us/agreements/"),
     ("Google Fonts: Public Sans, Barlow Condensed", "SIL Open Font License 1.1", "https://fonts.google.com"),
+    ("Google Fonts: Anton (Vernon Adams), self-hosted", "SIL Open Font License 1.1", "https://fonts.google.com/specimen/Anton"),
+    ("Google Fonts: Special Elite (Astigmatic), self-hosted", "Apache License 2.0", "https://fonts.google.com/specimen/Special+Elite"),
+    ("Photographs of Antananarivo, Wikimedia Commons, halftoned (landing and sign-in, credited in the footer)", "CC BY-SA 4.0, CC BY-SA 2.0, CC0", "apps/web/public/site/credits.json"),
 ]
 
 

@@ -12,10 +12,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 
+// The landing's "Nommez votre rédaction" dialog leaves its choice here before sign-up.
+const DRAFT = "fanilo:workspace";
+
+function readDraft(): { name: string; demo: boolean } | null {
+  try {
+    const raw = typeof window === "undefined" ? null : sessionStorage.getItem(DRAFT);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 function Onboarding() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [draft] = useState(readDraft);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -28,6 +41,11 @@ function Onboarding() {
         body: JSON.stringify({ name: String(form.get("name")) }),
       });
       if (form.get("demo")) await api(`/workspaces/${ws.id}/demo/reset`, { method: "POST" });
+      try {
+        sessionStorage.removeItem(DRAFT);
+      } catch {
+        // Storage may be unavailable; nothing to clean.
+      }
       await globalMutate("/me");
       router.replace(`/w/${ws.id}/affirmations`);
     } catch {
@@ -38,7 +56,7 @@ function Onboarding() {
 
   return (
     <div className="mx-auto max-w-lg px-5 py-12 lg:py-20">
-      <h1 className="text-2xl font-semibold tracking-tight text-balance">{t.onboarding.title}</h1>
+      <h1 className="page-title text-balance">{t.onboarding.title}</h1>
       <p className="mt-2 text-muted-foreground">{t.onboarding.lead}</p>
       <form onSubmit={onSubmit} className="mt-8 space-y-5">
         <div className="space-y-2">
@@ -48,12 +66,13 @@ function Onboarding() {
             name="name"
             required
             maxLength={120}
+            defaultValue={draft?.name}
             placeholder={t.onboarding.namePlaceholder}
             className="h-11"
           />
         </div>
         <label className="flex items-start gap-3 text-sm">
-          <input type="checkbox" name="demo" defaultChecked className="mt-0.5 size-4 accent-primary" />
+          <input type="checkbox" name="demo" defaultChecked={draft ? draft.demo : true} className="mt-0.5 size-4 accent-primary" />
           <span>
             <span className="font-medium">{t.common.demoData}</span>
             <span className="block text-muted-foreground">

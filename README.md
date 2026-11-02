@@ -236,6 +236,12 @@ The browser follows it with Socket.IO events `job.progress` / `job.done` / `job.
    - signal yellow `#f2c230` only for "now", focus and selection (never buttons or verdicts);
    - a verdict is always **icon + label**, never colour alone;
    - status icons never use verdict colours.
+6. Public pages (landing `/accueil`, `/connexion`, `/inscription`) are a separate world ("Le dossier":
+   a case file in manila, ink and one alarm red; Anton headlines, a typewriter for labels only).
+   Read the "Public pages" part of `CLAUDE.md` before touching them, and check a change with the
+   design-taste inspector (command there). Pieces live in `apps/web/public/site/dossier/` with their
+   credits; every rumour on these pages is fictional. The public, no-account features live there too:
+   `/verifies`, `/signaler`, `/suivi/[token]` (API `/api/v1/public/*`, only for newsrooms that opted in).
 
 Next.js 16 is newer than most tutorials and AI training data: read
 `apps/web/node_modules/next/dist/docs/` before using an unfamiliar API.

@@ -2,12 +2,12 @@
 version: 1
 slug: "app-app"
 primary_target: "app/(app)"
-related_targets: ["app/(auth)"]
+related_targets: []
 ---
 
 # Surface: app shell and claims workspace
 
-Scope: authenticated app shell (nav rail, workspace switcher, mobile bottom nav), sign-in and sign-up, and the claims list ("Affirmations"). Mode: Operate.
+Scope: authenticated app shell (nav rail, workspace switcher, mobile bottom nav) and the claims list ("Affirmations"). Mode: Operate.
 Audience and job: journalists and desk editors triaging the day's claims, on a phone in the field or a laptop at the desk. Task: see what is circulating, what is checked, and open one to work on it.
 Constraints: French UI; verdict never shown by colour alone; 360 px minimum width; light and dark; live updates over Socket.IO.
 

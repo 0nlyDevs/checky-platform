@@ -51,7 +51,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">
+      <h1 className="page-title text-foreground">
         {isSignUp ? t.auth.signUpTitle : t.auth.signInTitle}
       </h1>
       <p className="mt-1.5 text-muted-foreground">{isSignUp ? t.auth.signUpLead : t.auth.signInLead}</p>

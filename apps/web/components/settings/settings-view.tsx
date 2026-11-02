@@ -116,6 +116,47 @@ function HealthSection() {
   );
 }
 
+function PublicSection({ ws }: { ws: string }) {
+  const { data, mutate } = useSWR<{ is_public: boolean }>(`/workspaces/${ws}`, fetcher);
+  const [pending, setPending] = useState(false);
+
+  async function toggle(on: boolean) {
+    setPending(true);
+    try {
+      await mutate(api<{ is_public: boolean }>(`/workspaces/${ws}`, { method: "PATCH", body: JSON.stringify({ is_public: on }) }), { revalidate: false });
+      toast.success(t.settings.publicSaved(on));
+    } catch {
+      toast.error(t.settings.publicFailed);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  return (
+    <section aria-labelledby="public-title" className="rounded-lg border border-border bg-card p-5">
+      <h2 id="public-title" className="font-semibold">
+        {t.settings.publicTitle}
+      </h2>
+      <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t.settings.publicLead}</p>
+      <label className="mt-4 flex items-center gap-3 text-sm font-medium">
+        <input
+          type="checkbox"
+          className="size-5 accent-primary"
+          checked={data?.is_public ?? false}
+          disabled={!data || pending}
+          onChange={(e) => toggle(e.target.checked)}
+        />
+        {t.settings.publicOn}
+      </label>
+      {data?.is_public && (
+        <a href="/verifies" target="_blank" rel="noreferrer" className="mt-3 inline-block text-sm underline underline-offset-4">
+          {t.settings.publicLink}
+        </a>
+      )}
+    </section>
+  );
+}
+
 function DemoSection({ ws }: { ws: string }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
@@ -163,13 +204,14 @@ export function SettingsView() {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <header className="pb-6">
-        <h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight">{t.settings.title}</h1>
+        <h1 className="page-title">{t.settings.title}</h1>
         <p className="mt-1 text-muted-foreground">{t.settings.lead}</p>
       </header>
       {/* Service health is for whoever runs the desk; journalists only need to know who to ask. */}
       {role === "admin" ? (
         <div className="space-y-8">
           <HealthSection />
+          <PublicSection ws={ws} />
           <DemoSection ws={ws} />
         </div>
       ) : (

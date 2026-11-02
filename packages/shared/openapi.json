@@ -99,6 +99,110 @@
         ]
       }
     },
+    "/api/v1/workspaces/{ws}": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Get Workspace",
+        "operationId": "get_workspace_api_v1_workspaces__ws__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Update Workspace",
+        "operationId": "update_workspace_api_v1_workspaces__ws__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspacePatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSettingsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/members": {
       "get": {
         "tags": [
@@ -2202,6 +2306,287 @@
           }
         }
       }
+    },
+    "/api/v1/public/newsrooms": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Newsrooms",
+        "operationId": "newsrooms_api_v1_public_newsrooms_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NewsroomOut"
+                  },
+                  "type": "array",
+                  "title": "Response Newsrooms Api V1 Public Newsrooms Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/verdicts": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "List Verdicts",
+        "operationId": "list_verdicts_api_v1_public_verdicts_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "newsroom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Newsroom"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/verdicts/{item_id}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Get Verdict",
+        "operationId": "get_verdict_api_v1_public_verdicts__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/match": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Match",
+        "operationId": "match_api_v1_public_match_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MatchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MatchOut"
+                  },
+                  "type": "array",
+                  "title": "Response Match Api V1 Public Match Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/tips": {
+      "post": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Create Tip",
+        "operationId": "create_tip_api_v1_public_tips_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TipIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TipOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/tips/{token}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Tip Status",
+        "operationId": "tip_status_api_v1_public_tips__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TipStatusOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2887,6 +3272,38 @@
         "type": "object",
         "title": "ItemPatch"
       },
+      "MatchIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 3,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "MatchIn"
+      },
+      "MatchOut": {
+        "properties": {
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "verdict": {
+            "$ref": "#/components/schemas/VerdictOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score",
+          "verdict"
+        ],
+        "title": "MatchOut"
+      },
       "MeOut": {
         "properties": {
           "id": {
@@ -3010,6 +3427,24 @@
           "role"
         ],
         "title": "MembershipOut"
+      },
+      "NewsroomOut": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "NewsroomOut"
       },
       "Passage": {
         "properties": {
@@ -3382,6 +3817,124 @@
         ],
         "title": "SourceOut"
       },
+      "TipIn": {
+        "properties": {
+          "newsroom": {
+            "type": "string",
+            "maxLength": 140,
+            "minLength": 1,
+            "title": "Newsroom"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 5,
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "facebook",
+              "whatsapp",
+              "tiktok",
+              "radio",
+              "press",
+              "other"
+            ],
+            "title": "Origin",
+            "default": "other"
+          }
+        },
+        "type": "object",
+        "required": [
+          "newsroom",
+          "text"
+        ],
+        "title": "TipIn"
+      },
+      "TipOut": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "ref"
+        ],
+        "title": "TipOut"
+      },
+      "TipStatusOut": {
+        "properties": {
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Received At"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ref",
+          "title",
+          "status",
+          "received_at",
+          "newsroom",
+          "verdict"
+        ],
+        "title": "TipStatusOut"
+      },
       "TranscribeIn": {
         "properties": {
           "language": {
@@ -3591,6 +4144,129 @@
         ],
         "title": "ValidationError"
       },
+      "VerdictOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "post": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Post"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin"
+          },
+          "first_seen_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Seen At"
+          },
+          "published_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Published At"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "title",
+          "verdict",
+          "reason",
+          "post",
+          "sources",
+          "origin",
+          "first_seen_at",
+          "published_at",
+          "newsroom"
+        ],
+        "title": "VerdictOut"
+      },
+      "VerdictPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VerdictOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "VerdictPage"
+      },
       "WorkspaceIn": {
         "properties": {
           "name": {
@@ -3639,6 +4315,65 @@
           "role"
         ],
         "title": "WorkspaceOut"
+      },
+      "WorkspacePatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "is_public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Public"
+          }
+        },
+        "type": "object",
+        "title": "WorkspacePatch"
+      },
+      "WorkspaceSettingsOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "is_public": {
+            "type": "boolean",
+            "title": "Is Public"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "is_public"
+        ],
+        "title": "WorkspaceSettingsOut"
       }
     },
     "securitySchemes": {

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Public_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { anton } from "@/app/fonts/site";
 import { brand } from "@/lib/brand";
 import "./globals.css";
 
@@ -25,8 +26,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#0f3b36" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a2420" },
+    { media: "(prefers-color-scheme: light)", color: "#141210" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e0d0b" },
   ],
 };
 
@@ -35,7 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="fr"
       suppressHydrationWarning
-      className={`${publicSans.variable} ${barlowCondensed.variable} h-full antialiased`}
+      className={`${publicSans.variable} ${barlowCondensed.variable} ${anton.variable} h-full antialiased`}
     >
       <body className="min-h-full">
         <ThemeProvider>

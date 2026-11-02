@@ -66,6 +66,9 @@ def _clean_db():
     # The gateway keeps per-process key rotation and cooldowns; each test starts fresh.
     ai._turn.clear()
     ai._cooldown.clear()
+    from app.modules import public
+
+    public._TIPS.clear()
     yield
 
     async def truncate():

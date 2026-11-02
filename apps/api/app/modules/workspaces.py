@@ -46,6 +46,18 @@ class InvitationOut(BaseModel):
     expires_at: datetime
 
 
+class WorkspaceSettingsOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    slug: str
+    is_public: bool
+
+
+class WorkspacePatch(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    is_public: bool | None = None
+
+
 class RoleIn(BaseModel):
     role: Role
 
@@ -63,6 +75,23 @@ async def create_workspace(body: WorkspaceIn, user: User, db: Db) -> WorkspaceOu
     db.add(Membership(workspace_id=ws.id, user_id=user.id, role="admin"))
     await db.commit()
     return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug, role="admin")
+
+
+@router.get("/workspaces/{ws}")
+async def get_workspace(member: AnyMember, db: Db) -> WorkspaceSettingsOut:
+    ws = await db.get(Workspace, member.workspace_id)
+    return WorkspaceSettingsOut(id=ws.id, name=ws.name, slug=ws.slug, is_public=ws.is_public)
+
+
+@router.patch("/workspaces/{ws}")
+async def update_workspace(body: WorkspacePatch, admin: Admin, db: Db) -> WorkspaceSettingsOut:
+    ws = await db.get(Workspace, admin.workspace_id)
+    if body.name is not None:
+        ws.name = body.name
+    if body.is_public is not None:
+        ws.is_public = body.is_public
+    await db.commit()
+    return WorkspaceSettingsOut(id=ws.id, name=ws.name, slug=ws.slug, is_public=ws.is_public)
 
 
 @router.get("/workspaces/{ws}/members")

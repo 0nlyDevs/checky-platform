@@ -136,7 +136,7 @@ export function MembersView() {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <header className="pb-6">
-        <h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight">{t.members.title}</h1>
+        <h1 className="page-title">{t.members.title}</h1>
         <p className="mt-1 text-muted-foreground">
           {t.members.lead}
           {members && <span className="tabular"> · {t.members.count(members.length)}</span>}

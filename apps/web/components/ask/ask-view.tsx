@@ -210,7 +210,7 @@ export function AskView() {
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <header className="pb-6">
-        <h1 className="text-[1.75rem] leading-tight font-semibold tracking-tight">{t.ask.title}</h1>
+        <h1 className="page-title">{t.ask.title}</h1>
         <p className="mt-1 max-w-prose text-muted-foreground">{t.ask.lead}</p>
       </header>
 

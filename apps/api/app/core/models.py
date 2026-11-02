@@ -52,6 +52,8 @@ class Workspace(_Row):
 
     name: Mapped[str] = mapped_column(String(120))
     slug: Mapped[str] = mapped_column(String(140), unique=True)
+    # Opt-in: the newsroom's published verdicts are shown to the public and it receives public tips.
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
 
 class Membership(_Row):

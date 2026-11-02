@@ -7,7 +7,7 @@ from sqlalchemy import delete, select
 
 from app.core.access import Admin, Db
 from app.core.activity import broadcast, record
-from app.core.models import Item, Source
+from app.core.models import Item, Source, Workspace
 
 router = APIRouter(tags=["demo"])
 
@@ -26,7 +26,7 @@ DEMO_CLAIMS = [
     (
         320,
         "Une vidéo montre l'inondation d'Analakely ce matin",
-        "verified",
+        "published",
         "false",
         None,
         "whatsapp",
@@ -86,7 +86,7 @@ DEMO_CLAIMS = [
     (
         1500,
         "Un nouveau billet de 20 000 ariary entre en circulation",
-        "verified",
+        "published",
         "false",
         None,
         "tiktok",
@@ -95,6 +95,13 @@ DEMO_CLAIMS = [
     ),
 ]
 
+
+# The reason a journalist wrote for each published demo verdict (shown on the public archive).
+DEMO_REASONS = {
+    0: "Le communiqué du ministère confirme trois cas, pris en charge au CHRD d'Ambositra.",
+    1: "La vidéo date de janvier 2019 : une recherche inversée la retrouve sur Facebook, pendant la saison cyclonique.",
+    7: "Aucune nouvelle coupure n'est prévue cette année ; l'image partagée sur TikTok est un montage.",
+}
 
 # Sources attached to the demo claims (index in DEMO_CLAIMS → (title, text)), written so the claim
 # checker and the Vérifier page have something to conclude from. Clearly labelled as fictional.
@@ -158,6 +165,9 @@ DEMO_SOURCES = {
 
 @router.post("/workspaces/{ws}/demo/reset")
 async def reset_demo(admin: Admin, db: Db) -> dict:
+    # The demo newsroom shows its published verdicts and takes public tips, for the pitch.
+    ws = await db.get(Workspace, admin.workspace_id)
+    ws.is_public = True
     # Sources outlive their claim (SET NULL), so the demo's own go first; their passages cascade.
     items = select(Item.id).where(Item.workspace_id == admin.workspace_id)
     await db.execute(delete(Source).where(Source.item_id.in_(items)))
@@ -183,6 +193,7 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
                 "source_count": 1 if i in DEMO_SOURCES else 0,
                 "assignee_id": admin.user.id if status == "in_progress" else None,
                 "demo": True,
+                **({"reason": DEMO_REASONS[i]} if i in DEMO_REASONS else {}),
             },
         )
         db.add(item)
