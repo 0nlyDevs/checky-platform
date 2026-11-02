@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { StepLine } from "@/components/flow/step-line";
 import { Evidence, ShareActions, type SignedVerdict, Trajet, VerdictBlock } from "@/components/site/public/public-verdict";
 import { useDay, useT } from "@/lib/i18n";
-import { IconArrowLeft, IconArrowRight } from "@/lib/icons";
+import { IconArrowLeft, IconArrowRight, IconSealCheck, IconWarning, IconXCircle } from "@/lib/icons";
 import { publicApi } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
@@ -47,6 +47,7 @@ export function VerdictPage() {
         {v.ref && <span className="tabular"> · {v.ref}</span>}
       </p>
       <VerifiedBadge className="mt-1" />
+      <CardSeal id={v.id} newsroom={v.newsroom.name} />
 
       <div className="mt-6 grid gap-10 md:mt-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0">
@@ -112,6 +113,55 @@ export function VerdictPage() {
         </aside>
       </div>
     </Shell>
+  );
+}
+
+type SealCheck = { valid: boolean; revoked: boolean; current: boolean };
+const NOT_A_SEAL: SealCheck = { valid: false, revoked: false, current: false };
+
+/** The QR of a printed card carries the newsroom's seal after `#` (message.signature.key_id). The
+ *  fragment never reaches a server by itself: the page sends it to be checked against this verdict,
+ *  then says in one line whether the card in hand is genuine and current. Nothing without a seal. */
+function CardSeal({ id, newsroom }: { id: string; newsroom: string }) {
+  const s = useT().site.pub.file.seal;
+  const [check, setCheck] = useState<SealCheck | null>(null);
+
+  useEffect(() => {
+    const parts = window.location.hash.slice(1).split(".");
+    if (parts.length !== 3) return;
+    const [packed, signature, key_id] = parts;
+    let live = true;
+    Promise.resolve()
+      .then(() => {
+        const b64 = packed.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (packed.length % 4)) % 4);
+        return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
+      })
+      .then(
+        (message) =>
+          publicApi<SealCheck>(`/sceau/v/${id}/verify`, { method: "POST", body: JSON.stringify({ message, signature, key_id }) }).catch(
+            () => null,
+          ),
+        () => NOT_A_SEAL,
+      )
+      .then((out) => live && setCheck(out));
+    return () => {
+      live = false;
+    };
+  }, [id]);
+
+  if (!check) return null;
+  const [Glyph, text] = !check.valid
+    ? [IconXCircle, s.invalid]
+    : check.revoked
+      ? [IconWarning, s.revoked]
+      : check.current
+        ? [IconSealCheck, s.valid(newsroom)]
+        : [IconWarning, s.old];
+  return (
+    <p role="status" className="mt-3 flex max-w-[70ch] items-start gap-2 rounded-md border border-foreground bg-card px-3 py-2 font-bold text-pretty">
+      <Glyph className="mt-0.5 size-5 shrink-0" aria-hidden />
+      {text}
+    </p>
   );
 }
 

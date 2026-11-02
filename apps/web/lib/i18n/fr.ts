@@ -545,6 +545,13 @@ export const fr = {
         confirmed: "Verdict confirmé par la rédaction",
         wrong: "Vous avez vu une autre version de cette rumeur ?",
         wrongAction: "La signaler",
+        // The QR of a printed card or poster opens this page with the newsroom's seal after `#`.
+        seal: {
+          valid: (name: string) => `Carte authentique : le sceau de ${name} correspond à ce verdict.`,
+          old: "Carte authentique, mais d'une version précédente : la rédaction a mis ce verdict à jour. Fiez-vous à cette page.",
+          revoked: "Le sceau de cette carte utilise une clé retirée par la rédaction. Fiez-vous à cette page.",
+          invalid: "Cette carte ne porte pas un sceau valide de la rédaction : elle a pu être modifiée. Fiez-vous à cette page.",
+        },
       },
       report: {
         title: "Signaler une rumeur",

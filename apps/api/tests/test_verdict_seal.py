@@ -64,7 +64,7 @@ def test_sealed_verdict_round_trips_through_the_qr_fragment(as_user, secret):
     p = out["payload"]
     assert p["signed_at"] == "2026-11-02T05:15Z" and p["digest"] == "ab" * 16
     assert len(p["title"]) <= seal.TITLE_MAX and p["title"].endswith("…")
-    assert out["url"].startswith(f"https://checky.example/sceau/v/{item_id}#")
+    assert out["url"].startswith(f"https://checky.example/verifies/{item_id}#")
     payload, message, signature, key_id = seal.read_fragment(out["url"].split("#", 1)[1])
     assert payload == p and key_id == out["key_id"]
     assert seal.verify_message(out["public_key"], message, signature)
@@ -126,7 +126,7 @@ def test_card_seal_is_checked_offline_and_fails_once_the_verdict_changes(as_user
     assert check["valid"] is True and check["current"] is False
     # The diffusion's poster carries the seal, not just the page.
     formats = alice.get(f"/api/v1/workspaces/{ws}/items/{item}/diffusion").json()
-    assert formats["poster"]["qr_url"].startswith(f"https://checky.example/sceau/v/{item}#")
+    assert formats["poster"]["qr_url"].startswith(f"https://checky.example/verifies/{item}#")
     assert (
         formats["seal"]["number"] == 145 and formats["poster"]["check_label"] == "vérification 145"
     )

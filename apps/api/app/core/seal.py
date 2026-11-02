@@ -253,10 +253,11 @@ def verdict_payload(
 
 
 def verdict_seal_url(item_id: uuid.UUID, message: str, signature: str, key_id: str) -> str:
-    """What the card's QR encodes: the public page, with everything needed to check it offline after
-    `#` (the signed message, the signature, the key id), so the fragment never reaches a server."""
+    """What the card's QR encodes: the verdict's public page, with everything needed to check it
+    offline after `#` (the signed message, the signature, the key id), so the fragment never
+    reaches a server; the page checks it against `/public/sceau/v/{id}`."""
     base = get_settings().public_web_url.rstrip("/")
-    return f"{base}/sceau/v/{item_id}#{b64u(message.encode())}.{signature}.{key_id}"
+    return f"{base}/verifies/{item_id}#{b64u(message.encode())}.{signature}.{key_id}"
 
 
 async def sign_verdict(
