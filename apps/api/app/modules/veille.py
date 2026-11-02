@@ -1062,6 +1062,15 @@ async def feed_entries(
 
     clips = await recent_clips(db, workspace.id, days)
     sources = await fill_from_transcripts(db, clips)
+    followed = {c.item_id for c in clips if c.item_id}
+    refs = (
+        {
+            i.id: (i.data or {}).get("ref")
+            for i in (await db.scalars(select(Item).where(Item.id.in_(followed)))).all()
+        }
+        if followed
+        else {}
+    )
     for c in clips:
         out = _clip_out(c, sources.get(c.source_id) if c.source_id else None)
         entries.append(
@@ -1074,6 +1083,7 @@ async def feed_entries(
                 place=out.location,
                 station=c.station,
                 item_id=c.item_id,
+                ref=refs.get(c.item_id) if c.item_id else None,
                 status=c.status,
                 beats=beats_for(out.heard_text, offered),
                 demo=out.demo,

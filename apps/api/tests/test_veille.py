@@ -505,4 +505,5 @@ def test_the_demo_seeds_clips_words_and_seasons_idempotently(as_user):
     assert alice.get(base + "/meteo").json()["seasons"]
     feed = alice.get(base + "/veille").json()
     assert feed["counts"]["clip"] == 3 and all(e["demo"] for e in feed["entries"])
+    assert [e["ref"] for e in feed["entries"] if e["station"] == "RDJ (démo)"] == ["FAN-0145"]
     assert _db(lambda db: db.scalar(select(func.count()).select_from(Signal))) == 2
