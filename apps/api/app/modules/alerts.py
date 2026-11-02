@@ -7,12 +7,14 @@ town. This module:
 
 - lets a journalist adjust the danger level Checky computed (`item.data.risk_override`, logged in
   the Carnet); the adjusted level wins everywhere (`veille.risk_level`);
-- groups the variants that say the same thing (`group`): shared words first, with a small
+- groups the variants that say the same thing (`group`). Veille's own grouping comes first, so
+  the two never disagree: what « À l'antenne » shows as one rumour (`veille.group_clips`) and a
+  clip or SMS attached to a dossier are always in the same group. Then shared words, with a small
   French–Malagasy concept list and town names set aside (another town is the same rumour), then
   embeddings (cosine ≥ 0.78) when a provider is configured. A group of two or more with a high
   danger level becomes an **alert**: an `Item(type="alert")` whose members live in `data.members`
-  (the dossiers list asks `type=claim`, so alerts stay out of it). Journalists split and merge;
-  a split member is never put back by code.
+  (the items list leaves alerts out unless asked for them). Journalists split and merge; a split
+  member is never put back by code. Alerts carry no beat: nothing here labels a story political.
 
 No model decides anything here: grouping, counts and levels are code.
 """
@@ -40,12 +42,10 @@ from app.core.models import Item, Workspace
 from app.core.places import MG_REGIONS, MG_TOWNS, fold
 from app.core.words import words
 from app.modules.items import ItemOut, _get_item, _out
-from app.modules.veille import RISK_LEVELS, canonical_region, risk_level
+from app.modules.veille import AlertRef, canonical_region, risk_level
 
 log = logging.getLogger("checky.alerts")
 router = APIRouter(tags=["alerts"])
-
-RISK_FR = {"high": "élevé", "medium": "moyen", "low": "faible"}
 
 
 # ------------------------------------------------------------------------- danger level
@@ -299,9 +299,10 @@ def cosine(a: list[float], b: list[float]) -> float:
     return dot / (na * nb) if na and nb else 0.0
 
 
-async def clusters(rows: list[Variant]) -> list[list[Variant]]:
-    """Variants that say the same thing, by shared concepts, then by meaning when embeddings are
-    available. Union-find: a chain of close variants is one story."""
+async def clusters(rows: list[Variant], links: list[set[str]] | None = None) -> list[list[Variant]]:
+    """Variants that say the same thing. Union-find, so a chain of close variants is one story:
+    first the links Veille already made (`links`, sets of keys; a report attached to a dossier
+    goes with it), then shared concepts, then meaning when embeddings are available."""
     parent = list(range(len(rows)))
 
     def find(i: int) -> int:
@@ -313,6 +314,14 @@ async def clusters(rows: list[Variant]) -> list[list[Variant]]:
     def join(i: int, j: int) -> None:
         parent[find(i)] = find(j)
 
+    at = {v.key: i for i, v in enumerate(rows)}
+    for v in rows:
+        if v.item_id and (home := at.get(f"item:{v.item_id}")) is not None:
+            join(at[v.key], home)
+    for keys in links or []:
+        found = [at[k] for k in keys if k in at]
+        for i in found[1:]:
+            join(i, found[0])
     sets = [v.words for v in rows]
     for i in range(len(rows)):
         for j in range(i + 1, len(rows)):
@@ -437,6 +446,7 @@ async def group(db: AsyncSession, ws: uuid.UUID) -> dict[str, list[Item]]:
     them as {"created": […], "updated": […]}."""
     workspace = await db.get(Workspace, ws)
     rows = await variants(db, workspace)
+    links = await antenne_links(db, ws)
     by_key = {v.key: v for v in rows}
     alerts = list(
         await db.scalars(select(Item).where(Item.workspace_id == ws, Item.type == "alert"))
@@ -452,7 +462,7 @@ async def group(db: AsyncSession, ws: uuid.UUID) -> dict[str, list[Item]]:
         if fresh != members:
             _refresh(alert, fresh, None)
             updated.append(alert)
-    for cluster in await clusters(rows):
+    for cluster in await clusters(rows, links):
         keys = {v.key for v in cluster}
         homes = [a for a in alerts if a.status == "open" and _keys(a) & keys]
         new = [v for v in cluster if v.key not in taken]
@@ -479,18 +489,44 @@ async def group(db: AsyncSession, ws: uuid.UUID) -> dict[str, list[Item]]:
     for alert in [*created, *updated]:
         await db.refresh(alert)
         await broadcast(ws, "alert.updated", alert_out(alert).model_dump(mode="json"))
-    await _after_group(db, ws, created)
     return {"created": created, "updated": updated}
 
 
-async def _after_group(db: AsyncSession, ws: uuid.UUID, created: list[Item]) -> None:
-    """Hook for the live notices (added below)."""
+async def antenne_links(db: AsyncSession, ws: uuid.UUID) -> list[set[str]]:
+    """The rumours « À l'antenne » shows, as sets of variant keys (its clips, and the dossier
+    they are attached to)."""
+    from app.modules.veille import _items_of, group_clips, recent_clips
+
+    clips = await recent_clips(db, ws, WINDOW_DAYS)
+    out = []
+    for g in group_clips(clips, await _items_of(db, clips)):
+        keys = {f"clip:{c.id}" for c in g.clips}
+        if g.item is not None:
+            keys.add(f"item:{g.item.id}")
+        out.append(keys)
+    return out
 
 
 async def open_for(db: AsyncSession, ws: uuid.UUID, item_id: uuid.UUID) -> list[Item]:
-    """The open alerts a dossier belongs to (contract for the other slices)."""
+    """The open alerts a dossier belongs to."""
     key = f"item:{item_id}"
     return [a for a in await open_alerts(db, ws) if key in _keys(a)]
+
+
+async def alert_index(db: AsyncSession, ws: uuid.UUID) -> dict[str, AlertRef]:
+    """Each report of an open alert → that alert, for Veille's rows."""
+    out: dict[str, AlertRef] = {}
+    for alert in await open_alerts(db, ws):
+        d = alert.data or {}
+        ref = AlertRef(
+            id=alert.id,
+            ref=d.get("ref"),
+            level=risk_level(d) or "low",
+            reports=len(_members(alert)),
+        )
+        for key in _keys(alert):
+            out.setdefault(key, ref)
+    return out
 
 
 # --------------------------------------------------------------------------------- routes
@@ -531,7 +567,6 @@ class AlertOut(BaseModel):
     facts: AlertFacts
     members: list[AlertMember]
     excluded: list[str]
-    kit: dict[str, Any] | None
     closed: dict[str, Any] | None
     created_at: datetime
     updated_at: datetime
@@ -564,7 +599,6 @@ def alert_out(alert: Item) -> AlertOut:
         ),
         members=[AlertMember.model_validate(m) for m in _members(alert)],
         excluded=list(d.get("excluded") or []),
-        kit=d.get("kit") if isinstance(d.get("kit"), dict) else None,
         closed=d.get("closed") if isinstance(d.get("closed"), dict) else None,
         created_at=alert.created_at,
         updated_at=alert.updated_at,
@@ -601,9 +635,11 @@ async def list_alerts(
     db: Db,
     state: Literal["open", "closed", "all"] = "open",
     region: str | None = None,
+    item_id: uuid.UUID | None = None,
     days: int = 30,
 ) -> list[AlertOut]:
-    """The newsroom's alerts, open first, newest report first; `region` keeps those seen there."""
+    """The newsroom's alerts, open first, newest report first; `region` keeps those seen there,
+    `item_id` those a dossier belongs to."""
     await maybe_group(db, member.workspace_id)
     since = datetime.now(UTC) - timedelta(days=max(1, min(days, 365)))
     stmt = select(Item).where(
@@ -612,6 +648,8 @@ async def list_alerts(
     if state != "all":
         stmt = stmt.where(Item.status == state)
     out = [alert_out(a) for a in await db.scalars(stmt)]
+    if item_id:
+        out = [a for a in out if f"item:{item_id}" in {m.key for m in a.members}]
     if region:
         want = fold(canonical_region(region) or region)
         out = [a for a in out if want in {fold(r) for r in a.facts.regions}]
@@ -724,6 +762,3 @@ async def merge_alert(alert_id: uuid.UUID, body: MergeIn, member: AnyMember, db:
         await db.refresh(a)
         await broadcast(member.workspace_id, "alert.updated", alert_out(a).model_dump(mode="json"))
     return alert_out(alert)
-
-
-__all__ = ["RISK_FR", "RISK_LEVELS", "alert_out", "group", "open_for", "router"]

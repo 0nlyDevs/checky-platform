@@ -1,4 +1,4 @@
-"""Fanairana: the adjusted danger level, alerts, their kit, live notices and the morning brief."""
+"""Fanairana: the adjusted danger level, and alerts grouping rumour variants (split, merge)."""
 
 from tests.test_public import _newsroom
 from tests.test_workspaces import _join
@@ -213,6 +213,38 @@ def test_alerts_are_private_to_the_newsroom(as_user):
     assert bob.get(f"/api/v1/workspaces/{ws}/alerts/{alert['id']}").status_code == 404
 
 
+def test_veille_and_alerts_tell_one_story(as_user):
+    """A clip the desk attached to a dossier goes with it even with no word in common, and each
+    « À l'antenne » row names the alert its reports belong to."""
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    dossier = _dossier(alice, ws, KIDNAP_FR_2, risk="high")
+    _clip(alice, ws, KIDNAP_FR, "Radio Boeny (démo)", region="Boeny")
+    odd = _clip(alice, ws, "Les gens de Mahajanga restent chez eux ce matin.", "Radio Sofia (démo)")
+    r = alice.post(f"{base}/radio-clips/{odd['id']}/follow", json={"item_id": dossier})
+    assert r.status_code == 200, r.text
+    _clip(alice, ws, RICE, "Radio Boeny (démo)")
+
+    _scan(alice, ws)
+    [alert] = _alerts(alice, ws)
+    assert f"clip:{odd['id']}" in {m["key"] for m in alert["members"]}
+    assert alert["facts"]["reports"] == 3
+
+    rows = alice.get(f"{base}/antenne").json()
+    tagged = [r for r in rows if r["alert"]]
+    assert tagged and all(r["alert"]["ref"] == "ALR-0001" for r in tagged)
+    assert all(r["alert"]["level"] == "high" for r in tagged)
+    assert any(r["item_id"] == dossier for r in tagged)
+    assert all(r["alert"] is None for r in rows if "riz" in r["claim"])
+
+    # the dossier detail asks for the alerts it belongs to
+    mine = alice.get(f"{base}/alerts?item_id={dossier}").json()
+    assert [a["id"] for a in mine] == [alert["id"]]
+    other = _dossier(alice, ws, "Une autre histoire sans rapport", risk="low")
+    assert alice.get(f"{base}/alerts?item_id={other}").json() == []
+
+
 def test_alerts_stay_out_of_the_items_list(as_user):
     alice = as_user("alice")
     ws, _ = _newsroom(alice)
@@ -222,3 +254,24 @@ def test_alerts_stay_out_of_the_items_list(as_user):
     base = f"/api/v1/workspaces/{ws}/items"
     assert {i["type"] for i in alice.get(base).json()["items"]} == {"claim"}
     assert [i["type"] for i in alice.get(f"{base}?type=alert").json()["items"]] == ["alert"]
+
+
+def test_a_journalist_adjusts_an_alerts_level(as_user):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    _clip(alice, ws, KIDNAP_FR, "Radio Boeny (démo)", region="Boeny")
+    _dossier(alice, ws, KIDNAP_FR_2, risk="high")
+    _scan(alice, ws)
+    [alert] = _alerts(alice, ws)
+    r = alice.put(
+        f"/api/v1/workspaces/{ws}/items/{alert['id']}/risk",
+        json={"level": "medium", "reason": "La gendarmerie a démenti à l'antenne"},
+    )
+    assert r.status_code == 200, r.text
+    [after] = _alerts(alice, ws)
+    assert after["level"] == "medium" and after["code_level"] == "high"
+    assert after["override"]["reason"] == "La gendarmerie a démenti à l'antenne"
+    # a new scan keeps the journalist's level
+    _clip(alice, ws, KIDNAP_FR_2 + " Encore.", "Radio Boeny (démo)", region="Boeny")
+    _scan(alice, ws)
+    assert _alerts(alice, ws)[0]["level"] == "medium"

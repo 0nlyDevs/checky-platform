@@ -597,6 +597,16 @@ class AntenneClip(BaseModel):
     demo: bool
 
 
+class AlertRef(BaseModel):
+    """The open alert a row's rumour belongs to (app/modules/alerts.py), so Veille and the alerts
+    never tell two stories about the same reports."""
+
+    id: uuid.UUID
+    ref: str | None
+    level: str
+    reports: int
+
+
 class AntenneRow(BaseModel):
     claim: str
     item_id: uuid.UUID | None
@@ -610,6 +620,7 @@ class AntenneRow(BaseModel):
     latest: AntenneClip
     clip_ids: list[uuid.UUID]
     demo: bool
+    alert: AlertRef | None = None
 
 
 def first_sentence(text: str, limit: int = 300) -> str:
@@ -696,6 +707,14 @@ async def antenne_rows(db: AsyncSession, workspace_id: uuid.UUID) -> list[Antenn
     clips = await recent_clips(db, workspace_id)
     sources = await fill_from_transcripts(db, clips)
     rows = [_row(g, sources) for g in group_clips(clips, await _items_of(db, clips))]
+    from app.modules.alerts import alert_index
+
+    index = await alert_index(db, workspace_id)
+    for row in rows:
+        keys = [f"clip:{c}" for c in row.clip_ids]
+        if row.item_id:
+            keys.insert(0, f"item:{row.item_id}")
+        row.alert = next((index[k] for k in keys if k in index), None)
     order = {"new": 0, "followed": 1, "checked": 2}
     rows.sort(key=lambda r: (order[r.status], -r.reports, -r.latest.recorded_at.timestamp()))
     return rows

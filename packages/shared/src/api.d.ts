@@ -2328,6 +2328,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/items/{item_id}/risk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Adjust Risk
+         * @description A journalist sets the danger level, with a reason. Checky's own level (`data.risk`) stays
+         *     beside it; the adjusted one wins everywhere (feed, map, alerts).
+         */
+        put: operations["adjust_risk_api_v1_workspaces__ws__items__item_id__risk_put"];
+        post?: never;
+        /**
+         * Reset Risk
+         * @description Back to Checky's own level (the adjustment is removed, the Carnet keeps both lines).
+         */
+        delete: operations["reset_risk_api_v1_workspaces__ws__items__item_id__risk_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Alerts
+         * @description The newsroom's alerts, open first, newest report first; `region` keeps those seen there,
+         *     `item_id` those a dossier belongs to.
+         */
+        get: operations["list_alerts_api_v1_workspaces__ws__alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Scan Alerts
+         * @description Group what circulates now.
+         */
+        post: operations["scan_alerts_api_v1_workspaces__ws__alerts_scan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Alert */
+        get: operations["get_alert_api_v1_workspaces__ws__alerts__alert_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/split": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Split Alert
+         * @description « Ce n'est pas la même rumeur »: the chosen members leave this alert for a new one, and
+         *     code never puts them back.
+         */
+        post: operations["split_alert_api_v1_workspaces__ws__alerts__alert_id__split_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/merge": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge Alert
+         * @description « C'est la même rumeur »: the other alert's reports join this one; the other is closed as
+         *     merged.
+         */
+        post: operations["merge_alert_api_v1_workspaces__ws__alerts__alert_id__merge_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2449,6 +2574,132 @@ export interface components {
             /** Question */
             question: string;
         };
+        /** AlertFacts */
+        AlertFacts: {
+            /** Reports */
+            reports: number;
+            /** Kinds */
+            kinds: {
+                [key: string]: number;
+            };
+            /** Stations */
+            stations: string[];
+            /** Regions */
+            regions: string[];
+            /** First At */
+            first_at: string | null;
+            /** Last At */
+            last_at: string | null;
+            /** Hours */
+            hours: number | null;
+        };
+        /** AlertMember */
+        AlertMember: {
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string;
+            /** Title */
+            title: string;
+            /**
+             * Excerpt
+             * @default
+             */
+            excerpt: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Region */
+            region?: string | null;
+            /** Place */
+            place?: string | null;
+            /** Station */
+            station?: string | null;
+            /** Item Id */
+            item_id?: string | null;
+            /** Url */
+            url?: string | null;
+            /**
+             * Risk
+             * @default low
+             */
+            risk: string;
+            /**
+             * Demo
+             * @default false
+             */
+            demo: boolean;
+        };
+        /** AlertOut */
+        AlertOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "open" | "closed";
+            /** Level */
+            level: string;
+            /** Code Level */
+            code_level: string | null;
+            /** Override */
+            override: {
+                [key: string]: unknown;
+            } | null;
+            /** Reasons */
+            reasons: {
+                [key: string]: unknown;
+            }[];
+            facts: components["schemas"]["AlertFacts"];
+            /** Members */
+            members: components["schemas"]["AlertMember"][];
+            /** Excluded */
+            excluded: string[];
+            /** Closed */
+            closed: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Demo */
+            demo: boolean;
+        };
+        /**
+         * AlertRef
+         * @description The open alert a row's rumour belongs to (app/modules/alerts.py), so Veille and the alerts
+         *     never tell two stories about the same reports.
+         */
+        AlertRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref */
+            ref: string | null;
+            /** Level */
+            level: string;
+            /** Reports */
+            reports: number;
+        };
         /** Angle */
         Angle: {
             /** Title */
@@ -2565,6 +2816,7 @@ export interface components {
             clip_ids: string[];
             /** Demo */
             demo: boolean;
+            alert?: components["schemas"]["AlertRef"] | null;
         };
         /** AskOut */
         AskOut: {
@@ -3980,6 +4232,14 @@ export interface components {
             /** Verification */
             verification: string;
         };
+        /** MergeIn */
+        MergeIn: {
+            /**
+             * Other Id
+             * Format: uuid
+             */
+            other_id: string;
+        };
         /** NewsroomOut */
         NewsroomOut: {
             /** Slug */
@@ -4734,6 +4994,16 @@ export interface components {
             revoked_at: string;
             newsroom: components["schemas"]["NewsroomOut"];
         };
+        /** RiskIn */
+        RiskIn: {
+            /**
+             * Level
+             * @enum {string}
+             */
+            level: "high" | "medium" | "low";
+            /** Reason */
+            reason: string;
+        };
         /** RouteIn */
         RouteIn: {
             /**
@@ -5113,6 +5383,11 @@ export interface components {
              * @enum {string}
              */
             lang: "fr" | "mg";
+        };
+        /** SplitIn */
+        SplitIn: {
+            /** Keys */
+            keys: string[];
         };
         /** TipIn */
         TipIn: {
@@ -10377,6 +10652,247 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    adjust_risk_api_v1_workspaces__ws__items__item_id__risk_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RiskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_risk_api_v1_workspaces__ws__items__item_id__risk_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_alerts_api_v1_workspaces__ws__alerts_get: {
+        parameters: {
+            query?: {
+                state?: "open" | "closed" | "all";
+                region?: string | null;
+                item_id?: string | null;
+                days?: number;
+            };
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scan_alerts_api_v1_workspaces__ws__alerts_scan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: number;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_alert_api_v1_workspaces__ws__alerts__alert_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    split_alert_api_v1_workspaces__ws__alerts__alert_id__split_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SplitIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    merge_alert_api_v1_workspaces__ws__alerts__alert_id__merge_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MergeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"];
+                };
             };
             /** @description Validation Error */
             422: {
