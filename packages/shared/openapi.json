@@ -666,6 +666,70 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/items/similar": {
+      "get": {
+        "tags": [
+          "items"
+        ],
+        "summary": "Similar Items",
+        "description": "Claims of the desk that share most of their words with `q`: a duplicate warning while\na new claim is typed. Word overlap only, so it answers at once and without any AI.",
+        "operationId": "similar_items_api_v1_workspaces__ws__items_similar_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 600,
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SimilarOut"
+                  },
+                  "title": "Response Similar Items Api V1 Workspaces  Ws  Items Similar Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/items/{item_id}": {
       "get": {
         "tags": [
@@ -1651,6 +1715,73 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "sources"
+        ],
+        "summary": "Update Source",
+        "description": "Set a source's publication date by hand (a pasted text, a page that does not say it).",
+        "operationId": "update_source_api_v1_workspaces__ws__sources__source_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SourcePatch"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4090,6 +4221,17 @@
             ],
             "title": "Url"
           },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
           "text": {
             "type": "string",
             "title": "Text"
@@ -4244,6 +4386,23 @@
         ],
         "title": "Segment"
       },
+      "SimilarOut": {
+        "properties": {
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "item": {
+            "$ref": "#/components/schemas/ItemOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "score",
+          "item"
+        ],
+        "title": "SimilarOut"
+      },
       "SourceIn": {
         "properties": {
           "item_id": {
@@ -4293,6 +4452,18 @@
               }
             ],
             "title": "Title"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
           }
         },
         "type": "object",
@@ -4425,6 +4596,27 @@
           "file"
         ],
         "title": "SourceOut"
+      },
+      "SourcePatch": {
+        "properties": {
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "published_at"
+        ],
+        "title": "SourcePatch"
       },
       "SpeakIn": {
         "properties": {

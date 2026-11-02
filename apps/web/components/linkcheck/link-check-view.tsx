@@ -4,7 +4,7 @@ import type { Verdict } from "@fanilo/shared";
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { BadgeCheck, Check, CircleDashed, ExternalLink, LoaderCircle, ScanSearch, Sparkles, X } from "lucide-react";
+import { BadgeCheck, CalendarClock, Check, CircleDashed, ExternalLink, LoaderCircle, ScanSearch, Sparkles, X } from "lucide-react";
 import { VERDICT_META } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,7 @@ type Result = {
   site?: string | null;
   author?: string | null;
   published_at?: string | null;
+  days_old?: number | null; // worked out by the API
   excerpt?: string;
   summary?: string;
   claims?: string[];
@@ -42,6 +43,7 @@ type Result = {
 };
 
 const STEPS: StepKey[] = ["read", "claims", "search", "verdict"];
+const STALE_DAYS = 30; // the API's dates.STALE_DAYS
 const fresh = () => Object.fromEntries(STEPS.map((k) => [k, { status: "waiting", summary: "" }])) as Record<StepKey, StepState>;
 const ORIGIN: Record<string, string> = { facebook: "facebook", whatsapp: "whatsapp", tiktok: "tiktok" };
 const host = (u: string) => {
@@ -271,15 +273,22 @@ function Section({ title, note, children }: { title: string; note?: string; chil
 
 function Content({ r }: { r: Result }) {
   const where = r.site || (r.url ? host(r.url) : c.pasted);
-  const date = r.published_at ? new Date(r.published_at) : null;
+  // A calendar day (YYYY-MM-DD), shown in UTC so no time zone moves it.
+  const date = r.published_at ? new Date(`${r.published_at.slice(0, 10)}T00:00:00Z`) : null;
   return (
     <Section title={c.content}>
       <div className="rounded-md border border-border bg-card p-4">
         <p className="flex flex-wrap items-baseline gap-x-2 text-sm text-muted-foreground">
           <span className="font-medium text-foreground">{where}</span>
           {r.author && <span>{c.by(r.author)}</span>}
-          {date && !Number.isNaN(date.getTime()) && <time className="font-display tabular" dateTime={r.published_at!}>{date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}</time>}
+          {date && !Number.isNaN(date.getTime()) && <time className="font-display tabular" dateTime={r.published_at!}>{date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}</time>}
         </p>
+        {r.days_old != null && r.days_old > STALE_DAYS && (
+          <p role="note" className="mt-3 flex gap-2 rounded-md border border-border bg-muted p-3 text-sm font-medium text-pretty">
+            <CalendarClock className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {c.old(r.days_old)}
+          </p>
+        )}
         {r.title && <p className="mt-1.5 font-medium text-pretty">{r.title}</p>}
         {r.summary && <p className="mt-1.5 max-w-[70ch] text-pretty">{r.summary}</p>}
         {r.excerpt && r.excerpt !== r.title && <p className="mt-2 line-clamp-4 max-w-[70ch] text-sm text-pretty text-muted-foreground">{r.excerpt}</p>}

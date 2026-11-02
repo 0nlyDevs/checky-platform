@@ -5,6 +5,7 @@ from datetime import UTC, datetime, timedelta
 from fastapi import APIRouter
 from sqlalchemy import delete, select
 
+from app.core import dates
 from app.core.access import Admin, Db
 from app.core.activity import broadcast, record
 from app.core.models import Item, Source, Workspace
@@ -209,6 +210,11 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
                 status="ready",
                 title=title,
                 text=text,
+                # Written the day the rumour surfaced, so the checker reads it as current.
+                published_at=(now - timedelta(minutes=ago))
+                .astimezone(dates.EAT)
+                .date()
+                .isoformat(),
             )
             db.add(source)
             await db.flush()

@@ -134,6 +134,7 @@ async def _claim_reviews(query: str, k: int) -> list[dict[str, Any]]:
                         "title": review.get("title") or claim.get("text", "")[:120],
                         "url": review["url"],
                         "snippet": f"{who} : « {rating} ». Affirmation : {claim.get('text', '')}",
+                        "date": review.get("reviewDate"),
                     }
                 )
         return out[:k]

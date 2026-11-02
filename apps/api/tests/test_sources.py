@@ -347,3 +347,23 @@ def test_whisper_outage_marks_the_source_failed(as_user, whisper):
     src = alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}").json()
     assert src["status"] == "failed"
     assert "503" in src["error"]
+
+
+def test_a_source_date_is_set_by_hand(as_user):
+    from tests.test_workspaces import _join
+
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    src = alice.post(
+        f"/api/v1/workspaces/{ws}/sources", json={"text": "Un texte collé sans date."}
+    ).json()
+    assert src["published_at"] is None
+    url = f"/api/v1/workspaces/{ws}/sources/{src['id']}"
+    r = alice.patch(url, json={"published_at": "2019-01-14"})
+    assert r.status_code == 200 and r.json()["published_at"] == "2019-01-14"
+    assert alice.get(url).json()["published_at"] == "2019-01-14"
+    assert alice.patch(url, json={"published_at": "2999-01-01"}).status_code == 422
+    assert alice.patch(url, json={"published_at": None}).json()["published_at"] is None
+    assert as_user("mallory").patch(url, json={"published_at": None}).status_code == 404
+    _join(alice, bob, ws, "journalist")
+    assert bob.patch(url, json={"published_at": "2020-01-01"}).status_code == 403

@@ -166,6 +166,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/items/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Similar Items
+         * @description Claims of the desk that share most of their words with `q`: a duplicate warning while
+         *     a new claim is typed. Word overlap only, so it answers at once and without any AI.
+         */
+        get: operations["similar_items_api_v1_workspaces__ws__items_similar_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/items/{item_id}": {
         parameters: {
             query?: never;
@@ -375,7 +396,11 @@ export interface paths {
         delete: operations["delete_source_api_v1_workspaces__ws__sources__source_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /**
+         * Update Source
+         * @description Set a source's publication date by hand (a pasted text, a page that does not say it).
+         */
+        patch: operations["update_source_api_v1_workspaces__ws__sources__source_id__patch"];
         trace?: never;
     };
     "/api/v1/workspaces/{ws}/sources/{source_id}/text": {
@@ -1192,6 +1217,8 @@ export interface components {
             kind: string;
             /** Url */
             url: string | null;
+            /** Published At */
+            published_at?: string | null;
             /** Text */
             text: string;
             /** Start S */
@@ -1246,6 +1273,12 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** SimilarOut */
+        SimilarOut: {
+            /** Score */
+            score: number;
+            item: components["schemas"]["ItemOut"];
+        };
         /** SourceIn */
         SourceIn: {
             /** Item Id */
@@ -1256,6 +1289,8 @@ export interface components {
             text?: string | null;
             /** Title */
             title?: string | null;
+            /** Published At */
+            published_at?: string | null;
         };
         /** SourceOut */
         SourceOut: {
@@ -1300,6 +1335,11 @@ export interface components {
              * @default 0
              */
             duplicates: number;
+        };
+        /** SourcePatch */
+        SourcePatch: {
+            /** Published At */
+            published_at: string | null;
         };
         /** SpeakIn */
         SpeakIn: {
@@ -1911,6 +1951,39 @@ export interface operations {
             };
         };
     };
+    similar_items_api_v1_workspaces__ws__items_similar_get: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimilarOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_item_api_v1_workspaces__ws__items__item_id__get: {
         parameters: {
             query?: never;
@@ -2472,6 +2545,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_source_api_v1_workspaces__ws__sources__source_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourcePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceOut"];
+                };
             };
             /** @description Validation Error */
             422: {

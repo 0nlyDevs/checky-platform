@@ -8,7 +8,7 @@ Link: `POST …/sources` with a `url` queues `ingest_url`; with `text` the sourc
 import logging
 import re
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from fastapi import APIRouter
@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import storage
+from app.core import dates, storage
 from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
@@ -70,6 +70,8 @@ class SourceIn(BaseModel):
     url: str | None = Field(default=None, max_length=2000)
     text: str | None = Field(default=None, max_length=200_000)
     title: str | None = Field(default=None, max_length=500)
+    # When the text or page was published, if known (a link's own date is read from the page).
+    published_at: date | None = None
 
     @model_validator(mode="after")
     def one_of(self):
@@ -291,6 +293,7 @@ async def add_source(body: SourceIn, member: AnyMember, db: Db) -> SourceOut:
             kind="url",
             url=url,
             title=body.title or url,
+            published_at=body.published_at.isoformat() if body.published_at else None,
         )
     else:
         source = Source(
@@ -301,6 +304,7 @@ async def add_source(body: SourceIn, member: AnyMember, db: Db) -> SourceOut:
             status="ready",
             title=body.title or body.text.strip().splitlines()[0][:120],
             text=body.text,
+            published_at=body.published_at.isoformat() if body.published_at else None,
         )
     db.add(source)
     await db.flush()
@@ -347,6 +351,39 @@ async def get_source(source_id: uuid.UUID, member: AnyMember, db: Db) -> SourceO
 async def get_source_text(source_id: uuid.UUID, member: AnyMember, db: Db) -> dict:
     s = await _get_source(db, member, source_id)
     return {"id": str(s.id), "text": s.text}
+
+
+class SourcePatch(BaseModel):
+    # The day the text or page was published; null when it is unknown.
+    published_at: date | None
+
+
+@router.patch("/workspaces/{ws}/sources/{source_id}")
+async def update_source(
+    source_id: uuid.UUID, body: SourcePatch, member: AnyMember, db: Db
+) -> SourceOut:
+    """Set a source's publication date by hand (a pasted text, a page that does not say it)."""
+    s = await _get_source(db, member, source_id)
+    if s.created_by != member.user.id and not member.at_least("editor"):
+        raise ApiError(403, "forbidden", "Only who added it or an editor can change this source")
+    if body.published_at and body.published_at > dates.today():
+        raise ApiError(422, "future_date", "A publication date cannot be in the future")
+    before = s.published_at
+    s.published_at = body.published_at.isoformat() if body.published_at else None
+    await record(
+        db,
+        member.workspace_id,
+        member.user.id,
+        "source",
+        source_id,
+        "update",
+        {"published_at": [before, s.published_at]},
+    )
+    await db.commit()
+    await db.refresh(s)
+    out = await _source_out(db, s)
+    await broadcast(member.workspace_id, "source.updated", out.model_dump(mode="json"))
+    return out
 
 
 @router.delete("/workspaces/{ws}/sources/{source_id}", status_code=204)

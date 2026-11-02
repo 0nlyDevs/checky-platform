@@ -19,6 +19,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import select
 
+from app.core import dates
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
 from app.core.models import Item, Workspace
@@ -275,7 +276,10 @@ class GuideIn(BaseModel):
 
 def conversation(system: str, body: GuideIn, context: str = "") -> list[dict[str, Any]]:
     lang = "malagasy" if body.lang == "mg" else "français"
-    head = f"{system}\n\nLangue de réponse : {lang}. Page actuelle : {body.page}.{context}"
+    head = (
+        f"{system}\n\n{dates.today_line()} Langue de réponse : {lang}. "
+        f"Page actuelle : {body.page}.{context}"
+    )
     return [{"role": "system", "content": head}, *(t.model_dump() for t in body.messages[-8:])]
 
 

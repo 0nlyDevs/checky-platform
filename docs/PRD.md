@@ -219,6 +219,8 @@ Five features answer the journalist's main tasks. Each one is a thin layer over 
 - Step 1: extract the checkable claims (who, what, number, date) as a list the journalist can edit.
 - Step 2: for each claim, search the workspace's sources (RAG) and the web (agent), and list evidence for and against, each with its citation.
 - Step 3: suggest a verdict from a fixed scale: `true`, `misleading`, `false`, `unverifiable`, with a one-line reason. The journalist always confirms or changes it; the app never publishes a verdict on its own.
+- Beyond the attached sources, the checker reads up to 3 other sources of the newsroom that are close enough to the claim (similarity ≥ 0.78, measured on the demo files), marked as coming from another file.
+- Dates are worked out in code, never guessed by the model: today, when the rumour was first seen, each source's date and its gap to the rumour. A "true" whose supporting passages all date from more than 30 days before the rumour becomes "unverifiable"; each piece of evidence shows its date. A page date that is only guessed and falls today, with no metadata to back it, counts as unknown. The journalist can set or correct any source's date by hand.
 - Output: a claim item on the verification board, with its evidence attached.
 
 ### F2. Verification board
@@ -227,6 +229,7 @@ Five features answer the journalist's main tasks. Each one is a thin layer over 
 - Drag a card to change status; the change appears live for everyone in the workspace.
 - Card detail: claim, evidence panel, comments, activity history.
 - Filters by assignee, verdict, tag and date.
+- While a new claim is typed, the claims already followed with the same words are shown, to open instead of creating a duplicate (word overlap, no AI).
 
 ### F3. Interview to quotes
 
@@ -246,6 +249,7 @@ Five features answer the journalist's main tasks. Each one is a thin layer over 
 - Paste a post, article or image link (or the post's text when the link needs an account, as on Facebook and TikTok) and get in one pass: what it claims, the warning signs in how it is written (each with its quote), what fact-checkers, the web and Wikipedia already say, and a suggested verdict resting only on those results, each quote checked.
 - Nothing is written until the journalist follows it in the desk, with the sources they tick; the journalist still confirms the verdict on the claim.
 - No detector of AI-written text is reliable, so text only gets hints, never an "AI probability".
+- The content's publication date and age come from code; past 30 days the page warns that an old post may be circulating again.
 
 ### F5. Verdict card
 
@@ -350,6 +354,7 @@ All FastAPI routes live under `/api/v1`, require `Authorization: Bearer <jwt>` e
 | POST | `/invitations/{token}/accept` | Join a workspace | any |
 | PATCH / DELETE | `/workspaces/{ws}/members/{user}` | Change role, remove | admin |
 | GET / POST | `/workspaces/{ws}/items` | List (filters, pagination) / create | any member / journalist+ |
+| GET | `/workspaces/{ws}/items/similar?q=` | Claims sharing most of the words of a claim being typed | any member |
 | GET / PATCH / DELETE | `/workspaces/{ws}/items/{id}` | Read / update / delete | member / author or editor+ / editor+ |
 | GET / POST | `/workspaces/{ws}/items/{id}/comments` | Comments | any member |
 | GET | `/workspaces/{ws}/activity` | Activity log | any member |

@@ -10,6 +10,7 @@ from app.core.access import AnyMember, Db, Editor, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
 from app.core.models import Activity, Comment, Item
+from app.core.words import words
 
 router = APIRouter(tags=["items"])
 
@@ -129,6 +130,40 @@ async def create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
     await db.refresh(item)
     await broadcast(member.workspace_id, "item.created", _out(item))
     return ItemOut.model_validate(item)
+
+
+class SimilarOut(BaseModel):
+    score: float
+    item: ItemOut
+
+
+@router.get("/workspaces/{ws}/items/similar")
+async def similar_items(
+    member: AnyMember, db: Db, q: str = Query(min_length=1, max_length=600)
+) -> list[SimilarOut]:
+    """Claims of the desk that share most of their words with `q`: a duplicate warning while
+    a new claim is typed. Word overlap only, so it answers at once and without any AI."""
+    asked = words(q)
+    if len(asked) < 2:
+        return []
+    rows = await db.scalars(
+        select(Item)
+        .where(Item.workspace_id == member.workspace_id, Item.type == "claim")
+        .order_by(Item.created_at.desc())
+        .limit(500)
+    )
+    scored = []
+    for item in rows:
+        known = words(f"{item.title} {item.body}")
+        shared = asked & known
+        if len(shared) < 2:
+            continue
+        score = len(shared) / min(len(asked), len(known))
+        # Same bar as the public "already checked?" match; only a warning, so a near miss is fine.
+        if score >= 0.4:
+            scored.append((score, item))
+    scored.sort(key=lambda r: r[0], reverse=True)
+    return [SimilarOut(score=round(s, 2), item=i) for s, i in scored[:3]]
 
 
 @router.get("/workspaces/{ws}/items/{item_id}")

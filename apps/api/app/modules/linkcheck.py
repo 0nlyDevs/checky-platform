@@ -1,6 +1,8 @@
 """« Analyser un lien »: paste a post, an article or an image link and get, in one pass, what it
 claims, the warning signs in it, what fact-checkers and the web already say, and a suggested
 verdict with its evidence. The AI suggests; a journalist confirms on the claim, as everywhere.
+Dates come from code, not the model: both calls get today's date and the content's publication
+date, and the result carries `days_old` so an old post that circulates again is flagged.
 
 `POST /workspaces/{ws}/link-check {url?, text?}` SSE: `step` ({key, status, summary}) for read →
 claims → search → verdict, then `result`, then `done`, or `error`. Two model calls in all.
@@ -22,7 +24,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import or_, select
 
-from app.core import ai, websearch
+from app.core import ai, dates, websearch
 from app.core.access import AnyMember
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
@@ -78,7 +80,10 @@ uniquement à partir des résultats de recherche numérotés fournis. Réponds e
 résultat n"}],
  "missing": "ce qu'il faudrait encore vérifier, une phrase"}
 Un article de fact-checkeur qui traite déjà cette affirmation compte beaucoup. Si les résultats ne \
-permettent pas de conclure, réponds unverifiable. N'invente aucun fait ni extrait. Écris en français."""
+permettent pas de conclure, réponds unverifiable. N'invente aucun fait ni extrait. Écris en français.
+Les dates fournies (aujourd'hui, publication du contenu, date des résultats) sont exactes : ne les \
+devine pas. Un résultat ancien ne prouve pas un fait récent ; un contenu ancien qui recircule \
+présenté comme récent est trompeur ou faux."""
 
 
 class LinkIn(BaseModel):
@@ -173,7 +178,7 @@ async def read_link(url: str) -> dict[str, Any]:
         "final_url": final,
         "title": page["title"] or og.get("og:title", ""),
         "site": og.get("og:site_name"),
-        "published_at": page["published_at"] or og.get("article:published_time"),
+        "published_at": page["published_at"],
         "author": page["author"],
         "image_url": og.get("og:image"),
         "text": text,
@@ -293,6 +298,21 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
         text = "\n\n".join(p for p in [page.get("text", ""), pasted] if p).strip()
         out.update({k: v for k, v in page.items() if k != "text"})
         out["excerpt"] = text[:600]
+        published = dates.parse(page.get("published_at"))
+        out["published_at"] = published.isoformat() if published else None
+        out["days_old"] = max(0, (dates.today() - published).days) if published else None
+        when = (
+            f"Contenu publié le {dates.fr(published)}, il y a {dates.span(out['days_old'])}."
+            if published and out["days_old"]
+            else f"Contenu publié aujourd'hui, le {dates.fr(published)}."
+            if published
+            else "Date de publication du contenu inconnue."
+        )
+        # In the instructions, not beside the content, so the model does not read it as the post's.
+        dated = (
+            f"\n\nDates, calculées par FANILO (elles ne font pas partie du contenu) : "
+            f"{dates.today_line()} {when}"
+        )
         if page.get("kind") == "image":
             out["reverse_search"] = reverse_search(page["final_url"])
         elif page.get("image_url"):
@@ -312,7 +332,7 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
             yield _step("claims", "running")
             reply = await ai.complete(
                 [
-                    {"role": "system", "content": READ_SYSTEM},
+                    {"role": "system", "content": READ_SYSTEM + dated},
                     {
                         "role": "user",
                         "content": f"Titre : {page.get('title') or '—'}\n\n{text[:TEXT_CHARS]}",
@@ -353,12 +373,13 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
         if claims and results:
             yield _step("verdict", "running")
             listing = "\n\n".join(
-                f"[{r['n']}] ({r['kind']}) {r['title']}\n{r['url']}\n{r['snippet'][:700]}"
+                f"[{r['n']}] ({r['kind']}{', ' + dates.published_line(r['date']) if r.get('date') else ''})"
+                f" {r['title']}\n{r['url']}\n{r['snippet'][:700]}"
                 for r in results
             )
             reply = await ai.complete(
                 [
-                    {"role": "system", "content": VERDICT_SYSTEM},
+                    {"role": "system", "content": VERDICT_SYSTEM + dated},
                     {
                         "role": "user",
                         "content": f"Affirmation : {claims[0]}\n\nSource du contenu : "

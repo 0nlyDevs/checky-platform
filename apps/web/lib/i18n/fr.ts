@@ -1,4 +1,13 @@
 // Every UI string lives here so Malagasy can be added as a sibling file.
+
+/** A distance in days, rounded the way a person says it (same rounding as the API's dates.span). */
+const span = (days: number) => {
+  const n = Math.abs(days);
+  if (n < 60) return `${n} jour${n > 1 ? "s" : ""}`;
+  if (n < 730) return `${Math.round(n / 30.44)} mois`;
+  return `${Math.floor(n / 365)} ans`;
+};
+
 export const fr = {
   auth: {
     signInTitle: "Connexion",
@@ -114,6 +123,9 @@ export const fr = {
       submit: "Ajouter",
       cancel: "Annuler",
       added: "Affirmation ajoutée",
+      similarTitle: "Déjà suivie dans le desk ?",
+      similarLead: "Ces affirmations partagent les mêmes mots. Si c'est la même, ouvrez-la plutôt que d'en créer une seconde.",
+      similarOpen: "Ouvrir",
     },
   },
   detail: {
@@ -322,12 +334,12 @@ export const fr = {
   },
   analysis: {
     title: "Analyse des sources",
-    lead: "L'IA lit les sources jointes, relève ce qui étaye ou contredit l'affirmation et propose un verdict. Vous le confirmez ou le corrigez.",
+    lead: "L'IA lit les sources jointes, et celles des autres dossiers de la rédaction qui parlent de la même chose, relève ce qui étaye ou contredit l'affirmation et propose un verdict. Vous le confirmez ou le corrigez.",
     run: "Analyser avec l'IA",
     rerun: "Relancer l'analyse",
     running: "Lecture des sources…",
     failed: "L'analyse a échoué. Vérifiez Paramètres puis réessayez.",
-    noSources: "Joignez d'abord au moins une source : sans source, l'IA répondra « invérifiable ».",
+    noSources: "Aucune source jointe : l'IA ne lira que les autres dossiers de la rédaction qui en parlent, sinon elle répondra « invérifiable ».",
     facts: "Faits à vérifier",
     evidence: "Éléments de preuve",
     noEvidence: "Aucun passage des sources ne permet de trancher.",
@@ -335,7 +347,19 @@ export const fr = {
     missing: "Reste à vérifier",
     stance: { supports: "Étaye", contradicts: "Contredit", context: "Contexte" } as Record<string, string>,
     dropped: (n: number) => (n === 1 ? "1 citation écartée : introuvable mot pour mot dans les sources." : `${n} citations écartées : introuvables mot pour mot dans les sources.`),
-    meta: (n: number, when: string) => `Analyse IA · ${n === 1 ? "1 source lue" : `${n} sources lues`} · ${when}`,
+    otherFile: "Autre dossier de la rédaction",
+    openFile: "Ouvrir le dossier",
+    dates: {
+      published: (day: string, gap: string) => `Publiée le ${day}, ${gap}`,
+      added: (day: string, gap: string) => `Date de publication inconnue · déjà dans la rédaction le ${day}, ${gap}`,
+      unknown: "Date de publication inconnue",
+      gap: (days: number) => (days === 0 ? "le jour de la rumeur" : `${span(days)} ${days > 0 ? "avant" : "après"} la rumeur`),
+    },
+    downgraded:
+      "Suggestion ramenée à « Invérifiable » : les seuls passages qui étayent l'affirmation datent de plus d'un mois avant la rumeur. Une page ancienne ne confirme pas un fait récent : vérifiez qu'elle parle bien du même événement.",
+    oldEvidence: "Toutes les preuves datent de plus d'un mois avant la rumeur : vérifiez qu'elles parlent bien du même événement.",
+    meta: (n: number, related: number, when: string) =>
+      `Analyse IA · ${n === 1 ? "1 source jointe lue" : `${n} sources jointes lues`}${related ? ` · ${related === 1 ? "1 autre dossier" : `${related} autres dossiers`}` : ""} · ${when}`,
   },
   sources: {
     title: "Sources",
@@ -355,6 +379,19 @@ export const fr = {
     remove: "Retirer",
     removeConfirm: "Retirer cette source ?",
     removed: "Source retirée",
+    date: {
+      known: (day: string) => `Publiée le ${day}`,
+      unknown: "Date de publication inconnue",
+      add: "Ajouter la date",
+      edit: "Modifier",
+      label: "Date de publication de la source",
+      save: "Enregistrer",
+      cancel: "Annuler",
+      clear: "Date inconnue",
+      saved: "Date enregistrée",
+      failed: "La date n'a pas pu être enregistrée.",
+      hint: "L'analyse IA s'en sert : une source ancienne ne confirme pas un fait récent.",
+    },
     added: "Source ajoutée",
     open: "Ouvrir",
     noText: "Aucun texte extrait.",
@@ -677,6 +714,8 @@ export const fr = {
     content: "Le contenu",
     openOriginal: "Ouvrir l'original",
     by: (who: string) => `par ${who}`,
+    old: (days: number) =>
+      `Publié il y a ${span(days)}. Un contenu ancien qui recircule comme s'il était nouveau est un signe classique de rumeur : vérifiez qu'il parle bien d'aujourd'hui.`,
     pasted: "Texte collé",
     tracked: (ref: string) => `Déjà suivi dans le desk : ${ref}`,
     open: "Ouvrir",

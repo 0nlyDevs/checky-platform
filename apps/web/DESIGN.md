@@ -36,6 +36,23 @@ colors:
   verdict-unverifiable-on: "#ffffff"
   verdict-unverifiable-soft: "#e7ebe9"
   verdict-unverifiable-ink: "#4f5a56"
+  dossier-manila: "#dcc9a3"
+  dossier-manila-deep: "#cfb98f"
+  dossier-index: "#efe4c8"
+  dossier-index-hover: "#f6eedb"
+  dossier-paper: "#fffdf7"
+  dossier-photo-white: "#ffffff"
+  dossier-ink: "#141210"
+  dossier-ink-night: "#0e0d0b"
+  dossier-ink-soft: "#4a4033"
+  dossier-ink-label: "#c9b993"
+  dossier-alarm: "#c42a20"
+  dossier-alarm-ink: "#a3231b"
+  dossier-paperclip: "#8b8f95"
+  piece-whatsapp-ground: "#e7f6d8"
+  piece-whatsapp-meta: "#4f5b52"
+  piece-facebook-name: "#1b4a9b"
+  piece-voice-wave: "#2a7d4f"
 typography:
   headline:
     fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
@@ -89,12 +106,38 @@ typography:
     fontSize: "1.25rem"
     fontWeight: 600
     letterSpacing: "0.025em"
+  dossier-display:
+    fontFamily: "Anton, Arial Narrow, sans-serif"
+    fontSize: "clamp(44px, 5.6vw, 92px)"
+    fontWeight: 400
+    lineHeight: 0.9
+  dossier-tab:
+    fontFamily: "Anton, Arial Narrow, sans-serif"
+    fontSize: "21px"
+    fontWeight: 400
+    letterSpacing: "0.06em"
+  dossier-label:
+    fontFamily: "Special Elite, Courier New, serif"
+    fontSize: "14px"
+    fontWeight: 400
+  dossier-lead:
+    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "19px"
+    fontWeight: 400
+    lineHeight: 1.5
+  dossier-body:
+    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "17px"
+    fontWeight: 400
 rounded:
   block: "3px"
   sm: "3px"
   md: "4px"
   lg: "5px"
   full: "9999px"
+  assistant-control: "6px"
+  assistant-field: "8px"
+  assistant-panel: "10px"
 spacing:
   lane-gap: "6px"
   cell-y: "10px"
@@ -304,6 +347,35 @@ The programme grid of the day. Hour ruler in the condensed face; hairline rules;
 - **Maintenant:** a 2px signal-yellow line through the full height, topped by the now tag.
 - **Legend:** confirmed is a neutral ink swatch (foreground at 70%), since confirmation is a state shared by all four verdict hues; suggestion and unchecked swatches mirror their block treatments.
 - **Motion:** each block grows from its first-seen point toward now on load (`grid-extend`, 640ms, expo-out, 35ms stagger); the grid ticks every 30s. Reduced motion collapses all animation.
+
+## Public pages: "Le dossier"
+
+The landing, sign-in, sign-up and the public pages (`/verifies`, `/signaler`, `/suivi`) live in a second world: **the case file**. A rumour is treated as an affair under investigation: manila folders, index cards, typed labels, photographs pinned as pieces, and a red stamp that lands once. Contract: `.impeccable/surfaces/app-site-accueil-page-tsx.md`. CSS under `.site` and `.dossier-*` / `.pub-*` in `app/globals.css`, tokens `--site-*`.
+
+### Colors
+- **Manila** (`dossier-manila`, deeper `dossier-manila-deep`): the ground. **Index card** (`dossier-index`, hover `dossier-index-hover`): cards, files, the case card. **Paper** (`dossier-paper`): inputs on the card. Pieces sit on **photo white**.
+- **Ink** (`dossier-ink`; `dossier-ink-night` for the dark theme colour): text, folder tabs, the footer and the answer block. **Soft ink** (`dossier-ink-soft`): typed labels and secondary text on manila. **Label on ink** (`dossier-ink-label`): typed text on ink grounds.
+- **Alarm** (`dossier-alarm`): stamps, the current step, piece numbers. **Alarm ink** (`dossier-alarm-ink`): red text (the desk's notes), focus outline and hover of tabs.
+- Piece colours (`piece-*`) belong only to the fake WhatsApp, Facebook and voice-note fragments of the affair: they imitate the platforms, never the product.
+- Published verdict stamps reuse the desk's verdict **ink** tokens, so a verdict reads the same on both sides.
+
+### Typography
+- **Anton** (`--font-anton`): headlines, folder tabs, divider tabs, stamps, uppercase only (`dossier-display`, `dossier-tab`).
+- **Special Elite** (`--font-typed`): the file's labels only (`dossier-label`): dates, refs, captions, field names. Never a sentence a visitor must read.
+- **Public Sans**: everything a visitor reads (`dossier-lead`, `dossier-body`).
+
+### Components
+- **Folder tab** (`.tab-btn`): the one action shape; ink tab, manila text, lifts 3px and turns alarm ink on hover.
+- **Stamp** (`.stamp`, text from `data-label`): lands once at an angle (scale 1.5 → 1, 280ms expo-out), then stays at 85%.
+- **Index card / file** (`.dossier-fiche`, `.pub-file`): square corners, a 2px ink rule under the typed header.
+
+### Shared with the desk
+The app shell borrows the ink rail, the manila marker, Anton page titles (`.page-title`) and the folder logo. The floating assistant is the only component drawn in both worlds: an ink button (manila on the dark desk), an ink header, a body in the desk's own card colours, and rounder corners (6 / 8 / 10px) than the desk's 5px, as it floats above either world.
+
+### Named Rules
+**The One Red Rule.** Alarm red is the stamp's colour. It marks a verdict landing, the current step and the desk's notes; it never fills a button at rest.
+
+**The Typed Label Rule.** The typewriter face labels the file; it never carries content.
 
 ## Do's and Don'ts
 

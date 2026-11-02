@@ -4,6 +4,11 @@
 `verdict_suggested` (the UI's suggestion banner) and `analysis` (checkable facts, evidence with
 quotes, reason, what is missing). The AI only suggests; a journalist confirms the verdict.
 Every quote must appear word for word in its source, otherwise it is dropped.
+Beyond the attached sources, the checker also reads the newsroom's other sources whose passages
+are close enough to the claim (other claims' files, unattached sources), marked as such.
+Dates are worked out in code (`app/core/dates.py`): the prompt states today's date, when the
+rumour was first seen and how old each source is; afterwards, a "true" resting only on sources
+from well before the rumour becomes "unverifiable" (`date_check`).
 """
 
 import json
@@ -11,13 +16,13 @@ import logging
 import re
 import unicodedata
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from fastapi import APIRouter
 from sqlalchemy import select
 
-from app.core import ai
+from app.core import ai, dates
 from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.db import SessionLocal
@@ -35,12 +40,23 @@ MAX_SOURCES = 8
 # passages of each source (RAG) when it is indexed, else the start of its text.
 CHARS_PER_SOURCE = 2500
 TOTAL_CHARS = 14_000
+# Other sources of the newsroom read alongside the attached ones. Measured on gemini-embedding-2
+# with the demo files: a source about the claim scores 0.82 to 0.91, an unrelated one at most 0.76.
+MAX_RELATED = 3
+RELATED_MIN_SCORE = 0.78
 
 SYSTEM = """Tu es l'assistant de vérification d'une rédaction à Madagascar. Tu aides un journaliste \
 à vérifier une affirmation qui circule (Facebook, WhatsApp, radio, presse).
 
 Règles :
 - Tu t'appuies UNIQUEMENT sur les sources fournies, numérotées [1], [2]… Jamais sur ta mémoire.
+- Les dates (aujourd'hui, première apparition de la rumeur, date de chaque source et son écart \
+avec la rumeur) sont calculées pour toi : sers-t'en telles quelles, ne devine jamais une date.
+- Une source publiée bien avant la rumeur ne confirme pas un fait récent : elle peut seulement \
+montrer qu'un contenu est ancien ou recyclé, ou donner du contexte. Une source de date inconnue \
+ne permet pas de dater un fait.
+- Les sources marquées « autre dossier de la rédaction » n'ont pas été jointes par le journaliste : \
+ne les cite que si elles parlent vraiment de cette affirmation.
 - Chaque élément de preuve cite une phrase recopiée MOT POUR MOT depuis sa source (champ "quote").
 - Sans source qui permet de trancher, le verdict est "unverifiable" et tu dis ce qu'il faudrait chercher.
 - "misleading" = en partie vrai mais trompeur (chiffre sorti du contexte, date fausse, exagération).
@@ -70,11 +86,47 @@ def _parse(content: str) -> dict[str, Any]:
     return json.loads(m.group(0))
 
 
+def first_seen(item: Item) -> datetime:
+    """When the rumour was first seen, in Madagascar time (or when it was entered)."""
+    return dates.parse_moment((item.data or {}).get("first_seen_at")) or dates.parse_moment(
+        item.created_at
+    )
+
+
+def dating(source: Source, seen: date) -> dict[str, Any]:
+    """How old a source is against the rumour: its publication date when known; otherwise the day
+    it entered the newsroom, when that was before the rumour (it was published by then)."""
+    published = dates.parse(source.published_at)
+    if published:
+        return {"date": published, "basis": "published", "days_before": (seen - published).days}
+    added = dates.parse(source.created_at)
+    if added and added < seen:
+        return {"date": added, "basis": "added", "days_before": (seen - added).days}
+    return {"date": None, "basis": None, "days_before": None}
+
+
+def date_line(d: dict[str, Any], seen: date) -> str:
+    if d["basis"] == "published":
+        return f"publiée le {dates.fr(d['date'])}, {dates.gap(d['date'], seen)}"
+    if d["basis"] == "added":
+        return (
+            f"date de publication inconnue, déjà dans la rédaction le {dates.fr(d['date'])}, "
+            f"{dates.gap(d['date'], seen)}"
+        )
+    return "date de publication inconnue"
+
+
 def build_prompt(
     item: Item, sources: list[Source], excerpts: dict[uuid.UUID, str] | None = None
 ) -> str:
-    """Numbered sources; each shows its relevant passages (`excerpts`) or the start of its text."""
-    parts = [f"Affirmation : {item.title}"]
+    """Numbered sources; each shows its relevant passages (`excerpts`) or the start of its text.
+    Sources not attached to this claim are marked as coming from another file."""
+    seen = first_seen(item)
+    parts = [
+        dates.today_line(),
+        f"Rumeur vue pour la première fois le {dates.fr_moment(seen)}.",
+        f"Affirmation : {item.title}",
+    ]
     if item.body:
         parts.append(f"Contexte : {item.body}")
     if not sources:
@@ -82,6 +134,9 @@ def build_prompt(
     budget = max(1000, TOTAL_CHARS // max(1, len(sources)))
     for i, s in enumerate(sources, 1):
         head = f"[{i}] {s.title}" + (f" ({s.url})" if s.url else "")
+        if s.item_id != item.id:
+            head += " · autre dossier de la rédaction"
+        head += f" · {date_line(dating(s, seen.date()), seen.date())}"
         body = (excerpts or {}).get(s.id) or s.text
         parts.append(f"{head}\n{body[: min(CHARS_PER_SOURCE, budget)]}")
     return "\n\n".join(parts)
@@ -105,8 +160,44 @@ async def relevant_excerpts(db, item: Item) -> dict[uuid.UUID, str]:
     return {sid: "\n[…]\n".join(texts[:2]) for sid, texts in by_source.items()}
 
 
-def clean(raw: dict[str, Any], sources: list[Source]) -> dict[str, Any]:
-    """Keep only what the sources back: unknown sources and quotes not found verbatim go."""
+async def related_sources(
+    db, item: Item, attached: list[Source]
+) -> tuple[list[Source], dict[uuid.UUID, str]]:
+    """The newsroom's other sources close to the claim, with their closest passages."""
+    from app.core import embed
+    from app.modules.rag import search
+
+    if not embed.configured():
+        return [], {}
+    try:
+        passages = await search(db, item.workspace_id, f"{item.title}\n{item.body}", 24)
+    except Exception:  # noqa: BLE001 - the attached sources alone still make an analysis
+        log.warning("newsroom search failed for %s", item.id)
+        return [], {}
+    skip = {s.id for s in attached}
+    by_source: dict[uuid.UUID, list[str]] = {}
+    for p in passages:
+        if p.source_id in skip or p.score < RELATED_MIN_SCORE:
+            continue
+        if p.source_id in by_source or len(by_source) < MAX_RELATED:
+            by_source.setdefault(p.source_id, []).append(p.text)
+    if not by_source:
+        return [], {}
+    found = {
+        s.id: s
+        for s in await db.scalars(
+            select(Source).where(Source.id.in_(by_source), Source.status == "ready")
+        )
+    }
+    ordered = [found[sid] for sid in by_source if sid in found]
+    return ordered, {sid: "\n[…]\n".join(texts[:2]) for sid, texts in by_source.items()}
+
+
+def clean(raw: dict[str, Any], sources: list[Source], item: Item) -> dict[str, Any]:
+    """Keep only what the sources back: unknown sources and quotes not found verbatim go.
+    Each piece of evidence carries its source's date; a "true" whose supporting passages all come
+    from well before the rumour becomes "unverifiable"."""
+    seen = first_seen(item).date()
     texts = {i: _norm(s.text) for i, s in enumerate(sources, 1)}
     evidence, dropped = [], 0
     for e in raw.get("evidence") or []:
@@ -120,20 +211,39 @@ def clean(raw: dict[str, Any], sources: list[Source]) -> dict[str, Any]:
             dropped += 1
             continue
         s = sources[n - 1]
+        when = dating(s, seen)
         evidence.append(
             {
                 "source_id": str(s.id),
                 "source_title": s.title,
                 "n": n,
+                # Not attached = read from another file of the newsroom (its claim, if any).
+                "attached": s.item_id == item.id,
+                "item_id": str(s.item_id) if s.item_id else None,
                 "stance": e.get("stance") if e.get("stance") in STANCES else "context",
                 "quote": quote[:600],
                 "explanation": (e.get("explanation") or "")[:400],
+                "source_date": when["date"].isoformat() if when["date"] else None,
+                "date_basis": when["basis"],
+                "days_before": when["days_before"],
             }
         )
     verdict = raw.get("verdict") if raw.get("verdict") in VERDICTS else "unverifiable"
     if not evidence:
         # Nothing in the sources backs a conclusion.
         verdict = "unverifiable"
+
+    def old(e: dict[str, Any]) -> bool:
+        return e["days_before"] is not None and e["days_before"] > dates.STALE_DAYS
+
+    supports = [e for e in evidence if e["stance"] == "supports"]
+    backing = [e for e in evidence if e["stance"] != "context"]
+    date_check = None
+    if verdict == "true" and supports and all(old(e) for e in supports):
+        # An old page cannot confirm what is said to happen now; the journalist can still decide.
+        verdict, date_check = "unverifiable", "downgraded"
+    elif backing and all(old(e) for e in backing):
+        date_check = "old_evidence"
     claims = [
         {k: str(c.get(k) or "")[:300] for k in ("text", "who", "what", "when", "figure")}
         for c in (raw.get("claims") or [])
@@ -146,6 +256,8 @@ def clean(raw: dict[str, Any], sources: list[Source]) -> dict[str, Any]:
         "reason": str(raw.get("reason") or "")[:600],
         "missing": str(raw.get("missing") or "")[:600],
         "dropped_quotes": dropped,
+        "date_check": date_check,
+        "first_seen": first_seen(item).isoformat(),
     }
 
 
@@ -164,7 +276,9 @@ async def analyze_claim(ctx: JobContext) -> dict[str, Any]:
                 .limit(MAX_SOURCES)
             )
         )
-        prompt = build_prompt(item, sources, await relevant_excerpts(db, item))
+        excerpts = await relevant_excerpts(db, item)
+        related, related_excerpts = await related_sources(db, item, sources)
+        prompt = build_prompt(item, sources + related, {**excerpts, **related_excerpts})
     await ctx.progress(20)
     reply = await ai.complete(
         [{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}],
@@ -173,10 +287,11 @@ async def analyze_claim(ctx: JobContext) -> dict[str, Any]:
         response_format={"type": "json_object"},
     )
     await ctx.progress(80)
-    result = clean(_parse(reply.content), sources)
+    result = clean(_parse(reply.content), sources + related, item)
     analysis = {
         **result,
         "sources_used": len(sources),
+        "related_used": len(related),
         "provider": reply.provider,
         "model": reply.model,
         "at": datetime.now(UTC).isoformat(),

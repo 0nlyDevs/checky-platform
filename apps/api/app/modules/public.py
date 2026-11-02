@@ -6,7 +6,6 @@ import hashlib
 import re
 import secrets
 import time
-import unicodedata
 import uuid
 from collections import defaultdict, deque
 from datetime import datetime
@@ -23,6 +22,7 @@ from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.models import Item, Source, Workspace
+from app.core.words import words
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -133,57 +133,6 @@ async def _verdict(db: Db, item: Item, ws: Workspace) -> VerdictOut:
     )
 
 
-# --- "is it already checked?": word overlap on accent-free text (no AI verdict is ever made here)
-STOP = {
-    *[
-        "les",
-        "des",
-        "une",
-        "un",
-        "le",
-        "la",
-        "de",
-        "du",
-        "et",
-        "en",
-        "au",
-        "aux",
-        "pour",
-        "par",
-        "sur",
-        "dans",
-        "que",
-        "qui",
-        "est",
-        "sont",
-        "ce",
-    ],
-    *[
-        "cette",
-        "ces",
-        "avec",
-        "plus",
-        "pas",
-        "ont",
-        "été",
-        "the",
-        "and",
-        "ny",
-        "sy",
-        "amin",
-        "ary",
-        "izay",
-        "dia",
-        "fa",
-    ],
-}
-
-
-def _words(text: str) -> set[str]:
-    flat = unicodedata.normalize("NFKD", text.lower()).encode("ascii", "ignore").decode()
-    return {w for w in re.findall(r"[a-z0-9]+", flat) if len(w) >= 3 and w not in STOP}
-
-
 @router.get("/newsrooms")
 async def newsrooms(db: Db) -> list[NewsroomOut]:
     rows = await db.scalars(
@@ -219,14 +168,15 @@ async def get_verdict(item_id: uuid.UUID, db: Db) -> VerdictOut:
     return await _verdict(db, *row)
 
 
+# --- "is it already checked?": word overlap on accent-free text (no AI verdict is ever made here)
 @router.post("/match")
 async def match(body: MatchIn, db: Db) -> list[MatchOut]:
-    asked = _words(body.text)
+    asked = words(body.text)
     if not asked:
         return []
     scored = []
     for item, ws in (await db.execute(_published().limit(500))).all():
-        known = _words(f"{item.title} {item.body}")
+        known = words(f"{item.title} {item.body}")
         if not known:
             continue
         score = len(asked & known) / min(len(asked), len(known))
@@ -341,10 +291,10 @@ def _allow(store: dict[str, deque[float]], addr: str, limit: int, window: float)
 
 async def find_published(db: Db, text: str, k: int = 5) -> list[VerdictOut]:
     """Published verdicts sharing enough words with the text (accent-free), best first."""
-    asked = _words(text)
+    asked = words(text)
     scored = []
     for item, ws in (await db.execute(_published().limit(500))).all():
-        known = _words(f"{item.title} {item.body} {(item.data or {}).get('reason', '')}")
+        known = words(f"{item.title} {item.body} {(item.data or {}).get('reason', '')}")
         if asked and known and (hit := len(asked & known)):
             scored.append((hit / len(asked), item, ws))
     scored.sort(key=lambda r: r[0], reverse=True)

@@ -137,6 +137,7 @@ class Passage(BaseModel):
     title: str
     kind: str
     url: str | None
+    published_at: str | None = None
     text: str
     start_s: float | None
     end_s: float | None
@@ -166,6 +167,7 @@ async def search(
             title=s.title,
             kind=s.kind,
             url=s.url,
+            published_at=s.published_at,
             text=c.text,
             start_s=c.start_s,
             end_s=c.end_s,

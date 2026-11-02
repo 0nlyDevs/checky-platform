@@ -11,6 +11,7 @@ import ipaddress
 import re
 import socket
 import uuid
+from datetime import timedelta
 from html import unescape as html_unescape
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -18,7 +19,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from sqlalchemy import update
 
-from app.core import storage, stt
+from app.core import dates, storage, stt
 from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.models import File, Source, Transcript
@@ -106,17 +107,34 @@ def page_meta(html: str) -> dict[str, str]:
     return out
 
 
+def page_date(html: str, guessed: str | None) -> str | None:
+    """The page's publication date (ISO day). The page's own metadata (Open Graph, JSON-LD) wins.
+    A date found only by trafilatura's heuristics that falls today or yesterday is usually the
+    site's header showing the current day, on an article of any age: unknown is safer, since a
+    wrong "today" would make an old page look current."""
+    ld = re.search(r'"datePublished"\s*:\s*"([^"]+)"', html[:500_000])
+    structured = dates.parse(page_meta(html).get("article:published_time")) or dates.parse(
+        ld.group(1) if ld else None
+    )
+    if structured:
+        return structured.isoformat()
+    found = dates.parse(guessed)
+    if found is None or found >= dates.today() - timedelta(days=1):
+        return None
+    return found.isoformat()
+
+
 def extract_page(html: str, url: str) -> dict[str, Any]:
     import trafilatura
 
     doc = trafilatura.bare_extraction(html, url=url, with_metadata=True, include_tables=False)
     if doc is None:
-        return {"title": "", "author": None, "published_at": None, "text": ""}
+        return {"title": "", "author": None, "published_at": page_date(html, None), "text": ""}
     data = doc.as_dict() if hasattr(doc, "as_dict") else dict(doc)
     return {
         "title": (data.get("title") or "")[:500],
         "author": (data.get("author") or None),
-        "published_at": data.get("date") or None,
+        "published_at": page_date(html, data.get("date")),
         "text": (data.get("text") or "")[:MAX_TEXT_CHARS],
     }
 
@@ -188,7 +206,10 @@ def pdf_text(raw: bytes) -> tuple[dict[str, Any], str, str]:
     pages = [p.extract_text() or "" for p in reader.pages]
     info = reader.metadata or {}
     title = str(info.get("/Title") or "").strip()
-    return {"pages": len(pages)}, title, "\n\n".join(pages)[:MAX_TEXT_CHARS]
+    meta: dict[str, Any] = {"pages": len(pages)}
+    if created := dates.parse(str(info.get("/CreationDate") or "")):
+        meta["created_at"] = created.isoformat()
+    return meta, title, "\n\n".join(pages)[:MAX_TEXT_CHARS]
 
 
 async def _finish(source_id: uuid.UUID, ws: uuid.UUID, **values: Any) -> dict[str, Any]:
@@ -242,6 +263,8 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
     values: dict[str, Any] = {"status": "ready", "text": text, "error": None}
     if title:
         values["title"] = title[:500]
+    if meta.get("created_at"):
+        values["published_at"] = meta["created_at"]  # a PDF's own creation date
     result = await _finish(source_id, ctx.workspace_id, **values)
     if text:
         await _queue_embedding(ctx, source_id)

@@ -1,9 +1,11 @@
 "use client";
 
 import type { Item } from "@fanilo/shared";
-import { useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
 import { LoaderCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { StatusLabel, toClaim, VerdictBadge } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +37,28 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [origin, setOrigin] = useState("facebook");
+  const [title, setTitle] = useState("");
+  const [similar, setSimilar] = useState<Item[]>([]);
+
+  // While the claim is typed, warn if the desk already follows one with the same words.
+  useEffect(() => {
+    const q = title.trim();
+    if (q.length < 8) return;
+    let live = true;
+    const timer = setTimeout(async () => {
+      try {
+        const found = await api<{ score: number; item: Item }[]>(`/workspaces/${ws}/items/similar?q=${encodeURIComponent(q)}`);
+        if (live) setSimilar(found.map((s) => s.item));
+      } catch {
+        // Only a warning: without it the form works as before.
+      }
+    }, 400);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [ws, title]);
+  const shown = title.trim().length < 8 ? [] : similar;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -58,6 +82,8 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
         }),
       });
       onCreated(item);
+      setTitle("");
+      setSimilar([]);
       toast.success(`${t.claims.form.added} · ${nextRef}`);
       setOpen(false);
     } catch {
@@ -89,10 +115,43 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
               required
               maxLength={300}
               rows={3}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              aria-describedby={shown.length ? "claim-similar" : undefined}
               placeholder={t.claims.form.claimPlaceholder}
               className="w-full resize-none rounded-md border border-input bg-transparent px-3 py-2 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
             />
           </div>
+          {shown.length > 0 && (
+            <div id="claim-similar" role="status" className="rounded-md border border-border bg-muted p-3.5">
+              <p className="text-sm font-medium">{t.claims.form.similarTitle}</p>
+              <p className="mt-0.5 text-sm text-pretty text-muted-foreground">{t.claims.form.similarLead}</p>
+              <ul className="mt-3 space-y-2.5">
+                {shown.map((item) => {
+                  const c = toClaim(item);
+                  return (
+                    <li key={item.id} className="rounded-md border border-border bg-card p-3">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <span className="font-display text-base font-semibold tracking-wide tabular">{c.ref}</span>
+                        <Link
+                          href={`/w/${ws}/affirmations/${item.id}`}
+                          onClick={() => setOpen(false)}
+                          className="text-sm font-medium underline underline-offset-2"
+                        >
+                          {t.claims.form.similarOpen}
+                        </Link>
+                      </div>
+                      <p className="mt-1 text-pretty">{item.title}</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                        <StatusLabel status={c.status} />
+                        {(c.verdict || c.suggested) && <VerdictBadge claim={c} compact />}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="claim-seen">{t.claims.form.seenAt}</Label>

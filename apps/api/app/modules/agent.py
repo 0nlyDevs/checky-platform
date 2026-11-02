@@ -18,7 +18,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 
-from app.core import ai, embed, websearch
+from app.core import ai, dates, embed, websearch
 from app.core.access import AnyMember
 from app.core.db import SessionLocal
 from app.core.models import Item
@@ -67,7 +67,7 @@ async def search_sources(ctx: AgentContext, query: str) -> tuple[str, str]:
     lines = []
     for p in passages:
         n = ctx.cite(p.title, p.url, p.text, str(p.source_id))
-        lines.append(f"[{n}] {p.title}\n{p.text[:900]}")
+        lines.append(f"[{n}] {p.title} ({dates.published_line(p.published_at)})\n{p.text[:900]}")
     summary = f"{len(passages)} passages" + (f", dont « {passages[0].title} »" if passages else "")
     return summary, "\n\n".join(lines) or "No passage found."
 
@@ -81,9 +81,10 @@ async def fetch_url(ctx: AgentContext, url: str) -> tuple[str, str]:
     if not page["text"]:
         return "aucun texte principal", "The page has no main text."
     n = ctx.cite(page["title"] or final, final, page["text"])
+    when = dates.published_line(page["published_at"])
     return (
         f"« {page['title'] or final} » lue",
-        f"[{n}] {page['title']}\n{page['text'][:RESULT_CHARS]}",
+        f"[{n}] {page['title']} ({when})\n{page['text'][:RESULT_CHARS]}",
     )
 
 
@@ -355,7 +356,7 @@ class AgentIn(BaseModel):
 @router.post("/workspaces/{ws}/agent", response_class=EventSourceResponse)
 async def run_agent(body: AgentIn, member: AnyMember) -> AsyncIterable[ServerSentEvent]:
     messages: list[dict[str, Any]] = [
-        {"role": "system", "content": SYSTEM},
+        {"role": "system", "content": f"{SYSTEM}\n\n{dates.today_line()}"},
         {"role": "user", "content": body.question},
     ]
     async for event in tool_loop(

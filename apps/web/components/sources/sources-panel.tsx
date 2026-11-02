@@ -6,6 +6,7 @@ import useSWR from "swr";
 import {
   AudioLines,
   BadgeCheck,
+  CalendarClock,
   Check,
   Copy,
   ExternalLink,
@@ -312,6 +313,88 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
   );
 }
 
+/** Today in the browser's own time zone, as YYYY-MM-DD (toISOString would give UTC's day). */
+function localToday() {
+  const now = new Date();
+  return new Date(now.getTime() - now.getTimezoneOffset() * 60_000).toISOString().slice(0, 10);
+}
+
+/** The publication date the AI checks against the rumour; who added the source (or an editor) can set it. */
+function SourceDate({ ws, source, canEdit }: { ws: string; source: Source; canEdit: boolean }) {
+  const d = t.sources.date;
+  const [editing, setEditing] = useState(false);
+  const [pending, setPending] = useState(false);
+  const day = source.published_at?.slice(0, 10) ?? "";
+
+  async function save(value: string | null) {
+    setPending(true);
+    try {
+      await api(`/workspaces/${ws}/sources/${source.id}`, { method: "PATCH", body: JSON.stringify({ published_at: value }) });
+      toast.success(d.saved);
+      setEditing(false);
+    } catch {
+      toast.error(d.failed);
+    } finally {
+      setPending(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <form
+        className="mt-2 flex flex-wrap items-end gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const value = String(new FormData(e.currentTarget).get("published_at") || "");
+          void save(value || null);
+        }}
+      >
+        <div className="space-y-1">
+          <Label htmlFor={`date-${source.id}`} className="text-sm">
+            {d.label}
+          </Label>
+          <Input
+            id={`date-${source.id}`}
+            name="published_at"
+            type="date"
+            defaultValue={day}
+            max={localToday()}
+            className="h-9 w-44 tabular"
+            autoFocus
+          />
+        </div>
+        <Button type="submit" size="sm" className="h-9" disabled={pending}>
+          {pending && <LoaderCircle className="animate-spin" aria-hidden />}
+          {d.save}
+        </Button>
+        {day && (
+          <Button type="button" variant="ghost" size="sm" className="h-9" disabled={pending} onClick={() => void save(null)}>
+            {d.clear}
+          </Button>
+        )}
+        <Button type="button" variant="ghost" size="sm" className="h-9" disabled={pending} onClick={() => setEditing(false)}>
+          {d.cancel}
+        </Button>
+        <p className="basis-full text-sm text-muted-foreground">{d.hint}</p>
+      </form>
+    );
+  }
+  return (
+    <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
+      <CalendarClock className="size-3.5 shrink-0" aria-hidden />
+      {day ? d.known(pubDate(day)) : d.unknown}
+      {canEdit && (
+        <>
+          <span aria-hidden>·</span>
+          <button type="button" className="underline underline-offset-2 hover:text-foreground" onClick={() => setEditing(true)}>
+            {day ? d.edit : d.add}
+          </button>
+        </>
+      )}
+    </p>
+  );
+}
+
 function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRemove?: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const Icon = KIND_ICON[source.kind] ?? FileText;
@@ -323,7 +406,6 @@ function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRem
     source.file && sizeFmt(source.file.size_bytes),
     meta.pages && t.sources.pages(meta.pages),
     source.author,
-    source.published_at && pubDate(source.published_at),
   ].filter(Boolean);
 
   return (
@@ -341,6 +423,8 @@ function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRem
               <p className="line-clamp-2 font-medium text-pretty">{source.title}</p>
             )}
             <p className="truncate text-sm text-muted-foreground">{details.join(" · ")}</p>
+            {/* Same rule as removing: who added it, or an editor. */}
+            {source.status !== "queued" && <SourceDate ws={ws} source={source} canEdit={Boolean(onRemove)} />}
           </div>
           {!onRemove ? null : confirming ? (
             <Button variant="destructive" size="sm" onClick={onRemove} onBlur={() => setConfirming(false)} autoFocus>

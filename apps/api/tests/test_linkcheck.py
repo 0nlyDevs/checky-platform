@@ -190,3 +190,28 @@ def test_outsiders_cannot_analyse(as_user, web):
     ws = _workspace(alice)
     assert bob.post(f"/api/v1/workspaces/{ws}/link-check", json={"text": "x"}).status_code == 404
     assert alice.post(f"/api/v1/workspaces/{ws}/link-check", json={}).status_code == 422
+
+
+def test_an_old_post_is_dated_for_the_model_and_the_journalist(as_user, scripted, web):
+    turns, seen = scripted
+    dated = ARTICLE.replace(
+        "<title>Choc</title>",
+        '<title>Choc</title><meta property="article:published_time" '
+        'content="2019-01-14T08:00:00+03:00">',
+    )
+    web["https://buzz.mg/oms"] = (dated, "text/html; charset=utf-8")
+    turns.extend(
+        [
+            _say({"summary": "s", "claims": ["Madagascar quitte l'OMS"], "search": "OMS"}),
+            _say({"verdict": "unverifiable", "reason": "r", "evidence": []}),
+        ]
+    )
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    r = alice.post(f"/api/v1/workspaces/{ws}/link-check", json={"url": "https://buzz.mg/oms"})
+    out = next(d for e, d in _events(r.text) if e == "result")
+    assert out["published_at"] == "2019-01-14" and out["days_old"] > 2000
+    for call in seen:  # in the instructions, apart from the content
+        assert "Aujourd'hui : " in call["messages"][0]["content"]
+        assert "Contenu publié le 14 janvier 2019, il y a " in call["messages"][0]["content"]
+        assert "Aujourd'hui" not in call["messages"][1]["content"]

@@ -102,3 +102,30 @@ def test_demo_reset_seeds_sources_on_claims(as_user):
     # A second reset replaces them instead of piling up.
     alice.post(f"/api/v1/workspaces/{ws}/demo/reset")
     assert len(alice.get(f"/api/v1/workspaces/{ws}/sources").json()) == 7
+
+
+def test_similar_claims_warn_of_a_duplicate(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    for title in (
+        "Le pont de Mangasoavina serait fermé jusqu'à lundi",
+        "Le prix du riz a doublé à Antananarivo",
+    ):
+        alice.post(f"/api/v1/workspaces/{ws}/items", json={"title": title})
+
+    def similar(q):
+        r = alice.get(f"/api/v1/workspaces/{ws}/items/similar", params={"q": q})
+        assert r.status_code == 200
+        return [s["item"]["title"] for s in r.json()]
+
+    assert similar("Le pont de MANGASOAVINA est coupé depuis ce matin") == [
+        "Le pont de Mangasoavina serait fermé jusqu'à lundi"
+    ]
+    assert similar("Le pont") == []
+    assert similar("Coupure d'électricité à Toamasina") == []
+    assert (
+        as_user("mallory")
+        .get(f"/api/v1/workspaces/{ws}/items/similar", params={"q": "pont Mangasoavina"})
+        .status_code
+        == 404
+    )
