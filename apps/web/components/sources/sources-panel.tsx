@@ -72,7 +72,11 @@ function ImageFacts({ source }: { source: Source }) {
           )}
         </ul>
       )}
-      {!!meta.ai_markers?.length && <ImageTrace state="detected">{t.sources.aiMarkers(meta.ai_markers.join(", "))}</ImageTrace>}
+      {meta.ai_markers?.length ? (
+        <ImageTrace state="detected">{t.sources.aiMarkers(meta.ai_markers.join(", "))}</ImageTrace>
+      ) : (
+        <ImageTrace state="none">{t.linkCheck.imageNoMarkers}</ImageTrace>
+      )}
       {meta.content_credentials && (
         <p className="flex items-start gap-1.5">
           <IconSealCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
