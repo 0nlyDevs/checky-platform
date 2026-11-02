@@ -12,7 +12,8 @@ Never a model verdict, never a percentage, never a dossier: the crew's fact agen
 figures, the tone lexicon and the fact-checkers itself, all without a model.
 
 `POST /public/notify` lets a visitor leave a phone number or an e-mail to hear about the verdict
-(stored as an HMAC and a masked form, see `app/core/contact.py`); `PublicQuestion` has no column for the asker's
+(stored as an HMAC and a masked form, see `app/core/contact.py`); the desk reads what people ask,
+grouped, at `GET /workspaces/{ws}/questions`. `PublicQuestion` has no column for the asker's
 language or the sealed contact: both ride in its `location` JSONB (`lang`, `reach`, `kind`).
 """
 
@@ -20,18 +21,18 @@ import asyncio
 import logging
 import re
 import uuid
-from collections import defaultdict, deque
-from datetime import datetime
+from collections import Counter, defaultdict, deque
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from sqlalchemy import select
+from sqlalchemy import or_, select
 
 from app.core import contact, dates, places, websearch
-from app.core.access import Db
+from app.core.access import AnyMember, Db
 from app.core.activity import broadcast
 from app.core.errors import ApiError
 from app.core.models import Item, PublicQuestion, Workspace
@@ -508,3 +509,86 @@ async def notify(body: NotifyIn, request: Request, db: Db) -> NotifyOut:
         channel="sms" if kind == "phone" else "email",
         followed=item is not None,
     )
+
+
+# --- « Ce que les gens demandent »: the desk's view of the questions, grouped
+class QuestionGroup(BaseModel):
+    text: str
+    count: int
+    regions: dict[str, int]
+    channels: dict[str, int]
+    waiting: int  # people who left a contact and have not been answered yet
+    last_at: datetime
+    item_id: uuid.UUID | None
+    item_ref: str | None
+    item_status: str | None
+
+
+@router.get("/workspaces/{ws}/questions")
+async def questions(
+    member: AnyMember,
+    db: Db,
+    region: str | None = Query(default=None, max_length=120),
+    days: int = Query(default=7, ge=1, le=90),
+) -> list[QuestionGroup]:
+    ws = await db.get(Workspace, member.workspace_id)
+    mine = PublicQuestion.workspace_id == ws.id
+    # Questions sent to no newsroom in particular belong to every newsroom that answers the public.
+    scope = or_(mine, PublicQuestion.workspace_id.is_(None)) if ws.is_public else mine
+    rows = (
+        await db.scalars(
+            select(PublicQuestion)
+            .where(scope, PublicQuestion.created_at >= datetime.now(UTC) - timedelta(days=days))
+            .order_by(PublicQuestion.created_at.desc())
+            .limit(2000)
+        )
+    ).all()
+    if region:
+        wanted = places.fold(region)
+        rows = [q for q in rows if places.fold(places.region_of(q.location) or "") == wanted]
+    groups: list[dict[str, Any]] = []
+    for q in rows:
+        asked = words(q.text)
+        home = next(
+            (
+                g
+                for g in groups
+                if (q.item_id and g["item_id"] == q.item_id)
+                or (not (q.item_id and g["item_id"]) and public.overlap(asked, g["words"]) >= MATCH)
+            ),
+            None,
+        )
+        if home is None:
+            home = {"q": q, "words": asked, "item_id": q.item_id, "rows": []}
+            groups.append(home)
+        home["item_id"] = home["item_id"] or q.item_id
+        home["rows"].append(q)
+    items = {
+        i.id: i
+        for i in await db.scalars(
+            select(Item).where(
+                Item.id.in_([g["item_id"] for g in groups if g["item_id"]]),
+                Item.workspace_id == ws.id,
+            )
+        )
+    }
+    out = []
+    for g in groups:
+        item = items.get(g["item_id"])
+        out.append(
+            QuestionGroup(
+                text=g["q"].text[:300],
+                count=len(g["rows"]),
+                regions=dict(
+                    Counter(places.region_of(q.location) or "—" for q in g["rows"]).most_common()
+                ),
+                channels=dict(Counter(q.channel for q in g["rows"])),
+                waiting=sum(1 for q in g["rows"] if q.contact_hash and not q.notified_at),
+                last_at=max(q.created_at for q in g["rows"]),
+                item_id=item.id if item else None,
+                item_ref=(item.data or {}).get("ref") if item else None,
+                item_status=item.status if item else None,
+            )
+        )
+    out.sort(key=lambda g: (g.count, g.last_at), reverse=True)
+    return out[:50]

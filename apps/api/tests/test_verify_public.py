@@ -215,3 +215,30 @@ def test_notify_needs_the_secret_and_keeps_contacts_masked(as_user, monkeypatch)
     assert anon.post("/api/v1/public/notify", json=email).json()["masked"] == "c•••@example.org"
     bad = {"text": RUMOUR, "contact": "pas un numéro"}
     assert anon.post("/api/v1/public/notify", json=bad).status_code == 422
+    groups = alice.get(f"/api/v1/workspaces/{ws}/questions").json()
+    assert len(groups) == 1
+    g = groups[0]
+    assert g["count"] == 2 and g["waiting"] == 2 and g["item_ref"] == "FAN-0145"
+    assert g["regions"] == {"Analamanga": 2} and g["channels"] == {"web": 2}
+    # nothing in clear for the desk
+    assert "000 12" not in json.dumps(groups) and "Rabe" not in json.dumps(groups)
+
+
+def test_questions_are_grouped_by_what_they_ask(as_user, secret):
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    anon = TestClient(app)
+    for text, phone in [
+        ("Est-ce vrai, 72 heures de délestage à Antananarivo ?", "0340000001"),
+        ("délestage de 72 heures à Antananarivo selon la JIRAMA ??", "0340000002"),
+        ("Le bac est reporté à Toliara ?", "0340000003"),
+    ]:
+        r = anon.post("/api/v1/public/notify", json={"text": text, "contact": phone})
+        assert r.status_code == 201
+    groups = alice.get(f"/api/v1/workspaces/{ws}/questions").json()
+    assert sorted(g["count"] for g in groups) == [1, 2]
+    toliara = alice.get(f"/api/v1/workspaces/{ws}/questions?region=atsimo-andrefana").json()
+    assert [g["count"] for g in toliara] == [1]
+    # a private newsroom only sees the questions sent to it
+    private = _newsroom(alice, public=False)
+    assert alice.get(f"/api/v1/workspaces/{private}/questions").json() == []
