@@ -1,11 +1,17 @@
 """Ma rubrique: preferences, the morning page and its brief, Angles and Documents."""
 
 import asyncio
+import json
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import httpx
+import pytest
+
+from app.core import ai
+from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import Contact, Figure
+from app.core.models import Contact, Figure, PublicQuestion
 from app.modules import rubrique
 from tests.test_workspaces import _join, _workspace
 
@@ -22,6 +28,25 @@ def _db(fn):
 
 def _ago(**kw) -> str:
     return (datetime.now(UTC) - timedelta(**kw)).isoformat()
+
+
+@pytest.fixture
+def model(monkeypatch):
+    """The AI answers with whatever JSON the test puts in `answer`; `seen` keeps the requests."""
+    s = get_settings()
+    monkeypatch.setattr(s, "llm_providers", "groq")
+    monkeypatch.setattr(s, "groq_api_key", "k")
+    monkeypatch.setattr(s, "ai_cache", False)
+    answer: dict = {}
+    seen: list[dict] = []
+
+    def handler(request):
+        seen.append(json.loads(request.content))
+        msg = {"role": "assistant", "content": json.dumps(answer["json"])}
+        return httpx.Response(200, json={"model": "m", "choices": [{"message": msg}]})
+
+    monkeypatch.setattr(ai, "_transport", httpx.MockTransport(handler))
+    return answer, seen
 
 
 def test_beats_are_found_by_their_usual_words():
@@ -154,3 +179,71 @@ def test_the_morning_page_gathers_my_beats_and_places(as_user):
     assert brief.startswith("Checky · Ma rubrique · ")
     assert "énergie · Analamanga" in brief and f"- {energy['title']} (Antananarivo)" in brief
     assert "À signer : 1 dossier." in brief
+
+
+def test_angles_rest_on_numbered_facts_and_invent_nothing(as_user, model):
+    answer, seen = model
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    claim = alice.post(
+        base + "/items",
+        json={"title": "72 heures de délestage à Antananarivo", "tags": ["énergie"]},
+    ).json()
+    _db(
+        lambda db: _add(
+            db,
+            PublicQuestion(
+                workspace_id=uuid.UUID(ws),
+                text="Le délestage va durer combien de temps ?",
+                channel="sms",
+            ),
+        )
+    )
+
+    # nothing on the topic: no model call, no angle
+    empty = alice.post(base + "/angles", json={"topic": "pêche au thon"}).json()
+    assert empty["angles"] == [] and empty["facts"] == [] and seen == []
+
+    answer["json"] = {
+        "angles": [
+            {
+                "title": "Qui décide des délestages ?",
+                "why": "Le public demande la durée.",
+                "rests_on": [1, "2"],
+                "missing_figure": "La durée officielle",
+            },
+            {"title": "Un angle sans appui", "why": "…", "rests_on": [99]},
+            {
+                "title": "500 quartiers privés de courant",
+                "why": "Chiffre inventé.",
+                "rests_on": [1],
+            },
+        ]
+    }
+    out = alice.post(base + "/angles", json={"topic": "énergie"})
+    assert out.status_code == 200, out.text
+    out = out.json()
+    assert [a["title"] for a in out["angles"]] == ["Qui décide des délestages ?"]
+    angle = out["angles"][0]
+    assert [f["kind"] for f in angle["rests_on"]] == ["claim", "question"]
+    assert angle["rests_on"][0]["item_id"] == claim["id"] and out["dropped"] == 2
+    prompt = seen[-1]["messages"]
+    assert "Aujourd'hui" in prompt[0]["content"] and "[1] Dossier" in prompt[1]["content"]
+    assert alice.post(base + "/angles", json={}).status_code == 422
+
+    kept = alice.post(f"{base}/items/{claim['id']}/angles/keep", json={"angle": angle})
+    assert kept.status_code == 200
+    alice.post(f"{base}/items/{claim['id']}/angles/keep", json={"angle": angle})
+    item = alice.get(f"{base}/items/{claim['id']}").json()
+    assert len(item["data"]["angles"]) == 1 and item["data"]["angles"][0]["kept_by"] == "alice"
+    alice.put(base + "/me/prefs", json={"beats": ["énergie"]})
+    page = alice.get(base + "/rubrique").json()
+    assert page["angles"][0]["kind"] == "kept" and page["angles"][0]["item_id"] == claim["id"]
+
+    alice.patch(base, json={"settings": {"ai_enabled": False}})
+    assert alice.post(base + "/angles", json={"topic": "énergie"}).status_code == 409
+
+
+async def _add(db, row):
+    db.add(row)

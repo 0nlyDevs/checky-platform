@@ -10,6 +10,7 @@ Angles (« Explorer un angle ») are the one model call here: grounded in the ne
 each angle must rest on numbered facts and is shown dashed: the AI suggests, a journalist keeps.
 """
 
+import json
 import logging
 import re
 import uuid
@@ -17,23 +18,27 @@ from datetime import UTC, date, datetime, timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import dates, seasons
+from app.core import ai, dates, seasons
 from app.core.access import AnyMember, Anyone, Db, Member
+from app.core.activity import broadcast, record
+from app.core.errors import ApiError
 from app.core.models import (
     DEFAULT_BEATS,
     Contact,
     Figure,
     Item,
     MemberPref,
+    PublicQuestion,
     Workspace,
 )
 from app.core.places import MG_REGIONS, fold
-from app.modules.items import ItemOut
+from app.core.words import words
+from app.modules.items import ItemOut, _get_item, _out
 
 log = logging.getLogger("checky.rubrique")
 router = APIRouter(tags=["rubrique"])
@@ -617,6 +622,248 @@ async def brief(
 
 
 # ----------------------------------------------------------------------------------- angles
+ANGLES_SYSTEM = (
+    "Tu aides une rédaction de vérification à Madagascar à trouver des angles de reportage. "
+    "Tu ne t'appuies QUE sur les faits numérotés fournis : ce sont les dossiers, les questions du "
+    "public, les saisons et les chiffres de la rédaction. Propose 3 à 5 angles. Chaque angle cite "
+    "au moins un fait par son numéro dans `rests_on`. N'invente aucun fait, aucun chiffre, aucun "
+    "nom, aucune date. Si un chiffre officiel manque pour traiter l'angle, dis lequel dans "
+    "`missing_figure` (sinon null). Réponds en français, uniquement en JSON : "
+    '{"angles": [{"title": "…", "why": "…", "rests_on": [1, 3], "missing_figure": null}]}'
+)
+MAX_FACTS = 16
+
+
+class AnglesIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    topic: str | None = Field(default=None, max_length=200)
+    item_id: uuid.UUID | None = None
+    region: str | None = Field(default=None, max_length=120)
+
+    @model_validator(mode="after")
+    def _something(self) -> "AnglesIn":
+        if not (self.topic or "").strip() and not self.item_id:
+            raise ValueError("Give a topic or a dossier")
+        return self
+
+
+class Fact(BaseModel):
+    n: int
+    kind: Literal["claim", "verdict", "season", "question", "figure", "missing"]
+    label: str
+    item_id: uuid.UUID | None = None
+
+
+class Angle(BaseModel):
+    title: str
+    why: str
+    rests_on: list[Fact]
+    missing_figure: str | None = None
+
+
+class AnglesOut(BaseModel):
+    topic: str
+    angles: list[Angle]
+    facts: list[Fact]
+    dropped: int
+    model: str | None
+
+
+def _relevant(text: str, topic_words: set[str], topic_beats: list[str], offered: list[str]) -> bool:
+    if topic_words and words(text) & topic_words:
+        return True
+    return bool(topic_beats) and bool(set(beats_for(text, offered)) & set(topic_beats))
+
+
+async def ground(
+    db: AsyncSession, workspace: Workspace, topic: str, item: Item | None, region: str | None
+) -> list[Fact]:
+    """The newsroom's own facts on a topic, numbered: the dossier, recent claims, verdicts that
+    come back, the season, what the public asks, and the figures available or missing."""
+    offered = offered_beats(workspace)
+    topic_beats = [b for b in offered if _same(b, topic)] or beats_for(topic, offered)
+    topic_words = words(topic)
+    facts: list[Fact] = []
+
+    def add(kind: str, label: str, item_id: uuid.UUID | None = None) -> None:
+        if len(facts) < MAX_FACTS and label.strip():
+            facts.append(Fact(n=len(facts) + 1, kind=kind, label=label[:400], item_id=item_id))
+
+    def claim_line(i: Item) -> str:
+        d = i.data or {}
+        seen = dates.parse(d.get("first_seen_at"))
+        state = VERDICT_WORDS.get(d.get("verdict")) or {
+            "to_check": "à vérifier",
+            "in_progress": "en cours",
+            "verified": "vérifié",
+            "published": "publié",
+        }.get(i.status, i.status)
+        when = f", vu le {dates.fr(seen)}" if seen else ""
+        return f"Dossier {d.get('ref') or ''} « {i.title} » ({state}{when})".replace("  ", " ")
+
+    if item is not None:
+        add("claim", claim_line(item), item.id)
+        analysis = (item.data or {}).get("analysis") or {}
+        if isinstance(analysis, dict):
+            if analysis.get("reason"):
+                add("claim", f"Lecture des sources : {analysis['reason']}", item.id)
+            if analysis.get("missing"):
+                add("missing", f"Il manque : {analysis['missing']}", item.id)
+    since = datetime.now(UTC) - timedelta(days=30)
+    for i in await db.scalars(
+        select(Item)
+        .where(
+            Item.workspace_id == workspace.id,
+            Item.type == "claim",
+            Item.created_at >= since,
+        )
+        .order_by(Item.created_at.desc())
+        .limit(200)
+    ):
+        if item is not None and i.id == item.id:
+            continue
+        hay = f"{i.title} {' '.join(i.tags or [])}"
+        if _relevant(hay, topic_words, topic_beats, offered):
+            add("claim", claim_line(i), i.id)
+            missing = ((i.data or {}).get("analysis") or {}).get("missing")
+            if isinstance(missing, str) and missing.strip():
+                add("missing", f"Il manque ({(i.data or {}).get('ref') or ''}) : {missing}", i.id)
+        if sum(f.kind == "claim" for f in facts) >= 7:
+            break
+    weather = await seasons.meteo(db, workspace, region, topic_beats)
+    for back in weather["returning"]:
+        if _relevant(back["title"], topic_words, topic_beats, offered):
+            add(
+                "verdict",
+                f"En {back['year']}, à la même période : « {back['title']} » "
+                f"({VERDICT_WORDS.get(back['verdict'], back['verdict'])})",
+                uuid.UUID(back["id"]),
+            )
+    for s in weather["seasons"]:
+        if any(_same(s["topic"], b) for b in topic_beats) or _relevant(
+            f"{s['name']} {' '.join(s['keywords'])}", topic_words, [], offered
+        ):
+            add("season", f"Saison en cours : {s['name']} ({s['note']})")
+    asked = 0
+    for q in await db.scalars(
+        select(PublicQuestion)
+        .where(PublicQuestion.workspace_id == workspace.id, PublicQuestion.created_at >= since)
+        .order_by(PublicQuestion.created_at.desc())
+        .limit(100)
+    ):
+        if asked < 4 and _relevant(q.text, topic_words, topic_beats, offered):
+            add("question", f"Question du public ({q.channel}) : « {q.text[:200]} »")
+            asked += 1
+    for f in await db.scalars(
+        select(Figure).where(
+            or_(Figure.workspace_id == workspace.id, Figure.workspace_id.is_(None))
+        )
+    ):
+        hay = f"{f.topic} {f.label} {' '.join(f.keywords or [])}"
+        if _relevant(hay, topic_words, topic_beats, offered):
+            unit = f" {f.unit}" if f.unit else ""
+            add(
+                "figure",
+                f"Chiffre disponible : {f.label} = {f.value}{unit} ({f.source_name}, {f.as_of})",
+            )
+    return facts
+
+
+def _numbers(text: str) -> set[str]:
+    return {n.replace(" ", "").replace(",", ".") for n in re.findall(r"\d[\d  ,.]*\d|\d", text)}
+
+
+def clean_angles(raw: Any, facts: list[Fact], allowed_text: str) -> tuple[list[Angle], int]:
+    """Keep the angles that rest on known facts and invent no number; at most five."""
+    by_n = {f.n: f for f in facts}
+    known_numbers = _numbers(allowed_text)
+    kept, dropped = [], 0
+    proposed = raw.get("angles") if isinstance(raw, dict) else None
+    for a in proposed if isinstance(proposed, list) else []:
+        if not isinstance(a, dict):
+            dropped += 1
+            continue
+        title = re.sub(r"\s+", " ", str(a.get("title") or "")).strip()[:200]
+        why = re.sub(r"\s+", " ", str(a.get("why") or "")).strip()[:600]
+        refs = []
+        for r in a.get("rests_on") or []:
+            try:
+                n = int(str(r).strip("[] "))
+            except ValueError:
+                continue
+            if n in by_n and by_n[n] not in refs:
+                refs.append(by_n[n])
+        missing = a.get("missing_figure")
+        missing = re.sub(r"\s+", " ", str(missing)).strip()[:200] if missing else None
+        if not title or not refs or not _numbers(f"{title} {why}") <= known_numbers:
+            dropped += 1
+            continue
+        kept.append(Angle(title=title, why=why, rests_on=refs, missing_figure=missing or None))
+    return kept[:5], dropped + max(0, len(kept) - 5)
+
+
+def _parse(content: str) -> dict[str, Any]:
+    m = re.search(r"\{.*\}", content or "", re.DOTALL)
+    if not m:
+        raise ValueError("The model did not return JSON")
+    return json.loads(m.group(0))
+
+
+@router.post("/workspaces/{ws}/angles")
+async def angles(body: AnglesIn, member: AnyMember, db: Db) -> AnglesOut:
+    """3 to 5 story angles grounded in the newsroom's own facts. One model call; an angle that
+    cites no fact or brings a number of its own is dropped. Drawn dashed: a suggestion."""
+    workspace = await db.get(Workspace, member.workspace_id)
+    if (workspace.settings or {}).get("ai_enabled") is False:
+        raise ApiError(409, "ai_disabled", "Angles need the AI; this newsroom runs without it")
+    item = await _get_item(db, member, body.item_id) if body.item_id else None
+    topic = (body.topic or "").strip() or (item.title if item else "")
+    facts = await ground(db, workspace, topic, item, body.region)
+    if not facts:
+        return AnglesOut(topic=topic, angles=[], facts=[], dropped=0, model=None)
+    numbered = "\n".join(f"[{f.n}] {f.label}" for f in facts)
+    try:
+        reply = await ai.complete(
+            [
+                {"role": "system", "content": f"{ANGLES_SYSTEM}\n{dates.today_line()}"},
+                {"role": "user", "content": f"Sujet : {topic}\n\nFaits :\n{numbered}"},
+            ],
+            workspace_id=member.workspace_id,
+            temperature=0.4,
+            max_tokens=1500,
+            response_format={"type": "json_object"},
+        )
+    except ai.AiUnavailable as e:
+        raise ApiError(503, "ai_unavailable", "The AI is unavailable right now") from e
+    try:
+        raw = _parse(reply.content)
+    except (ValueError, json.JSONDecodeError):
+        raw = {}
+    kept, dropped = clean_angles(raw, facts, f"{topic}\n{numbered}")
+    return AnglesOut(topic=topic, angles=kept, facts=facts, dropped=dropped, model=reply.model)
+
+
+class KeepIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    angle: Angle
+
+
+@router.post("/workspaces/{ws}/items/{item_id}/angles/keep")
+async def keep_angle(item_id: uuid.UUID, body: KeepIn, member: AnyMember, db: Db) -> ItemOut:
+    """A journalist keeps a suggested angle on a dossier (`item.data.angles`)."""
+    item = await _get_item(db, member, item_id)
+    angle = body.angle.model_dump(mode="json")
+    angle.update(kept_by=member.user.id, kept_at=datetime.now(UTC).isoformat())
+    previous = [a for a in (item.data or {}).get("angles") or [] if isinstance(a, dict)]
+    previous = [a for a in previous if fold(a.get("title", "")) != fold(angle["title"])]
+    item.data = {**(item.data or {}), "angles": [*previous, angle][-10:]}
+    await record(
+        db, member.workspace_id, member.user.id, "item", item.id, "angle", {"title": angle["title"]}
+    )
+    await db.commit()
+    await db.refresh(item)
+    await broadcast(member.workspace_id, "item.updated", _out(item))
+    return ItemOut.model_validate(item)
 
 
 # -------------------------------------------------------------------------------- documents
