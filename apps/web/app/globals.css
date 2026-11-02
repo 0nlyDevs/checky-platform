@@ -377,6 +377,21 @@
   }
 }
 
+/* What the page scrolls to (« Diffuser », a cited passage) lands below the sticky bar, not under it. */
+html:has([data-desk-bar]) {
+  scroll-padding-top: 84px;
+}
+@media (max-width: 900px) {
+  html:has([data-desk-bar]) {
+    scroll-padding-top: 140px;
+  }
+}
+@media (max-width: 640px) {
+  html:has([data-desk-bar]) {
+    scroll-padding-top: 80px;
+  }
+}
+
 /* The desk's top bar: wordmark and workspace left, the ink tab island centred, the avatar right. */
 .desk-bar {
   position: sticky;
