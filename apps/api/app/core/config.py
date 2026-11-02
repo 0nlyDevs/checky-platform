@@ -98,6 +98,9 @@ class Settings(BaseSettings):
     public_preparation_providers: str = "groq,gemini,nvidia"
     # Separate opt-in: a validated private detector is not automatically offered anonymously.
     public_image_detector_enabled: bool = False
+    # Header holding the visitor's address, set by the edge proxy itself (rate limits key on it).
+    # Empty = the socket peer; on Render (RENDER set) it defaults to Cloudflare's CF-Connecting-IP.
+    client_ip_header: str = ""
 
     # Where the public site lives (links in SMS, cards, posters, attestations: /verifies/{id}).
     public_web_url: str = "http://localhost:3000"

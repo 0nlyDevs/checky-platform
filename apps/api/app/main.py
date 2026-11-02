@@ -5,6 +5,7 @@ import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.client_ip import ClientAddress
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
 from app.modules import (
@@ -64,6 +65,8 @@ api.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Added last so it runs first: every limiter reads the address it sets.
+api.add_middleware(ClientAddress)
 install_error_handlers(api)
 api.include_router(health.router, prefix="/api/v1", tags=["health"])
 api.include_router(me.router, prefix="/api/v1")

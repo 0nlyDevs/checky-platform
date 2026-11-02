@@ -24,8 +24,9 @@ services:
         value: never
       - key: UV_LINK_MODE
         value: copy
-      # Render's proxy sits in front: take the visitor's address from X-Forwarded-For, otherwise
-      # every visitor shares one rate limit on the public routes.
+      # Render's proxy sits in front: trust its X-Forwarded-Proto (https URLs). The visitor's address
+      # for rate limits does NOT come from here (the first X-Forwarded-For entry is caller-chosen):
+      # app/core/client_ip.py reads Cloudflare's CF-Connecting-IP whenever RENDER is set.
       - key: FORWARDED_ALLOW_IPS
         value: "*"
       # Neon project fanilo, direct (non-pooled) connection string, as PROD_DATABASE_URL in .env.
