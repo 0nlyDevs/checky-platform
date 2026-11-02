@@ -57,7 +57,8 @@ function Empty({ title, lead, action }: { title: string; lead: string; action?: 
 
 export function ClaimsView() {
   const { ws } = useParams<{ ws: string }>();
-  const key = `/workspaces/${ws}/items?limit=200`;
+  // Press articles read by the Veille job are items too (type "press"); the dossiers list shows claims.
+  const key = `/workspaces/${ws}/items?limit=200&type=claim`;
   const { data, error, isLoading, mutate } = useSWR<ItemPage>(key, fetcher);
   const now = useNow();
   const [q, setQ] = useState("");
