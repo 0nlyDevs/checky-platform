@@ -150,10 +150,10 @@ One world for the desk and the public site, **« Le signal clair »** (civic sig
 Rules that must not break:
 - Chalk ground `#f1f2ec`, white cards, ink `#171a18`, square-ish corners, 1 px rules. **Citron `#d7f45b` (`--action`) only for the one action of a screen (`Button variant="action"`), the active step and highlights** (`.signal-mark`, the rail's current page): never a verdict, a status or decoration. On the public header the current page is an ink underline.
 - **Verdicts are never colour alone:** always icon + word (`VerdictChip`, `VerdictBadge`, the verdict block in Archivo). Each verdict has fill / on / soft / ink tokens. **AI suggestion = dashed outline**, confirmed = solid (the block has a 2 px border). The AI only suggests; a journalist confirms.
-- **Status is not truth:** status uses ink lucide icons (CircleDashed, Timer, ShieldCheck, Radio), never verdict colours.
+- **Status is not truth:** status uses ink icons from `apps/web/lib/icons.ts` (Phosphor duotone wrapped as `Icon*`: IconCircleDashed, IconTimer, IconShieldCheck, IconBroadcast), never verdict colours. `lucide-react` was removed on 2 Nov; add a missing icon as one export in `lib/icons.ts`.
 - **Contrast:** all text ≥ 4.5:1 in light and dark, measured against its real background; no opacity on text; placeholders use `--muted-foreground`.
 - Archivo (`--font-archivo`, `font-display`, `.page-title`) for titles, numbers, refs and verdict words; Atkinson Hyperlegible Next (`--font-atkinson`) for everything read.
-- No eyebrow or kicker above a heading (meta goes under the title); no coloured border-left accents; real lucide icons, not Unicode arrows.
+- No eyebrow or kicker above a heading (meta goes under the title); no coloured border-left accents; real icons from `lib/icons.ts`, not Unicode arrows.
 - Signature: **the numbered line** (`components/flow/step-line.tsx`): 01 L'affirmation, 02 Les éléments, 03 La conclusion, each disc waiting / active (citron, breathing) / done / suggested (dashed) / failed, `full` or `mini`, `claimSteps()` for a dossier. It runs live on Vérifier, on every dossier row, down a dossier's page, on a public verdict and on a tip's follow-up. With it: the citron highlighter on flagged phrases, the ink live log, sources arriving (`.arrive`), the verdict landing once (`.verdict-land`).
 - The pitch kit (`docs/pitch/`, `scripts/pitch_video.py`) still draws the old « dossier » world (Anton, Special Elite, the halftoned photographs in `public/site/`, credits in `public/site/credits.json`); the app no longer uses them.
 

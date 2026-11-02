@@ -252,7 +252,7 @@ Dark: foreground/background 15.81, foreground/card 14.53, muted-foreground on ba
 ### Named Rules
 **The One Citron Rule.** Citron marks the one action of a screen, the active step, the active nav item and highlighted phrases. Never a verdict, a status, a decoration or a second competing button.
 
-**The Word-and-Icon Rule.** A verdict is always its lucide icon plus its word in the verdict's ink. Colour alone never carries a verdict.
+**The Word-and-Icon Rule.** A verdict is always its icon (from `lib/icons.ts`, Phosphor duotone wrapped as `Icon*`) plus its word in the verdict's ink. Colour alone never carries a verdict.
 
 **The Status-Is-Not-Truth Rule.** Workflow status (À vérifier CircleDashed, En cours Timer, Vérifié ShieldCheck, Publié Radio) uses ink icons, muted only for « À vérifier »; never a verdict colour.
 
@@ -359,7 +359,7 @@ Sources arrive as hairline cards (`.arrive`, 0.45s rise, 90ms stagger). The publ
 - **Do** build every new screen from these tokens and components: `.page-title` H1 with meta under it, the check field, `StepLine`/`StepDisc` for progress, `VerdictChip`/`VerdictBadge`/the verdict block for verdicts, the live panel for anything FANILO is doing.
 - **Do** give each screen exactly one `variant="action"` button; everything else is primary, outline or ghost.
 - **Do** draw an AI suggestion dashed and a journalist's confirmation solid, and leave the final verdict to a journalist's explicit click.
-- **Do** pair every verdict with its icon and word, and every status with its ink lucide icon.
+- **Do** pair every verdict with its icon and word, and every status with its ink icon from `lib/icons.ts`.
 - **Do** measure every new text pair in light and dark against its real ground (≥ 4.5:1); use `*-ink` tokens for coloured text on light grounds.
 - **Do** keep corners at 2–4px and edges as 1px hairlines; reserve full rounds for discs, avatars and pills.
 - **Do** pad the page when the assistant opens on desktop (`lg:pr-[25rem]`) and use the bottom sheet on phone.
