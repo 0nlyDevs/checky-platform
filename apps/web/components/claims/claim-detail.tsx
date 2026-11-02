@@ -30,6 +30,7 @@ import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { SourcesPanel } from "@/components/sources/sources-panel";
 import { AnglesPanel } from "@/components/rubrique/angles-view";
+import type { Alert } from "@/components/rubrique/types";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
@@ -59,6 +60,10 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
   if (a.action === "route") return ev.route;
   if (a.action === "diffuse") return ev.diffuse;
   if (a.action === "broadcast") return ev.broadcast;
+  if (a.action === "risk") {
+    const diff = a.diff as { to?: string; reset?: boolean };
+    return diff.reset ? ev.riskReset : ev.risk(t.dossier.risk.level[diff.to ?? ""] ?? "—");
+  }
   if (a.action === "analysis") {
     const v = (a.diff as { verdict_suggested?: string }).verdict_suggested;
     return t.detail.events.analysed(v && v in VERDICT_META ? VERDICT_META[v as Verdict].label : "—");
@@ -133,23 +138,128 @@ function StepTitle({ id, title, state }: { id: string; title: string; state: Ste
   );
 }
 
-/** « Risque élevé »: the danger the reading spotted in the wording, in ink (it is not a verdict). */
-function RiskBadge({ item }: { item: Item }) {
+/**
+ * « Risque élevé »: the danger the reading spotted in the wording, in ink (it is not a verdict).
+ * A journalist adjusts it with a reason (logged in the carnet), and the alert the dossier belongs
+ * to, if any, is named beside it.
+ */
+function RiskLine({ ws, item, nameOf, onSaved }: { ws: string; item: Item; nameOf: (id: string) => string; onSaved: (item: Item) => void }) {
+  const tr = t.dossier.risk;
   const risk = readRisk(item);
-  if (!risk || risk.level === "low") return null;
-  const kinds = [...new Set(risk.reasons.map((r) => t.dossier.risk.kinds[r.kind]).filter(Boolean))];
+  const { data: alerts } = useSWR<Alert[]>(`/workspaces/${ws}/alerts?item_id=${item.id}`, fetcher);
+  const alert = alerts?.find((a) => a.state === "open");
+  const [editing, setEditing] = useState(false);
+  const [level, setLevel] = useState<string>(risk?.level ?? "medium");
+  const [reason, setReason] = useState("");
+  const [saving, setSaving] = useState(false);
+  const url = `/workspaces/${ws}/items/${item.id}/risk`;
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (reason.trim().length < 3) return;
+    setSaving(true);
+    try {
+      onSaved(await api<Item>(url, { method: "PUT", body: JSON.stringify({ level, reason: reason.trim() }) }));
+      toast(tr.saved);
+      setEditing(false);
+      setReason("");
+    } catch {
+      toast.error(tr.failed);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function reset() {
+    setSaving(true);
+    try {
+      onSaved(await api<Item>(url, { method: "DELETE" }));
+      toast(tr.saved);
+      setEditing(false);
+    } catch {
+      toast.error(tr.failed);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const shown = risk && risk.level !== "low" ? risk : null;
+  const kinds = shown && !shown.override ? [...new Set(shown.reasons.map((r) => tr.kinds[r.kind]).filter(Boolean))] : [];
   return (
-    <p className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-      <span className={cn("inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 font-bold", risk.level === "high" ? "border-2 border-foreground" : "border-border")}>
-        <IconWarning className="size-4" aria-hidden />
-        {t.dossier.risk.level[risk.level]}
-      </span>
-      {kinds.length > 0 && <span>{kinds.join(" · ")}</span>}
-      <span className="w-full text-muted-foreground sm:w-auto">
-        <span className="hidden sm:inline">· </span>
-        {t.dossier.risk.lead}
-      </span>
-    </p>
+    <div className="mt-3 text-sm">
+      <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {shown && (
+          <span className={cn("inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 font-bold", shown.level === "high" ? "border-2 border-foreground" : "border-border")}>
+            <IconWarning className="size-4" aria-hidden />
+            {tr.level[shown.level]}
+          </span>
+        )}
+        {kinds.length > 0 && <span>{kinds.join(" · ")}</span>}
+        {!editing && (
+          <button type="button" onClick={() => setEditing(true)} className="inline-flex min-h-9 items-center font-bold underline underline-offset-4 outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {shown ? tr.adjust : tr.adjustTitle}
+          </button>
+        )}
+        {shown && !shown.override && (
+          <span className="w-full text-muted-foreground sm:w-auto">
+            <span className="hidden sm:inline">· </span>
+            {tr.lead}
+          </span>
+        )}
+      </p>
+      {risk?.override && (
+        <p className="mt-1 text-muted-foreground">
+          {tr.adjusted(risk.override.by ? nameOf(risk.override.by) : t.detail.someone, risk.override.reason)}
+          {risk.code && <> · {tr.checky(tr.level[risk.code])}</>}
+        </p>
+      )}
+      {alert && (
+        <p className="mt-1">
+          <Link href={`/w/${ws}/veille#alerte-${alert.id}` as never} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
+            <IconWarning className="size-4" aria-hidden />
+            {tr.inAlert(alert.ref ?? "", alert.facts.reports)}
+          </Link>
+        </p>
+      )}
+      {editing && (
+        <form onSubmit={save} aria-label={tr.adjustTitle} className="mt-3 grid max-w-xl gap-3 rounded-md border border-border bg-card p-3">
+          <div className="grid gap-1.5">
+            <Label htmlFor="risk-level">{tr.levelLabel}</Label>
+            <Select value={level} onValueChange={setLevel}>
+              <SelectTrigger id="risk-level" className="h-10 w-full bg-background sm:w-60">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(["high", "medium", "low"] as const).map((l) => (
+                  <SelectItem key={l} value={l}>
+                    {tr.level[l]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="risk-reason">{tr.reason}</Label>
+            <textarea id="risk-reason" rows={2} required minLength={3} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} placeholder={tr.reasonPlaceholder} className={textareaClass} />
+            <p className="text-xs text-muted-foreground">{tr.reasonHint}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button type="submit" size="lg" disabled={saving || reason.trim().length < 3}>
+              {saving && <IconCircleNotch className="animate-spin" aria-hidden />}
+              {saving ? tr.saving : tr.save}
+            </Button>
+            <Button type="button" variant="ghost" size="lg" onClick={() => setEditing(false)} disabled={saving}>
+              {tr.cancel}
+            </Button>
+            {risk?.override && (
+              <Button type="button" variant="outline" size="lg" onClick={reset} disabled={saving} className="sm:ml-auto">
+                {tr.reset}
+              </Button>
+            )}
+          </div>
+        </form>
+      )}
+    </div>
   );
 }
 
@@ -391,7 +501,7 @@ export function ClaimDetail() {
                     {originLabel && <span>· {originLabel}</span>}
                     {seen && <span className="tabular">· {t.claims.board.circulating(formatDuration(now.getTime() - seen.getTime()))}</span>}
                   </p>
-                  <RiskBadge item={item} />
+                  <RiskLine ws={ws} item={item} nameOf={(uid) => names.get(uid) ?? t.detail.someone} onSaved={(next) => mutate(next, { revalidate: false })} />
                   {/* Context belongs with the claim it explains; when there is none, nothing takes its place. */}
                   {item.body && <p className="mt-3 max-w-[70ch] whitespace-pre-line text-pretty">{item.body}</p>}
                   <div className="mt-4 flex flex-wrap items-center gap-2">

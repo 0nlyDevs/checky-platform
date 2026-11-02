@@ -185,14 +185,29 @@ export function readResearch(item: Item): Research {
 export const hasResearch = (r: Research) =>
   Boolean(r.provenance || r.registry || r.figures.length || r.reviews.length || r.published.length || r.tone || r.credibility);
 
-export type Risk = { level: "high" | "medium" | "low"; reasons: { kind: string; quote: string | null }[] };
+type Level = "high" | "medium" | "low";
+const isLevel = (v: unknown): v is Level => v === "high" || v === "medium" || v === "low";
 
+export type Risk = {
+  level: Level;
+  reasons: { kind: string; quote: string | null }[];
+  /** Checky's own level when a journalist adjusted it (`data.risk_override`). */
+  code: Level | null;
+  override: { level: Level; reason: string; by: string | null } | null;
+};
+
+/** The danger level: a journalist's adjustment wins over Checky's (app/modules/alerts.py). */
 export function readRisk(item: Item): Risk | null {
   const r = obj(item.data.risk);
-  const level = r?.level;
-  if (level !== "high" && level !== "medium" && level !== "low") return null;
+  const o = obj(item.data.risk_override);
+  const code = isLevel(r?.level) ? r.level : null;
+  const override = o && isLevel(o.level) ? { level: o.level, reason: str(o.reason) ?? "", by: str(o.by) } : null;
+  const level = override?.level ?? code;
+  if (!level) return null;
   return {
     level,
+    code,
+    override,
     reasons: list(r?.reasons)
       .map((x) => (typeof x === "string" ? { kind: "", quote: x } : { kind: str(obj(x)?.kind) ?? "", quote: str(obj(x)?.quote) }))
       .filter((x) => x.kind || x.quote),
