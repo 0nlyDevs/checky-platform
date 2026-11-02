@@ -2,6 +2,7 @@
 
 import type { Item, Verdict } from "@fanilo/shared";
 import { VERDICTS } from "@fanilo/shared";
+import { AlertDialog } from "radix-ui";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { PublicStrip } from "@/components/claims/publication-panel";
@@ -89,6 +90,8 @@ export function VerdictDecision({
   const [picking, setPicking] = useState(!suggested && !signedVerdict);
   const [reason, setReason] = useState(typeof item.data.reason === "string" && item.data.reason ? item.data.reason : reasonDraft);
   const [busy, setBusy] = useState(false);
+  // A journalist always confirms: signing opens a dialog that says what will be signed and published.
+  const [asking, setAsking] = useState<{ publish: boolean; verdict: Verdict; text: string } | null>(null);
   const [focusIndex, setFocusIndex] = useState(() => Math.max(0, VERDICTS.indexOf(choice ?? "true")));
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const base = `/workspaces/${ws}/items/${item.id}`;
@@ -130,6 +133,50 @@ export function VerdictDecision({
     }
   }
 
+  const confirmDialog = (
+    <AlertDialog.Root open={!!asking} onOpenChange={(open) => !open && setAsking(null)}>
+      <AlertDialog.Portal>
+        <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/40 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0" />
+        <AlertDialog.Content className="fixed top-[18vh] left-1/2 z-50 w-[min(480px,calc(100vw-2rem))] -translate-x-1/2 rounded-[22px] border border-border bg-popover p-5 text-popover-foreground shadow-2xl outline-none max-sm:top-4 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0">
+          {asking && (
+            <>
+              <AlertDialog.Title className="font-display text-lg font-bold text-balance">{t.detail.decision.title(VERDICT_META[asking.verdict].label)}</AlertDialog.Title>
+              <AlertDialog.Description asChild>
+                <ul className="mt-2 space-y-1.5 text-sm text-muted-foreground">
+                  <li>{t.detail.decision.visible}</li>
+                  {asking.publish && (
+                    <li>
+                      <span className="font-bold text-foreground">{s.strip.after} :</span> {s.strip.afterText}
+                    </li>
+                  )}
+                </ul>
+              </AlertDialog.Description>
+              {suggested && suggested !== asking.verdict && (
+                <p className="mt-3 flex items-start gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm">
+                  <IconWarning className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  {s.againstAi(VERDICT_META[suggested].label)}
+                </p>
+              )}
+              <div className="mt-5 flex flex-wrap justify-end gap-2">
+                <AlertDialog.Cancel asChild>
+                  <Button variant="ghost" size="xl">
+                    {s.cancel}
+                  </Button>
+                </AlertDialog.Cancel>
+                <AlertDialog.Action asChild>
+                  <Button variant="action" size="xl" onClick={() => void sign(asking.publish, asking.verdict, asking.text)}>
+                    <IconStamp aria-hidden />
+                    {asking.publish ? s.signPublish : s.signOnly}
+                  </Button>
+                </AlertDialog.Action>
+              </div>
+            </>
+          )}
+        </AlertDialog.Content>
+      </AlertDialog.Portal>
+    </AlertDialog.Root>
+  );
+
   // Signed: the solid block, the byline, and publication when it is still to come.
   if (signed && signedVerdict && !editing) {
     const signedReason = typeof item.data.reason === "string" ? item.data.reason : "";
@@ -149,11 +196,12 @@ export function VerdictDecision({
             <p className="text-sm">{s.waitingRelease}</p>
           ))}
         {!published && !doubleSignature && canSign && (
-          <Button variant="action" size="xl" onClick={() => sign(true, signedVerdict, signedReason)} disabled={busy || signedReason.trim().length < 10}>
+          <Button variant="action" size="xl" onClick={() => setAsking({ publish: true, verdict: signedVerdict, text: signedReason })} disabled={busy || signedReason.trim().length < 10}>
             {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
             {s.signPublish}
           </Button>
         )}
+        {confirmDialog}
         {canSign && (
           <button
             type="button"
@@ -210,7 +258,7 @@ export function VerdictDecision({
                   setPicking(false);
                 }}
                 className={cn(
-                  "flex h-12 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+                  "flex h-12 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:text-muted-foreground",
                   m.ink,
                   on ? cn(m.soft, "border-2 border-current font-bold") : "border-border bg-card hover:bg-muted",
                 )}
@@ -254,7 +302,7 @@ export function VerdictDecision({
 
           {doubleSignature && <p className="text-sm text-muted-foreground">{s.double}</p>}
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="action" size="xl" disabled={busy || !choice || tooShort} onClick={() => sign(!doubleSignature)}>
+            <Button variant="action" size="xl" disabled={busy || !choice || tooShort} onClick={() => choice && setAsking({ publish: !doubleSignature, verdict: choice, text: reason })}>
               {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
               {busy ? s.signing : doubleSignature ? s.signOnly : s.signPublish}
             </Button>
@@ -269,6 +317,7 @@ export function VerdictDecision({
       ) : (
         <p className="text-sm text-muted-foreground">{s.cannot}</p>
       )}
+      {confirmDialog}
     </div>
   );
 }

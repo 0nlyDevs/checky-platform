@@ -3,6 +3,7 @@ import { IconArrowSquareOut, IconBooks, IconCalculator, IconCalendarDots, IconNe
 import { VerdictChip } from "@/components/claims/verdict";
 import { type CrewResult, type FigureCheck, frDate, hostOf, type Provenance } from "@/components/crew/types";
 import { RegistryDiff } from "@/components/registre/registry-diff";
+import { ImageTrace } from "@/components/sources/image-trace";
 import type { MatchResult } from "@/components/registre/types";
 import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
@@ -43,12 +44,19 @@ function ProvenanceFacts({ p, media }: { p: Provenance; media: boolean }) {
         </p>
       )}
       {p.verdict_hint === "old_media_new_caption" && <p className="rounded-sm bg-muted px-2.5 py-1.5 font-bold text-pretty">{k.provenance.hint}</p>}
-      {p.signals.map((s, i) => (
-        <p key={i} className="text-pretty">
-          {s.detail}
-        </p>
-      ))}
-      {media && p.no_trace && <p className="text-muted-foreground">{k.provenance.noTrace}</p>}
+      {/* An AI trace is a clue, not a verdict: the teal examination scale, never a verdict colour. */}
+      {p.signals.map((s, i) =>
+        s.kind === "ai_marker" ? (
+          <ImageTrace key={i} state="detected" className="text-pretty">
+            {s.detail}
+          </ImageTrace>
+        ) : (
+          <p key={i} className="text-pretty">
+            {s.detail}
+          </p>
+        ),
+      )}
+      {media && p.no_trace && <ImageTrace state="none">{k.provenance.noTrace}</ImageTrace>}
       {!!p.reverse_links.length && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="text-muted-foreground">{k.provenance.reverse} :</span>

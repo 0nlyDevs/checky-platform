@@ -20,7 +20,7 @@ const PRINT_CSS = `
   @page { size: A4; margin: 16mm; }
   body * { visibility: hidden !important; }
   .print-sheet, .print-sheet * { visibility: visible !important; }
-  .print-sheet { position: absolute !important; inset: 0 auto auto 0 !important; width: 100% !important; overflow: visible !important; background: #fff !important; color: #171a18 !important; }
+  .print-sheet { position: absolute !important; inset: 0 auto auto 0 !important; width: 100% !important; overflow: visible !important; background: #fff !important; color: #0a0a0b !important; }
   .no-print { display: none !important; }
 }`;
 

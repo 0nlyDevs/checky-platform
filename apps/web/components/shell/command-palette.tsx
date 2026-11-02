@@ -46,7 +46,7 @@ export function CommandPalette() {
         setOpen(true);
         return;
       }
-      if (e.key !== "/" || document.querySelector('[role="dialog"], [role="alertdialog"]') || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
+      if (e.key !== "/" || document.querySelector('[role="dialog"]:not([inert]), [role="alertdialog"]:not([inert])') || e.ctrlKey || e.metaKey || e.altKey || e.defaultPrevented) return;
       const el = e.target as HTMLElement | null;
       if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return;
       e.preventDefault();

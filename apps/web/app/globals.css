@@ -377,6 +377,21 @@
   }
 }
 
+/* What the page scrolls to (« Diffuser », a cited passage) lands below the sticky bar, not under it. */
+html:has([data-desk-bar]) {
+  scroll-padding-top: 84px;
+}
+@media (max-width: 900px) {
+  html:has([data-desk-bar]) {
+    scroll-padding-top: 140px;
+  }
+}
+@media (max-width: 640px) {
+  html:has([data-desk-bar]) {
+    scroll-padding-top: 80px;
+  }
+}
+
 /* The desk's top bar: wordmark and workspace left, the ink tab island centred, the avatar right. */
 .desk-bar {
   position: sticky;
@@ -793,6 +808,9 @@
 /* Toasts never sit under the corners: bottom-centre between the dock and Checky on a computer,
    above the ink bar and the Checky button on a phone. */
 @media (max-width: 640px) {
+  [data-sonner-toaster][data-y-position="bottom"] {
+    bottom: calc(var(--corner-y) + 56px + 12px) !important;
+  }
   :root:has([data-app-shell]) [data-sonner-toaster][data-y-position="bottom"] {
     bottom: calc(66px + 84px + env(safe-area-inset-bottom)) !important;
   }
@@ -1139,7 +1157,7 @@
 }
 @keyframes assistant-pulse {
   50% {
-    box-shadow: 0 0 0 6px rgb(157 56 46 / 0.2);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--verdict-false) 22%, transparent);
   }
 }
 .assistant-chip {
@@ -1301,8 +1319,8 @@
   color: var(--live);
 }
 .assistant-stage-btn:hover {
-  background: var(--active);
-  color: var(--foreground);
+  background: color-mix(in srgb, var(--live-foreground) 86%, var(--live));
+  color: var(--live);
 }
 .assistant-stage-btn:disabled {
   opacity: 0.6;

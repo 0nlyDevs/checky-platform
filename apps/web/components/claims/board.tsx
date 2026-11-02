@@ -235,7 +235,7 @@ export function Board({ ws, claims, now, names, canMove, onMove }: Props) {
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}>
         {active && (
-          <div className="w-[min(19rem,82vw)] rotate-[1.5deg] cursor-grabbing rounded-md border border-border bg-card p-3 shadow-[0_14px_32px_-12px_rgb(23_26_24/0.45)] lg:w-72">
+          <div className="w-[min(19rem,82vw)] rotate-[1.5deg] cursor-grabbing rounded-md border border-border bg-card p-3 shadow-[var(--shadow-float)] lg:w-72">
             <CardBody claim={active} now={now} names={names} />
           </div>
         )}

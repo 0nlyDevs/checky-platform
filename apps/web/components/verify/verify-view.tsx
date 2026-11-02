@@ -533,7 +533,7 @@ function Board({
           </p>
           <PublicStrip r={result} />
 
-          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-background px-4 py-3 max-[641px]:bottom-[calc(66px+env(safe-area-inset-bottom))] lg:mx-0 lg:px-0">
+          <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-background px-4 py-3 max-[641px]:bottom-[calc(66px+env(safe-area-inset-bottom))] max-[901px]:pr-[88px] min-[641px]:max-[901px]:pl-[88px] lg:mx-0 lg:px-0">
             <Button variant="action" size="xl" onClick={onTrack} disabled={tracking}>
               {tracking && <IconCircleNotch className="animate-spin" aria-hidden />}
               {tracking ? c.tracking : c.track}

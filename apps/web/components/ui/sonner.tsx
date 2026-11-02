@@ -46,7 +46,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       toastOptions={{
         classNames: {
           toast: "cn-toast",
-          description: "!text-current opacity-80",
+          description: "!text-current",
           // outlined in the toast's own label colour, so the pair holds in both themes
           actionButton: "!h-[34px] !rounded-full !border !border-current !bg-transparent !px-3.5 !font-medium !text-current hover:!bg-transparent",
         },
