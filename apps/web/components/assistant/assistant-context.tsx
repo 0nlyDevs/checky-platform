@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, Suspense, useContext, useMemo, useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { IconChatCircle } from "@/lib/icons";
 import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,7 @@ export function AssistantLauncher({ variant, className }: { variant: "rail" | "b
         )}
       >
         <span className={cn("grid h-6 w-12 place-items-center rounded-full", open && "bg-sidebar-primary text-sidebar-primary-foreground")}>
-          <MessageCircle className="size-[1.125rem]" aria-hidden />
+          <IconChatCircle className="size-[1.125rem]" aria-hidden />
         </span>
         {a.short}
       </button>
@@ -70,7 +70,7 @@ export function AssistantLauncher({ variant, className }: { variant: "rail" | "b
         className,
       )}
     >
-      <MessageCircle className={cn("shrink-0", variant === "rail" ? "size-5 text-action" : "size-4")} aria-hidden />
+      <IconChatCircle className={cn("shrink-0", variant === "rail" ? "size-5 text-action" : "size-4")} aria-hidden />
       {variant === "rail" ? (
         <span className="min-w-0">
           <span className="block text-sm font-bold">{a.title}</span>

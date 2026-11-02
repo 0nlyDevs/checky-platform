@@ -3,28 +3,7 @@
 import type { components } from "@fanilo/shared";
 import { useRef, useState } from "react";
 import useSWR from "swr";
-import {
-  AudioLines,
-  BadgeCheck,
-  CalendarClock,
-  Check,
-  Copy,
-  ExternalLink,
-  FileText,
-  ImageIcon,
-  Link2,
-  LoaderCircle,
-  MapPin,
-  Paperclip,
-  Play,
-  Plus,
-  RotateCcw,
-  Sparkles,
-  TriangleAlert,
-  Type,
-  Video,
-  type LucideIcon,
-} from "lucide-react";
+import { IconArrowCounterClockwise, IconArrowSquareOut, IconCalendarDots, IconCheck, IconCircleNotch, IconCopy, IconFileText, IconImage, IconLink, IconMapPin, IconPaperclip, IconPlay, IconPlus, IconSealCheck, IconSparkle, IconTextT, IconVideoCamera, IconWarning, IconWaveform, type Icon } from "@/lib/icons";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +16,7 @@ import { t } from "@/lib/i18n/fr";
 import { uploadFile, type Source } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 
-const KIND_ICON: Record<string, LucideIcon> = { url: Link2, pdf: FileText, image: ImageIcon, audio: AudioLines, video: Video, text: Type };
+const KIND_ICON: Record<string, Icon> = { url: IconLink, pdf: IconFileText, image: IconImage, audio: IconWaveform, video: IconVideoCamera, text: IconTextT };
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,application/pdf,audio/*,video/mp4,video/webm,video/quicktime,video/3gpp";
 
 const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
@@ -85,7 +64,7 @@ function ImageFacts({ source }: { source: Source }) {
           {date && <li>{t.sources.exifDate(exifDate(date))}</li>}
           {"GPS" in exif && (
             <li className="flex items-center gap-1.5">
-              <MapPin className="size-3.5" aria-hidden />
+              <IconMapPin className="size-3.5" aria-hidden />
               {t.sources.exifGps}
             </li>
           )}
@@ -93,19 +72,19 @@ function ImageFacts({ source }: { source: Source }) {
       )}
       {!!meta.ai_markers?.length && (
         <p className="flex items-start gap-1.5 font-medium text-verdict-misleading-ink">
-          <Sparkles className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <IconSparkle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {t.sources.aiMarkers(meta.ai_markers.join(", "))}
         </p>
       )}
       {meta.content_credentials && (
         <p className="flex items-start gap-1.5">
-          <BadgeCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <IconSealCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {t.sources.contentCredentials}
         </p>
       )}
       {source.duplicates > 0 && (
         <p className="flex items-center gap-1.5 font-medium">
-          <Copy className="size-3.5" aria-hidden />
+          <IconCopy className="size-3.5" aria-hidden />
           {t.sources.duplicates(source.duplicates)}
         </p>
       )}
@@ -183,7 +162,7 @@ function HighlightsBlock({ ws, source, highlights, play, onRefresh }: { ws: stri
     <div className="space-y-3 pt-1">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="outline" size="sm" onClick={extract} disabled={Boolean(jobId)}>
-          {jobId ? <LoaderCircle className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
+          {jobId ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconSparkle aria-hidden />}
           {highlights ? t.sources.reExtract : t.sources.extract}
         </Button>
         {jobId && (
@@ -218,7 +197,7 @@ function HighlightsBlock({ ws, source, highlights, play, onRefresh }: { ws: stri
                     <span className="w-12 shrink-0 font-display text-sm tracking-wide tabular text-muted-foreground">{c.start != null ? clock(c.start) : "—"}</span>
                     <span className="min-w-0 flex-1 text-sm text-pretty">{c.text}</span>
                     <Button variant="ghost" size="sm" onClick={() => toClaim(c, i)} disabled={created.has(i)}>
-                      {created.has(i) ? <Check aria-hidden /> : <Plus aria-hidden />}
+                      {created.has(i) ? <IconCheck aria-hidden /> : <IconPlus aria-hidden />}
                       {t.sources.toClaim}
                     </Button>
                   </li>
@@ -266,7 +245,7 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
         ))}
       {!!meta.ai_markers?.length && (
         <p className="flex items-start gap-1.5 text-sm font-medium text-verdict-misleading-ink">
-          <Sparkles className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          <IconSparkle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           {t.sources.aiMarkers(meta.ai_markers.join(", "))}
         </p>
       )}
@@ -281,7 +260,7 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
         </button>
         {meta.language && <span className="text-muted-foreground">{t.sources.detected(t.sources.languages[meta.language.toLowerCase()] ?? meta.language)}</span>}
         <span className="flex items-center gap-2 text-muted-foreground">
-          <RotateCcw className="size-3.5" aria-hidden />
+          <IconArrowCounterClockwise className="size-3.5" aria-hidden />
           {t.sources.redo}
           <button type="button" onClick={() => redo("fr")} className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
             {t.sources.redoFr}
@@ -307,7 +286,7 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
                   className="group flex w-full gap-3 rounded-sm px-2 py-1 text-left text-sm hover:bg-accent focus-visible:outline-2"
                 >
                   <span className="flex w-12 shrink-0 items-center gap-1 font-display tracking-wide tabular text-muted-foreground">
-                    <Play className="size-3 opacity-0 group-hover:opacity-100" aria-hidden />
+                    <IconPlay className="size-3 opacity-0 group-hover:opacity-100" aria-hidden />
                     {clock(g.start)}
                   </span>
                   <span className="text-pretty">{g.text}</span>
@@ -374,7 +353,7 @@ function SourceDate({ ws, source, canEdit }: { ws: string; source: Source; canEd
           />
         </div>
         <Button type="submit" size="sm" className="h-9" disabled={pending}>
-          {pending && <LoaderCircle className="animate-spin" aria-hidden />}
+          {pending && <IconCircleNotch className="animate-spin" aria-hidden />}
           {d.save}
         </Button>
         {day && (
@@ -391,7 +370,7 @@ function SourceDate({ ws, source, canEdit }: { ws: string; source: Source; canEd
   }
   return (
     <p className="mt-1 flex flex-wrap items-center gap-x-1.5 text-sm text-muted-foreground">
-      <CalendarClock className="size-3.5 shrink-0" aria-hidden />
+      <IconCalendarDots className="size-3.5 shrink-0" aria-hidden />
       {day ? d.known(pubDate(day)) : d.unknown}
       {canEdit && (
         <>
@@ -407,7 +386,7 @@ function SourceDate({ ws, source, canEdit }: { ws: string; source: Source; canEd
 
 function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRemove?: () => void }) {
   const [confirming, setConfirming] = useState(false);
-  const Icon = KIND_ICON[source.kind] ?? FileText;
+  const Icon = KIND_ICON[source.kind] ?? IconFileText;
   const href = source.url ?? source.file?.download_url ?? undefined;
   const meta = (source.file?.meta ?? {}) as { pages?: number };
   const details = [
@@ -427,7 +406,7 @@ function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRem
             {href ? (
               <a href={href} target="_blank" rel="noreferrer" className="group inline-flex max-w-full items-baseline gap-1.5 font-medium hover:underline">
                 <span className="line-clamp-2 text-pretty">{source.title}</span>
-                <ExternalLink className="size-3.5 shrink-0 self-center text-muted-foreground" aria-label={t.sources.open} />
+                <IconArrowSquareOut className="size-3.5 shrink-0 self-center text-muted-foreground" aria-label={t.sources.open} />
               </a>
             ) : (
               <p className="line-clamp-2 font-medium text-pretty">{source.title}</p>
@@ -449,13 +428,13 @@ function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRem
 
         {source.status === "queued" && (
           <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground" role="status">
-            <LoaderCircle className="size-3.5 animate-spin" aria-hidden />
+            <IconCircleNotch className="size-3.5 animate-spin" aria-hidden />
             {source.kind === "audio" || source.kind === "video" ? t.sources.transcribing : t.sources.analysing}
           </p>
         )}
         {source.status === "failed" && (
           <p className="mt-2 flex items-start gap-2 rounded-md bg-verdict-false-soft px-2.5 py-1.5 text-sm text-verdict-false-ink" role="alert">
-            <TriangleAlert className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            <IconWarning className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             <span>
               <span className="font-medium">{t.sources.failed}</span> · {source.error}
             </span>
@@ -565,13 +544,13 @@ export function SourcesPanel({ ws, itemId, kind }: { ws: string; itemId?: string
           className="h-10 min-w-0 flex-1 basis-64 bg-card"
         />
         <Button type="submit" className="h-10" disabled={adding || !url.trim()}>
-          {adding ? <LoaderCircle className="animate-spin" aria-hidden /> : <Plus aria-hidden />}
+          {adding ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconPlus aria-hidden />}
           {t.sources.addUrl}
         </Button>
           </>
         )}
         <Button type="button" variant="outline" className="h-10" disabled={Boolean(upload)} onClick={() => fileInput.current?.click()}>
-          <Paperclip aria-hidden />
+          <IconPaperclip aria-hidden />
           {kind ? t.transcriptions.attach : t.sources.attach}
         </Button>
         <input ref={fileInput} type="file" accept={kind ? "audio/*" : ACCEPT} className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => addFile(e.target.files?.[0])} />

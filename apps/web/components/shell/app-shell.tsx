@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import useSWR from "swr";
-import { Check, ChevronsUpDown, LogOut, Monitor, Moon, Plus, Sun } from "lucide-react";
+import { IconCaretUpDown, IconCheck, IconMonitor, IconMoon, IconPlus, IconSignOut, IconSun } from "@/lib/icons";
 import { AssistantLauncher, AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
 import { NAV, WORKSPACE_NAV, type NavItem } from "@/components/shell/nav";
@@ -44,7 +44,7 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
           <span className="block text-xs text-sidebar-muted">{t.nav.workspace}</span>
           <span className="block truncate font-bold">{active?.name ?? "—"}</span>
         </span>
-        <ChevronsUpDown className="size-4 shrink-0 text-sidebar-muted" aria-hidden />
+        <IconCaretUpDown className="size-4 shrink-0 text-sidebar-muted" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64">
         <DropdownMenuLabel>{t.nav.workspace}</DropdownMenuLabel>
@@ -52,14 +52,14 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
           <DropdownMenuItem key={m.workspace_id} asChild>
             <Link href={`/w/${m.workspace_id}/verifier`}>
               <span className="flex-1 truncate">{m.name}</span>
-              {m.workspace_id === current && <Check className="size-4" aria-hidden />}
+              {m.workspace_id === current && <IconCheck className="size-4" aria-hidden />}
             </Link>
           </DropdownMenuItem>
         ))}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link href="/?nouveau=1">
-            <Plus className="size-4" aria-hidden />
+            <IconPlus className="size-4" aria-hidden />
             {t.nav.newWorkspace}
           </Link>
         </DropdownMenuItem>
@@ -102,18 +102,18 @@ function UserMenu({ user, compact = false }: { user: SessionUser; compact?: bool
         <DropdownMenuLabel>{t.nav.theme}</DropdownMenuLabel>
         <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
           <DropdownMenuRadioItem value="light">
-            <Sun className="size-4" aria-hidden /> {t.nav.themeLight}
+            <IconSun className="size-4" aria-hidden /> {t.nav.themeLight}
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="dark">
-            <Moon className="size-4" aria-hidden /> {t.nav.themeDark}
+            <IconMoon className="size-4" aria-hidden /> {t.nav.themeDark}
           </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="system">
-            <Monitor className="size-4" aria-hidden /> {t.nav.themeSystem}
+            <IconMonitor className="size-4" aria-hidden /> {t.nav.themeSystem}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={signOut}>
-          <LogOut className="size-4" aria-hidden /> {t.auth.signOut}
+          <IconSignOut className="size-4" aria-hidden /> {t.auth.signOut}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

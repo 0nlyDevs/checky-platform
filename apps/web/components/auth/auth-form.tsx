@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { LoaderCircle } from "lucide-react";
+import { IconCircleNotch } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -101,7 +101,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
         )}
 
         <Button type="submit" variant="action" size="xl" className="w-full" disabled={pending}>
-          {pending && <LoaderCircle className="animate-spin" aria-hidden />}
+          {pending && <IconCircleNotch className="animate-spin" aria-hidden />}
           {isSignUp ? t.auth.signUp : t.auth.signIn}
         </Button>
       </form>

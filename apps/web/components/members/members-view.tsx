@@ -5,7 +5,7 @@ import { ROLES } from "@fanilo/shared";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
-import { Check, Copy, Link2, LoaderCircle } from "lucide-react";
+import { IconCheck, IconCircleNotch, IconCopy, IconLink } from "@/lib/icons";
 import { toast } from "sonner";
 import { Avatar } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
@@ -79,7 +79,7 @@ function Invite({ ws }: { ws: string }) {
           <RoleSelect id="invite-role" value={role} onChange={setRole} />
         </div>
         <Button onClick={create} disabled={pending} className="h-9">
-          {pending ? <LoaderCircle className="animate-spin" aria-hidden /> : <Link2 aria-hidden />}
+          {pending ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconLink aria-hidden />}
           {t.members.createLink}
         </Button>
       </div>
@@ -90,7 +90,7 @@ function Invite({ ws }: { ws: string }) {
             {link}
           </code>
           <Button variant="outline" size="sm" onClick={copy}>
-            {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
+            {copied ? <IconCheck aria-hidden /> : <IconCopy aria-hidden />}
             {t.members.copy}
           </Button>
           <p className="w-full text-xs text-muted-foreground">{t.members.expires(dateFmt.format(new Date(invite.expires_at)))}</p>

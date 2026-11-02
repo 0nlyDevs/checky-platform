@@ -17,7 +17,7 @@ import {
 } from "@dnd-kit/core";
 import Link from "next/link";
 import { useState } from "react";
-import { EllipsisVertical } from "lucide-react";
+import { IconDotsThreeVertical } from "@/lib/icons";
 import { formatDuration } from "@/lib/time";
 import { Avatar, type ClaimView, STATUS_ICON, VerdictBadge } from "@/components/claims/verdict";
 import { claimSteps, StepLine } from "@/components/flow/step-line";
@@ -120,7 +120,7 @@ function Card({
             className="absolute top-2 right-1.5 grid size-7 place-items-center rounded-sm text-muted-foreground outline-none hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
             aria-label={`${t.claims.board.moveTo} ${claim.ref}`}
           >
-            <EllipsisVertical className="size-4" aria-hidden />
+            <IconDotsThreeVertical className="size-4" aria-hidden />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
             <DropdownMenuLabel>{t.claims.board.moveTo}</DropdownMenuLabel>

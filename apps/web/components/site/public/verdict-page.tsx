@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Link2, Share2, Square, Volume2 } from "lucide-react";
+import { IconArrowLeft, IconArrowRight, IconCheck, IconLink, IconShareNetwork, IconSpeakerHigh, IconStop } from "@/lib/icons";
 import { VERDICT_META } from "@/components/claims/verdict";
 import { StepLine } from "@/components/flow/step-line";
 import { day } from "@/components/site/public/verdicts";
@@ -23,7 +23,7 @@ export function VerdictCard({ v }: { v: PublicVerdict }) {
   return (
     <section className={cn("verdict-land rounded-md border-2 border-current p-5 md:p-7", m.soft, m.ink)} aria-label={p.verdict}>
       <p className="flex items-center gap-3 font-display text-5xl font-extrabold tracking-tight md:text-6xl">
-        <Icon className="size-10 shrink-0 md:size-12" strokeWidth={2.4} aria-hidden />
+        <Icon className="size-10 shrink-0 md:size-12" aria-hidden />
         {m.label}
       </p>
       <p className="mt-2 text-sm font-bold">{p.confirmed}</p>
@@ -84,11 +84,11 @@ export function VerdictPage() {
           <div className="mt-4 flex flex-wrap gap-2">
             <Button asChild variant="action" size="xl">
               <a href={`https://wa.me/?text=${encodeURIComponent(p.whatsappText(v.title, label, href))}`} target="_blank" rel="noreferrer">
-                <Share2 aria-hidden /> {p.whatsapp}
+                <IconShareNetwork aria-hidden /> {p.whatsapp}
               </a>
             </Button>
             <Button variant="outline" size="xl" onClick={listen} aria-pressed={reading}>
-              {reading ? <Square aria-hidden /> : <Volume2 aria-hidden />}
+              {reading ? <IconStop aria-hidden /> : <IconSpeakerHigh aria-hidden />}
               {reading ? p.stopListening : p.listen}
             </Button>
             <Button
@@ -96,7 +96,7 @@ export function VerdictPage() {
               size="xl"
               onClick={() => navigator.clipboard?.writeText(location.href).then(() => setCopied(true))}
             >
-              {copied ? <Check aria-hidden /> : <Link2 aria-hidden />}
+              {copied ? <IconCheck aria-hidden /> : <IconLink aria-hidden />}
               {copied ? p.copied : p.share}
             </Button>
           </div>
@@ -141,7 +141,7 @@ export function VerdictPage() {
               href={`/signaler?texte=${encodeURIComponent(v.title)}`}
               className="mt-2 inline-flex items-center gap-1.5 font-bold underline underline-offset-4"
             >
-              {p.wrongAction} <ArrowRight className="size-4" aria-hidden />
+              {p.wrongAction} <IconArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
         </aside>
@@ -154,7 +154,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-[88rem] px-4 pt-8 pb-20 lg:px-10">
       <Link href="/verifies" className="inline-flex items-center gap-1.5 text-sm font-bold hover:underline">
-        <ArrowLeft className="size-4" aria-hidden /> {p.back}
+        <IconArrowLeft className="size-4" aria-hidden /> {p.back}
       </Link>
       {children}
     </div>

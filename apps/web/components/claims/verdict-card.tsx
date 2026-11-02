@@ -4,7 +4,7 @@ import type { Item, Me, Verdict } from "@fanilo/shared";
 import { toPng } from "html-to-image";
 import { useRef, useState } from "react";
 import useSWR from "swr";
-import { Check, Copy, Download, LoaderCircle, Sparkles } from "lucide-react";
+import { IconCheck, IconCircleNotch, IconCopy, IconDownloadSimple, IconSparkle } from "@/lib/icons";
 import { toast } from "sonner";
 import { LogoMark } from "@/components/brand/logo";
 import { VERDICT_META } from "@/components/claims/verdict";
@@ -174,7 +174,7 @@ export function VerdictCard({ ws, item, verdict, onShared }: { ws: string; item:
             <p className="text-sm text-muted-foreground tabular">{t.card.chars(reason.length)}</p>
           </div>
           <Button onClick={download} disabled={exporting} className="h-10">
-            {exporting ? <LoaderCircle className="animate-spin" aria-hidden /> : <Download aria-hidden />}
+            {exporting ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconDownloadSimple aria-hidden />}
             {t.card.download}
           </Button>
 
@@ -193,12 +193,12 @@ export function VerdictCard({ ws, item, verdict, onShared }: { ws: string; item:
             )}
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" onClick={write} disabled={writing}>
-                {writing ? <LoaderCircle className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
+                {writing ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconSparkle aria-hidden />}
                 {text ? t.card.rewrite : t.card.write}
               </Button>
               {text && (
                 <Button variant="outline" onClick={copy}>
-                  {copied ? <Check aria-hidden /> : <Copy aria-hidden />}
+                  {copied ? <IconCheck aria-hidden /> : <IconCopy aria-hidden />}
                   {t.card.copy}
                 </Button>
               )}

@@ -4,7 +4,7 @@ import type { components } from "@fanilo/shared";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
-import { Check, CircleMinus, LoaderCircle, RefreshCw, RotateCcw, TriangleAlert } from "lucide-react";
+import { IconArrowCounterClockwise, IconArrowsClockwise, IconCheck, IconCircleNotch, IconMinusCircle, IconWarning } from "@/lib/icons";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,7 +18,7 @@ type ServiceCheck = components["schemas"]["Check"];
 
 const timeFmt = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-const STATE_ICON = { up: Check, down: TriangleAlert, not_configured: CircleMinus } as const;
+const STATE_ICON = { up: IconCheck, down: IconWarning, not_configured: IconMinusCircle } as const;
 
 function hint(key: string, kind: "core" | "ai") {
   if (kind === "ai") return t.settings.notConfiguredHint.ai(key);
@@ -95,7 +95,7 @@ function HealthSection() {
           )}
         </div>
         <Button variant="outline" className="h-9" onClick={() => mutate()} disabled={isValidating}>
-          <RefreshCw className={cn(isValidating && "animate-spin")} aria-hidden />
+          <IconArrowsClockwise className={cn(isValidating && "animate-spin")} aria-hidden />
           {t.settings.refresh}
         </Button>
       </div>
@@ -183,12 +183,12 @@ function DemoSection({ ws }: { ws: string }) {
       <div className="mt-4">
         {confirming ? (
           <Button variant="destructive" className="h-10" onClick={reset} onBlur={() => setConfirming(false)} autoFocus>
-            <RotateCcw aria-hidden />
+            <IconArrowCounterClockwise aria-hidden />
             {t.settings.demoConfirm}
           </Button>
         ) : (
           <Button variant="outline" className="h-10" onClick={() => setConfirming(true)} disabled={pending}>
-            {pending ? <LoaderCircle className="animate-spin" aria-hidden /> : <RotateCcw aria-hidden />}
+            {pending ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconArrowCounterClockwise aria-hidden />}
             {t.settings.demoReset}
           </Button>
         )}

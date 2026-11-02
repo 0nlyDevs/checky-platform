@@ -4,7 +4,7 @@ import type { Item, ItemPage, Status } from "@fanilo/shared";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { ArrowRight, Columns3, FolderOpen, Rows3, Search, WifiOff } from "lucide-react";
+import { IconArrowRight, IconColumns, IconFolderOpen, IconMagnifyingGlass, IconRows, IconWifiSlash } from "@/lib/icons";
 import { toast } from "sonner";
 import { Board } from "@/components/claims/board";
 import { DossierList } from "@/components/claims/dossier-list";
@@ -47,7 +47,7 @@ function nextRef(claims: ClaimView[]) {
 function Empty({ title, lead, action }: { title: string; lead: string; action?: React.ReactNode }) {
   return (
     <div className="mx-4 rounded-md border border-dashed border-border px-6 py-14 text-center lg:mx-0">
-      <FolderOpen className="mx-auto size-6 text-muted-foreground" aria-hidden />
+      <IconFolderOpen className="mx-auto size-6 text-muted-foreground" aria-hidden />
       <h2 className="mt-3 font-display text-lg font-bold">{title}</h2>
       <p className="mx-auto mt-1 max-w-sm text-muted-foreground">{lead}</p>
       {action && <div className="mt-5">{action}</div>}
@@ -167,7 +167,7 @@ export function ClaimsView() {
 
       {!online && (
         <p role="status" className="mx-4 mb-4 flex items-center gap-2 rounded-md bg-verdict-misleading-soft px-3 py-2 text-sm text-verdict-misleading-ink lg:mx-0">
-          <WifiOff className="size-4" aria-hidden />
+          <IconWifiSlash className="size-4" aria-hidden />
           {t.claims.offline}
         </p>
       )}
@@ -176,7 +176,7 @@ export function ClaimsView() {
         <div className="mx-4 mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border-2 border-dashed border-foreground bg-card px-4 py-3 lg:mx-0">
           <p className="font-bold">{t.claims.waiting(counts.confirm)}</p>
           <button type="button" onClick={() => go({ onglet: "confirm" })} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
-            {t.claims.waitingAction} <ArrowRight className="size-4" aria-hidden />
+            {t.claims.waitingAction} <IconArrowRight className="size-4" aria-hidden />
           </button>
         </div>
       )}
@@ -210,7 +210,7 @@ export function ClaimsView() {
           </div>
         )}
         <div className="relative min-w-0 flex-1 basis-56">
-          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <IconMagnifyingGlass className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.claims.search} aria-label={t.claims.search} className="h-10 bg-card pl-9" />
         </div>
         <Select value={assignee} onValueChange={setAssignee}>
@@ -233,8 +233,8 @@ export function ClaimsView() {
         <div role="radiogroup" aria-label={t.claims.views.label} className="flex h-10 shrink-0 rounded-md border border-input bg-card p-0.5">
           {(
             [
-              ["list", t.claims.views.grid, Rows3],
-              ["board", t.claims.views.board, Columns3],
+              ["list", t.claims.views.grid, IconRows],
+              ["board", t.claims.views.board, IconColumns],
             ] as const
           ).map(([v, label, Icon]) => (
             <button

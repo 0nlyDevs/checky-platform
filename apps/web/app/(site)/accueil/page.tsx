@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Check } from "lucide-react";
+import { IconArrowRight, IconCheck } from "@/lib/icons";
 import { STEPS } from "@/components/flow/step-line";
 import { CheckForm } from "@/components/site/public/check";
 import { Specimen } from "@/components/site/public/specimen";
@@ -41,7 +41,7 @@ export default function HomePage() {
                 {h.recent}
               </h2>
               <Link href="/verifies" className="inline-flex items-center gap-1.5 text-sm font-bold underline underline-offset-4">
-                {h.all} <ArrowRight className="size-4" aria-hidden />
+                {h.all} <IconArrowRight className="size-4" aria-hidden />
               </Link>
             </div>
             <div className="mt-2">
@@ -88,7 +88,7 @@ export default function HomePage() {
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild variant="action" size="xl">
                 <Link href="/inscription">
-                  {h.newsroomsCta} <ArrowRight aria-hidden />
+                  {h.newsroomsCta} <IconArrowRight aria-hidden />
                 </Link>
               </Button>
               <Link href="/connexion" className="inline-flex h-12 items-center rounded-md border border-live-border px-5 font-bold hover:bg-white/5">
@@ -100,7 +100,7 @@ export default function HomePage() {
             {h.newsroomsPoints.map((point) => (
               <li key={point} className="flex items-start gap-4 border-t border-live-border py-5 text-lg">
                 <span className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-full border border-live-border text-live-foreground">
-                  <Check className="size-4" strokeWidth={3} aria-hidden />
+                  <IconCheck className="size-4" aria-hidden />
                 </span>
                 {point}
               </li>

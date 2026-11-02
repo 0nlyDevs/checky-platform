@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowRight, LoaderCircle } from "lucide-react";
+import { IconArrowRight, IconCircleNotch } from "@/lib/icons";
 import { VerdictRow } from "@/components/site/public/verdicts";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
@@ -83,9 +83,9 @@ export function CheckForm({ id = "check", className }: { id?: string; className?
           />
           <div className="flex items-center justify-end border-t border-border px-3 py-2.5">
             <Button type="submit" variant="action" size="xl" disabled={busy}>
-              {busy && <LoaderCircle className="animate-spin" aria-hidden />}
+              {busy && <IconCircleNotch className="animate-spin" aria-hidden />}
               {busy ? c.searching : c.submit}
-              {!busy && <ArrowRight aria-hidden />}
+              {!busy && <IconArrowRight aria-hidden />}
             </Button>
           </div>
         </div>
@@ -116,7 +116,7 @@ export function CheckForm({ id = "check", className }: { id?: string; className?
               href={`/signaler?texte=${encodeURIComponent(text.slice(0, 600))}`}
               className="inline-flex h-11 items-center gap-2 rounded-md border border-foreground px-4 font-bold hover:bg-accent"
             >
-              {c.noneAction} <ArrowRight className="size-4" aria-hidden />
+              {c.noneAction} <IconArrowRight className="size-4" aria-hidden />
             </Link>
           </div>
         )}

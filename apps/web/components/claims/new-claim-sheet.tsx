@@ -3,7 +3,7 @@
 import type { Item } from "@fanilo/shared";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { LoaderCircle, Plus } from "lucide-react";
+import { IconCircleNotch, IconPlus } from "@/lib/icons";
 import { toast } from "sonner";
 import { StatusLabel, toClaim, VerdictBadge } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
@@ -97,7 +97,7 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button variant="action" size="lg" className="size-11 px-0 sm:h-10 sm:w-auto sm:px-4" aria-label={t.claims.newClaim}>
-          <Plus className="size-5 sm:size-4" aria-hidden />
+          <IconPlus className="size-5 sm:size-4" aria-hidden />
           <span className="hidden sm:inline">{t.claims.newClaim}</span>
         </Button>
       </SheetTrigger>
@@ -200,7 +200,7 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
             {t.claims.form.cancel}
           </Button>
           <Button type="submit" form="new-claim" disabled={pending}>
-            {pending && <LoaderCircle className="animate-spin" aria-hidden />}
+            {pending && <IconCircleNotch className="animate-spin" aria-hidden />}
             {t.claims.form.submit}
           </Button>
         </SheetFooter>

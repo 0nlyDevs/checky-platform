@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { IconArrowRight } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
 import { t } from "@/lib/i18n/fr";
 import { type PublicVerdict, publicApi } from "@/lib/public-api";
@@ -24,7 +24,7 @@ export function VerdictRow({ v, index = 0, compact = false }: { v: PublicVerdict
         >
           <VerdictChip verdict={v.verdict} className="w-[8.5rem] shrink-0" />
           <span className="min-w-0 flex-1 truncate font-bold group-hover:underline">{tidy(v.title)}</span>
-          <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
+          <IconArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
         </Link>
       </li>
     );
@@ -44,7 +44,7 @@ export function VerdictRow({ v, index = 0, compact = false }: { v: PublicVerdict
         </span>
         <span className="flex items-center gap-3 md:self-center">
           <VerdictChip verdict={v.verdict} className="text-base" />
-          <ArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
+          <IconArrowRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-1" aria-hidden />
         </span>
       </Link>
     </li>

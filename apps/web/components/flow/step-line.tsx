@@ -1,4 +1,4 @@
-import { Check, X } from "lucide-react";
+import { IconCheck, IconX } from "@/lib/icons";
 import type { ClaimView } from "@/components/claims/verdict";
 import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
@@ -36,9 +36,9 @@ export function StepDisc({ n, state, size, className }: { n: number; state: Step
       )}
     >
       {state === "done" ? (
-        <Check className={big ? "size-5" : "size-3.5"} strokeWidth={3} aria-hidden />
+        <IconCheck className={big ? "size-5" : "size-3.5"} aria-hidden />
       ) : state === "failed" ? (
-        <X className={big ? "size-5" : "size-3.5"} strokeWidth={3} aria-hidden />
+        <IconX className={big ? "size-5" : "size-3.5"} aria-hidden />
       ) : (
         String(n).padStart(2, "0")
       )}
