@@ -457,10 +457,11 @@ async def delete_source(source_id: uuid.UUID, member: AnyMember, db: Db) -> None
     if file_id:
         f = await db.get(File, file_id)
         if f is not None:
-            try:
-                await storage.delete(f.storage_key)
-            except Exception:  # noqa: BLE001 - an orphan object must not block the delete
-                log.warning("could not delete %s from storage", f.storage_key)
+            for key in [f.storage_key, *media.derived_keys(f)]:
+                try:
+                    await storage.delete(key)
+                except Exception:  # noqa: BLE001 - an orphan object must not block the delete
+                    log.warning("could not delete %s from storage", key)
             await db.delete(f)
     await db.commit()
     await broadcast(

@@ -408,6 +408,30 @@ def test_video_keyframes_are_stored_with_their_blurred_copy_and_reverse_search(
         assert not any(f"frames%2F{i}.jpg" in link["url"] for link in frame["reverse_search"])
 
 
+def test_deleting_a_video_source_removes_its_frames_and_safe_copies(as_user, whisper, monkeypatch):
+    async def fake_video(raw, mime):
+        return {"duration_s": 4.0}, b"", "", ""
+
+    async def frames(raw, duration, ffmpeg, container=None):
+        return [{"at_s": i, "jpeg": b"face", "dhash": "0" * 16, "flat": False} for i in range(3)]
+
+    monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)
+    monkeypatch.setattr(ingest.media, "sample_frames", frames)
+    monkeypatch.setattr(ingest.media, "blur_faces", lambda raw: (b"blurred", 1))
+    monkeypatch.setattr(ingest.shutil, "which", lambda name: "/usr/bin/ffmpeg")
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    video = _upload(alice, ws, "clip.mp4", "video/mp4", b"fake-video").json()
+    photo = _upload(alice, ws, "foule.jpg", "image/jpeg", _jpeg_with_exif()).json()
+    while asyncio.run(queue.run_once()):
+        pass
+    assert len(OBJECTS) == 2 + 3 * 2 + 1  # two uploads, three frames with their copies, one copy
+    for made in (video, photo):
+        r = alice.delete(f"/api/v1/workspaces/{ws}/sources/{made['id']}")
+        assert r.status_code == 204, r.text
+    assert OBJECTS == {}
+
+
 def test_failed_face_detection_hides_the_frame_but_keeps_the_source(as_user, whisper, monkeypatch):
     async def fake_video(raw, mime):
         return {"duration_s": 3.0}, b"", "", ""

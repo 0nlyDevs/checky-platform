@@ -318,6 +318,16 @@ async def derive_video(
     return out
 
 
+def derived_keys(file: File) -> list[str]:
+    """Every object ingest made from this file (keyframes, safe copies): they go with it, since an
+    original frame shows faces unblurred."""
+    meta = file.meta or {}
+    keys = [meta.get("safe_key")]
+    for i, frame in enumerate(meta.get("keyframes") or []):
+        keys += [frame.get("key") or f"{file.storage_key}/frames/{i}.jpg", frame.get("safe_key")]
+    return [k for k in keys if k]
+
+
 # --- reading it back --------------------------------------------------------------------------
 
 
