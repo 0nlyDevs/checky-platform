@@ -15,6 +15,7 @@ import { PublicStrip, Reliability, RiskNote, ToneCard } from "@/components/crew/
 import { type AgentEvent, type CrewResult, frDate, hostOf, type Numbered } from "@/components/crew/types";
 import { claimSteps, type Step, StepLine, type StepState } from "@/components/flow/step-line";
 import { Button } from "@/components/ui/button";
+import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { API_URL, api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { postStream } from "@/lib/sse";
@@ -588,6 +589,7 @@ function Wall({ r, picked, toggle }: { r: Result; picked: Set<string>; toggle: (
 /** Beside the check: the dossiers still open (oldest first) and what the desk settled lately. */
 function DeskColumn({ ws }: { ws: string }) {
   const { data } = useSWR<ItemPage>(`/workspaces/${ws}/items?limit=200`, fetcher);
+  const column = useStickyColumn<HTMLElement>();
   const claims = useMemo(() => (data?.items ?? []).map(toClaim), [data]);
   const open = claims
     .filter((x) => x.status === "to_check" || x.status === "in_progress")
@@ -598,7 +600,7 @@ function DeskColumn({ ws }: { ws: string }) {
     .sort((a, b) => b.item.updated_at.localeCompare(a.item.updated_at))
     .slice(0, 3);
   return (
-    <aside className="space-y-8 @6xl:pt-14">
+    <aside ref={column} className="space-y-8 @5xl:sticky @5xl:self-start @6xl:pt-14">
       <section>
         <h2 className="flex items-baseline justify-between gap-3 font-display text-lg font-bold">
           {v.open}

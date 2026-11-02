@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { SourcesPanel } from "@/components/sources/sources-panel";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
@@ -160,6 +161,7 @@ function RiskBadge({ item }: { item: Item }) {
 
 export function ClaimDetail() {
   const { ws, id } = useParams<{ ws: string; id: string }>();
+  const column = useStickyColumn<HTMLElement>();
   const router = useRouter();
   const base = `/workspaces/${ws}/items/${id}`;
   const { data: item, error, mutate } = useSWR<Item>(base, fetcher);
@@ -441,7 +443,7 @@ export function ClaimDetail() {
           </Step>
         </div>
 
-        <aside className="space-y-8">
+        <aside ref={column} className="space-y-8 min-[1101px]:sticky min-[1101px]:self-start">
           <WhoPanel ws={ws} itemId={id} />
           <Section id="details" title={t.detail.details}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
