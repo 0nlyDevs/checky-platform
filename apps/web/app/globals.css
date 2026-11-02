@@ -1301,8 +1301,8 @@
   color: var(--live);
 }
 .assistant-stage-btn:hover {
-  background: var(--active);
-  color: var(--foreground);
+  background: color-mix(in srgb, var(--live-foreground) 86%, var(--live));
+  color: var(--live);
 }
 .assistant-stage-btn:disabled {
   opacity: 0.6;
