@@ -31,9 +31,11 @@ from app.modules import (
     registry,
     rubrique,
     signing,
+    sms,
     sources,
     trajet,
     veille,
+    verify_public,
     workspaces,
 )
 from app.realtime.server import sio
@@ -90,6 +92,8 @@ api.include_router(rubrique.router, prefix="/api/v1")
 api.include_router(signing.router, prefix="/api/v1")
 api.include_router(trajet.router, prefix="/api/v1")
 api.include_router(veille.router, prefix="/api/v1")
+api.include_router(verify_public.router, prefix="/api/v1")
+api.include_router(sms.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)
