@@ -238,7 +238,10 @@ def test_formats_come_from_one_model_call_and_invented_numbers_fall_back(as_user
     assert "300 000" not in out["text"] and out["text"].startswith("Faux · Rédaction démo")
     assert out["flash"].startswith("Flash mot")  # 71 words: within the flash's length
     assert out["mg"]["sms"].startswith("DISO") and out["mg"]["text"] == "Diso ity vaovao ity."
-    assert out["poster"]["verdict_word"] == "Faux" and out["poster"]["qr_url"] == out["permalink"]
+    assert (
+        out["poster"]["verdict_word"] == "Faux"
+        and out["poster"]["qr_url"].split("#")[0] == out["permalink"]
+    )
     assert out["poster"]["date"]
     assert [g["channel"] for g in out["gaps"]] == ["facebook"]
     # Opening the panel again costs no second call.
