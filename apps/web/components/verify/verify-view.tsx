@@ -12,7 +12,7 @@ import { CrewLog } from "@/components/crew/crew-log";
 import { Facts } from "@/components/crew/facts";
 import { Lecture } from "@/components/crew/lecture";
 import { PublicStrip, Reliability, RiskNote, ToneCard } from "@/components/crew/signals";
-import { type AgentEvent, type CrewResult, frDate, hostOf } from "@/components/crew/types";
+import { type AgentEvent, type CrewResult, frDate, hostOf, type Numbered } from "@/components/crew/types";
 import { claimSteps, type Step, StepLine, type StepState } from "@/components/flow/step-line";
 import { Button } from "@/components/ui/button";
 import { API_URL, api, ApiError, fetcher } from "@/lib/api";
@@ -32,6 +32,24 @@ const STALE_DAYS = 30; // the API's dates.STALE_DAYS
 const ORIGIN: Record<string, string> = { facebook: "facebook", whatsapp: "whatsapp", tiktok: "tiktok" };
 const fresh = () => Object.fromEntries(KEYS.map((key) => [key, { status: "waiting", summary: "" }])) as Record<StepKey, Run>;
 const host = hostOf;
+// Kept with the dossier: the facts and their snippets, not the pages' read text.
+const light = (list?: Numbered[]) =>
+  list?.map((x) => {
+    const copy = { ...x };
+    delete copy.passages;
+    return copy;
+  });
+
+/** What a followed dossier keeps in `item.data`: the research, the reading with its confidence, the risk. */
+export function dossierData(result: Result) {
+  const { analysis, ...research } = result;
+  delete research.tracked;
+  return {
+    research: { ...research, results: light(research.results), numbered: light(research.numbered), recheck: research.recheck && { ...research.recheck, results: light(research.recheck.results) } },
+    ...(analysis ? { analysis, verdict_suggested: analysis.verdict } : {}),
+    ...(result.risk ? { risk: result.risk } : {}),
+  };
+}
 
 /** What was pasted becomes a link to read and/or the text itself. */
 function split(input: string): { url: string | null; text: string | null } {
@@ -216,7 +234,7 @@ export function VerifyView() {
         body: [result.summary, sent?.text && sent.text !== title ? sent.text : "", result.url ?? ""].filter(Boolean).join("\n\n").slice(0, 4000),
         origin: (result.platform && ORIGIN[result.platform]) || (result.kind === "page" ? "press" : "other"),
       });
-      await api(`/workspaces/${ws}/items/${made.item_id}`, { method: "PATCH", body: JSON.stringify({ data: { research: result, verdict_suggested: result.analysis?.verdict } }) });
+      await api(`/workspaces/${ws}/items/${made.item_id}`, { method: "PATCH", body: JSON.stringify({ data: dossierData(result) }) });
       const links = [result.url, ...picked].filter((u, i, all): u is string => !!u && all.indexOf(u) === i);
       // one by one: the API checks each link before queueing it
       for (const link of links) await act({ kind: "attach_link", item_id: made.item_id, url: link }).catch(() => null);
