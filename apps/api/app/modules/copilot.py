@@ -24,12 +24,20 @@ from app.core.access import AnyMember, Db
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
 from app.core.models import Item
-from app.modules.agent import AgentContext, Tools, find_claims, search_sources, tool_loop
+from app.modules.agent import (
+    WEB_TOOLS,
+    AgentContext,
+    Tools,
+    fetch_url,
+    find_claims,
+    search_sources,
+    tool_loop,
+)
 from app.modules.guide import STATUS_FR, VERDICT_FR, GuideIn, conversation
 
 router = APIRouter(tags=["agent"])
 
-COPILOT_STEPS = 4
+COPILOT_STEPS = 5  # room for search → read → propose
 OPEN = ("to_check", "in_progress")
 MOVABLE = ("to_check", "in_progress", "verified")  # never "published": a journalist publishes
 
@@ -39,6 +47,9 @@ journalistes à travailler : lire l'état du desk, chercher dans les sources, pr
 - Pour l'état du desk (ce qui circule depuis le plus longtemps, résumé de la nuit, affirmations sans \
 source, signalements du public) : desk_overview.
 - Pour une affirmation précise : find_claims. Pour un fait dans les sources : search_sources, et cite [n].
+- Pour trouver des sources hors du desk : search_fact_checks, search_wikipedia, search_web, puis lis la \
+page avec fetch_url. Propose de joindre les bonnes avec propose_attach_link (le journaliste confirme). \
+Préfère les sources primaires et la presse reconnue aux publications de réseaux sociaux.
 - Pour agir (créer une affirmation, joindre un lien, lancer l'analyse, changer le statut, ouvrir une \
 affirmation) utilise les outils propose_* et open_claim. Rien n'est fait tant que le journaliste n'a \
 pas appuyé sur « Confirmer » : dis-le simplement, ne prétends jamais que c'est fait.
@@ -47,7 +58,7 @@ fiche de l'affirmation. Une suggestion de l'IA n'est pas un verdict. Si on te le
 ne peux pas le proposer et ouvre la fiche avec open_claim.
 - Statuts, toujours en français : to_check = « à vérifier », in_progress = « en cours » (de \
 vérification), verified = « vérifié », published = « publié ». N'écris jamais les noms anglais.
-- Cite [n] uniquement pour les passages renvoyés par search_sources. Désigne une affirmation par sa \
+- Cite [n] uniquement pour les passages et résultats renvoyés par tes outils de recherche. Désigne une affirmation par sa \
 référence (FAN-0139), sans crochets.
 - Réponds en deux à cinq phrases courtes, dans la langue demandée."""
 
@@ -214,6 +225,12 @@ COPILOT_TOOLS: Tools = {
         search_sources,
         "Search the workspace's sources and return numbered passages to cite.",
         {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
+    ),
+    **WEB_TOOLS,
+    "fetch_url": (
+        fetch_url,
+        "Read a public web page (article, post) and return its main text, numbered for citation.",
+        {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]},
     ),
     "propose_create_claim": (
         propose_create_claim,

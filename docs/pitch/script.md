@@ -9,65 +9,56 @@ Le jury doit comprendre le besoin, la solution et son fonctionnement, l'intérê
 
 | Temps | Slide | Ce qu'elle sert |
 | --- | --- | --- |
-| 0:00–0:10 | 1 · cover | Article 4 · ouverture |
-| 0:10–0:35 | 2 · Le besoin | Article 4 · le besoin / Article 5 · pertinence |
-| 0:35–0:50 | 3 · La tentation | Article 5 · pertinence (à couper si le temps manque) |
-| 0:50–1:10 | 4 · La réponse | Article 4 · la solution et son fonctionnement |
-| 1:10–2:10 | 5 · Démo | Article 5 · qualité technique et fonctionnalité |
-| 2:10–2:30 | 6 · Pour les journalistes | Article 4 · intérêt pour les médias / Article 5 · utilité, résilience informationnelle |
-| 2:30–2:50 | 7 · Et après | Article 4 · potentiel / Article 5 · potentiel de développement |
-| 2:50–3:00 | 8 · end | Article 5 · qualité du pitch (fin nette) |
+| 0:00–0:20 | 1 · cover | Article 4 · ouverture : la scène, sans se présenter |
+| 0:20–0:40 | 2 · Le besoin | Article 4 · le besoin / Article 5 · pertinence |
+| 0:40–0:55 | 3 · Le parti pris | Article 4 · la solution et son fonctionnement / Article 5 · pertinence |
+| 0:55–2:05 | 4 · Démo | Article 5 · qualité technique et fonctionnalité |
+| 2:05–2:30 | 5 · Pour les journalistes | Article 4 · intérêt pour les médias / Article 5 · utilité, résilience informationnelle |
+| 2:30–2:50 | 6 · Et après | Article 4 · potentiel / Article 5 · potentiel de développement |
+| 2:50–3:00 | 7 · end | Article 5 · qualité du pitch (fin nette) |
 
 ## 1 · Chaque rumeur a son dossier.
 
-**0:00–0:10** · cover
+**0:00–0:20** · cover
 
-- Bonjour. Nous sommes 0nlyDevs, quatre développeurs.
-- Lundi matin, la vidéo nous a posé une question simple : {{le besoin, tel que la vidéo l'a formulé, en une phrase}}.
-- Voici notre réponse. Elle s'appelle FANILO.
+- (Pas de « Bonjour, nous sommes… ». On commence par la scène.)
+- 23 h 47. Une vidéo arrive dans un groupe WhatsApp : « Analakely sous l'eau ce matin, partagez ! »
+- À minuit, 2 300 partages. À 7 h, la radio doit dire si c'est vrai.
+- {{La même scène, avec la vraie rumeur du sujet.}}
 
 ## 2 · {{Le besoin, en une phrase}}
 
-**0:10–0:35** · Le besoin
+**0:20–0:40** · Le besoin
 
-- {{Raconter le besoin avec une scène vécue, pas une définition : une heure, un lieu, une personne.}}
-- Entre 23 h 47 et 7 h, une rumeur fait le tour de la ville. La rédaction n'a que la radio du matin pour y répondre.
+- Ce problème, ce n'est pas nous qui le disons. C'est {{qui}} : « {{la citation, mot pour mot}} ».
 - {{Ce qui se passe aujourd'hui sans l'outil : ce que le journaliste fait à la main, combien de temps il y passe, ce qu'il risque.}}
+- {{Le chiffre qui prouve que le besoin est réel, s'il y en a un.}}
 
-## 3 · On aurait pu {{détecter l'IA en un clic}}.
+## 3 · Une machine ne signe pas un verdict.
 
-**0:35–0:50** · La tentation
+**0:40–0:55** · Le parti pris
 
-- On a d'abord pensé à {{la solution évidente}}. On a même commencé.
-- Puis on s'est mis à la place du journaliste à 6 h du matin. {{Pourquoi ça ne l'aide pas.}}
-- Non. Le sujet, c'est {{le vrai sujet}}.
-
-## 4 · Vérifier, c'est lever le noir.
-
-**0:50–1:10** · La réponse
-
-- Chaque rumeur devient un dossier, avec son heure et son origine.
-- On y verse les preuves : liens, PDF, photos, notes vocales transcrites en français ou en malagasy.
-- L'IA lit tout et propose un verdict, citation par citation. Une citation introuvable dans sa source est écartée.
+- On aurait pu faire {{une IA qui dit vrai ou faux}}. Non : une machine ne signe pas un verdict.
+- Alors chaque rumeur devient un dossier. On y verse les preuves, l'IA les lit et propose, citation par citation.
 - Et c'est un journaliste qui signe. Jamais la machine.
 
-## 5 · {{Titre de la démo, en une ligne}}
+## 4 · {{Titre de la démo, en une ligne}}
 
-**1:10–2:10** · Démo
+**0:55–2:05** · Démo
 
-- Plan A : démo en direct (onglet déjà ouvert, démo réinitialisée). Plan B : lancer demo.mp4 et commenter par-dessus.
-- {{Chapitre 1 : la phrase qu'on dit pendant qu'on le montre.}}
-- {{Chapitre 2 : la phrase qu'on dit pendant qu'on le montre.}}
-- {{Chapitre 3 : la phrase qu'on dit pendant qu'on le montre.}}
+- Plan A : démo en direct (onglet déjà ouvert, démo réinitialisée). Plan B : lancer demo.mp4 et commenter par-dessus. Même rumeur que l'ouverture.
+- 1. Voilà la vidéo de 23 h 47 dans la grille du desk : son heure, son origine. Elle devient un dossier, avec ses preuves.
+- 2. L'IA a lu les preuves et propose « Faux », citation par citation. Le journaliste vérifie, et il signe.
+- 3. Le lendemain, quelqu'un reçoit la même vidéo. Il demande si c'est vérifié : l'assistant retrouve le dossier et cite le verdict.
 
-## 6 · Rien ne part sans une personne.
+## 5 · Rien ne part sans une personne.
 
-**2:10–2:30** · Pour les journalistes
+**2:05–2:30** · Pour les journalistes
 
-- Pour un journaliste, ça change trois choses. {{Les trois, en une phrase chacune.}}
+- Pour un journaliste, ça change trois choses. {{Les trois, en une phrase chacune, et un chiffre si on en a un (« de 2 heures à 20 minutes »).}}
 - Et une règle : l'IA ne publie jamais. Elle propose, une personne signe.
 
-## 7 · {{Une rédaction, puis toutes.}}
+## 6 · {{Une rédaction, puis toutes.}}
 
 **2:30–2:50** · Et après
 
@@ -75,12 +66,14 @@ Le jury doit comprendre le besoin, la solution et son fonctionnement, l'intérê
 - Le public peut demander si une rumeur est déjà vérifiée, et en signaler une nouvelle.
 - {{La suite, en une phrase : avec qui, et pour quoi.}}
 
-## 8 · FANILO
+## 7 · FANILO
 
 **2:50–3:00** · end
 
-- Merci. FANILO. Chaque rumeur a son dossier.
-- (Rester sur cette slide pour les questions.)
+- 23 h 47, une rumeur. 6 h 41, vérifié.
+- FANILO. Chaque rumeur a son dossier.
+- Nous sommes 0nlyDevs : {{les quatre prénoms}}. Merci.
+- (Se taire et rester sur cette slide pour les questions.)
 
 ## Réserve
 

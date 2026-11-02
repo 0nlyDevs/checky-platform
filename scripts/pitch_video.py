@@ -285,12 +285,77 @@ def wait_ready(page: Page, hand: Hand, selector: str, timeout: int) -> None:
     raise TimeoutError(f"{selector} never showed up")
 
 
-def play(page: Page, hand: Hand, steps: list[dict], base: str, ws: str) -> None:
+class Api:
+    """Prepares the demo between scenes through the API, as the signed-in user: finds a claim by
+    its title, edits it, runs its analysis. Found ids are kept as {names} usable in paths."""
+
+    def __init__(self, pw, base: str, api: str, state: dict, ws: str):
+        self.web = pw.request.new_context(base_url=base, storage_state=state)
+        self.root = f"{api.rstrip('/')}/api/v1/workspaces/{ws}"
+        self.vars = {"ws": ws}
+
+    def fill(self, text: str) -> str:
+        for name, value in self.vars.items():
+            text = text.replace("{" + name + "}", value)
+        return text
+
+    def call(self, method: str, path: str, body: dict | None = None):
+        token = self.web.get("/api/auth/token").json()["token"]
+        res = self.web.fetch(
+            self.root + self.fill(path),
+            method=method,
+            headers={"Authorization": f"Bearer {token}"},
+            data=body,
+        )
+        if not res.ok:
+            raise RuntimeError(f"{method} {path}: {res.status} {res.text()[:200]}")
+        return res.json() if res.body() else None
+
+    def run(self, ops: list[dict]) -> None:
+        for op in ops:
+            if "find" in op:
+                items = self.call("GET", f"/items?q={op['find']}&limit=1")["items"]
+                if not items:
+                    raise RuntimeError(f"no claim matches {op['find']!r}")
+                self.vars[op.get("as", "claim")] = items[0]["id"]
+            elif "patch" in op:
+                self.call("PATCH", f"/items/{{{op['patch']}}}", op["body"])
+            elif "analyze" in op:
+                job = self.call("POST", f"/items/{{{op['analyze']}}}/analyze")
+                self.wait_job(job["id"], op.get("timeout", 150))
+            elif "wait_indexed" in op:
+                self.wait_indexed(op["wait_indexed"], op.get("timeout", 180))
+            else:
+                raise ValueError(f"unknown setup step {op}")
+
+    def wait_job(self, job_id: str, timeout: float) -> None:
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            job = self.call("GET", f"/jobs/{job_id}")
+            if job["status"] == "done":
+                return
+            if job["status"] == "failed":
+                raise RuntimeError(f"job {job_id} failed: {job['error']}")
+            time.sleep(2)
+        raise TimeoutError(f"job {job_id} still running after {timeout} s")
+
+    def wait_indexed(self, query: str, timeout: float) -> None:
+        """The demo sources are embedded by background jobs right after the reset; nothing can be
+        cited until they are done."""
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self.call("POST", "/search", {"query": query, "k": 1}):
+                return
+            time.sleep(3)
+        print("  (warning: no source is indexed yet; scenes that cite sources may show nothing)")
+
+
+def play(page: Page, hand: Hand, steps: list[dict], base: str, api: Api) -> None:
     for step in steps:
         optional = step.get("optional", False)
         try:
             if "goto" in step:
-                page.goto(base + step["goto"].replace("{ws}", ws), wait_until="load")
+                page.goto(base + api.fill(step["goto"]), wait_until="load")
                 if step.get("ready"):
                     wait_ready(page, hand, step["ready"], step.get("timeout", 60000))
                 page.wait_for_timeout(step.get("settle", 1200))
@@ -318,20 +383,16 @@ def play(page: Page, hand: Hand, steps: list[dict], base: str, ws: str) -> None:
             print(f"    (skipped optional step {step}: {type(e).__name__})")
 
 
-def wait_indexed(page: Page, api: str, ws: str, timeout: float = 180) -> None:
-    """The demo sources are embedded by background jobs right after the reset; Vérifier has
-    nothing to cite until they are done. Polls the search endpoint with the page's own JWT."""
-    token = page.evaluate("fetch('/api/auth/token').then((r) => r.json()).then((j) => j.token)")
-    url = f"{api.rstrip('/')}/api/v1/workspaces/{ws}/search"
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        res = page.request.post(
-            url, headers={"Authorization": f"Bearer {token}"}, data={"query": "riz", "k": 1}
-        )
-        if res.ok and res.json():  # a non-empty list of passages
-            return
-        page.wait_for_timeout(3000)
-    print("  (warning: no source is indexed yet; scenes that ask the sources may show nothing)")
+def warm_up(browser, state: dict, base: str, api: Api, scenes: list[dict]) -> None:
+    """Opens every page the scenes visit once, off camera, so a dev server compiles them before
+    the recording instead of during it."""
+    ctx = browser.new_context(viewport=SIZE, storage_state=state)
+    page = ctx.new_page()
+    paths = dict.fromkeys(api.fill(s["goto"]) for sc in scenes for s in sc["steps"] if "goto" in s)
+    for p in paths:
+        page.goto(base + p, wait_until="load", timeout=120000)
+        page.wait_for_timeout(1500)
+    ctx.close()
 
 
 def sign_in(pw, args, base: str) -> tuple[dict, str]:
@@ -359,7 +420,6 @@ def sign_in(pw, args, base: str) -> tuple[dict, str]:
         page.click("button[type=submit]")
     page.wait_for_url(re.compile(r"/w/[^/]+/"), timeout=90000)
     ws = re.search(r"/w/([^/]+)/", page.url).group(1)
-    wait_indexed(page, args.api_url, ws)
     state = ctx.storage_state()
     ctx.close()
     browser.close()
@@ -375,7 +435,7 @@ def main() -> None:
     ap.add_argument(
         "--api-url",
         default="http://localhost:8000",
-        help="the API, to wait for the demo sources to be indexed",
+        help="the API, for the setup steps that prepare the demo between scenes",
     )
     ap.add_argument("--email")
     ap.add_argument("--password")
@@ -403,7 +463,10 @@ def main() -> None:
         cam = Camera(pw, tmp)
         state, ws = sign_in(pw, args, base)
         print(f"  workspace {ws}")
+        api = Api(pw, base, args.api_url, state, ws)
+        api.run(spec.get("setup", []))
         browser = pw.chromium.launch(executable_path=chromium(), headless=not args.headed)
+        warm_up(browser, state, base, api, spec["scenes"])
 
         clips: list[Path] = []
         foot = spec.get("footer", "FANILO · démo")
@@ -425,6 +488,9 @@ def main() -> None:
             sid = scene["id"]
             final = OUT / "scenes" / f"{sid}.mp4"
             tab = f"{n} · {scene['chapter']}"
+            api.run(
+                scene.get("before", [])
+            )  # also for kept scenes, so the demo moves on the same way
             if args.only and sid not in args.only and final.exists():
                 print(f"  {sid}: kept")
                 clips.append(final)
@@ -453,7 +519,7 @@ def main() -> None:
             page = ctx.new_page()
             started = time.monotonic()
             try:
-                play(page, Hand(page), scene["steps"], base, ws)
+                play(page, Hand(page), scene["steps"], base, api)
             except Exception:
                 page.screenshot(path=str(OUT / f"failed-{sid}.png"))
                 print(f"  {sid}: failed, see {OUT / f'failed-{sid}.png'}")

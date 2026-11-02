@@ -29,7 +29,7 @@ class ItemPatch(BaseModel):
     type: str | None = None
     status: str | None = None
     tags: list[str] | None = None
-    # Merged into the existing JSONB, so day-one fields need no migration.
+    # Merged into the existing JSONB, so new fields need no migration.
     data: dict[str, Any] | None = None
 
 

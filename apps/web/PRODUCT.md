@@ -15,9 +15,9 @@ web
 
 ## Product Purpose
 
-FANILO is a working base for a fact-checking and information-resilience tool for media professionals, built before the FANILO Hackathon (IFM and the French Embassy press service, Antananarivo, 2–4 November 2026). The exact problem is revealed at kickoff, so the product is a set of reusable modules (workspaces, items, files, realtime, jobs, AI: model gateway, RAG with citations, speech-to-text, agent) plus five pre-built features that can be reshaped on day one: claim checker, verification board, interview to quotes, image check, verdict card.
+FANILO is a fact-checking and information-resilience tool for media professionals in Madagascar, made for the FANILO Hackathon (IFM and the French Embassy press service, Antananarivo, 2–4 November 2026). It is built from general modules (workspaces, items, files, realtime, jobs, AI: model gateway, RAG with citations, speech-to-text, agent) and five features that can be reshaped quickly: claim checker, verification board, interview to quotes, image check, verdict card.
 
-Success: on day one a new feature goes from idea to deployed and demoable in under two hours, and the claim checker and verification board work end to end on seed data.
+Success: a new feature goes from idea to deployed and demoable in under two hours, and the claim checker and verification board work end to end on seed data.
 
 ## Positioning
 
@@ -37,12 +37,12 @@ Built for the local newsroom reality: French and Malagasy content, field conditi
 - Roles: `admin`, `editor`, `journalist`, one per workspace member.
 - Verdict scale is fixed: `true`, `misleading`, `false`, `unverifiable`. The app suggests; it never publishes a verdict on its own.
 - Image signals are hints, never proof; the app does not claim to detect AI-generated images with certainty.
-- Hackathon rules: every third-party component listed with version and license (`THIRD_PARTY.md`); pre-built work declared in the pitch.
+- Hackathon rules: every third-party component listed with version and license (`THIRD_PARTY.md`).
 - Performance budget: first load under 3 s on 3G-like conditions; main-page JS under 250 KB gzipped.
 
 ## Brand Commitments
 
-- Working name **FANILO**, kept in one config file with one SVG logo so it can change on day one.
+- Working name **FANILO**, kept in one config file with one SVG logo so it can change in one place.
 - Voice: calm, factual, plain French; no hype.
 
 ## Evidence on Hand

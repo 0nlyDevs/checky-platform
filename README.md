@@ -1,12 +1,11 @@
-# FANILO base
+# FANILO
 
-Base platform for the **FANILO Hackathon** (IFM + French Embassy press service, Antananarivo): an
-app for journalists to verify claims, track misinformation and spot AI-generated content.
+An app for newsrooms in Madagascar to verify claims, track misinformation and spot AI-generated
+content, made for the **FANILO Hackathon** (IFM + French Embassy press service, Antananarivo).
 
-The hackathon problem is revealed on **Mon 2 Nov 2026, 08:00**. Hand-in is **Tue 3 Nov, 20:00**
-and the pitch is on **Wed 4 Nov**. This repo is built beforehand (allowed by the organisers, and
-it must be declared in the pitch) so that on day one a new feature goes from idea to deployed
-demo in under 2 hours.
+The hackathon problem is presented on **Mon 2 Nov 2026, 08:00**. Hand-in is **Tue 3 Nov, 20:00**
+and the pitch is on **Wed 4 Nov**. A new feature should go from idea to deployed demo in under
+2 hours.
 
 - Product requirements: [`docs/PRD.md`](docs/PRD.md), a copy of the [PRD Claude Doc](https://claude.ai/artifact/XFypCd4WmGLBm6pMbGMwrv) (keep both in sync)
 - Design rules: [`apps/web/DESIGN.md`](apps/web/DESIGN.md) and [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md)

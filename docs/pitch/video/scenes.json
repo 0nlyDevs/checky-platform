@@ -1,18 +1,39 @@
 {
-  "_": "The demo video, scene by scene. Each scene = a chapter card (chapter, title, caption), then steps played in the real app. Steps: goto (path, {ws} = the workspace; ready: a selector to wait for before going on, clicking « Réessayer » if the page failed to load), click / hover (Playwright selector), type ([selector, text]), press (key), scroll (pixels), wait (ms), wait_for (selector, timeout ms), optional: true to skip a step whose element is missing. hold = ms kept on screen at the end. Anything in {{double braces}} is to fill on Monday. Film with: uv run --with playwright python -I scripts/pitch_video.py",
+  "_": "The demo video: one rumour followed from its arrival to the public. Each scene = a chapter card (chapter, title, caption), then steps played in the real app. setup (once, after sign-in) and before (per scene) prepare the demo through the API: find (a claim by title words, kept as {as}), patch (a claim, with a body), analyze (runs the AI analysis and waits), wait_indexed (waits for the sources to be searchable). Steps: goto (path, {ws} and found names are replaced; ready: a selector to wait for, clicking « Réessayer » if the page failed to load), click / hover (Playwright selector), type ([selector, text]), press (key), scroll (pixels), wait (ms), wait_for (selector, timeout ms), optional: true to skip a step whose element is missing. hold = ms kept on screen at the end. The rumour (Analakely, fictional) is the demo data's: swap it for the real story's. Film with: uv run --with playwright python -I scripts/pitch_video.py",
   "footer": "FANILO · démo · exemple fictif",
+  "setup": [
+    {
+      "wait_indexed": "Analakely"
+    },
+    {
+      "find": "Analakely",
+      "as": "claim"
+    },
+    {
+      "patch": "claim",
+      "body": {
+        "status": "in_progress",
+        "data": {
+          "verdict": null
+        }
+      }
+    },
+    {
+      "analyze": "claim"
+    }
+  ],
   "title": {
-    "tab": "Démo",
-    "title": "Chaque rumeur a son dossier.",
-    "caption": "{{Le besoin en une phrase, tel que la vidéo l'a posé.}} Toute rumeur montrée est fictive.",
-    "seconds": 2.4
+    "tab": "Pièce 1",
+    "title": "Une vidéo arrive sur WhatsApp.",
+    "caption": "Elle dit qu'Analakely est sous l'eau ce matin. À 7 h, il faudra dire si c'est vrai. Exemple fictif.",
+    "seconds": 2.6
   },
   "scenes": [
     {
-      "id": "grille",
-      "chapter": "La grille du jour",
-      "title": "Ce qui circule depuis le plus longtemps",
-      "caption": "Chaque affirmation est un bloc, de sa première apparition à maintenant. Le desk voit d'un coup d'œil ce qui traîne.",
+      "id": "arrivee",
+      "chapter": "La rumeur arrive",
+      "title": "Une rumeur, un dossier",
+      "caption": "La vidéo entre dans la grille du desk : son heure, son origine, depuis quand elle circule.",
       "steps": [
         {
           "goto": "/w/{ws}/affirmations",
@@ -20,135 +41,79 @@
           "settle": 800
         },
         {
-          "hover": "text=prix du riz"
-        },
-        {
-          "wait": 1200
-        },
-        {
-          "hover": "text=Mangasoavina"
-        }
-      ],
-      "hold": 2200
-    },
-    {
-      "id": "dossier",
-      "chapter": "Le dossier",
-      "title": "Son heure, ses sources, ce que l'IA propose",
-      "caption": "Le dossier garde l'origine, l'heure, les preuves jointes et le verdict suggéré par l'IA, citation par citation.",
-      "steps": [
-        {
-          "goto": "/w/{ws}/affirmations",
-          "ready": "text=FAN-",
-          "settle": 800
-        },
-        {
-          "click": "a:has-text(\"prix du riz\")"
-        },
-        {
-          "wait_for": "text=Ce que disent les sources",
-          "timeout": 30000,
-          "optional": true
-        },
-        {
-          "wait": 1800
-        },
-        {
-          "scroll": 500
-        },
-        {
-          "wait": 1000
-        },
-        {
-          "scroll": 500
-        }
-      ],
-      "hold": 2200
-    },
-    {
-      "id": "verdict",
-      "chapter": "Un journaliste signe",
-      "title": "Rien ne part sans une personne",
-      "caption": "L'IA suggère « trompeur ». Le journaliste lit les citations, puis confirme ou corrige. Aucun verdict ne part sans lui.",
-      "steps": [
-        {
-          "goto": "/w/{ws}/affirmations",
-          "ready": "text=FAN-",
-          "settle": 800
-        },
-        {
-          "click": "a:has-text(\"prix du riz\")"
-        },
-        {
-          "wait_for": "text=Ce que disent les sources",
-          "timeout": 30000,
-          "optional": true
-        },
-        {
-          "wait": 1200
-        },
-        {
-          "hover": "text=Suggestion IA"
-        },
-        {
-          "wait": 900
-        },
-        {
-          "click": "text=Examiner"
+          "hover": "text=inondation d'Analakely"
         },
         {
           "wait": 1400
         },
         {
-          "click": "text=Confirmer «"
+          "click": "a:has-text(\"inondation d'Analakely\")"
         },
         {
-          "wait": 1800
-        }
-      ],
-      "hold": 2500
-    },
-    {
-      "id": "verifier",
-      "chapter": "Vérifier",
-      "title": "Une question à toutes les sources",
-      "caption": "La réponse ne s'appuie que sur les sources de la rédaction et cite chaque passage. Sans source, elle le dit.",
-      "steps": [
-        {
-          "goto": "/w/{ws}/verifier",
-          "ready": "textarea",
-          "settle": 800
-        },
-        {
-          "type": [
-            "textarea",
-            "Le prix du riz a-t-il doublé à Antananarivo ?"
-          ]
-        },
-        {
-          "wait": 600
-        },
-        {
-          "click": "[aria-label=\"Demander\"]"
-        },
-        {
-          "wait_for": "text=Passages cités",
+          "wait_for": "text=Ce que disent les sources",
           "timeout": 90000
         },
         {
-          "wait": 2500
+          "wait": 1200
+        },
+        {
+          "hover": "text=Preuves"
+        }
+      ],
+      "hold": 1800
+    },
+    {
+      "id": "signature",
+      "chapter": "L'IA lit, le journaliste signe",
+      "title": "Rien ne part sans une personne",
+      "caption": "L'IA a lu les preuves et propose un verdict, citation par citation. Le journaliste vérifie, puis signe.",
+      "steps": [
+        {
+          "goto": "/w/{ws}/affirmations/{claim}",
+          "ready": "text=Ce que disent les sources",
+          "settle": 800
+        },
+        {
+          "hover": "text=Ce que disent les sources"
         },
         {
           "scroll": 300
+        },
+        {
+          "wait": 1800
+        },
+        {
+          "click": "text=Examiner"
+        },
+        {
+          "wait": 1500
+        },
+        {
+          "click": "text=Confirmer «"
+        },
+        {
+          "wait": 1500
+        },
+        {
+          "hover": "text=la carte est prête",
+          "optional": true
         }
       ],
-      "hold": 3000
+      "hold": 2200
     },
     {
       "id": "public",
-      "chapter": "Pour le public",
+      "chapter": "Le public la retrouve",
       "title": "Est-ce déjà vérifié ?",
-      "caption": "Sans compte, n'importe qui colle le message reçu : l'assistant répond uniquement à partir des verdicts publiés, et cite les dossiers.",
+      "caption": "Sans compte, n'importe qui colle le message reçu : l'assistant retrouve le dossier et cite le verdict.",
+      "before": [
+        {
+          "patch": "claim",
+          "body": {
+            "status": "published"
+          }
+        }
+      ],
       "steps": [
         {
           "goto": "/verifies",
@@ -162,7 +127,7 @@
           ]
         },
         {
-          "wait": 600
+          "wait": 500
         },
         {
           "click": "text=Demander à l'assistant"
@@ -173,16 +138,16 @@
           "optional": true
         },
         {
-          "wait": 2500
+          "wait": 2000
         }
       ],
-      "hold": 3000
+      "hold": 2500
     }
   ],
   "end": {
-    "tab": "Fin",
-    "title": "FANILO",
-    "caption": "{{adresse de l'app}} · 0nlyDevs · Hackathon FANILO, novembre 2026",
-    "seconds": 2.5
+    "tab": "Le matin",
+    "title": "Vérifié.",
+    "caption": "FANILO · {{adresse de l'app}} · 0nlyDevs",
+    "seconds": 2.6
   }
 }

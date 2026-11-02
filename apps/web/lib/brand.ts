@@ -1,4 +1,4 @@
-// Product name and logo live here only, so they can change on day one.
+// Product name and logo live here only, so they can change in one place.
 export const brand = {
   name: "FANILO",
   tagline: "Vérification de l'information",

@@ -18,7 +18,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field
 from sqlalchemy import or_, select
 
-from app.core import ai, embed
+from app.core import ai, embed, websearch
 from app.core.access import AnyMember
 from app.core.db import SessionLocal
 from app.core.models import Item
@@ -112,6 +112,73 @@ async def find_claims(ctx: AgentContext, query: str) -> tuple[str, str]:
     return f"{len(rows)} affirmations", json.dumps(rows, ensure_ascii=False)
 
 
+async def _found(ctx: AgentContext, results: list[dict[str, Any]], what: str) -> tuple[str, str]:
+    lines = []
+    for r in results:
+        n = ctx.cite(r["title"], r["url"], r["snippet"])
+        lines.append(f"[{n}] {r['title']}\n{r['url']}\n{r['snippet'][:700]}")
+    if not results:
+        return f"aucun résultat ({what})", "No result. Try other words, or another language."
+    summary = f"{len(results)} résultats ({what}), dont « {results[0]['title'][:60]} »"
+    return summary, "\n\n".join(lines)
+
+
+async def search_web(ctx: AgentContext, query: str) -> tuple[str, str]:
+    try:
+        return await _found(ctx, await websearch.web(query), "web")
+    except websearch.SearchUnavailable as e:
+        return "recherche web indisponible", f"Web search is unavailable right now ({e})."
+
+
+async def search_wikipedia(
+    ctx: AgentContext, query: str, lang: str | None = None
+) -> tuple[str, str]:
+    try:
+        return await _found(ctx, await websearch.wikipedia(query, lang or "fr"), "Wikipedia")
+    except websearch.SearchUnavailable as e:
+        return "Wikipedia indisponible", f"Wikipedia is unavailable right now ({e})."
+
+
+async def search_fact_checks(ctx: AgentContext, query: str) -> tuple[str, str]:
+    try:
+        return await _found(ctx, await websearch.fact_checks(query), "fact-checkeurs")
+    except websearch.SearchUnavailable as e:
+        return "recherche indisponible", f"Search is unavailable right now ({e})."
+
+
+QUERY = {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
+WEB_TOOLS = {
+    "search_web": (
+        search_web,
+        (
+            "Search the web (news, posts, official pages). Returns numbered results with links; read "
+            "one with fetch_url before relying on it."
+        ),
+        QUERY,
+    ),
+    "search_wikipedia": (
+        search_wikipedia,
+        "Search Wikipedia and return the opening summary of the best articles.",
+        {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string"},
+                "lang": {"type": "string", "enum": ["fr", "mg", "en"]},
+            },
+            "required": ["query"],
+        },
+    ),
+    "search_fact_checks": (
+        search_fact_checks,
+        (
+            "Search articles already published by fact-checkers (AFP Factuel, Africa Check, France 24 "
+            "Observers, Les Décodeurs…) about the claim."
+        ),
+        QUERY,
+    ),
+}
+
+
 Tool = Callable[..., Awaitable[tuple[str, str]]]
 Tools = dict[str, tuple[Tool, str, dict[str, Any]]]
 TOOLS: Tools = {
@@ -130,12 +197,16 @@ TOOLS: Tools = {
         "Find claims already tracked by the newsroom whose title or context contains the words.",
         {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
     ),
+    **WEB_TOOLS,
 }
 
 SYSTEM = """Tu es l'agent de vérification d'une rédaction à Madagascar. Tu utilises les outils pour \
 trouver des éléments, puis tu réponds.
-- Cherche d'abord dans les sources de l'espace (search_sources). Lis un lien (fetch_url) s'il est fourni \
-ou s'il apparaît dans les passages.
+- Cherche d'abord dans les sources de l'espace (search_sources). Si elles ne suffisent pas, cherche \
+dehors : search_fact_checks (déjà vérifié ailleurs ?), search_wikipedia (faits établis), search_web \
+(presse, pages officielles, publications). Lis la page (fetch_url) avant de t'appuyer sur un résultat.
+- Un résultat web n'est pas une preuve en soi : dis d'où vient l'information et préfère les sources \
+primaires (institutions, presse reconnue) aux réseaux sociaux.
 - Ta réponse finale ne s'appuie que sur ce que les outils ont renvoyé et cite les passages [n].
 - Si rien ne permet de conclure, dis-le et indique quoi chercher.
 - Réponds dans la langue de la question, en 3 à 6 phrases."""

@@ -179,27 +179,20 @@ const render = {
     });
   },
 
-  refusal(s) {
+  // The temptation, refused on the left; the case file that replaces it on the right.
+  stance(s) {
     const slide = contentSlide(s, PITCH);
-    anton(slide, s.stat.value, { x: M, y: TOP, w: 6.6, h: 1.9, fontSize: 110, valign: "bottom", objectName: "stat" });
-    body(slide, s.stat.text, { x: M, y: TOP + 2.1, w: 6.2, h: 0.9, fontSize: 22 });
-    typed(slide, s.stat.source, { x: M, y: TOP + 3.2, w: 6.2, h: 0.3, color: C.accent3 });
-    stamp(slide, s.stamp, 8.3, TOP + 0.9, 96);
-  },
-
-  method(s) {
-    const slide = contentSlide(s, PITCH);
-    card(slide, M, TOP, CW, 4.1, 0.25);
-    const ix = M + 0.45, iw = CW - 0.9, gap = 0.35;
-    typed(slide, s.report, { x: ix, y: TOP + 0.35, w: 8, h: 0.3, color: C.accent3 });
-    const colW = (iw - gap * (s.steps.length - 1)) / s.steps.length;
+    typed(slide, s.temptation.label, { x: M, y: TOP + 0.15, w: 5.0, h: 0.3, fontSize: 14, color: C.accent3 });
+    body(slide, s.temptation.text, { x: M, y: TOP + 0.6, w: 5.0, h: 1.5, fontSize: 26 });
+    stamp(slide, s.stamp, M + 0.5, TOP + 2.35, 72);
+    const cx = 6.75, cw = 13.333 - M - cx;
+    card(slide, cx, TOP, cw, 4.1, 0.3);
+    typed(slide, s.report, { x: cx + 0.45, y: TOP + 0.35, w: cw - 0.9, h: 0.3, color: C.accent3 });
     s.steps.forEach(([time, head], i) => {
-      const x = ix + i * (colW + gap);
-      anton(slide, time, { x, y: TOP + 0.95, w: colW, h: 0.75, fontSize: 40, objectName: `time ${time}` });
-      body(slide, head, { x, y: TOP + 1.85, w: colW, h: 0.9, fontSize: 20, bold: true });
+      const y = TOP + 0.9 + i * 0.75;
+      anton(slide, time, { x: cx + 0.45, y, w: 1.3, h: 0.55, fontSize: 28, valign: "middle", objectName: `time ${time}` });
+      body(slide, head, { x: cx + 1.9, y, w: cw - 2.35, h: 0.55, fontSize: 20, bold: i === s.steps.length - 1, valign: "middle" });
     });
-    typed(slide, s.signature, { x: ix, y: TOP + 3.4, w: 6, h: 0.3 });
-    stamp(slide, "Vérifié", 9.9, TOP + 3.1, 30, -9);
   },
 
   demo(s) {

@@ -8,6 +8,7 @@ import asyncio
 import hashlib
 import io
 import ipaddress
+import re
 import socket
 import uuid
 from typing import Any
@@ -91,6 +92,39 @@ def extract_page(html: str, url: str) -> dict[str, Any]:
     }
 
 
+# Traces generators and editors leave inside a file (EXIF, PNG text chunks, XMP, C2PA manifests).
+# Finding one is a strong hint; finding none proves nothing (re-saving or a screenshot strips them).
+# (marker, label, searched in the whole file too); ordinary words are only matched in metadata text.
+AI_MARKERS = [
+    ("trainedalgorithmicmedia", "IPTC : média généré par IA", True),
+    ("compositewithtrainedalgorithmicmedia", "IPTC : retouché par IA", True),
+    ("midjourney", "Midjourney", True),
+    ("stable diffusion", "Stable Diffusion", True),
+    ("adobe firefly", "Adobe Firefly", True),
+    ("dall-e", "DALL·E", True),
+    ("dall·e", "DALL·E", True),
+    ("gpt-image", "OpenAI", True),
+    ("comfyui", "ComfyUI", False),
+    ("imagen", "Google Imagen", False),
+    ("grok", "Grok", False),
+    ("flux", "FLUX", False),
+]
+C2PA_MARKERS = (b"c2pa", b"jumbf")
+
+
+def ai_signals(raw: bytes, texts: list[str]) -> dict[str, Any]:
+    """Generator names found in the file, and whether it carries Content Credentials (C2PA)."""
+    blob = raw[:4_000_000].lower()
+    meta_text = " ".join(texts).lower()
+    whole = meta_text + " " + blob.decode("latin-1")
+    found = []
+    for marker, label, anywhere in AI_MARKERS:
+        hay = whole if anywhere else meta_text
+        if re.search(rf"(?<![a-z]){re.escape(marker)}(?![a-z])", hay) and label not in found:
+            found.append(label)
+    return {"ai_markers": found, "content_credentials": any(m in blob for m in C2PA_MARKERS)}
+
+
 def image_meta(raw: bytes) -> dict[str, Any]:
     """Readable EXIF tags, camera, date and GPS when present."""
     from PIL import ExifTags, Image
@@ -102,6 +136,8 @@ def image_meta(raw: bytes) -> dict[str, Any]:
         ifd = exif.get_ifd(ExifTags.IFD.Exif)
         tags.update({ExifTags.TAGS.get(k, str(k)): v for k, v in ifd.items()})
         gps = exif.get_ifd(ExifTags.IFD.GPSInfo)
+        # PNG text chunks: Stable Diffusion writes "parameters", ComfyUI "prompt" and "workflow".
+        chunks = [str(v)[:2000] for v in img.info.values() if isinstance(v, (str, bytes))]
     picked = {
         k: str(tags[k])[:200]
         for k in ("Make", "Model", "Software", "DateTimeOriginal", "DateTime", "Artist")
@@ -110,6 +146,8 @@ def image_meta(raw: bytes) -> dict[str, Any]:
     if gps:
         picked["GPS"] = {ExifTags.GPSTAGS.get(k, str(k)): str(v)[:100] for k, v in gps.items()}
     meta["exif"] = picked
+    texts = [str(v) for v in tags.values() if isinstance(v, (str, bytes))] + chunks
+    meta.update(ai_signals(raw, texts))
     return meta
 
 

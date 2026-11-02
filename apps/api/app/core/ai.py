@@ -23,11 +23,13 @@ import logging
 import time
 import uuid
 from collections.abc import AsyncIterator, Coroutine
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal, overload
 
 import httpx
 
+from app.core import claude, keys
 from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.models import AiCacheEntry, AiCall
@@ -39,6 +41,8 @@ PROVIDERS: dict[str, tuple[str, str]] = {
     "groq": ("https://api.groq.com/openai/v1", "openai/gpt-oss-120b"),
     "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-3.5-flash-lite"),
     "nvidia": ("https://integrate.api.nvidia.com/v1", "nvidia/nemotron-3.5-lightning-30b-a3b"),
+    # Not OpenAI-compatible: app/core/claude.py translates (official anthropic SDK).
+    "claude": ("https://api.anthropic.com", claude.DEFAULT_MODEL),
 }
 
 # Tests swap these for an httpx.MockTransport and a no-op sleep.
@@ -56,13 +60,13 @@ class Provider:
 
 # In-process state: which key of each provider goes first next time, and keys set aside until
 # a monotonic time after a 429 or repeated failures.
-_turn: dict[str, int] = {}
-_cooldown: dict[tuple[str, str], float] = {}
+# (Shared with embeddings, transcription and voice through app.core.keys.)
+_turn = keys._turn
+_cooldown = keys._cooldown
 
 
 def _keys(name: str) -> list[str]:
-    raw = getattr(get_settings(), f"{name}_api_key", "") or ""
-    return [k.strip() for k in raw.split(",") if k.strip()]
+    return keys.split(getattr(get_settings(), f"{name}_api_key", ""))
 
 
 def providers(prompt_tokens: int | None = None) -> list[Provider]:
@@ -77,14 +81,14 @@ def providers(prompt_tokens: int | None = None) -> list[Provider]:
         if name not in PROVIDERS:
             log.warning("unknown LLM provider %r in LLM_PROVIDERS", name)
             continue
-        keys = _keys(name)
-        if not keys:
+        key_list = _keys(name)
+        if not key_list:
             continue
-        start = _turn.get(name, 0) % len(keys)
+        start = _turn.get(name, 0) % len(key_list)
         _turn[name] = start + 1
         base_url, default_model = PROVIDERS[name]
         model = getattr(s, f"llm_model_{name}", "") or default_model
-        out.extend(Provider(name, base_url, k, model) for k in keys[start:] + keys[:start])
+        out.extend(Provider(name, base_url, k, model) for k in key_list[start:] + key_list[:start])
     if prompt_tokens:
         fits = [
             p
@@ -119,6 +123,7 @@ class Completion:
     tokens_in: int | None = None
     tokens_out: int | None = None
     cached: bool = False
+    raw: list[dict[str, Any]] | None = None  # Claude's content blocks, replayed to Claude only
 
     @property
     def message(self) -> dict[str, Any]:
@@ -126,6 +131,8 @@ class Completion:
         msg: dict[str, Any] = {"role": "assistant", "content": self.content}
         if self.tool_calls:
             msg["tool_calls"] = self.tool_calls
+        if self.raw:
+            msg["anthropic_content"] = self.raw
         return msg
 
 
@@ -153,6 +160,8 @@ def _replay(provider: Provider, messages) -> list[dict[str, Any]]:
     reject that field, so it is dropped for them."""
     out = []
     for m in messages:
+        if "anthropic_content" in m and provider.name != "claude":
+            m = {k: v for k, v in m.items() if k != "anthropic_content"}
         if m.get("role") == "assistant" and m.get("tool_calls"):
             calls = []
             for c in m["tool_calls"]:
@@ -168,6 +177,19 @@ def _replay(provider: Provider, messages) -> list[dict[str, Any]]:
             m = {**m, "tool_calls": calls}
         out.append(m)
     return out
+
+
+@contextmanager
+def _claude_errors():
+    """Claude's SDK errors in the gateway's terms: 429/5xx/timeouts retry or cool down."""
+    try:
+        yield
+    except _Retryable:
+        raise
+    except Exception as e:
+        if (kind := claude.classify(e)) is not None:
+            raise _Retryable(str(e)[:300], kind[1], kind[0]) from e
+        raise
 
 
 def _body(provider: Provider, messages, tools, stream: bool, params) -> dict[str, Any]:
@@ -269,6 +291,19 @@ async def check_providers() -> dict[str, dict[str, Any]]:
         if p is None:
             return name, {"status": "not_configured"}
         started = time.monotonic()
+        if p.name == "claude":
+            try:
+                await claude.check(p.api_key)
+                status, detail = "up", None
+            except Exception as e:  # noqa: BLE001 - any failure means down
+                status, detail = "down", type(e).__name__
+            latency = int((time.monotonic() - started) * 1000)
+            return name, {
+                "status": status,
+                "model": p.model,
+                "latency_ms": latency,
+                "detail": detail,
+            }
         try:
             async with httpx.AsyncClient(transport=_transport, timeout=5) as http:
                 resp = await http.get(
@@ -327,6 +362,14 @@ async def _complete(messages, tools, workspace_id, params) -> Completion:
         return hit
 
     async def attempt(provider: Provider, started: float) -> Completion:
+        if provider.name == "claude":
+            with _claude_errors():
+                got = await claude.complete(
+                    provider.api_key, provider.model, _replay(provider, messages), tools, params
+                )
+            result = Completion(provider=provider.name, **got)
+            await _log(provider, started, None, workspace_id, result.tokens_in, result.tokens_out)
+            return result
         async with _client() as http:
             resp = await http.post(
                 f"{provider.base_url}/chat/completions",
@@ -379,6 +422,20 @@ class Stream:
 
         async def attempt(provider: Provider, started: float):
             # Open the stream and read up to the first event, so failures here can fall back.
+            if provider.name == "claude":
+                msgs = _replay(provider, self.messages)
+                opened = claude.OpenStream(
+                    provider.api_key, provider.model, msgs, self.tools, self.params
+                )
+                try:
+                    with _claude_errors():
+                        await opened.open()
+                        events = opened.events()
+                        first = await anext(events, None)
+                except BaseException:
+                    await opened.aclose()
+                    raise
+                return provider, started, opened, events, first
             http = _client()
             try:
                 req = http.build_request(
@@ -429,6 +486,7 @@ class Stream:
             await _log(provider, started, error, self.workspace_id, *tokens)
 
         self.completion = Completion(
+            raw=getattr(http, "raw", None),
             content="".join(content),
             provider=provider.name,
             model=model,

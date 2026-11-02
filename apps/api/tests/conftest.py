@@ -84,6 +84,9 @@ def _clean_db():
     from app.modules import guide
 
     guide._GUIDES.clear()
+    from app.core import websearch
+
+    websearch._cache.clear()
     yield
 
     async def truncate():

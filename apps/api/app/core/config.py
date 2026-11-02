@@ -27,14 +27,23 @@ class Settings(BaseSettings):
 
     # AI gateway: providers are tried in this order; one without a key is skipped. Each *_API_KEY
     # may hold several keys separated by commas (one per teammate); they are used in turn.
-    llm_providers: str = "groq,gemini,nvidia"
+    llm_providers: str = "groq,gemini,nvidia,claude"
     groq_api_key: str = ""
     gemini_api_key: str = ""
     nvidia_api_key: str = ""
+    claude_api_key: str = ""
+    # Optional: steadier web search for the agent (without it, DuckDuckGo needs no key).
+    brave_api_key: str = ""
+    # Optional: Google Fact Check Tools (claim reviews by fact-checkers worldwide), a Google Cloud
+    # API key with that API enabled.
+    google_factcheck_api_key: str = ""
     # Empty means the gateway's default model for that provider.
     llm_model_groq: str = ""
     llm_model_gemini: str = ""
     llm_model_nvidia: str = ""
+    llm_model_claude: str = ""
+    # Claude thinks before answering; "low" keeps chat answers quick and cheap.
+    claude_effort: str = "low"
     ai_timeout: float = 30.0
     # Embeddings for RAG. Chosen on 25 Oct: both Gemini models scored 18/18 on French, Malagasy
     # and cross-language retrieval; embedding-2 is the newer one. Never change mid-event without
@@ -65,6 +74,7 @@ class Settings(BaseSettings):
     llm_max_prompt_tokens_groq: int = 6000
     llm_max_prompt_tokens_gemini: int = 0
     llm_max_prompt_tokens_nvidia: int = 0
+    llm_max_prompt_tokens_claude: int = 0
     # How long a provider key is set aside after a 429 or repeated failures (seconds).
     ai_cooldown: float = 30.0
 

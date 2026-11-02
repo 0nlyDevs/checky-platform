@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 import {
   AudioLines,
+  BadgeCheck,
   Check,
   Copy,
   ExternalLink,
@@ -67,7 +68,7 @@ function exifDate(v: string) {
 }
 
 function ImageFacts({ source }: { source: Source }) {
-  const meta = (source.file?.meta ?? {}) as { exif?: Record<string, unknown> };
+  const meta = (source.file?.meta ?? {}) as { exif?: Record<string, unknown>; ai_markers?: string[]; content_credentials?: boolean };
   const exif = meta.exif ?? {};
   const camera = [exif.Make, exif.Model].filter(Boolean).join(" ");
   const date = (exif.DateTimeOriginal ?? exif.DateTime) as string | undefined;
@@ -87,6 +88,18 @@ function ImageFacts({ source }: { source: Source }) {
             </li>
           )}
         </ul>
+      )}
+      {!!meta.ai_markers?.length && (
+        <p className="flex items-start gap-1.5 font-medium text-verdict-misleading-ink">
+          <Sparkles className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          {t.sources.aiMarkers(meta.ai_markers.join(", "))}
+        </p>
+      )}
+      {meta.content_credentials && (
+        <p className="flex items-start gap-1.5">
+          <BadgeCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          {t.sources.contentCredentials}
+        </p>
       )}
       {source.duplicates > 0 && (
         <p className="flex items-center gap-1.5 font-medium">

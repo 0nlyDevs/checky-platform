@@ -360,6 +360,8 @@ export const fr = {
     kinds: { url: "Lien", pdf: "PDF", image: "Image", audio: "Audio", text: "Texte" } as Record<string, string>,
     exifNone: "Aucune métadonnée EXIF : souvent retirée par Facebook et WhatsApp, ce n'est pas une preuve.",
     exifCamera: (camera: string) => `Appareil : ${camera}`,
+    aiMarkers: (names: string) => `Traces d'un générateur d'images IA dans le fichier : ${names}. Indice fort, à confirmer par le contexte.`,
+    contentCredentials: "Le fichier porte des identifiants de contenu (C2PA) : son origine et ses retouches peuvent être lues sur contentcredentials.org/verify.",
     exifDate: (date: string) => `Prise le ${date}`,
     exifGps: "Position GPS présente dans le fichier",
     duplicates: (n: number) => (n === 1 ? "Déjà présente une autre fois dans l'espace" : `Déjà présente ${n} autres fois dans l'espace`),

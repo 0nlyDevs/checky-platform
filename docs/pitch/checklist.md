@@ -5,8 +5,8 @@ Qui : {{nom}} tient cette liste et coche. Une case non cochée à 7 h 30 mercred
 ## Lundi 2 novembre, 8 h 30 (juste après la vidéo du besoin)
 
 - [ ] Noter mot pour mot la phrase du besoin et une citation de la vidéo → `docs/pitch/deck/content.js` (`need.title`, `need.quote`).
-- [ ] Décider en 10 minutes ce qu'on garde, renomme ou retire du socle (grille, tableau, sources, Vérifier, carte, public).
-- [ ] Écrire les 3 chapitres de la démo dans `video/scenes.json` (titres seulement ; les étapes viendront quand les écrans existeront).
+- [ ] Décider en 10 minutes ce qu'on garde, renomme ou retire de l'app (grille, tableau, sources, Vérifier, carte, public).
+- [ ] Choisir **la** rumeur qu'on suivra du début à la fin (ouverture, démo, fin) et la remplacer partout : `deck/content.js` et `video/scenes.json`.
 - [ ] Désigner qui parle et qui tient le clavier (`team.speaker`, `team.driver`).
 
 ## Mardi 3 novembre, 18 h → 20 h (le gel est à 20 h, pas une minute de plus)

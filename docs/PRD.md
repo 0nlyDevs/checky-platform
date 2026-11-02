@@ -1,41 +1,38 @@
-# FANILO Hackathon Base Platform – PRD
+# FANILO – PRD
 
-Oct 25, 2026 · @coco
-
-This replaces the PRD of 23 October. Since then the production database and file storage moved to one Neon project, Better Auth uses the `better_auth` schema, and the AI defaults are Groq `openai/gpt-oss-120b` then Gemini `gemini-3.5-flash-lite`.
+@coco
 
 ## Overview
 
-We will build a reusable, problem-agnostic base platform (the "socle") before 2 November 2026, so that during the FANILO Hackathon all 48 hours go into the features that answer the problem revealed on day one.
+FANILO is a verification tool for newsrooms in Madagascar. Every rumour gets a case file, from its first appearance to a sourced verdict: the desk tracks claims live, gathers the sources, gets an AI suggestion whose quotes are checked against those sources, and a journalist confirms the verdict before anything leaves the newsroom. Published verdicts are open to the public.
 
 **The event.** The FANILO Hackathon is organized by the Institut français de Madagascar (IFM) and the press service of the French Embassy, hosted at 42 Antananarivo in Andraharo. Teams of 4 build a working web or mobile app that meets a real need of journalists and media professionals around information resilience: verifying information, misinformation and AI-generated content.
 
-**The catch.** The exact problem is presented by video at the kickoff on Monday 2 November at 8:00. The IFM contact confirmed that work prepared in advance is allowed, so besides the generic plumbing we pre-build the features most likely to be needed and a polished UI, then adapt them on day one.
+**The need.** The need the app answers is presented by video at the kickoff on Monday 2 November at 8:00.
 
-**The base.** A web app (Next.js, installable as a PWA) and an API (FastAPI) that already provide authentication, workspaces, file handling, realtime updates, background jobs and a generic AI layer: a model gateway with fallback, a RAG pipeline with citations, speech-to-text and a simple tool-using agent. Everything runs on free tiers.
+**The product.** A web app (Next.js, installable as a PWA) and an API (FastAPI) with authentication, newsroom workspaces, file handling, realtime updates, background jobs and an AI layer: a model gateway with fallback, search over the sources with citations, speech-to-text and a tool-using agent. Everything runs on free tiers.
 
 ## Goals and success criteria
 
-The base succeeds if, on Monday at 8:30, a new feature can go from idea to deployed and demoable in under 2 hours.
+FANILO succeeds if a newsroom can take a rumour from its first appearance to a sourced, signed verdict in one shared tool, from a phone, and if the demo never fails in front of the jury.
 
 **Goals**
 
-1. Remove setup work from the hackathon: auth, database, deployment and UI shell are done and tested.
-2. Provide generic AI building blocks that fit most likely problems: ask questions over documents with citations, transcribe audio, run an agent with tools.
-3. Pre-build the features journalists are most likely to need (see Pre-built features), designed so they can be reshaped, renamed or dropped within an hour on day one.
+1. Give a newsroom one shared place to track claims, gather sources and confirm verdicts, live.
+2. Provide AI help that always cites its sources: questions over documents with citations, audio transcription, an agent with tools. The AI only suggests.
+3. Cover the journalist's main tasks end to end (see Features).
 4. Ship a polished, consistent UI that looks like a finished product, not a hackathon prototype (see UI and design).
 5. Make the demo reliable: hosted URL, fallback between AI providers, seed data, no dependency on one free tier.
-6. Stay compliant with the hackathon rules: every third-party component listed with version and license; pre-built work declared in the pitch.
-7. Cost nothing: free tiers only until a deliberate decision on 31 October.
+6. Stay compliant with the hackathon rules: every third-party component listed with version and license.
+7. Cost nothing: free tiers only.
 
 **Non-goals**
 
 - No native mobile app. The PWA covers phones; Expo may come later on the same API.
 - No production hardening beyond what a 3-minute demo needs (no SSO, no multi-region, no audit compliance).
-- No conversational voice agent until everything in Priority 2 works.
-- No guessed feature built deeper than its core flow: depth goes into whatever the real problem turns out to be.
+- No conversational voice agent until the core features work end to end.
 
-**Success criteria (checked on 1 November)**
+**Success criteria**
 
 - [ ] A user can sign up, log in and land in a workspace on the hosted URL, from a phone on mobile data.
 - [ ] A PDF and a web URL can be ingested, and a question returns an answer citing source and passage.
@@ -44,21 +41,20 @@ The base succeeds if, on Monday at 8:30, a new feature can go from idea to deplo
 - [ ] Turning off the primary AI provider key does not break the app (fallback works).
 - [ ] The claim checker and the verification board work end to end on seed data.
 - [ ] Every main screen passes the UI polish checklist on a phone and a laptop.
-- [ ] The 2-hour dry run on a mock problem ends with a working, deployed feature.
 
 ## Users
 
-The base has two kinds of users: our own team, who build on it during the hackathon, and the media professionals who will use whatever app we build on top.
+FANILO serves the newsroom that verifies information, and the public that wants to know whether a rumour is already checked.
 
-| Persona | Who | What they need from the base |
+| Persona | Who | What they need |
 | --- | --- | --- |
-| Builder | One of our 4 team members, Monday morning | Copyable patterns for a new page, endpoint, job and AI call; a working deploy in one command |
 | Journalist | Reporter in the field, often on a phone with a slow or unstable connection | Fast mobile pages, upload a photo, record audio, paste a link from Facebook or WhatsApp, work in French and Malagasy |
 | Editor | Desk editor or fact-checker who reviews and validates | Shared workspace, live status of items, see who did what |
 | Admin | Team lead or demo operator | Manage members and roles, reset seed data before the pitch |
+| Public | Anyone who received a rumour, no account | Ask whether it is already verified, read published verdicts, report a rumour and follow it |
 | Jury | Evaluates a 3-minute pitch on 4 November | A live demo that loads instantly and never fails |
 
-**Roles in the base:** `admin`, `editor`, `journalist`. Each workspace member has exactly one role. Permissions are kept simple so they can be adapted to the real problem on day one.
+**Roles:** `admin`, `editor`, `journalist`. Each workspace member has exactly one role. Permissions are kept simple.
 
 ## Constraints
 
@@ -66,13 +62,12 @@ The hard limits come from the hackathon rules, the free tiers we rely on, and th
 
 **From the hackathon rules**
 
-- Work prepared before the event is allowed (confirmed with the IFM contact). We still say in the pitch what was pre-built and what was built during the 48 hours.
 - Every third-party component (libraries, runtimes, algorithms, APIs) must be listed with its version and license (Article 6). We keep `THIRD_PARTY.md` updated as we go.
 - Hard deadline Tuesday 3 November at 20:00; no extension (Article 4).
 - Pitch of 3 minutes maximum on Wednesday 4 November, 8:00 to 13:00 at IFM Analakely. It must let the jury understand the need, the solution and how it works, the value for media professionals, and the potential (Article 4).
 - The jury scores relevance to the need, usability, contribution to information resilience, technical quality and functionality, development potential, and the quality of the pitch (Article 5). Its decisions are final; prizes are announced before the event.
 - Teams of exactly four; registration through the form by **28 October 2026** (Article 3). The rules end with a team sheet (team name, four names, date, acceptance).
-- The rules say nothing about pre-built work: the IFM contact's confirmation is oral, so a written confirmation is worth asking for (contact: christelle.ramanandraitsiory@institutfrancais-madagascar.com).
+- Questions about the rules go to Christelle Ramanandraitsiory at the IFM (christelle.ramanandraitsiory@institutfrancais-madagascar.com).
 - We keep ownership of our code; organizers may publicize screenshots and slides with our names (Article 6).
 - Participants are responsible for their own equipment and data (Article 8).
 
@@ -104,11 +99,11 @@ The browser talks to both services; files go straight from the browser to Neon O
 | Auth | Better Auth in Next.js, JWT plugin | FastAPI verifies tokens with the JWKS endpoint |
 | API | FastAPI (Python), Pydantic, SQLAlchemy + Alembic | OpenAPI schema generates the TypeScript client |
 | Realtime | python-socketio on FastAPI; socket.io-client in the browser | SSE for streaming AI answers |
-| Database | Postgres 18 + pgvector (Neon free, project `fanilo` in the 0nlydevs org, Frankfurt) | Better Auth tables and app tables in one database, separate schemas. Chosen over Supabase Postgres on 25 Oct: wakes automatically instead of pausing, free branching |
+| Database | Postgres 18 + pgvector (Neon free, project `fanilo` in the 0nlydevs org, Frankfurt) | Better Auth tables and app tables in one database, separate schemas. Chosen over Supabase Postgres: wakes automatically instead of pausing, free branching |
 | File storage | Neon Object Storage (S3-compatible, private buckets `uploads` and `uploads-dev`, same Neon project) | Never on the API server's disk; boto3 presigned URLs; branches with the database |
 | Background jobs | Postgres job table, worker loop in the API process | No extra service to host; queued jobs survive restarts |
 | Language models | Groq `openai/gpt-oss-120b` (primary), Gemini `gemini-3.5-flash-lite` (fallback), NVIDIA NIM (third) | All called through one OpenAI-compatible gateway; models change often on free tiers, so they are set by env |
-| Embeddings | Gemini `gemini-embedding-2`, 768 dimensions (chosen 25 Oct: 18/18 on French, Malagasy and cross-language top-3) | Model name stored with every vector |
+| Embeddings | Gemini `gemini-embedding-2`, 768 dimensions (chosen after an 18/18 top-3 test in French, Malagasy and across the two) | Model name stored with every vector |
 | Speech-to-text | Groq Whisper; local faster-whisper as backup | Test French and Malagasy first |
 | Parsing | pypdf (PDF, BSD), trafilatura (web pages), Pillow (EXIF) | pypdf rather than PyMuPDF, which is AGPL |
 | API hosting | Render free (or Railway trial), Frankfurt | Wake it up before the pitch |
@@ -116,9 +111,9 @@ The browser talks to both services; files go straight from the browser to Neon O
 
 ## Functional requirements
 
-Each module below is generic: it is the plumbing any likely problem needs, and gets its domain meaning on day one. Priority P1 is due 27 October, P2 by 30 October, P3 only if time allows.
+Each capability below is a building block the features rely on.
 
-### M1. Authentication and roles (P1)
+### M1. Authentication and roles
 
 - Sign up and log in with email and password through Better Auth; optional Google OAuth.
 - Session cookie on the web; JWT issued by the Better Auth JWT plugin for calls to FastAPI.
@@ -126,43 +121,43 @@ Each module below is generic: it is the plumbing any likely problem needs, and g
 - Workspace roles `admin`, `editor`, `journalist`, checked by a FastAPI dependency `require_role(...)`.
 - Acceptance: an unauthenticated call to any `/api` route returns 401; a journalist calling an admin route returns 403.
 
-### M2. Workspaces and members (P1)
+### M2. Workspaces and members
 
 - Create a workspace; the creator becomes admin.
 - Invite by email (link with token, no email sending required: the admin copies the link).
 - List, change role, remove members.
 - Every domain record belongs to one workspace; every query filters by workspace.
 
-### M3. Generic items (P1)
+### M3. Generic items
 
-One flexible model, `item`, that becomes the domain object on day one (a claim, a story, a rumor, a source).
+One flexible model, `item`, for the domain objects (a claim, a story, a rumor, a source).
 
 - Fields: title, body, `type`, `status`, `tags`, `data` (JSONB for anything problem-specific), author, timestamps.
 - Full CRUD with pagination, filter by status, type and tag, text search.
 - Comments on items, and an activity log (who changed what, when).
-- Acceptance: adding a new field on day one needs only a JSONB key and a UI field, no migration.
+- Acceptance: adding a new field needs only a JSONB key and a UI field, no migration.
 
-### M4. Files and sources (P1)
+### M4. Files and sources
 
 - Upload images, PDFs and audio (max 25 MB) through a presigned upload URL straight to Neon Object Storage.
 - Attach files to items. Store type, size, hash and metadata.
 - Add a web source by URL: fetch, extract the main text with trafilatura, store title, author, date and text.
 - Images: read EXIF metadata and offer a reverse image search link.
 
-### M5. Realtime (P1)
+### M5. Realtime
 
 - Socket.IO server on FastAPI, authenticated with the same JWT at handshake; connection rejected without a valid token.
 - One room per workspace; joining checks membership.
 - Events: `item.created`, `item.updated`, `comment.created`, `job.progress`, `job.done`, `job.failed`, `presence`.
 - Client reconnects automatically and re-fetches the list after a reconnection.
 
-### M6. Background jobs (P1)
+### M6. Background jobs
 
 - Queue stored in the Postgres job table and claimed with SELECT … FOR UPDATE SKIP LOCKED by a worker loop in the API process; jobs: `ingest_document`, `ingest_url`, `transcribe_audio`, `embed_chunks`.
 - Each job has status (`queued`, `running`, `done`, `failed`), progress 0 to 100, error message, result.
 - Progress pushed over Socket.IO; failed jobs can be retried from the UI.
 
-### M7. AI gateway (P2)
+### M7. AI gateway
 
 - One function `complete(messages, tools?, stream?)` over an OpenAI-compatible client.
 - Provider order from config: Groq, then Gemini, then NVIDIA. On 429, 5xx or timeout, retry with backoff, then move to the next provider.
@@ -170,7 +165,7 @@ One flexible model, `item`, that becomes the domain object on day one (a claim, 
 - Logs per call: provider, model, latency, tokens, success. A cache keyed on the request avoids burning quota during development.
 - Acceptance: with the Groq key removed, calls still succeed through Gemini.
 
-### M8. RAG pipeline (P2)
+### M8. RAG pipeline
 
 - Ingest: PDF, URL, text and transcripts → clean → split into chunks of about 800 tokens with 100 overlap → embed in batches → store in pgvector with source id, page or timestamp, and model name.
 - Search: embed the question, top-k by cosine similarity filtered by workspace, optional keyword boost.
@@ -178,45 +173,45 @@ One flexible model, `item`, that becomes the domain object on day one (a claim, 
 - When no passage is relevant, the answer says so instead of guessing.
 - A `reembed_all` script rebuilds every vector if we switch embedding provider.
 
-### M9. Speech-to-text (P2)
+### M9. Speech-to-text
 
 - Record in the browser with MediaRecorder, or upload mp3, m4a, wav, webm.
 - Transcribe through Groq Whisper with a language hint (`fr`, `mg` or auto). Uploads are capped at 25 MB, the provider's limit, so no splitting is needed yet.
 - Output: segments with start and end times; the transcript is saved and can be ingested into RAG.
 - Play the audio from any segment by clicking its timestamp.
 
-### M10. Agent (P2)
+### M10. Agent
 
 - A simple loop: model, tool calls, results, until an answer or a limit of 6 steps.
 - Starting tools: `search_sources` (RAG), `fetch_url`, `find_claims`; `web_search` only if a free search API is found.
 - Each step is shown in the UI (tool called, short result), so the reasoning is visible in the demo.
 - Adding a tool means writing one Python function with a typed signature and a docstring.
 
-### M11. Web app shell and PWA (P1)
+### M11. Web app shell and PWA
 
 - Pages: login, sign up, workspace switcher, items list, item detail, upload, ask (RAG chat), transcribe, members, settings.
 - Responsive from 360 px wide; bottom navigation on mobile.
-- PWA manifest, icon and installability; share target so a link can be shared into the app from a phone (P3).
+- PWA manifest, icon and installability; share target so a link can be shared into the app from a phone.
 - Typed API client generated from FastAPI's OpenAPI schema; loading, empty and error states on every page.
 - French as the default UI language, with strings kept in one file so Malagasy can be added.
 
-### M12. Admin and demo tools (P3)
+### M12. Admin and demo tools
 
 - Seed script: one workspace, 3 users (one per role), 10 items, 3 documents, 1 transcript.
 - "Reset demo data" button for admins.
 - Health page showing database, storage and each AI provider as up or down.
 
-## Pre-built features
+## Features
 
-We pre-build the two features most likely to match the problem (claim checker and verification board) to a demoable level, and three more to a working core flow. Each one is a thin layer over the generic modules, so it can be renamed, reshaped or dropped on day one.
+Five features answer the journalist's main tasks. Each one is a thin layer over the capabilities above.
 
-| Feature | What the journalist does | Built on | Depth before 2 Nov |
-| --- | --- | --- | --- |
-| F1. Claim checker | Paste text, a link or a screenshot; get the checkable claims, evidence from sources with citations, and a suggested verdict | M4, M7, M8, M10 | Demoable |
-| F2. Verification board | Track claims on a shared board: to check, in progress, verified, published; assign, comment, see changes live | M3, M5 | Demoable |
-| F3. Interview to quotes | Record or upload audio; get a transcript, the key quotes and the claims to check, each with its timestamp | M9, M7 | Core flow |
-| F4. Image check | Upload an image; see its metadata, duplicates already seen in the workspace, and reverse image search links | M4 | Core flow |
-| F5. Verdict card | Turn a verified claim into a shareable image card and a short post in French or Malagasy | M3, M7 | Core flow |
+| Feature | What the journalist does | Built on |
+| --- | --- | --- |
+| F1. Claim checker | Paste text, a link or a screenshot; get the checkable claims, evidence from sources with citations, and a suggested verdict | M4, M7, M8, M10 |
+| F2. Verification board | Track claims on a shared board: to check, in progress, verified, published; assign, comment, see changes live | M3, M5 |
+| F3. Interview to quotes | Record or upload audio; get a transcript, the key quotes and the claims to check, each with its timestamp | M9, M7 |
+| F4. Image check | Upload an image; see its metadata, duplicates already seen in the workspace, and reverse image search links | M4 |
+| F5. Verdict card | Turn a verified claim into a shareable image card and a short post in French or Malagasy | M3, M7 |
 
 ### F1. Claim checker
 
@@ -252,9 +247,9 @@ We pre-build the two features most likely to match the problem (claim checker an
 
 ## UI and design
 
-The UI looks like a calm, trustworthy newsroom tool set as a Malagasy radio programme grid ("Grille d'antenne"): one design system, built first, so every screen added on day one looks finished automatically. The full rules live in `apps/web/DESIGN.md`.
+The UI looks like a calm, trustworthy newsroom tool set as a Malagasy radio programme grid ("Grille d'antenne"): one design system, so every screen looks finished. The full rules live in `apps/web/DESIGN.md`.
 
-**Design system (built 24 October)**
+**Design system**
 
 - Tokens as CSS variables in the Tailwind theme, light and dark: deep antenna green rail `#0f3b36` on cool white `#f4f6f5`, green-black ink, hairline rules, 5 px corners.
 - One signal yellow `#f2c230`, only for "maintenant", keyboard focus and selection; never buttons, verdicts or status.
@@ -263,7 +258,7 @@ The UI looks like a calm, trustworthy newsroom tool set as a Malagasy radio prog
 - Icons: one set only (lucide, which ships with shadcn/ui). shadcn/ui components themed once with the tokens; no one-off styles in pages.
 - Signature: the day grid, where each claim is a block from first seen to now, drawn to scale.
 
-**Public pages (rebuilt 27 October)**
+**Public pages**
 
 The landing and the sign-in and sign-up pages have their own world, "Le dossier": every rumour gets a case file. Its contract lives in `apps/web/.impeccable/surfaces/app-site-accueil-page-tsx.md`.
 
@@ -273,7 +268,7 @@ The landing and the sign-in and sign-up pages have their own world, "Le dossier"
 - No 3D and no heavy script: the page is HTML and CSS with three small client components.
 - Sign-in and sign-up use the same case card for the app's form, with the pieces beside it on desktop. The app shell shares the world lightly (ink rail, Anton page titles, folder logo) and keeps its verdict colours and day grid.
 
-**Public features (27 October)**
+**Public features**
 
 Ordinary people can use FANILO without an account, in the same case-file world:
 - « Est-ce déjà vérifié ? » (`/verifies`): a public AI assistant. Ask a question or paste a message received on WhatsApp or Facebook, in French or Malagasy; it answers only from verdicts published by newsrooms, citing them [n] with links to each file. With nothing published on the subject it makes no AI call and invites a tip. It never makes up a verdict.
@@ -309,7 +304,7 @@ Ordinary people can use FANILO without an account, in the same case-file world:
 
 **Branding**
 
-- Product name and logo kept in one config file and one SVG, so they can change on day one to fit the real problem.
+- Product name and logo kept in one config file and one SVG, so they change in one place.
 - A clean favicon and PWA icon, since the jury may see the app installed on a phone.
 
 ## Data model
@@ -451,7 +446,7 @@ We test the paths the demo will walk, not coverage numbers.
 - RAG: a fixed set of 10 questions over 3 seed documents; each must return at least one correct citation.
 - Web: Playwright smoke test: sign up, create workspace, create item, see it appear in a second browser.
 
-**Manual checks before 1 November**
+**Manual checks**
 
 - [ ] Full flow on a real phone over mobile data.
 - [ ] Embedding comparison: 20 French and Malagasy sentences, top-3 search accuracy per provider; choose one.
@@ -459,54 +454,39 @@ We test the paths the demo will walk, not coverage numbers.
 - [ ] Rate-limit behavior: 30 quick requests in a row do not crash the UI.
 - [ ] Paramètres shows database, storage and AI providers up; Render service awake; all keys loaded.
 
-**Dry run (1 November)**
+**Pitch kit** (`docs/pitch/`)
 
-- Mock problem: "A viral Facebook post claims X; help a journalist verify it."
-- 2 hours, all 4 members, on the deployed base. Note every blocker; fix the base, not the mock feature.
-
-**Pitch kit** (built 27 October, `docs/pitch/`)
-
-- Deck generated from one content file (`deck/content.js` → `fanilo-pitch.pptx`, 8 slides + 2 in reserve, importable into Google Slides with its fonts): need, the refused temptation, the method, demo, value for journalists, potential, end. One idea per slide, few words on screen, the rest in the speaker notes; the slides and the video show the product, not the pre-built base. Every open point is a `{{hole}}` the build lists.
+- Deck generated from one content file (`deck/content.js` → `fanilo-pitch.pptx`, 7 slides + 2 in reserve, importable into Google Slides with its fonts). It follows one rumour from 23:47 to its verdict: the night, the need in the jury's words, the pivot (not an AI that judges, a case file a journalist signs), the demo on the same rumour, what changes for journalists, what comes next, and the close back on the first frame. One idea per slide, few words on screen, the rest in the speaker notes. Every open point is a `{{hole}}` the build lists.
 - Timed script (`script.md`, generated from the speaker notes, 3:00 split slide by slide) and the storyboard of the demo video.
-- Demo video filmed by `scripts/pitch_video.py` from `video/scenes.json` on the real app with the demo data (chapter cards, visible cursor, captions; silent, commented live; re-shot on the deployed app on Tuesday evening as the backup if the network fails).
-- `checklist.md`: Monday 8:30, Tuesday 18:00–20:00 freeze, Wednesday morning (wake Render and Neon, demo reset, tabs, plan B).
-
-## Milestones
-
-The core platform must work end to end by 27 October, the AI layer by 30 October, and nothing new is added after the 31 October freeze.
-
-&#91;embedded content: build timeline · 23 Oct to 4 Nov 2026\]
-
-P2 work starts only once P1 passes its acceptance checks; 1 November is kept for the dry run and fixes, not for new features.
+- Demo video filmed by `scripts/pitch_video.py` from `video/scenes.json` on the real app with the demo data, following the same rumour (chapter cards, visible cursor, captions; silent, commented live; filmed again on the deployed app on Tuesday evening as the backup if the network fails).
+- `checklist.md`: Tuesday 18:00–20:00 before the hand-in, Wednesday morning (wake Render and Neon, demo reset, tabs, plan B).
 
 ## Risks and mitigations
 
-The biggest risk is guessing the wrong features: time spent on F1 to F5 is lost if the real problem is elsewhere, so the generic modules come first and the guessed features stay shallow.
+The biggest risk is a demo that fails in front of the jury: no single free tier, network or model may take the app down.
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| The real problem does not match the pre-built features | Time spent on unused features | Generic modules first; F1 to F5 kept thin and built on M1 to M12, so their parts are reused anyway |
 | UI polish eats the time needed for the core | Beautiful screens on a broken flow | Design system first, then polish only screens whose flow already works end to end |
 | A free AI tier rate-limits or blocks us during the event | Features stop working | Three providers with automatic fallback; one key per member; response cache |
 | A free AI model is renamed or retired | Calls fail with model errors | Models set by env (`LLM_MODEL_*`); Paramètres shows each provider and model; already happened once (Groq Llama 3.3, Gemini 2.5 Flash) |
 | Render service asleep at pitch time | 1-minute blank screen in front of the jury | Wake it 5 minutes before; backup screen recording |
 | Neon database asleep at the first request | A few seconds' delay on the first screen | Open Paramètres a few minutes before the demo to wake it |
-| Weak Malagasy support in embeddings or transcription | Poor results on local content | Test before the freeze; pick the best provider; show French in the demo if Malagasy is weak |
+| Weak Malagasy support in embeddings or transcription | Poor results on local content | Test on real French and Malagasy samples; pick the best provider; show French in the demo if Malagasy is weak |
 | Venue internet slow or down | Cannot deploy or call AI | Phone hotspot as backup; local setup works offline except AI calls |
-| Better Auth and FastAPI JWT setup breaks | Nothing works across services | Built and tested first (P1); one integration test in CI |
+| Better Auth and FastAPI JWT setup breaks | Nothing works across services | Tested end to end; one integration test in CI |
 | AI suggests a wrong verdict in the demo | Loss of trust with the jury | The journalist always confirms the verdict; evidence and citations always shown |
 | Embedding provider changed mid-event | All vectors invalid | Provider fixed by config; `reembed_all` script ready |
 
 ## Open questions
 
-- [x] Do the organizers allow work prepared before the event? Yes, confirmed with the IFM contact.
-- [x] Supabase or Neon? Neon, for both the database and file storage (decided 25 October).
+- [x] Supabase or Neon? Neon, for both the database and file storage.
 - [ ] Does the team registration page of the rules need to be submitted, or is the form enough?
 - [ ] What prizes are offered, and does that change what the jury values?
 - [x] Which embedding model? Gemini `gemini-embedding-2` (both Gemini models scored 18/18; NVIDIA not tested, no key).
 - [ ] Is the Gemini free tier usable from Madagascar?
 - [ ] Is a free vision model available for screenshot OCR in F1?
-- [ ] Is a free web search API available for the agent's `web_search` tool, or do we leave it out?
+- [x] Free web search for the agent? Yes, without a key: DuckDuckGo's HTML results, the Wikipedia API and fact-checkers' sites (27 Oct). Brave Search and Google Fact Check Tools are optional keys; Claude is wired in as an optional provider, off until a key is set.
 - [ ] Render free or Railway trial for the API?
 
 ## Sources

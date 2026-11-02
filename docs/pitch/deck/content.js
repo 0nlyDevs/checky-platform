@@ -1,9 +1,13 @@
 // Everything the pitch deck says, in one place. Edit this file, then `node build.js`.
 //
-// Anything between {{double braces}} is a hole to fill on Monday 2 November, once the problem is
-// known. `node build.js` lists the holes that are left; the morning checklist refuses a deck that
-// still has one. The filled-in example running through the file (FAN-0138, « Analakely sous
-// l'eau ») is the landing page's fictional affair: replace it with the real story.
+// Anything between {{double braces}} is a hole to fill. `node build.js` lists the holes that are
+// left; the checklist refuses a deck that still has one.
+//
+// The pitch follows ONE rumour from start to end: it arrives at 23:47 (cover), the need is said in
+// the jury's own words, the stance (a machine does not sign a verdict), the demo shows that same
+// rumour from arrival to the public, and the close returns to it (« 23 h 47, une rumeur. 6 h 41,
+// vérifié. »). The example running through the file (FAN-0138, « Analakely sous l'eau ») is a
+// fictional affair: replace it with the real story everywhere at once (here and video/scenes.json).
 //
 // One idea per slide. The screen carries a title and a few words; what the speaker says lives in
 // `notes`. Slide titles fit one line under about 50 characters, card titles under about 30.
@@ -21,7 +25,7 @@ const team = {
 };
 
 const product = {
-  name: "FANILO", // lib/brand.ts says the same; change both on day one if the name changes
+  name: "FANILO", // lib/brand.ts says the same; change both if the name changes
   claim: "Chaque rumeur a son dossier.",
   url: "{{fanilo.example}}",
   caseRef: "FAN-0138",
@@ -35,8 +39,8 @@ const event = {
 const slides = [
   {
     kind: "cover",
-    t: "0:00–0:10",
-    serves: "Article 4 · ouverture",
+    t: "0:00–0:20",
+    serves: "Article 4 · ouverture : la scène, sans se présenter",
     label: `${event.name} · ${event.date}`,
     title: product.claim,
     sub: "L'outil de vérification des rédactions de Madagascar.",
@@ -44,14 +48,15 @@ const slides = [
     stamp: "Faux",
     fictional: "Exemple fictif.",
     notes: [
-      "Bonjour. Nous sommes 0nlyDevs, quatre développeurs.",
-      "Lundi matin, la vidéo nous a posé une question simple : {{le besoin, tel que la vidéo l'a formulé, en une phrase}}.",
-      `Voici notre réponse. Elle s'appelle ${product.name}.`,
+      "(Pas de « Bonjour, nous sommes… ». On commence par la scène.)",
+      "23 h 47. Une vidéo arrive dans un groupe WhatsApp : « Analakely sous l'eau ce matin, partagez ! »",
+      "À minuit, 2 300 partages. À 7 h, la radio doit dire si c'est vrai.",
+      "{{La même scène, avec la vraie rumeur du sujet.}}",
     ],
   },
   {
     kind: "need",
-    t: "0:10–0:35",
+    t: "0:20–0:40",
     serves: "Article 4 · le besoin / Article 5 · pertinence",
     tab: "Le besoin",
     title: "{{Le besoin, en une phrase}}",
@@ -68,63 +73,49 @@ const slides = [
       ],
     },
     notes: [
-      "{{Raconter le besoin avec une scène vécue, pas une définition : une heure, un lieu, une personne.}}",
-      "Entre 23 h 47 et 7 h, une rumeur fait le tour de la ville. La rédaction n'a que la radio du matin pour y répondre.",
+      "Ce problème, ce n'est pas nous qui le disons. C'est {{qui}} : « {{la citation, mot pour mot}} ».",
       "{{Ce qui se passe aujourd'hui sans l'outil : ce que le journaliste fait à la main, combien de temps il y passe, ce qu'il risque.}}",
+      "{{Le chiffre qui prouve que le besoin est réel, s'il y en a un.}}",
     ],
   },
   {
-    kind: "refusal",
-    t: "0:35–0:50",
-    serves: "Article 5 · pertinence (à couper si le temps manque)",
-    tab: "La tentation",
-    title: "On aurait pu {{détecter l'IA en un clic}}.",
+    kind: "stance",
+    t: "0:40–0:55",
+    serves: "Article 4 · la solution et son fonctionnement / Article 5 · pertinence",
+    tab: "Le parti pris",
+    title: "Une machine ne signe pas un verdict.",
+    temptation: { label: "On aurait pu faire", text: "{{une IA qui dit vrai ou faux en un clic}}" },
     stamp: "Non.",
-    stat: { value: "{{18,4 %}}", text: "{{ce que dit le chiffre, en une ligne}}", source: "{{source du chiffre}}" },
-    notes: [
-      "On a d'abord pensé à {{la solution évidente}}. On a même commencé.",
-      "Puis on s'est mis à la place du journaliste à 6 h du matin. {{Pourquoi ça ne l'aide pas.}}",
-      "Non. Le sujet, c'est {{le vrai sujet}}.",
-    ],
-  },
-  {
-    kind: "method",
-    t: "0:50–1:10",
-    serves: "Article 4 · la solution et son fonctionnement",
-    tab: "La réponse",
-    title: "Vérifier, c'est lever le noir.",
-    report: `Rapport de vérification · ${product.caseRef}`,
+    report: `Dossier ${product.caseRef}`,
     steps: [
-      ["06:08", "On ouvre le dossier"],
+      ["23:47", "La rumeur arrive"],
       ["06:12", "On réunit les preuves"],
       ["06:30", "L'IA lit et propose"],
       ["06:41", "Un journaliste signe"],
     ],
-    signature: "Signé : {{prénom}}, desk du matin",
     notes: [
-      "Chaque rumeur devient un dossier, avec son heure et son origine.",
-      "On y verse les preuves : liens, PDF, photos, notes vocales transcrites en français ou en malagasy.",
-      "L'IA lit tout et propose un verdict, citation par citation. Une citation introuvable dans sa source est écartée.",
+      "On aurait pu faire {{une IA qui dit vrai ou faux}}. Non : une machine ne signe pas un verdict.",
+      "Alors chaque rumeur devient un dossier. On y verse les preuves, l'IA les lit et propose, citation par citation.",
       "Et c'est un journaliste qui signe. Jamais la machine.",
     ],
   },
   {
     kind: "demo",
-    t: "1:10–2:10",
+    t: "0:55–2:05",
     serves: "Article 5 · qualité technique et fonctionnalité",
     tab: "Démo",
     title: "{{Titre de la démo, en une ligne}}",
-    chapters: ["{{Chapitre 1}}", "{{Chapitre 2}}", "{{Chapitre 3}}"],
+    chapters: ["La rumeur arrive", "L'IA lit, le journaliste signe", "Le public la retrouve"],
     notes: [
-      "Plan A : démo en direct (onglet déjà ouvert, démo réinitialisée). Plan B : lancer demo.mp4 et commenter par-dessus.",
-      "{{Chapitre 1 : la phrase qu'on dit pendant qu'on le montre.}}",
-      "{{Chapitre 2 : la phrase qu'on dit pendant qu'on le montre.}}",
-      "{{Chapitre 3 : la phrase qu'on dit pendant qu'on le montre.}}",
+      "Plan A : démo en direct (onglet déjà ouvert, démo réinitialisée). Plan B : lancer demo.mp4 et commenter par-dessus. Même rumeur que l'ouverture.",
+      "1. Voilà la vidéo de 23 h 47 dans la grille du desk : son heure, son origine. Elle devient un dossier, avec ses preuves.",
+      "2. L'IA a lu les preuves et propose « Faux », citation par citation. Le journaliste vérifie, et il signe.",
+      "3. Le lendemain, quelqu'un reçoit la même vidéo. Il demande si c'est vérifié : l'assistant retrouve le dossier et cite le verdict.",
     ],
   },
   {
     kind: "value",
-    t: "2:10–2:30",
+    t: "2:05–2:30",
     serves: "Article 4 · intérêt pour les médias / Article 5 · utilité, résilience informationnelle",
     tab: "Pour les journalistes",
     title: "Rien ne part sans une personne.",
@@ -134,7 +125,7 @@ const slides = [
       ["Des preuves, pas un avis", "Chaque citation est retrouvée mot pour mot dans sa source."],
     ],
     notes: [
-      "Pour un journaliste, ça change trois choses. {{Les trois, en une phrase chacune.}}",
+      "Pour un journaliste, ça change trois choses. {{Les trois, en une phrase chacune, et un chiffre si on en a un (« de 2 heures à 20 minutes »).}}",
       "Et une règle : l'IA ne publie jamais. Elle propose, une personne signe.",
     ],
   },
@@ -164,7 +155,12 @@ const slides = [
     url: product.url,
     stamp: "Vérifié",
     credits: "Photographies : Wikimedia Commons (CC BY-SA, CC0), tramées. Toute rumeur montrée est fictive.",
-    notes: [`Merci. ${product.name}. Chaque rumeur a son dossier.`, "(Rester sur cette slide pour les questions.)"],
+    notes: [
+      "23 h 47, une rumeur. 6 h 41, vérifié.",
+      `${product.name}. Chaque rumeur a son dossier.`,
+      "Nous sommes 0nlyDevs : {{les quatre prénoms}}. Merci.",
+      "(Se taire et rester sur cette slide pour les questions.)",
+    ],
   },
 ];
 

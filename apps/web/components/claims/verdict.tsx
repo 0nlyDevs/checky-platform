@@ -67,7 +67,7 @@ function isVerdict(v: unknown): v is Verdict {
   return typeof v === "string" && v in VERDICT_META;
 }
 
-/** Item fields that live in `data` (the day-one flexible part) read back with types. */
+/** Item fields that live in `data` (the flexible part) read back with types. */
 export function toClaim(item: Item): ClaimView {
   const d = item.data as Record<string, unknown>;
   const seen = typeof d.first_seen_at === "string" ? new Date(d.first_seen_at) : null;

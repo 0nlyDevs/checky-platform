@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from app.core import ai
+from app.core import ai, keys
 from app.core.config import get_settings
 
 URL = "https://api.groq.com/openai/v1/audio/transcriptions"
@@ -28,50 +28,59 @@ async def transcribe(
     raw: bytes, filename: str, mime: str, language: str | None = None, prompt: str | None = None
 ) -> dict[str, Any]:
     s = get_settings()
-    if not s.groq_api_key:
+    if not keys.split(s.groq_api_key):
         raise SttUnavailable("GROQ_API_KEY is not set")
     data = {"model": s.stt_model, "response_format": "verbose_json", "temperature": "0"}
     if language:
         data["language"] = language
     if prompt:  # a vocabulary hint: Whisper spells these names the way they are written
         data["prompt"] = prompt
-    errors = []
-    for attempt in range(max(1, s.ai_attempts)):
-        started = time.monotonic()
-        try:
-            async with httpx.AsyncClient(transport=_transport, timeout=s.stt_timeout) as http:
-                resp = await http.post(
-                    URL,
-                    headers={"Authorization": f"Bearer {s.groq_api_key}"},
-                    data=data,
-                    files={"file": (filename, raw, mime)},
-                )
-            if resp.status_code == 429 or resp.status_code >= 500:
-                raise httpx.HTTPStatusError(
-                    f"HTTP {resp.status_code}", request=resp.request, response=resp
-                )
-            if resp.status_code >= 400:
-                raise SttUnavailable(f"HTTP {resp.status_code}: {resp.text[:200]}")
-            body = resp.json()
-            await _log(s.stt_model, started, None)
-            return {
-                "text": (body.get("text") or "").strip(),
-                "language": body.get("language"),
-                "duration_s": body.get("duration"),
-                "segments": [
-                    {
-                        "start": round(g["start"], 2),
-                        "end": round(g["end"], 2),
-                        "text": g["text"].strip(),
-                    }
-                    for g in body.get("segments") or []
-                ],
-            }
-        except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.TransportError) as e:
-            errors.append(f"{type(e).__name__}: {e}")
-            await _log(s.stt_model, started, errors[-1])
-            if attempt + 1 < max(1, s.ai_attempts):
-                await _sleep(min(2.0 * 2**attempt, 8.0))
+    errors: list[str] = []
+    # Groq's keys in turn: a 429 or a refused key moves on at once, 5xx/timeouts are retried first.
+    for key in keys.rotation("groq-stt", keys.split(s.groq_api_key)):
+        for attempt in range(max(1, s.ai_attempts)):
+            started = time.monotonic()
+            try:
+                async with httpx.AsyncClient(transport=_transport, timeout=s.stt_timeout) as http:
+                    resp = await http.post(
+                        URL,
+                        headers={"Authorization": f"Bearer {key}"},
+                        data=data,
+                        files={"file": (filename, raw, mime)},
+                    )
+                if resp.status_code in (401, 403, 429):
+                    errors.append(f"HTTP {resp.status_code}")
+                    await _log(s.stt_model, started, errors[-1])
+                    keys.set_aside("groq-stt", key, keys.retry_after(resp.headers, s.ai_cooldown))
+                    break
+                if resp.status_code >= 500:
+                    raise httpx.HTTPStatusError(
+                        f"HTTP {resp.status_code}", request=resp.request, response=resp
+                    )
+                if resp.status_code >= 400:
+                    raise SttUnavailable(f"HTTP {resp.status_code}: {resp.text[:200]}")
+                body = resp.json()
+                await _log(s.stt_model, started, None)
+                return {
+                    "text": (body.get("text") or "").strip(),
+                    "language": body.get("language"),
+                    "duration_s": body.get("duration"),
+                    "segments": [
+                        {
+                            "start": round(g["start"], 2),
+                            "end": round(g["end"], 2),
+                            "text": g["text"].strip(),
+                        }
+                        for g in body.get("segments") or []
+                    ],
+                }
+            except (httpx.HTTPStatusError, httpx.TimeoutException, httpx.TransportError) as e:
+                errors.append(f"{type(e).__name__}: {e}")
+                await _log(s.stt_model, started, errors[-1])
+                if attempt + 1 < max(1, s.ai_attempts):
+                    await _sleep(min(2.0 * 2**attempt, 8.0))
+                else:
+                    keys.set_aside("groq-stt", key, s.ai_cooldown)
     raise SttUnavailable("; ".join(errors))
 
 

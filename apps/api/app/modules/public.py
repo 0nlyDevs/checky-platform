@@ -17,7 +17,7 @@ from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import func, select
 
-from app.core import ai, stt
+from app.core import ai, keys, stt
 from app.core.access import Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
@@ -450,10 +450,41 @@ class SpeakIn(BaseModel):
     lang: Literal["fr", "mg"] = "fr"
 
 
+async def _tts(text: str, lang: str) -> bytes:
+    """ElevenLabs over its keys in turn: a used-up (401/402) or busy (429) key gives way to the next."""
+    s = get_settings()
+    status = 0
+    for api_key in keys.rotation("elevenlabs", keys.split(s.elevenlabs_api_key)):
+        try:
+            async with httpx.AsyncClient(transport=_tts_transport, timeout=30) as http:
+                r = await http.post(
+                    TTS_URL.format(voice=s.elevenlabs_voice_id),
+                    params={"output_format": "mp3_44100_64"},
+                    headers={"xi-api-key": api_key, "accept": "audio/mpeg"},
+                    json={"text": text, "model_id": s.elevenlabs_model_mg, "language_code": None}
+                    if lang == "mg"
+                    else {"text": text, "model_id": s.elevenlabs_model, "language_code": "fr"},
+                )
+        except httpx.HTTPError:
+            keys.set_aside("elevenlabs", api_key, s.ai_cooldown)
+            continue
+        if r.status_code == 200:
+            return r.content
+        status = r.status_code
+        if status in (401, 402, 429):
+            # a key out of credits stays aside for an hour; a busy one for the usual cooldown
+            wait = 3600.0 if status in (401, 402) else keys.retry_after(r.headers, s.ai_cooldown)
+            keys.set_aside("elevenlabs", api_key, wait)
+            continue
+        break
+    suffix = f" ({status})" if status else ""
+    raise ApiError(503, "tts_unavailable", f"The voice is unavailable right now{suffix}")
+
+
 @router.post("/speak", response_class=Response, responses={200: {"content": {"audio/mpeg": {}}}})
 async def speak(body: SpeakIn, request: Request) -> Response:
     s = get_settings()
-    if not s.elevenlabs_api_key:
+    if not keys.split(s.elevenlabs_api_key):
         raise ApiError(501, "tts_not_configured", "No voice configured; the browser reads instead")
     text = re.sub(r"\[\d+\]|【[^】]*】|\*\*", "", body.text)
     text = re.sub(r"\s+([.,;:!?])", r"\1", re.sub(r"\s+", " ", text)).strip()
@@ -465,25 +496,10 @@ async def speak(body: SpeakIn, request: Request) -> Response:
             raise ApiError(
                 429, "too_many_voices", "Too many spoken answers, try again in a few minutes"
             )
-        try:
-            async with httpx.AsyncClient(transport=_tts_transport, timeout=30) as http:
-                r = await http.post(
-                    TTS_URL.format(voice=s.elevenlabs_voice_id),
-                    params={"output_format": "mp3_44100_64"},
-                    headers={"xi-api-key": s.elevenlabs_api_key, "accept": "audio/mpeg"},
-                    json={"text": text, "model_id": s.elevenlabs_model_mg, "language_code": None}
-                    if body.lang == "mg"
-                    else {"text": text, "model_id": s.elevenlabs_model, "language_code": "fr"},
-                )
-        except httpx.HTTPError as e:
-            raise ApiError(503, "tts_unavailable", "The voice is unavailable right now") from e
-        if r.status_code != 200:
-            raise ApiError(
-                503, "tts_unavailable", f"The voice is unavailable right now ({r.status_code})"
-            )
+        audio = await _tts(text, body.lang)
         if len(_AUDIO) >= _AUDIO_MAX:
             _AUDIO.pop(next(iter(_AUDIO)))
-        _AUDIO[key] = r.content
+        _AUDIO[key] = audio
     return Response(
         _AUDIO[key], media_type="audio/mpeg", headers={"Cache-Control": "private, max-age=3600"}
     )
