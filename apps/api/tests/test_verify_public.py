@@ -123,7 +123,7 @@ def test_a_fact_checkers_review_is_relayed_as_theirs(as_user, monkeypatch):
     ]
 
 
-def test_facts_alone_when_a_newsroom_follows_the_rumour(as_user, no_reviews, monkeypatch):
+def test_facts_alone_from_the_registry(as_user, no_reviews, monkeypatch):
     from app.modules import registry
 
     async def match_text(db, workspace_id, text):
@@ -139,16 +139,42 @@ def test_facts_alone_when_a_newsroom_follows_the_rumour(as_user, no_reviews, mon
 
     monkeypatch.setattr(registry, "match_text", match_text, raising=False)
     alice = as_user("alice")
-    ws = _newsroom(alice)
-    item = _claim(alice, ws, CLAIM, status="to_check", verdict=None)
+    _newsroom(alice)
     out = TestClient(app).post("/api/v1/public/verify", json={"text": RUMOUR}).json()
     assert out["status"] == "facts" and out["signed"] is None
-    assert out["tracked_id"] == item and out["tracked_ref"] == "FAN-0145"
-    assert out["followed_since"]
     fact = out["known"][0]
     assert fact["kind"] == "registry" and fact["date"] == "2026-11-01"
     assert fact["diff"][0]["b"] == "72 heures" and "4 heures" in fact["text"]
-    assert out["search_status"] == "done"
+    assert out["search_status"] == "done" and out["followed_since"] is None
+
+
+def test_a_followed_rumour_gives_the_hour_and_the_newsroom_only(as_user, no_reviews):
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    item = _claim(alice, ws, CLAIM, status="to_check", verdict=None)
+    anon = TestClient(app)
+    out = anon.post("/api/v1/public/verify", json={"text": CLAIM}).json()
+    assert out["status"] == "facts" and out["followed_by"] == "Desk du matin"
+    assert out["followed_since"].endswith(("00:00Z", "00:00+00:00"))
+    raw = json.dumps(out)
+    assert item not in raw and "FAN-0145" not in raw and "selon la JIRAMA" not in raw
+    # nobody probes a draft title word by word
+    for probe in ("délestage Antananarivo", "délestage Antananarivo pomme banane rouge"):
+        out = anon.post("/api/v1/public/verify", json={"text": probe}).json()
+        assert out["status"] == "none" and out["followed_since"] is None
+    # a public tip is not « followed » (anyone could have sent it)
+    _claim(
+        alice,
+        ws,
+        "Le pont de Mangasoavina serait fermé jusqu'à lundi",
+        status="to_check",
+        verdict=None,
+        public_tip=True,
+    )
+    out = anon.post(
+        "/api/v1/public/verify", json={"text": "Le pont de Mangasoavina serait fermé jusqu'à lundi"}
+    ).json()
+    assert out["followed_since"] is None
 
 
 def test_the_crews_fact_agents_answer_when_they_are_there(monkeypatch):
@@ -201,7 +227,7 @@ def test_a_link_alone_is_read_first(as_user, no_reviews, monkeypatch):
 def test_notify_needs_the_secret_and_keeps_contacts_masked(as_user, monkeypatch):
     monkeypatch.setattr(get_settings(), "seal_secret", "")
     anon = TestClient(app)
-    body = {"text": RUMOUR, "contact": "034 00 000 12"}
+    body = {"text": CLAIM + " ?", "contact": "034 00 000 12"}
     assert anon.post("/api/v1/public/notify", json=body).status_code == 503
     monkeypatch.setattr(get_settings(), "seal_secret", "test-seal-secret-for-contacts")
     alice = as_user("alice")

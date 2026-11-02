@@ -112,34 +112,54 @@ class VerifyOut(BaseModel):
     external: list[ReviewOut] = Field(default_factory=list)
     facts: dict[str, Any] = Field(default_factory=dict)
     known: list[FactOut] = Field(default_factory=list)
+    # a public newsroom follows this rumour: since when (to the hour) and which newsroom; never
+    # the claim itself
     followed_since: datetime | None = None
-    tracked_ref: str | None = None
-    tracked_id: uuid.UUID | None = None
+    followed_by: str | None = None
     search_status: Literal["done", "unavailable", "skipped"] = "skipped"
 
 
 # --- 1. a newsroom already signed it; 3b. a newsroom already follows it
-async def followed(db: Db, text: str) -> Item | None:
-    """The unpublished claim of a public newsroom that is about this text, if any."""
+DISMISSED_TAGS = {"écarté", "ecarte", "ignoré", "ignore"}
+
+
+def _followable(item: Item) -> bool:
+    d = item.data or {}
+    if d.get("public_tip") or d.get("tip_token") or d.get("dismissed") or d.get("ignored"):
+        return False
+    return not DISMISSED_TAGS & {t.lower() for t in item.tags or []}
+
+
+async def followed(db: Db, text: str) -> tuple[Item, Workspace] | None:
+    """The unpublished claim of a public newsroom this text is about, if any. Coarse on purpose,
+    since anyone may ask: titles only (never a body), at least four words asked, and the same
+    words on both sides (Jaccard ≥ 0.5), so nobody can probe a draft title word by word. Public
+    tips and dismissed claims never count."""
     asked = words(text)
-    if len(asked) < 2:
+    if len(asked) < 4:
         return None
-    rows = await db.scalars(
-        select(Item)
+    rows = await db.execute(
+        select(Item, Workspace)
         .join(Workspace, Workspace.id == Item.workspace_id)
         .where(Workspace.is_public.is_(True), Item.type == "claim", Item.status != "published")
         .order_by(Item.created_at.desc())
         .limit(500)
     )
     best, best_score = None, 0.0
-    for item in rows:
-        score = max(
-            (public.overlap(asked, w) for w in (words(item.title), words(item.body)) if w),
-            default=0.0,
-        )
+    for item, ws in rows:
+        title = words(item.title)
+        shared = asked & title
+        if len(shared) < 3 or not _followable(item):
+            continue
+        score = len(shared) / len(asked | title)
         if score >= MATCH and score > best_score:
-            best, best_score = item, score
+            best, best_score = (item, ws), score
     return best
+
+
+def since_hour(moment: datetime) -> datetime:
+    """« Une rédaction s'en occupe depuis … », to the hour: enough for the public, no more."""
+    return moment.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
 
 
 def place_in(text: str) -> dict[str, Any]:
@@ -421,9 +441,8 @@ async def layered(db: Db, text: str, url: str | None) -> VerifyOut:
         external=external[:4],
         facts={k: facts[k] for k in FACT_KEYS if facts.get(k)},
         known=known,
-        followed_since=tracked.created_at if tracked else None,
-        tracked_ref=(tracked.data or {}).get("ref") if tracked else None,
-        tracked_id=tracked.id if tracked else None,
+        followed_since=since_hour(tracked[0].created_at) if tracked else None,
+        followed_by=tracked[1].name if tracked else None,
         search_status="unavailable" if raw_reviews is None else "done",
     )
 
@@ -476,8 +495,8 @@ async def notify(body: NotifyIn, request: Request, db: Db) -> NotifyOut:
         )
         if item is None:
             raise ApiError(404, "not_found", "Claim not found")
-    else:
-        item = await followed(db, body.text)
+    elif tracked := await followed(db, body.text):
+        item = tracked[0]
     digest = contact.digest(kind, value)
     same = select(PublicQuestion).where(PublicQuestion.contact_hash == digest)
     same = (
