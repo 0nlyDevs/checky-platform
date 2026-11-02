@@ -30,15 +30,25 @@ const Toaster = ({ ...props }: ToasterProps) => {
       }}
       style={
         {
-          "--normal-bg": "var(--popover)",
-          "--normal-text": "var(--popover-foreground)",
-          "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)",
+          // The ink pill (paper in dark): the paired toast / toast-foreground tokens.
+          "--normal-bg": "var(--toast)",
+          "--normal-text": "var(--toast-foreground)",
+          "--normal-border": "var(--toast)",
+          "--success-bg": "var(--toast)",
+          "--success-text": "var(--toast-foreground)",
+          "--success-border": "var(--toast)",
+          "--error-bg": "var(--toast)",
+          "--error-text": "var(--toast-foreground)",
+          "--error-border": "var(--toast)",
+          "--border-radius": "18px",
         } as React.CSSProperties
       }
       toastOptions={{
         classNames: {
           toast: "cn-toast",
+          description: "!text-current opacity-80",
+          // outlined in the toast's own label colour, so the pair holds in both themes
+          actionButton: "!h-[34px] !rounded-full !border !border-current !bg-transparent !px-3.5 !font-medium !text-current hover:!bg-transparent",
         },
       }}
       {...props}
