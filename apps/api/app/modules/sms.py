@@ -126,12 +126,16 @@ def _clip(text: str, n: int) -> str:
 
 
 def verdict_line(v: public.VerdictOut, lang: str = "fr") -> str:
-    """« Faux — <titre>. <raison courte> <lien court> », about two SMS."""
+    """« Faux — <titre>. <raison courte> (vérification 145) <lien court> », about two SMS."""
     word = VERDICT_WORDS.get(lang, VERDICT_WORDS["fr"])[v.verdict]
     first = re.split(r"(?<=[.!?])\s", (v.reason or "").strip(), maxsplit=1)[0]
     reason = f" {_clip(first, 110)}" if first else ""
     title = _clip(v.title, 90).rstrip(".")
-    return f"{word} — {title}.{reason} {short_link(v)}"[:SMS_MAX]
+    from app.core.seal import check_label
+
+    label = check_label(v.ref, lang)
+    number = f" ({label})" if label else ""
+    return f"{word} — {title}.{reason}{number} {short_link(v)}"[:SMS_MAX]
 
 
 # --- the gateway's door

@@ -241,6 +241,14 @@ def test_formats_come_from_one_model_call_and_invented_numbers_fall_back(as_user
     off = alice.get(path).json()
     assert off["written_by"] == "template" and off["mg"] is None and len(model) == 1
     assert off["sms"].startswith("FAUX : ")
+    # One verification number everywhere, written the same way.
+    assert off["sms"].endswith("(vérification 145) https://checky.example/v/145")
+    assert len(off["sms"]) <= 160
+    assert "C'est la vérification 145, sur checky.example/v/145." in off["radio_line"]
+    assert "vérification 145" in off["flash"] and "Vérification 145 : " in off["text"]
+    # The model's lines get the number from code when they leave it out.
+    assert out["radio_line"].endswith("(vérification 145)")
+    assert "(vérification 145)" in out["sms"] and "(fanamarinana 145)" in out["mg"]["sms"]
 
 
 def test_diffuse_draws_truth_stops_and_keeps_malagasy_until_reread(as_user, model):

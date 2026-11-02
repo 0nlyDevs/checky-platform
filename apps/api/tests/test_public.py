@@ -255,8 +255,9 @@ def test_flashes_of_the_day_and_short_links(as_user, monkeypatch):
     line = out["items"][0]
     assert line["fr"] == (
         "1. Faux — Une vidéo montre l'inondation d'Analakely ce matin. Images de 2019. "
-        "https://checky.example/v/142"
+        "(vérification 142) https://checky.example/v/142"
     )
+    assert "(fanamarinana 142)" in line["mg"]
     assert line["mg"].startswith("1. Diso — ") and line["link"] == "https://checky.example/v/142"
     assert anon.get("/api/v1/public/flashs").json()["items"][0]["id"] == first
     assert anon.get("/api/v1/public/flashs?newsroom=nope").status_code == 404

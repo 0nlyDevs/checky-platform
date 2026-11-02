@@ -67,7 +67,7 @@ def test_a_published_verdict_comes_back_in_the_senders_language(as_user):
     assert r.status_code == 200 and out["action"] == "verdict" and out["verdict_id"] == item
     assert out["reply"] == (
         "Faux — 72 heures de délestage dès demain sur tout Antananarivo, selon la JIRAMA. "
-        "Le communiqué annonce 4 heures par jour. https://checky.example/v/145"
+        "Le communiqué annonce 4 heures par jour. (vérification 145) https://checky.example/v/145"
     )
     assert out["masked"] == "+261 32 •• ••• 91" and len(out["phone_hash"]) == 64
     mg = sms("Marina ve fa 72 heures delestage eto Antananarivo hono ny JIRAMA ?").json()

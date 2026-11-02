@@ -20,7 +20,7 @@ from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import ai, dates, places
+from app.core import ai, dates, places, seal
 from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
@@ -454,11 +454,17 @@ def _fit_sms(head: str, link: str) -> str:
     return f"{head} {link}"
 
 
+def _bare(link: str) -> str:
+    return re.sub(r"^https?://", "", link)
+
+
 def templates(item: Item, ws: Workspace, reason: str, link: str, url: str) -> dict[str, Any]:
-    """The formats written by code: always available, Mode sans IA included."""
+    """The formats written by code: always available, Mode sans IA included. Each one carries the
+    verification number written the same way (« vérification 145 »), which `/v/145` resolves."""
     verdict = item.data["verdict"]
     word = VERDICT_FR[verdict]
     title = item.title.strip().rstrip(".")
+    label = seal.check_label((item.data or {}).get("ref"))
     origin = (item.data or {}).get("origin")
     where = {
         "facebook": " sur Facebook",
@@ -466,50 +472,69 @@ def templates(item: Item, ws: Workspace, reason: str, link: str, url: str) -> di
         "tiktok": " sur TikTok",
         "radio": " à la radio",
     }.get(origin or "", "")
+    on_air = f" C'est la {label}, sur {_bare(link)}." if label else ""
+    detail = (
+        f"Le détail de la {label} est sur {link}."
+        if label
+        else f"Le détail de notre vérification est sur {link}."
+    )
     flash_words = (
         f"Flash vérification de {ws.name}. Une information circule{where} : « {title} ». "
         f"Nous avons vérifié. Notre conclusion : {word.lower()}. {reason} "
         "Avant de partager un message, demandez-vous d'où il vient et qui l'a publié en premier. "
-        f"Le détail de notre vérification est sur {link}."
+        f"{detail}"
     ).split()
+    sms_tail = f"({label}) {link}" if label else link
     return {
         "radio_line": f"{ws.name} a vérifié l'information selon laquelle « {title} ». "
-        f"Conclusion : {word.lower()}. {reason}",
+        f"Conclusion : {word.lower()}. {reason}{on_air}",
         "flash": " ".join(flash_words[:110]),
-        "sms": _fit_sms(f"{word.upper()} : {title}.", link),
-        "text": f"{word} · {ws.name}\n« {title} »\n\n{reason}\n\n{url}",
+        "sms": _fit_sms(f"{word.upper()} : {title}.", sms_tail),
+        "text": f"{word} · {ws.name}\n« {title} »\n\n{reason}\n\n"
+        + (f"{label[0].upper()}{label[1:]} : {url}" if label else url),
         "institution_alert": (
-            f"Bonjour, {ws.name} a publié une vérification qui vous concerne : « {title} ». "
-            f"Conclusion : {word.lower()}. {reason} Le détail : {url}. Si vous publiez un "
+            f"Bonjour, {ws.name} a publié une vérification qui vous concerne : « {title} »"
+            + (f" ({label})" if label else "")
+            + f". Conclusion : {word.lower()}. {reason} Le détail : {url}. Si vous publiez un "
             "démenti ou une précision, merci de nous l'envoyer : nous l'ajouterons au dossier."
         ),
         "mg": None,
     }
 
 
-def _clean_model(raw: dict, facts: str, link: str, fallback: dict[str, Any]) -> dict[str, Any]:
+def _clean_model(
+    raw: dict, facts: str, link: str, fallback: dict[str, Any], ref: str | None = None
+) -> dict[str, Any]:
     """Keep a model field only when it is plausible: no number the facts do not hold, the SMS
-    under 160 characters with its link, the flash around 75 words. Otherwise the template."""
+    under 160 characters with its link, the flash around 75 words. Otherwise the template. The
+    verification number is added by code where the model left it out."""
     known = _numbers(facts)
     out = dict(fallback)
 
     def ok(text: str) -> bool:
         return bool(text) and _numbers(text) <= known
 
-    def field(key: str, text: str) -> str:
+    def field(key: str, text: str, lang: str = "fr") -> str:
         if not ok(text):
             return ""
-        if key == "sms":  # the link is added by code, after the check
-            return f"{text} {link}" if len(text) + len(link) < 160 else ""
+        label = seal.check_label(ref, lang)
+        has = bool(label) and label.lower() in text.lower()
+        if key == "sms":  # the number and the link are added by code, after the check
+            for tail in ([] if has or not label else [f"({label}) {link}"]) + [link]:
+                if len(text) + len(tail) < 160:
+                    return f"{text} {tail}"
+            return ""
         if key == "flash" and not 40 <= len(text.split()) <= 110:
             return ""
+        if key in ("radio_line", "flash") and label and not has:
+            text = f"{text.rstrip()} ({label})"
         return text
 
     for key in FORMAT_KEYS:
         if text := field(key, _plain(raw.get(key))):
             out[key] = text
     mg = raw.get("mg") if isinstance(raw.get("mg"), dict) else {}
-    drafts = {k: text for k in MG_KEYS if (text := field(k, _plain(mg.get(k))))}
+    drafts = {k: text for k in MG_KEYS if (text := field(k, _plain(mg.get(k)), "mg"))}
     out["mg"] = drafts or None
     return out
 
@@ -596,6 +621,7 @@ async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut
             "raison": reason,
             "rédaction": ws.name,
             "référence": (item.data or {}).get("ref"),
+            "numéro de vérification": seal.check_label((item.data or {}).get("ref")),
             "origine": (item.data or {}).get("origin"),
         },
         ensure_ascii=False,
@@ -619,7 +645,10 @@ async def diffusion(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut
             )
             raw = json.loads(reply.content or "{}")
             if isinstance(raw, dict):
-                formats, written_by = _clean_model(raw, facts, link, base), "ai"
+                formats, written_by = (
+                    _clean_model(raw, facts, link, base, (item.data or {}).get("ref")),
+                    "ai",
+                )
                 if len(_WRITTEN) >= 256:
                     _WRITTEN.pop(next(iter(_WRITTEN)))
                 _WRITTEN[key] = {k: formats.get(k) for k in (*FORMAT_KEYS, "mg")}
