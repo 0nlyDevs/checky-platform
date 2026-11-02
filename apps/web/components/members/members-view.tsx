@@ -8,6 +8,7 @@ import useSWR from "swr";
 import { IconCheck, IconCircleNotch, IconCopy, IconLink } from "@/lib/icons";
 import { toast } from "sonner";
 import { Avatar } from "@/components/claims/verdict";
+import { PermissionsMatrix, RolesGuide } from "@/components/members/permissions-matrix";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -73,17 +74,13 @@ function Invite({ ws }: { ws: string }) {
         {t.members.inviteTitle}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t.members.inviteLead}</p>
-      <div className="mt-4 flex flex-wrap items-end gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="invite-role">{t.members.inviteRole}</Label>
-          <RoleSelect id="invite-role" value={role} onChange={setRole} />
-        </div>
-        <Button onClick={create} disabled={pending} className="h-9">
-          {pending ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconLink aria-hidden />}
-          {t.members.createLink}
-        </Button>
+      <div className="mt-4">
+        <RolesGuide value={role} onChange={setRole} name="invite-role" />
       </div>
-      <p className="mt-2 text-sm text-muted-foreground">{t.members.roleHelp[role]}</p>
+      <Button onClick={create} disabled={pending} className="mt-4 h-9">
+        {pending ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconLink aria-hidden />}
+        {t.members.createLink}
+      </Button>
       {invite && (
         <div className="mt-4 flex flex-wrap items-center gap-2 rounded-md bg-muted p-2 pl-3">
           <code className="min-w-0 flex-1 truncate text-sm" title={link}>
@@ -192,6 +189,16 @@ export function MembersView() {
           })}
         </ul>
       )}
+
+      {/* Who may do what, read from the API's own rules; non-admins also get the roles in words. */}
+      <div className="mt-8 space-y-8">
+        {role && !isAdmin && (
+          <section className="rounded-lg border border-border bg-card p-5">
+            <RolesGuide />
+          </section>
+        )}
+        {role && <PermissionsMatrix ws={ws} />}
+      </div>
     </div>
   );
 }
