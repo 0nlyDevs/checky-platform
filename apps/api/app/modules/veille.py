@@ -1,32 +1,380 @@
-"""Human radio observations, linked to original clips already uploaded as sources."""
+"""Veille: what circulates before it reaches the desk.
 
+Four roads bring a rumour in before anyone pastes it into Vérifier: a citizen's tip, a question by
+SMS, a radio bulletin a partner heard (« À l'antenne ») and the national press. This module merges
+them into one feed and one map (counts per region, last 24 hours and 7 days), groups radio clips by
+the claim they carry, watches the words a desk cares about (« Mots surveillés ») and says which
+rumours the season brings back (« Météo des rumeurs », see app/core/seasons.py).
+
+Radio clips are what a veilleur (a partner-radio journalist or correspondent) heard: a French clip
+with a recording gets its transcript once ready; a Malagasy clip keeps the sentence the veilleur
+typed, never a machine transcript. Nothing here makes a verdict: « Déjà vérifié » only relays a
+verdict a journalist signed (this newsroom's, or `public.find_published`).
+
+Clips carry no column for extra facts, so the demo flag lives in `location.demo`.
+"""
+
+import logging
+import re
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Any, Literal
 
 from fastapi import APIRouter
-from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import select
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.access import Db, Veilleur
+from app.core import dates, storage
+from app.core.access import AnyMember, Db, Member, Veilleur
+from app.core.activity import broadcast, record
 from app.core.errors import ApiError
-from app.core.models import RadioClip, Source
+from app.core.models import (
+    File,
+    Item,
+    RadioClip,
+    Route,
+    Signal,
+    Source,
+)
+from app.core.places import MG_REGIONS, fold, gazetteer
+from app.workers.queue import enqueue
 
+log = logging.getLogger("checky.veille")
 router = APIRouter(tags=["veille"])
 
+VERDICTS = ("true", "misleading", "false", "unverifiable")
+# Two clips (or a clip and a claim) carry the same rumour when they share this much of their words.
+SAME_RUMOUR = 0.34
+ANTENNE_DAYS = 7
+FEED_LIMIT = 120
+_REGIONS = {fold(r): r for r in MG_REGIONS}
 
+
+# --------------------------------------------------------------------------------------- places
+def canonical_region(name: str | None) -> str | None:
+    """A region name as the gazetteer spells it (« analamanga » → « Analamanga »), or as given."""
+    if not name or not name.strip():
+        return None
+    if found := _REGIONS.get(fold(name)):
+        return found
+    hit = gazetteer(name)
+    return (hit or {}).get("region") or name.strip()
+
+
+def region_of_text(*texts: str | None) -> dict[str, Any] | None:
+    """The Malagasy place a text names, if any (offline gazetteer, no network). Punctuation is
+    blanked first: the gazetteer reads whole words between spaces (« à Toamasina. »)."""
+    text = " ".join(t for t in texts if t)
+    return gazetteer(re.sub(r"[^\w'’\- ]+", " ", text)) if text.strip() else None
+
+
+def item_location(item: Item) -> dict[str, Any] | None:
+    loc = (item.data or {}).get("location")
+    if isinstance(loc, dict) and (loc.get("region") or loc.get("name")):
+        return loc
+    return region_of_text(item.title, (item.body or "")[:600])
+
+
+def clip_location(clip: RadioClip) -> dict[str, Any] | None:
+    loc = clip.location or {}
+    if loc.get("region") or loc.get("name"):
+        return loc
+    return region_of_text(clip.station, (clip.heard_text or "")[:600])
+
+
+def _place_out(loc: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not loc:
+        return None
+    return {
+        "name": loc.get("name") or loc.get("region"),
+        "region": canonical_region(loc.get("region")),
+        "country": loc.get("country"),
+        "lat": loc.get("lat"),
+        "lng": loc.get("lng"),
+    }
+
+
+def _is_demo(clip: RadioClip) -> bool:
+    return bool((clip.location or {}).get("demo"))
+
+
+# ------------------------------------------------------------------------------ Mots surveillés
+class SignalIn(BaseModel):
+    word: str = Field(min_length=2, max_length=120)
+
+
+class SignalOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    word: str
+    active: bool
+    hits: int
+    created_at: datetime
+
+
+def _word_pattern(word: str) -> re.Pattern[str]:
+    # Whole words, accents and case ignored, a plural s/x allowed (« délestages »).
+    return re.compile(rf"(?<![a-z0-9]){re.escape(fold(word))}(?:s|x)?(?![a-z0-9])")
+
+
+def mentions(word: str, text: str) -> bool:
+    return bool(word.strip()) and bool(_word_pattern(word).search(fold(text)))
+
+
+async def match_signals(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    text: str,
+    where: str,
+    item_id: uuid.UUID | None = None,
+) -> list[str]:
+    """The watched words `text` mentions. Each match adds a hit and is broadcast as
+    `signal.matched {word, where, item_id, excerpt}`. Commits its own update, so call it once
+    your own rows are committed. Other modules (tips, SMS) call it lazily."""
+    if not text or not text.strip():
+        return []
+    rows = (
+        await db.scalars(
+            select(Signal).where(Signal.workspace_id == workspace_id, Signal.active.is_(True))
+        )
+    ).all()
+    hit = [s for s in rows if mentions(s.word, text)]
+    if not hit:
+        return []
+    for s in hit:
+        s.hits = (s.hits or 0) + 1
+    await db.commit()
+    excerpt = re.sub(r"\s+", " ", text).strip()[:200]
+    for s in hit:
+        await broadcast(
+            workspace_id,
+            "signal.matched",
+            {
+                "word": s.word,
+                "where": where,
+                "item_id": str(item_id) if item_id else None,
+                "excerpt": excerpt,
+            },
+        )
+    return [s.word for s in hit]
+
+
+@router.get("/workspaces/{ws}/signals")
+async def list_signals(member: AnyMember, db: Db) -> list[SignalOut]:
+    rows = await db.scalars(
+        select(Signal)
+        .where(Signal.workspace_id == member.workspace_id)
+        .order_by(Signal.created_at.desc())
+    )
+    return [SignalOut.model_validate(s) for s in rows]
+
+
+@router.post("/workspaces/{ws}/signals", status_code=201)
+async def add_signal(body: SignalIn, member: AnyMember, db: Db) -> SignalOut:
+    word = re.sub(r"\s+", " ", body.word).strip()
+    if len(fold(word)) < 2:
+        raise ApiError(422, "invalid_word", "Watch a word of two letters or more")
+    existing = (
+        await db.scalars(select(Signal).where(Signal.workspace_id == member.workspace_id))
+    ).all()
+    if any(fold(s.word) == fold(word) for s in existing):
+        raise ApiError(409, "already_watched", "This word is already watched")
+    signal = Signal(workspace_id=member.workspace_id, created_by=member.user.id, word=word)
+    db.add(signal)
+    await db.flush()
+    await record(db, member.workspace_id, member.user.id, "signal", signal.id, "create")
+    await db.commit()
+    await db.refresh(signal)
+    return SignalOut.model_validate(signal)
+
+
+@router.delete("/workspaces/{ws}/signals/{signal_id}", status_code=204)
+async def delete_signal(signal_id: uuid.UUID, member: AnyMember, db: Db) -> None:
+    signal = await db.get(Signal, signal_id)
+    if signal is None or signal.workspace_id != member.workspace_id:
+        raise ApiError(404, "not_found", "Signal not found")
+    await db.delete(signal)
+    await record(db, member.workspace_id, member.user.id, "signal", signal_id, "delete")
+    await db.commit()
+
+
+# ------------------------------------------------------------------------------- À l'antenne
 class ClipIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     station: str = Field(min_length=1, max_length=120)
-    heard_text: str = Field(min_length=10, max_length=4000)
+    # What the veilleur heard, in their words. Optional for a French clip with a recording: its
+    # transcript fills it once ready. Required in Malagasy: the text stays human.
+    heard_text: str = Field(default="", max_length=4000)
     language: str = Field(default="mg", min_length=2, max_length=10)
     recorded_at: datetime
     source_id: uuid.UUID | None = None
+    # A recording just uploaded through `radio-clips/upload-url` (the clip completes it).
+    file_id: uuid.UUID | None = None
+    location: dict[str, Any] | None = None
+    clip_at_s: float | None = Field(default=None, ge=0)
+
+    @model_validator(mode="after")
+    def _text_or_recording(self) -> "ClipIn":
+        self.heard_text = self.heard_text.strip()
+        self.language = self.language.strip().lower()
+        if self.source_id and self.file_id:
+            raise ValueError("Send source_id or file_id, not both")
+        recording = self.source_id or self.file_id
+        if len(self.heard_text) < 10 and not (recording and self.language == "fr"):
+            raise ValueError("Say in one sentence what was heard (10 characters or more)")
+        return self
 
 
-class ClipOut(ClipIn):
-    model_config = ConfigDict(from_attributes=True)
-    id: uuid.UUID
+class ServedOut(BaseModel):
+    """« Votre signalement a servi »: the dossier the clip fed, its signed verdict, the routes the
+    correction took."""
+
+    item_id: uuid.UUID
+    ref: str | None
+    title: str
     status: str
+    verdict: str | None
+    signed_at: str | None
+    truth_routes: int
+
+
+class ClipOut(BaseModel):
+    id: uuid.UUID
+    station: str
+    heard_text: str
+    # veilleur: typed by the veilleur; transcript: the recording's transcript; pending: waiting
+    text_from: Literal["veilleur", "transcript", "pending"]
+    language: str | None
+    recorded_at: datetime
+    source_id: uuid.UUID | None
+    item_id: uuid.UUID | None
+    location: dict[str, Any] | None
+    origin: str
+    status: str
+    clip_at_s: float | None
+    created_by: str
+    created_at: datetime
+    demo: bool
+    served: ServedOut | None = None
+
+
+class ClipUploadIn(BaseModel):
+    filename: str = Field(min_length=1, max_length=255)
+    mime: str
+    size_bytes: int = Field(gt=0)
+
+
+class ClipUploadOut(BaseModel):
+    file_id: uuid.UUID
+    upload_url: str
+    headers: dict[str, str]
+    expires_in: int
+
+
+def _clip_out(
+    clip: RadioClip, source: Source | None = None, served: ServedOut | None = None
+) -> ClipOut:
+    text = clip.heard_text or ""
+    if not text.strip():
+        text_from = "pending"
+    elif source is not None and source.text and text == source.text.strip()[:4000]:
+        text_from = "transcript"
+    else:
+        text_from = "veilleur"
+    return ClipOut(
+        id=clip.id,
+        station=clip.station,
+        heard_text=text,
+        text_from=text_from,
+        language=clip.language,
+        recorded_at=clip.recorded_at,
+        source_id=clip.source_id,
+        item_id=clip.item_id,
+        location=_place_out(clip_location(clip)),
+        origin=clip.origin,
+        status=clip.status,
+        clip_at_s=clip.clip_at_s,
+        created_by=clip.created_by,
+        created_at=clip.created_at,
+        demo=_is_demo(clip),
+        served=served,
+    )
+
+
+async def _sources(db: AsyncSession, clips: list[RadioClip]) -> dict[uuid.UUID, Source]:
+    ids = {c.source_id for c in clips if c.source_id}
+    if not ids:
+        return {}
+    return {s.id: s for s in await db.scalars(select(Source).where(Source.id.in_(ids)))}
+
+
+async def fill_from_transcripts(
+    db: AsyncSession, clips: list[RadioClip]
+) -> dict[uuid.UUID, Source]:
+    """A French clip recorded without a sentence takes its recording's transcript once the source
+    is ready (the ingest job runs after the clip is saved). Malagasy clips are never filled."""
+    sources = await _sources(db, clips)
+    filled = []
+    for clip in clips:
+        source = sources.get(clip.source_id) if clip.source_id else None
+        if (
+            source is not None
+            and (clip.language or "").startswith("fr")
+            and not (clip.heard_text or "").strip()
+            and source.status == "ready"
+            and source.text.strip()
+        ):
+            clip.heard_text = source.text.strip()[:4000]
+            filled.append(clip)
+    if filled:
+        await db.commit()
+        for clip in filled:
+            await match_signals(db, clip.workspace_id, clip.heard_text, "clip")
+    return sources
+
+
+async def _served(db: AsyncSession, clips: list[RadioClip]) -> dict[uuid.UUID, ServedOut]:
+    ids = {c.item_id for c in clips if c.item_id}
+    if not ids:
+        return {}
+    items = {i.id: i for i in await db.scalars(select(Item).where(Item.id.in_(ids)))}
+    counts = dict(
+        (
+            await db.execute(
+                select(Route.item_id, func.count())
+                .where(Route.item_id.in_(ids), Route.side == "truth")
+                .group_by(Route.item_id)
+            )
+        ).all()
+    )
+    out = {}
+    for item_id, item in items.items():
+        d = item.data or {}
+        signed = d.get("verdict") in VERDICTS and item.status in ("verified", "published")
+        out[item_id] = ServedOut(
+            item_id=item.id,
+            ref=d.get("ref"),
+            title=item.title,
+            status=item.status,
+            verdict=d["verdict"] if signed else None,
+            signed_at=(d.get("signed_at") or item.updated_at.isoformat()) if signed else None,
+            truth_routes=counts.get(item_id, 0),
+        )
+    return out
+
+
+async def _clips_out(db: AsyncSession, clips: list[RadioClip]) -> list[ClipOut]:
+    sources = await fill_from_transcripts(db, clips)
+    served = await _served(db, clips)
+    return [
+        _clip_out(
+            c,
+            sources.get(c.source_id) if c.source_id else None,
+            served.get(c.item_id) if c.item_id else None,
+        )
+        for c in clips
+    ]
 
 
 @router.get("/workspaces/{ws}/radio-clips")
@@ -34,25 +382,171 @@ async def clips(member: Veilleur, db: Db) -> list[ClipOut]:
     stmt = select(RadioClip).where(RadioClip.workspace_id == member.workspace_id)
     if member.role == "veilleur":
         stmt = stmt.where(RadioClip.created_by == member.user.id)
-    return [
-        ClipOut.model_validate(row)
-        for row in await db.scalars(stmt.order_by(RadioClip.recorded_at.desc()).limit(100))
-    ]
+    rows = list(await db.scalars(stmt.order_by(RadioClip.recorded_at.desc()).limit(100)))
+    return await _clips_out(db, rows)
 
 
-@router.post("/workspaces/{ws}/radio-clips", status_code=201)
-async def create_clip(body: ClipIn, member: Veilleur, db: Db) -> ClipOut:
-    if body.recorded_at.tzinfo is None or body.recorded_at > datetime.now(UTC):
-        raise ApiError(422, "invalid_time", "Use a past recording time with timezone")
+async def _get_clip(db: AsyncSession, member: Member, clip_id: uuid.UUID) -> RadioClip:
+    clip = await db.get(RadioClip, clip_id)
+    if clip is None or clip.workspace_id != member.workspace_id:
+        raise ApiError(404, "not_found", "Clip not found")
+    if member.role == "veilleur" and clip.created_by != member.user.id:
+        raise ApiError(404, "not_found", "Clip not found")
+    return clip
+
+
+@router.post("/workspaces/{ws}/radio-clips/upload-url", status_code=201)
+async def clip_upload_url(body: ClipUploadIn, member: Veilleur, db: Db) -> ClipUploadOut:
+    """The veilleur's recording goes straight to storage, as every upload does; the clip then
+    completes it. A door of its own: `files/upload-url` belongs to the desk."""
+    from app.modules.sources import KIND_BY_MIME, MAX_UPLOAD_BYTES, _safe_name
+
+    if not storage.configured():
+        raise ApiError(503, "storage_unavailable", "File storage is not configured")
+    mime = body.mime.split(";")[0].strip().lower()
+    if KIND_BY_MIME.get(mime) not in ("audio", "video"):
+        raise ApiError(415, "unsupported_type", "Send an audio or video recording")
+    if body.size_bytes > MAX_UPLOAD_BYTES:
+        raise ApiError(413, "too_large", "Files are limited to 25 MB")
+    file_id = uuid.uuid4()
+    key = f"ws/{member.workspace_id}/{file_id}/{_safe_name(body.filename)}"
+    db.add(
+        File(
+            id=file_id,
+            workspace_id=member.workspace_id,
+            uploaded_by=member.user.id,
+            storage_key=key,
+            filename=body.filename,
+            mime=mime,
+            size_bytes=body.size_bytes,
+        )
+    )
+    await db.commit()
+    return ClipUploadOut(
+        file_id=file_id,
+        upload_url=storage.presign_upload(key, mime),
+        headers={"Content-Type": mime},
+        expires_in=storage.UPLOAD_SECONDS,
+    )
+
+
+@router.get("/workspaces/{ws}/radio-clips/{clip_id}")
+async def get_clip(clip_id: uuid.UUID, member: Veilleur, db: Db) -> ClipOut:
+    clip = await _get_clip(db, member, clip_id)
+    return (await _clips_out(db, [clip]))[0]
+
+
+async def _recording_source(
+    db: AsyncSession, member: Member, body: ClipIn
+) -> tuple[Source | None, bool]:
+    """(the clip's source, whether it was just created and must be ingested)."""
+    from app.modules.sources import KIND_BY_MIME, MAX_UPLOAD_BYTES
+
     if body.source_id:
         source = await db.get(Source, body.source_id)
         if source is None or source.workspace_id != member.workspace_id:
             raise ApiError(404, "not_found", "Source not found")
         if source.kind not in ("audio", "video"):
             raise ApiError(422, "invalid_source", "Attach an audio or video source")
+        return source, False
+    if not body.file_id:
+        return None, False
+    f = await db.get(File, body.file_id)
+    if f is None or f.workspace_id != member.workspace_id or f.uploaded_by != member.user.id:
+        raise ApiError(404, "not_found", "File not found")
+    if f.status != "pending":
+        raise ApiError(409, "already_completed", "This upload was already completed")
+    if KIND_BY_MIME.get(f.mime) not in ("audio", "video"):
+        raise ApiError(422, "invalid_source", "Attach an audio or video recording")
+    obj = await storage.head(f.storage_key)
+    if obj is None:
+        raise ApiError(409, "not_uploaded", "The file has not reached storage yet")
+    if obj["size"] > MAX_UPLOAD_BYTES:
+        await storage.delete(f.storage_key)
+        raise ApiError(413, "too_large", "Files are limited to 25 MB")
+    f.status, f.size_bytes = "ready", obj["size"]
+    heard = body.recorded_at.astimezone(dates.EAT)
+    source = Source(
+        workspace_id=member.workspace_id,
+        file_id=f.id,
+        created_by=member.user.id,
+        kind=KIND_BY_MIME[f.mime],
+        title=f"Antenne · {body.station} · {dates.fr(heard.date())} {heard:%H:%M}"[:500],
+        published_at=heard.date().isoformat(),
+    )
+    db.add(source)
+    await db.flush()
+    await record(db, member.workspace_id, member.user.id, "source", source.id, "create")
+    return source, True
+
+
+@router.post("/workspaces/{ws}/radio-clips", status_code=201)
+async def create_clip(body: ClipIn, member: Veilleur, db: Db) -> ClipOut:
+    latest = datetime.now(UTC) + timedelta(minutes=2)  # a phone clock a little ahead is fine
+    if body.recorded_at.tzinfo is None or body.recorded_at > latest:
+        raise ApiError(422, "invalid_time", "Use a past recording time with timezone")
+    source, fresh = await _recording_source(db, member, body)
+    location = dict(body.location or {})
+    if location.get("region"):
+        location["region"] = canonical_region(location["region"])
+    elif location.get("name"):
+        location = {**(gazetteer(str(location["name"])) or {}), **location}
+    else:
+        location = region_of_text(body.station) or {}
+    location.pop("demo", None)  # only the demo seed marks its own clips
     clip = RadioClip(
-        workspace_id=member.workspace_id, created_by=member.user.id, **body.model_dump()
+        workspace_id=member.workspace_id,
+        created_by=member.user.id,
+        source_id=source.id if source else None,
+        station=body.station.strip(),
+        heard_text=body.heard_text,
+        language=body.language,
+        recorded_at=body.recorded_at,
+        location=location,
+        clip_at_s=body.clip_at_s,
     )
     db.add(clip)
+    await db.flush()
+    await record(
+        db,
+        member.workspace_id,
+        member.user.id,
+        "radio_clip",
+        clip.id,
+        "create",
+        {"station": clip.station},
+    )
     await db.commit()
-    return ClipOut.model_validate(clip)
+    await db.refresh(clip)
+    if source is not None and fresh:
+        await enqueue(
+            db,
+            member.workspace_id,
+            member.user.id,
+            "ingest_file",
+            {
+                "source_id": str(source.id),
+                "language": body.language if body.language in ("fr", "mg") else None,
+            },
+        )
+    out = _clip_out(clip, source)
+    await broadcast(member.workspace_id, "clip.created", out.model_dump(mode="json"))
+    if clip.heard_text:
+        await match_signals(db, member.workspace_id, clip.heard_text, "clip")
+    return out
+
+
+# --- grouping by claim
+
+
+# ------------------------------------------------------------------------------ Veille feed
+
+
+# ----------------------------------------------------------------------- Météo des rumeurs
+
+
+# ------------------------------------------------------------------------------- demo seed
+# Fictional stations and bulletins, flagged « démo » (location.demo). The Malagasy sentence is
+# what a veilleur would type (to be reread by a native speaker).
+# A citizen's tip, and two verdicts of earlier years so that « Ça revient » has something to
+# show on a fresh demo. Fictional, flagged `demo`.
