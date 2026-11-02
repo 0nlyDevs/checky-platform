@@ -125,12 +125,56 @@ def _facts(raw: bytes) -> tuple[ImageFacts, str]:
     return ImageFacts(**meta), mime
 
 
+SIGHTENGINE_URL = "https://api.sightengine.com/1.0/check.json"
+
+
+def _grade(answer: DetectorReply) -> DetectorOut:
+    # Conservative operational thresholds, not a claimed calibration or probability.
+    assessment: Assessment = (
+        "detected"
+        if answer.ai_score >= 0.9
+        else "none"
+        if answer.ai_score <= 0.1
+        else "inconclusive"
+    )
+    return DetectorOut(status="assessed", assessment=assessment, model=answer.model)
+
+
+async def _sightengine(raw: bytes, mime: str) -> DetectorOut:
+    """Sightengine's `genai` model: multipart upload, answers {"type": {"ai_generated": 0..1}}."""
+    settings = get_settings()
+    try:
+        async with httpx.AsyncClient(
+            transport=_detector_transport, timeout=20, follow_redirects=False
+        ) as http:
+            response = await http.post(
+                SIGHTENGINE_URL,
+                data={
+                    "models": "genai",
+                    "api_user": settings.sightengine_api_user,
+                    "api_secret": settings.sightengine_api_secret,
+                },
+                files={"media": ("image", raw, mime)},
+            )
+        response.raise_for_status()
+        body = response.json()
+        if body.get("status") != "success":
+            raise ValueError("Sightengine refused the request")
+        score = body["type"]["ai_generated"]
+        return _grade(DetectorReply(ai_score=score, model="sightengine-genai"))
+    except (httpx.HTTPError, ValueError, TypeError, KeyError):
+        return DetectorOut(status="unavailable")
+
+
 async def detect_pixels(raw: bytes, mime: str) -> DetectorOut:
     settings = get_settings()
-    if not settings.image_detector_url:
+    sightengine = bool(settings.sightengine_api_user and settings.sightengine_api_secret)
+    if not settings.image_detector_url and not sightengine:
         return DetectorOut(status="not_configured")
     if not settings.image_detector_validated:
         return DetectorOut(status="not_validated")
+    if sightengine:
+        return await _sightengine(raw, mime)
     target = urlparse(settings.image_detector_url)
     if (
         target.username
@@ -160,16 +204,7 @@ async def detect_pixels(raw: bytes, mime: str) -> DetectorOut:
                 data.extend(chunk)
                 if len(data) > 16_384:
                     raise ValueError("Detector response too large")
-        answer = DetectorReply.model_validate(json.loads(data))
-        # Conservative operational thresholds, not a claimed calibration or probability.
-        assessment: Assessment = (
-            "detected"
-            if answer.ai_score >= 0.9
-            else "none"
-            if answer.ai_score <= 0.1
-            else "inconclusive"
-        )
-        return DetectorOut(status="assessed", assessment=assessment, model=answer.model)
+        return _grade(DetectorReply.model_validate(json.loads(data)))
     except (httpx.HTTPError, ValueError, TypeError):
         return DetectorOut(status="unavailable")
 

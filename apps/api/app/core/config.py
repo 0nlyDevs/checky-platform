@@ -85,6 +85,10 @@ class Settings(BaseSettings):
     image_detector_url: str = ""
     image_detector_token: str = ""
     image_detector_validated: bool = False
+    # Or Sightengine's `genai` model (https://sightengine.com, free plan): both keys set = configured.
+    # It takes precedence over IMAGE_DETECTOR_URL and still waits for IMAGE_DETECTOR_VALIDATED.
+    sightengine_api_user: str = ""
+    sightengine_api_secret: str = ""
     # Anonymous checks have no LLM verdict generation. Both routes share these per-process caps.
     public_checks_per_window: int = 12  # requests per address, per 10 minutes
     public_checks_per_day: int = 1000  # all addresses, per 24-hour budget period

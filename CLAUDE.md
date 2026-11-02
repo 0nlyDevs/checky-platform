@@ -109,7 +109,9 @@ persisted by this endpoint. Content Credentials signatures are not verified; no 
 proves authenticity. `IMAGE_DETECTOR_URL`/`TOKEN` stay server-side and the detector is not contacted
 until `IMAGE_DETECTOR_VALIDATED=true` after evaluation. Its contract is raw image bytes →
 `{ai_score: 0..1, model: versioned_id}`; 0.9/0.1 are conservative operational cutoffs, not calibrated
-probabilities. No external detector is enabled by default. The extension's README documents
+probabilities. **Sightengine** (`genai` model, multipart `media` → `type.ai_generated`) is built in:
+`SIGHTENGINE_API_USER` + `SIGHTENGINE_API_SECRET` configure it (it takes precedence over `IMAGE_DETECTOR_URL`),
+reported as model `sightengine-genai`, same validation gate and cutoffs; tests blank its keys. No external detector is enabled by default. The extension's README documents
 limitations, data handling and manual browser checks still required before distribution.
 
 ## Web app

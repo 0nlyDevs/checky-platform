@@ -208,3 +208,67 @@ def test_bad_detector_results_do_not_claim_authenticity(as_user, image_web, monk
     result = alice.post(f"/api/v1/workspaces/{ws}/image-check", json={"url": url}).json()
     assert result["detector"]["status"] == "unavailable"
     assert result["assessment"] == "inconclusive"
+
+
+def _sightengine(monkeypatch, validated, reply):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "sightengine_api_user", "user")
+    monkeypatch.setattr(settings, "sightengine_api_secret", "secret")
+    monkeypatch.setattr(settings, "image_detector_validated", validated)
+    seen = []
+
+    def respond(request):
+        seen.append(request)
+        return reply(request)
+
+    monkeypatch.setattr(imagecheck, "_detector_transport", httpx.MockTransport(respond))
+    return seen
+
+
+@pytest.mark.parametrize(
+    ("score", "expected"), [(0.99, "detected"), (0.02, "none"), (0.5, "inconclusive")]
+)
+def test_sightengine_scores_are_a_separate_signal(as_user, image_web, monkeypatch, score, expected):
+    seen = _sightengine(
+        monkeypatch,
+        True,
+        lambda _: httpx.Response(200, json={"status": "success", "type": {"ai_generated": score}}),
+    )
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    result = alice.post(
+        f"/api/v1/workspaces/{ws}/image-check/file",
+        content=png(),
+        headers={"Content-Type": "image/png"},
+    ).json()
+    assert result["detector"] == {
+        "status": "assessed",
+        "assessment": expected,
+        "model": "sightengine-genai",
+    }
+    assert result["assessment"] == expected
+    assert "ai_score" not in str(result) and str(score) not in str(result)
+    assert str(seen[0].url) == imagecheck.SIGHTENGINE_URL
+    body = seen[0].content
+    assert b'name="models"' in body and b"genai" in body and b'name="media"' in body
+
+
+def test_sightengine_waits_for_validation_and_failures_claim_nothing(
+    as_user, image_web, monkeypatch
+):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    endpoint = f"/api/v1/workspaces/{ws}/image-check/file"
+    image = {"Content-Type": "image/png"}
+    seen = _sightengine(monkeypatch, False, lambda _: pytest.fail("not validated yet"))
+    result = alice.post(endpoint, content=png(), headers=image).json()
+    assert result["detector"]["status"] == "not_validated" and not seen
+    for reply in (
+        lambda _: httpx.Response(200, json={"status": "failure", "error": {"code": 21}}),
+        lambda _: httpx.Response(500),
+        lambda _: httpx.Response(200, json={"status": "success", "type": {}}),
+    ):
+        _sightengine(monkeypatch, True, reply)
+        result = alice.post(endpoint, content=png(), headers=image).json()
+        assert result["detector"]["status"] == "unavailable"
+        assert result["assessment"] == "inconclusive"
