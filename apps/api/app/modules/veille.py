@@ -36,8 +36,10 @@ from app.core.models import (
     Route,
     Signal,
     Source,
+    Workspace,
 )
 from app.core.places import MG_REGIONS, fold, gazetteer
+from app.core.words import words
 from app.workers.queue import enqueue
 
 log = logging.getLogger("checky.veille")
@@ -537,6 +539,342 @@ async def create_clip(body: ClipIn, member: Veilleur, db: Db) -> ClipOut:
 
 
 # --- grouping by claim
+def overlap(a: set[str], b: set[str]) -> float:
+    if not a or not b:
+        return 0.0
+    return len(a & b) / min(len(a), len(b))
+
+
+class ClipGroup:
+    def __init__(self, item: Item | None = None):
+        self.item = item
+        self.clips: list[RadioClip] = []
+        self.words: set[str] = words(item.title) if item else set()
+
+    def add(self, clip: RadioClip) -> None:
+        self.clips.append(clip)
+        self.words |= words(clip.heard_text or "")
+
+
+def group_clips(clips: list[RadioClip], items: dict[uuid.UUID, Item]) -> list[ClipGroup]:
+    """Clips that carry the same rumour, oldest first: those attached to a dossier gather under
+    it; the others join the group whose words they share (≥ a third), or start a new one."""
+    groups: list[ClipGroup] = []
+    by_item: dict[uuid.UUID, ClipGroup] = {}
+    for clip in sorted(clips, key=lambda c: c.recorded_at):
+        if clip.item_id and clip.item_id in items:
+            group = by_item.get(clip.item_id)
+            if group is None:
+                group = by_item[clip.item_id] = ClipGroup(items[clip.item_id])
+                groups.append(group)
+            group.add(clip)
+            continue
+        said = words(clip.heard_text or "")
+        best, score = None, 0.0
+        for group in groups:
+            s = overlap(said, group.words)
+            if s > score and len(said & group.words) >= 2:
+                best, score = group, s
+        if best is not None and score >= SAME_RUMOUR:
+            best.add(clip)
+        else:
+            group = ClipGroup()
+            group.add(clip)
+            groups.append(group)
+    return groups
+
+
+class AntenneClip(BaseModel):
+    id: uuid.UUID
+    station: str
+    recorded_at: datetime
+    source_id: uuid.UUID | None
+    clip_at_s: float | None
+    heard_text: str
+    language: str | None
+    text_from: str
+    demo: bool
+
+
+class AntenneRow(BaseModel):
+    claim: str
+    item_id: uuid.UUID | None
+    ref: str | None
+    status: Literal["new", "followed", "checked"]
+    verdict: str | None
+    reports: int
+    stations: list[str]
+    regions_24h: list[str]
+    first_at: datetime
+    latest: AntenneClip
+    clip_ids: list[uuid.UUID]
+    demo: bool
+
+
+def first_sentence(text: str, limit: int = 300) -> str:
+    text = re.sub(r"\s+", " ", text or "").strip()
+    m = re.match(r"(.{20,}?[.!?…])(\s|$)", text)
+    return (m.group(1) if m else text)[:limit].strip()
+
+
+def _row(group: ClipGroup, sources: dict[uuid.UUID, Source]) -> AntenneRow:
+    clips = sorted(group.clips, key=lambda c: c.recorded_at)
+    latest = clips[-1]
+    item = group.item
+    d = (item.data or {}) if item else {}
+    if item and (d.get("verdict") in VERDICTS or item.status in ("verified", "published")):
+        status = "checked"
+    elif item:
+        status = "followed"
+    else:
+        status = "new"
+    day_ago = datetime.now(UTC) - timedelta(hours=24)
+    regions: list[str] = []
+    for c in clips:
+        region = canonical_region((clip_location(c) or {}).get("region"))
+        if c.recorded_at >= day_ago and region and region not in regions:
+            regions.append(region)
+    stations: list[str] = []
+    for c in reversed(clips):
+        if c.station not in stations:
+            stations.append(c.station)
+    texted = next((c for c in reversed(clips) if (c.heard_text or "").strip()), latest)
+    out = _clip_out(latest, sources.get(latest.source_id) if latest.source_id else None)
+    return AntenneRow(
+        claim=item.title if item else first_sentence(texted.heard_text) or texted.station,
+        item_id=item.id if item else None,
+        ref=d.get("ref"),
+        status=status,
+        verdict=d.get("verdict") if d.get("verdict") in VERDICTS else None,
+        reports=len(clips),
+        stations=stations,
+        regions_24h=regions,
+        first_at=clips[0].recorded_at,
+        latest=AntenneClip(
+            id=latest.id,
+            station=latest.station,
+            recorded_at=latest.recorded_at,
+            source_id=latest.source_id,
+            clip_at_s=latest.clip_at_s,
+            heard_text=out.heard_text,
+            language=latest.language,
+            text_from=out.text_from,
+            demo=out.demo,
+        ),
+        clip_ids=[c.id for c in clips],
+        demo=any(_is_demo(c) for c in clips),
+    )
+
+
+async def recent_clips(
+    db: AsyncSession, workspace_id: uuid.UUID, days: int = ANTENNE_DAYS
+) -> list[RadioClip]:
+    since = datetime.now(UTC) - timedelta(days=days)
+    return list(
+        await db.scalars(
+            select(RadioClip)
+            .where(
+                RadioClip.workspace_id == workspace_id,
+                RadioClip.recorded_at >= since,
+                RadioClip.status != "ignored",
+            )
+            .order_by(RadioClip.recorded_at.desc())
+            .limit(400)
+        )
+    )
+
+
+async def _items_of(db: AsyncSession, clips: list[RadioClip]) -> dict[uuid.UUID, Item]:
+    ids = {c.item_id for c in clips if c.item_id}
+    if not ids:
+        return {}
+    return {i.id: i for i in await db.scalars(select(Item).where(Item.id.in_(ids)))}
+
+
+async def antenne_rows(db: AsyncSession, workspace_id: uuid.UUID) -> list[AntenneRow]:
+    clips = await recent_clips(db, workspace_id)
+    sources = await fill_from_transcripts(db, clips)
+    rows = [_row(g, sources) for g in group_clips(clips, await _items_of(db, clips))]
+    order = {"new": 0, "followed": 1, "checked": 2}
+    rows.sort(key=lambda r: (order[r.status], -r.reports, -r.latest.recorded_at.timestamp()))
+    return rows
+
+
+@router.get("/workspaces/{ws}/antenne")
+async def antenne(member: AnyMember, db: Db) -> list[AntenneRow]:
+    """What the partner radios heard in the last 7 days, one row per claim: new first, then the
+    ones the desk follows, then the ones it checked."""
+    return await antenne_rows(db, member.workspace_id)
+
+
+class FollowIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    # Attach to this dossier; otherwise the clip's group's dossier, or a new one.
+    item_id: uuid.UUID | None = None
+
+
+class FollowOut(BaseModel):
+    item_id: uuid.UUID
+    ref: str | None
+    created: bool
+    clip_ids: list[uuid.UUID]
+
+
+async def add_rumour_stop(
+    db: AsyncSession, member: Member, item_id: uuid.UUID, clip: RadioClip
+) -> None:
+    """The clip becomes a stop of the rumour's road (« Le trajet »): through `trajet.add_stop`
+    when that module provides it, otherwise as the same Route row written here."""
+    location = _place_out(clip_location(clip)) or {}
+    proof = {
+        "source_id": str(clip.source_id) if clip.source_id else None,
+        "clip_at_s": clip.clip_at_s,
+        "clip_id": str(clip.id),
+        "note": (clip.heard_text or "")[:300],
+    }
+    try:
+        from app.modules.trajet import add_stop
+    except ImportError:
+        add_stop = None
+    if add_stop is not None:
+        await add_stop(
+            db,
+            member.workspace_id,
+            item_id,
+            side="rumour",
+            channel="radio",
+            place=clip.station,
+            location=location,
+            proof=proof,
+            added_by=member.user.id,
+            at=clip.recorded_at,
+            auto=True,
+        )
+        return
+    db.add(
+        Route(
+            workspace_id=member.workspace_id,
+            item_id=item_id,
+            added_by=member.user.id,
+            side="rumour",
+            channel="radio",
+            place=clip.station[:300],
+            location=location,
+            at=clip.recorded_at,
+            proof=proof,
+            status="seen",
+            auto=True,
+        )
+    )
+
+
+@router.post("/workspaces/{ws}/radio-clips/{clip_id}/follow")
+async def follow_clip(clip_id: uuid.UUID, body: FollowIn, member: AnyMember, db: Db) -> FollowOut:
+    """« Suivre »: the clip (and the clips that carry the same rumour) join a dossier, new or
+    existing, and each becomes a radio stop of the rumour's road."""
+    from app.modules.items import _out
+    from app.modules.public import _next_ref
+    from app.modules.rubrique import beats_for, offered_beats
+
+    clip = await _get_clip(db, member, clip_id)
+    if clip.status == "ignored":
+        clip.status = "new"
+    recent = await recent_clips(db, member.workspace_id)
+    if clip.id not in {c.id for c in recent}:
+        recent.append(clip)
+    await fill_from_transcripts(db, recent)
+    group = next(g for g in group_clips(recent, await _items_of(db, recent)) if clip in g.clips)
+
+    item: Item | None = None
+    if body.item_id:
+        item = await db.get(Item, body.item_id)
+        if item is None or item.workspace_id != member.workspace_id:
+            raise ApiError(404, "not_found", "Item not found")
+    elif group.item is not None:
+        item = group.item
+    created = item is None
+    if item is None:
+        first = min(group.clips, key=lambda c: c.recorded_at)
+        texted = next((c for c in group.clips if (c.heard_text or "").strip()), clip)
+        ws = await db.get(Workspace, member.workspace_id)
+        item = Item(
+            workspace_id=member.workspace_id,
+            author_id=member.user.id,
+            type="claim",
+            title=first_sentence(texted.heard_text) or f"Entendu sur {texted.station}",
+            body=texted.heard_text or "",
+            status="to_check",
+            tags=beats_for(texted.heard_text or "", offered_beats(ws)),
+            data={
+                "ref": await _next_ref(db, member.workspace_id),
+                "first_seen_at": first.recorded_at.astimezone(dates.EAT).isoformat(),
+                "origin": "radio",
+                "source_count": 0,
+                "location": _place_out(clip_location(texted)) or {},
+                "from_clip": str(clip.id),
+                **({"demo": True} if any(_is_demo(c) for c in group.clips) else {}),
+            },
+        )
+        db.add(item)
+        await db.flush()
+        await record(db, member.workspace_id, member.user.id, "item", item.id, "create")
+
+    joined = [clip] if body.item_id else [c for c in group.clips if c.item_id != item.id]
+    if clip.item_id != item.id and clip not in joined:
+        joined.append(clip)
+    attached_sources = False
+    for c in joined:
+        c.item_id, c.status = item.id, "followed"
+        await add_rumour_stop(db, member, item.id, c)
+        if c.source_id:
+            source = await db.get(Source, c.source_id)
+            if source is not None and source.item_id is None:
+                source.item_id = item.id
+                attached_sources = True
+        await record(
+            db,
+            member.workspace_id,
+            member.user.id,
+            "item",
+            item.id,
+            "clip",
+            {"clip_id": str(c.id), "station": c.station},
+        )
+    await db.commit()
+    await db.refresh(item)
+    if attached_sources:
+        from app.modules.sources import _sync_source_count
+
+        await _sync_source_count(db, member.workspace_id, item.id)
+        await db.refresh(item)
+    await broadcast(member.workspace_id, "item.created" if created else "item.updated", _out(item))
+    for c in joined:
+        await broadcast(
+            member.workspace_id,
+            "clip.updated",
+            {"id": str(c.id), "item_id": str(item.id), "status": c.status},
+        )
+    return FollowOut(
+        item_id=item.id,
+        ref=(item.data or {}).get("ref"),
+        created=created,
+        clip_ids=[c.id for c in joined],
+    )
+
+
+@router.post("/workspaces/{ws}/radio-clips/{clip_id}/ignore")
+async def ignore_clip(clip_id: uuid.UUID, member: AnyMember, db: Db) -> ClipOut:
+    clip = await _get_clip(db, member, clip_id)
+    if clip.item_id:
+        raise ApiError(409, "followed", "This clip already feeds a dossier")
+    clip.status = "ignored"
+    await record(db, member.workspace_id, member.user.id, "radio_clip", clip.id, "ignore")
+    await db.commit()
+    await db.refresh(clip)
+    await broadcast(
+        member.workspace_id, "clip.updated", {"id": str(clip.id), "status": clip.status}
+    )
+    return (await _clips_out(db, [clip]))[0]
 
 
 # ------------------------------------------------------------------------------ Veille feed

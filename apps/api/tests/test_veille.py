@@ -7,9 +7,9 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import select, update
 
-from app.core import storage
+from app.core import dates, storage
 from app.core.db import SessionLocal
-from app.core.models import Job, Source
+from app.core.models import Item, Job, Route, Source
 from app.modules import veille
 from tests.test_workspaces import _join, _workspace
 
@@ -185,6 +185,102 @@ def test_a_veilleur_uploads_a_recording_and_the_french_clip_takes_its_transcript
     # the veilleur sees their clips only, and none of the desk
     _clip(alice, ws, "Une autre station a entendu autre chose ce matin.")
     assert [c["id"] for c in eve.get(base + "/radio-clips").json()] == [clip["id"]]
+
+
+def test_antenne_groups_clips_by_claim_and_follow_opens_a_dossier(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    a = _clip(
+        alice,
+        ws,
+        "Un auditeur affirme que la JIRAMA prévoit 72 heures de délestage à Antananarivo.",
+        station="RDJ",
+        recorded_at=_ago(hours=3),
+    )
+    b = _clip(
+        alice,
+        ws,
+        "On entend que la JIRAMA prévoit un délestage de 72 heures sur Antananarivo.",
+        station="Radio Tana",
+        recorded_at=_ago(hours=1),
+    )
+    other = _clip(
+        alice,
+        ws,
+        "Le pont de Mangasoavina serait fermé jusqu'à lundi prochain.",
+        station="Radio Sud",
+    )
+    rows = alice.get(base + "/antenne").json()
+    assert len(rows) == 2
+    top = rows[0]
+    assert top["status"] == "new" and top["reports"] == 2
+    assert top["stations"] == ["Radio Tana", "RDJ"] and top["regions_24h"] == ["Analamanga"]
+    assert top["latest"]["id"] == b["id"]
+
+    followed = alice.post(f"{base}/radio-clips/{a['id']}/follow", json={})
+    assert followed.status_code == 200, followed.text
+    out = followed.json()
+    assert (
+        out["created"] and out["ref"] == "FAN-0001" and set(out["clip_ids"]) == {a["id"], b["id"]}
+    )
+    item = alice.get(f"{base}/items/{out['item_id']}").json()
+    assert item["data"]["origin"] == "radio" and "énergie" in item["tags"]
+    assert item["data"]["location"]["region"] == "Analamanga"
+    assert item["data"]["first_seen_at"].startswith(
+        dates.parse_moment(a["recorded_at"]).astimezone(dates.EAT).isoformat()[:16]
+    )
+    stops = alice.get(f"{base}/items/{out['item_id']}/routes").json()
+    assert sorted(s["place"] for s in stops) == ["RDJ", "Radio Tana"]
+    assert {s["channel"] for s in stops} == {"radio"} and {s["side"] for s in stops} == {"rumour"}
+
+    rows = alice.get(base + "/antenne").json()
+    assert [r["status"] for r in rows] == ["new", "followed"]
+    assert alice.post(f"{base}/radio-clips/{a['id']}/ignore").status_code == 409
+    ignored = alice.post(f"{base}/radio-clips/{other['id']}/ignore").json()
+    assert ignored["status"] == "ignored"
+    assert len(alice.get(base + "/antenne").json()) == 1
+
+
+def test_your_report_served_once_the_dossier_is_signed(as_user):
+    alice, eve = as_user("alice"), as_user("eve")
+    ws = _workspace(alice)
+    _join(alice, eve, ws, "veilleur")
+    base = f"/api/v1/workspaces/{ws}"
+    claim = alice.post(
+        base + "/items", json={"title": "Le pont de Mangasoavina serait fermé"}
+    ).json()
+    clip = _clip(eve, ws, "Le pont de Mangasoavina serait fermé jusqu'à lundi selon un auditeur.")
+    assert eve.post(f"{base}/radio-clips/{clip['id']}/follow", json={}).status_code == 403
+    out = alice.post(
+        f"{base}/radio-clips/{clip['id']}/follow", json={"item_id": claim["id"]}
+    ).json()
+    assert out["item_id"] == claim["id"] and not out["created"]
+    served = eve.get(f"{base}/radio-clips/{clip['id']}").json()["served"]
+    assert served["title"] == claim["title"] and served["verdict"] is None
+
+    async def sign(db):
+        await db.execute(
+            update(Item)
+            .where(Item.id == uuid.UUID(claim["id"]))
+            .values(status="published", data={"verdict": "false", "ref": "FAN-0001"})
+        )
+        db.add(
+            Route(
+                workspace_id=uuid.UUID(ws),
+                item_id=uuid.UUID(claim["id"]),
+                added_by="alice",
+                side="truth",
+                channel="radio",
+                place="RDJ",
+            )
+        )
+
+    _db(sign)
+    served = eve.get(f"{base}/radio-clips/{clip['id']}").json()["served"]
+    assert served["verdict"] == "false" and served["truth_routes"] == 1
+    assert as_user("bob").get(f"{base}/radio-clips/{clip['id']}").status_code == 404
+    assert eve.get(base + "/antenne").status_code == 403
 
 
 # --- the feed and the map
