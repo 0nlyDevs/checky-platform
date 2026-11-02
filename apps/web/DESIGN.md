@@ -208,8 +208,6 @@ Four families, each with **fill** (solid blocks, the downloadable card), **on** 
 
 **The Paired-Token Rule.** Every filled background is used with its own foreground: `primary` / `primary-foreground`, `nav` / `nav-foreground`, `nav-active` / `nav-active-foreground` (ink in both themes: theme text on the paper pill is 1:1 in dark), `verdict-*-soft` / `verdict-*-ink`, `verdict-*` / `verdict-*-on`, `tag-inverted` / `tag-inverted-foreground`, `toast` / `toast-foreground`. A class that sets one without the other (`hover:bg-primary` with no `hover:text-primary-foreground`) is a bug.
 
-**The Word-and-Icon Rule.** A verdict is always its icon plus its word in the verdict's ink. Colour alone never carries a verdict.
-
 **The Status-Is-Not-Truth Rule.** Workflow status uses ink icons, never a verdict colour.
 
 **The 4.5 Rule.** Every text pair is at least 4.5:1 in both themes, against its real ground. No opacity on text; placeholders and disabled labels use `muted-foreground`.
