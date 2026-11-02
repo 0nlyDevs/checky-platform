@@ -82,7 +82,7 @@ export function RadiosSection({ ws, canEdit }: { ws: string; canEdit: boolean })
                 <p className="font-medium">
                   {radio.name}
                   {radio.frequency && <span className="text-muted-foreground"> · {radio.frequency}</span>}
-                  {radio.is_demo && <span className="ml-2 rounded-sm border border-border px-1.5 text-xs text-muted-foreground">{r.demo}</span>}
+                  {radio.is_demo && !/démo/i.test(radio.name) && <span className="ml-2 rounded-sm border border-border px-1.5 text-xs text-muted-foreground">{r.demo}</span>}
                 </p>
                 {(radio.location.region || radio.location.name) && (
                   <p className="text-sm text-muted-foreground">{[radio.location.name, radio.location.region].filter(Boolean).join(" · ")}</p>
