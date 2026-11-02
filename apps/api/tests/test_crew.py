@@ -3,6 +3,7 @@ bound to what was read, one targeted loop, a confidence computed in code, and fa
 
 import asyncio
 import json
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -125,14 +126,18 @@ def test_without_ai_the_facts_still_show(as_user, monkeypatch, research):
     assert bob.post(f"/api/v1/workspaces/{ws}/crew", json={"text": "hello"}).status_code == 404
 
 
-def test_pitch_rumour_without_registry_or_figures_modules(as_user, monkeypatch, research):
+def test_pitch_rumour_reads_the_registry_and_the_figures(as_user, monkeypatch, research):
     _forbid_models(monkeypatch)
     alice = as_user("alice")
     ws = _workspace(alice)
     _, result = _run(alice, ws, text=DEMO_RUMOUR_TEXT, ai_enabled=False)
     trace = _trace(result)
-    assert trace["Registre"]["status"] == "skipped"  # match_text is not wired yet
-    assert trace["Chiffres"]["status"] == "skipped"
+    # an empty registry: « Introuvable », never « Faux », and no stance for the confidence
+    assert trace["Registre"]["status"] == "done"
+    assert result["registry"]["status"] in ("not_found", "inconsistent")
+    assert result["registry"]["issuer"] == "JIRAMA"
+    assert trace["Chiffres"]["status"] == "done"
+    assert not any(r["kind"] == "registry" for r in result["numbered"])
     assert result["tone"]["level"] == "sensationnaliste"
     quotes = {s["quote"] for s in result["signals"]}
     assert {"URGENT", "Partagez"} <= quotes
@@ -140,6 +145,20 @@ def test_pitch_rumour_without_registry_or_figures_modules(as_user, monkeypatch, 
     assert "72 heures" in result["reading"]["numbers"] and "40 %" in result["reading"]["numbers"]
     assert "JIRAMA" in result["reading"]["institutions"]
     assert result["reading"]["location"]["region"] == "Analamanga"
+
+
+def test_registry_and_figures_skip_when_their_modules_are_missing(as_user, monkeypatch, research):
+    _forbid_models(monkeypatch)
+    for name in ("app.modules.registry", "app.modules.figures", "app.modules.directory"):
+        monkeypatch.setitem(sys.modules, name, None)  # importing them raises ImportError
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    _, result = _run(alice, ws, text=DEMO_RUMOUR_TEXT, ai_enabled=False)
+    trace = _trace(result)
+    assert trace["Registre"] == {**trace["Registre"], "status": "skipped"}
+    assert trace["Registre"]["summary"] == "Registre des originaux pas encore branché"
+    assert trace["Chiffres"]["summary"] == "Chiffres officiels pas encore branchés"
+    assert trace["Ton"]["status"] == "done" and result["tone"]["level"] == "sensationnaliste"
 
 
 def test_the_newsroom_setting_wins_over_the_run(as_user, monkeypatch, research):
@@ -351,7 +370,7 @@ def test_public_facts_has_no_reading_and_finds_signed_verdicts(as_user, research
     assert facts["published"][0]["verdict"] == "false"
     assert facts["published"][0]["newsroom"] == "Desk du matin"
     assert facts["fact_checks"][0]["publisher"] == "AFP Factuel"
-    assert facts["tone"]["level"] == "neutre" and facts["registry"] is None
+    assert facts["tone"]["level"] == "neutre" and facts["registry"]["status"] == "none"
 
 
 def test_a_reason_the_model_quotes_longer_replaces_the_codes_shorter_one():
