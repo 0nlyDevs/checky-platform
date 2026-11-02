@@ -75,16 +75,8 @@ export const crew = {
   },
   registry: {
     title: "Registre des originaux",
-    status: {
-      authentic: "Identique au communiqué original",
-      modified: "Modifié par rapport à l'original",
-      not_found: "Introuvable au registre",
-      inconsistent: "Incohérent avec le registre",
-      none: "Aucun communiqué cité",
-    } as Record<string, string>,
-    notFound: "Introuvable ne veut pas dire faux : le communiqué n'a peut-être pas été déposé.",
-    legend: "Barré : ce que la rumeur ajoute ou change. Souligné : le texte original.",
     issued: (date: string) => `daté du ${date}`,
+    contacts: "Peut confirmer",
     open: "Voir l'original",
   },
   figures: {

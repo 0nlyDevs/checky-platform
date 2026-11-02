@@ -1,4 +1,5 @@
 import type { Verdict } from "@fanilo/shared";
+import type { MatchResult } from "@/components/registre/types";
 
 /** One crew member reporting through the `agent` event of `POST /workspaces/{ws}/crew`. */
 export type AgentEvent = {
@@ -40,17 +41,6 @@ export type Provenance = {
   reverse_links: { name: string; url: string }[];
   verdict_hint: string | null;
   no_trace: boolean;
-};
-
-export type DiffPart = { op?: string; operation?: string; a?: string; b?: string; original?: string; submitted?: string };
-
-export type Registry = {
-  status: "authentic" | "modified" | "not_found" | "inconsistent" | "none";
-  issuer?: string | null;
-  number?: string | null;
-  communique?: { text?: string; url?: string | null; issued_on?: string | null; title?: string | null } | null;
-  diff?: DiffPart[];
-  summary?: string;
 };
 
 export type FigureCheck = {
@@ -151,7 +141,7 @@ export type CrewResult = {
   analysis?: Analysis;
   confidence?: Confidence;
   framing?: Framing[];
-  registry?: Registry;
+  registry?: MatchResult;
   figures?: FigureCheck[];
   fact_checks?: Review[];
   provenance?: Provenance;

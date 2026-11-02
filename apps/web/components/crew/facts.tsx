@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { IconArrowSquareOut, IconBooks, IconCalculator, IconCalendarDots, IconNewspaper, IconSealCheck, IconStamp, type Icon } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
-import { type CrewResult, type DiffPart, type FigureCheck, frDate, hostOf, type Provenance, type Registry } from "@/components/crew/types";
+import { type CrewResult, type FigureCheck, frDate, hostOf, type Provenance } from "@/components/crew/types";
+import { RegistryDiff } from "@/components/registre/registry-diff";
+import type { MatchResult } from "@/components/registre/types";
 import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
 
 const k = t.crew;
 const FACT_AGENTS = ["Provenance", "Registre", "Chiffres", "Fact-checkers", "Archives"];
 
-function Card({ icon: Icon, title, i, children }: { icon: Icon; title: string; i: number; children: React.ReactNode }) {
+function Card({ icon: Icon, title, i, wide, children }: { icon: Icon; title: string; i: number; wide?: boolean; children: React.ReactNode }) {
   return (
-    <article className="arrive rounded-md border border-border bg-card p-4" style={{ "--i": i } as React.CSSProperties}>
+    <article className={cn("arrive rounded-md border border-border bg-card p-4", wide && "md:col-span-2")} style={{ "--i": i } as React.CSSProperties}>
       <h3 className="flex items-center gap-2 font-display text-sm font-bold">
         <Icon className="size-4 shrink-0" aria-hidden />
         {title}
@@ -61,52 +63,23 @@ function ProvenanceFacts({ p, media }: { p: Provenance; media: boolean }) {
   );
 }
 
-const words = (s: string) => s.split(/\s+/).filter(Boolean);
-
-/** The rumour against the deposited original: what it adds or changes struck in red, the original underlined. */
-function Diff({ parts }: { parts: DiffPart[] }) {
-  return (
-    <p className="leading-relaxed text-pretty">
-      {parts.map((p, i) => {
-        const op = p.op ?? p.operation;
-        const a = p.a ?? p.original ?? "";
-        const b = p.b ?? p.submitted ?? "";
-        if (op === "equal") {
-          const w = words(a);
-          return <span key={i}>{w.length > 14 ? `${w.slice(0, 6).join(" ")} … ${w.slice(-6).join(" ")} ` : `${a} `}</span>;
-        }
-        return (
-          <span key={i}>
-            {b && <del className="font-bold text-verdict-false-ink decoration-2">{b}</del>}
-            {a && b ? " " : ""}
-            {a && <ins className="font-bold underline decoration-2 underline-offset-4">{a}</ins>}{" "}
-          </span>
-        );
-      })}
-    </p>
-  );
-}
-
-function RegistryFacts({ r }: { r: Registry }) {
+function RegistryFacts({ r }: { r: MatchResult }) {
   const original = r.communique;
-  const changed = (r.diff ?? []).some((p) => (p.op ?? p.operation) !== "equal");
   const issued = frDate(original?.issued_on);
   return (
     <>
-      <p className="font-bold">{k.registry.status[r.status] ?? r.status}</p>
       {(r.issuer || r.number) && (
         <p className="text-muted-foreground">
-          {[r.issuer, r.number].filter(Boolean).join(" · ")}
+          {[r.issuer, r.number && `N° ${r.number}`].filter(Boolean).join(" · ")}
           {issued && ` · ${k.registry.issued(issued)}`}
         </p>
       )}
-      {changed && (
-        <>
-          <Diff parts={r.diff!} />
-          <p className="text-xs text-muted-foreground">{k.registry.legend}</p>
-        </>
+      <RegistryDiff diff={r.diff ?? []} summary={r.summary} status={r.status} changedNumbers={r.changed_numbers} />
+      {!!r.contacts?.length && (
+        <p className="text-pretty">
+          <span className="font-bold">{k.registry.contacts} :</span> {r.contacts.map((x) => [x.name, x.role, x.institution].filter(Boolean).join(", ")).join(" · ")}
+        </p>
       )}
-      {r.status === "not_found" && <p className="text-muted-foreground">{k.registry.notFound}</p>}
       {original?.url && <Out href={original.url}>{k.registry.open}</Out>}
     </>
   );
@@ -159,7 +132,7 @@ export function Facts({ r, ws }: { r: CrewResult; ws: string }) {
     );
   if (r.registry && r.registry.status !== "none")
     cards.push(
-      <Card key="registry" icon={IconStamp} title={k.registry.title} i={cards.length}>
+      <Card key="registry" icon={IconStamp} title={k.registry.title} i={cards.length} wide={!!r.registry.diff?.length}>
         <RegistryFacts r={r.registry} />
       </Card>,
     );
