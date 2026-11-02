@@ -176,3 +176,27 @@ def test_a_private_newsrooms_fakes_are_never_counted_or_listed_elsewhere(as_user
     # Once Bob's newsroom publishes, its fakes become part of the shared record.
     _public(bob, other)
     assert alice.get(f"/api/v1/workspaces/{ws}/registry/{cid}").json()["fakes"] == 1
+
+
+def test_the_official_feed_shows_public_originals_and_fakes_only(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws, other = _workspace(alice), _workspace(bob, "Private desk")
+    cid = alice.post(f"/api/v1/workspaces/{ws}/registry", json=ORIGINAL).json()["id"]
+    bob.post(f"/api/v1/workspaces/{other}/registry", json={**ORIGINAL, "title": "Hidden notice"})
+    anyone = as_user("nobody")
+    anyone.headers.pop("Authorization")
+    assert anyone.get("/api/v1/public/registry").json() == {"items": [], "total": 0}
+    _public(alice, ws)
+    fake = alice.post(f"/api/v1/workspaces/{ws}/registry/{cid}/fake", json={"text": RUMOUR}).json()
+    # A private newsroom's fake of a public original stays private.
+    bob.post(f"/api/v1/workspaces/{other}/registry/{cid}/fake", json={"text": RUMOUR + " Vite"})
+    feed = anyone.get("/api/v1/public/registry").json()
+    assert feed["total"] == 2 and [i["id"] for i in feed["items"]] == [fake["id"], cid]
+    caught, original = feed["items"]
+    assert caught["kind"] == "fake_caught" and caught["original"]["id"] == cid
+    assert caught["changed_numbers"] and caught["summary"].startswith("Le communiqué N° 2026-118")
+    assert original["kind"] == "original" and original["fakes"] == 1
+    assert original["newsroom"]["name"] == "Desk" and original["sealed"] is False
+    only = anyone.get("/api/v1/public/registry", params={"kind": "original", "q": "délestage"})
+    assert [i["id"] for i in only.json()["items"]] == [cid]
+    assert anyone.get("/api/v1/public/registry", params={"newsroom": "nope"}).json()["total"] == 0

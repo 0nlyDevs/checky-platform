@@ -677,6 +677,153 @@ async def public_seal_keys(db: Db) -> SealKeysOut:
     return SealKeysOut(keys=keys, revoked=revoked)
 
 
+# --- Fil officiel: the public newsrooms' originals and the fakes they caught -------------------
+
+
+class OriginalRef(BaseModel):
+    id: uuid.UUID
+    issuer: str
+    number: str | None
+    issued_on: str | None
+    title: str
+
+
+class OfficialOut(BaseModel):
+    id: uuid.UUID
+    kind: Literal["original", "fake_caught"]
+    issuer: str
+    number: str | None
+    issued_on: str | None
+    title: str
+    text: str
+    url: str | None
+    is_demo: bool
+    created_at: datetime
+    newsroom: NewsroomOut
+    confirmed: bool
+    sealed: bool
+    seal_url: str | None
+    fakes: int = 0
+    original: OriginalRef | None = None
+    diff: list[DiffOp] = []
+    changed_numbers: list[ChangedNumber] = []
+    summary: str | None = None
+
+
+class OfficialPage(BaseModel):
+    items: list[OfficialOut]
+    total: int
+
+
+@router.get("/public/registry")
+async def official_feed(
+    db: Db,
+    newsroom: str = Query(default="", max_length=140),
+    q: str = Query(default="", max_length=200),
+    kind: Literal["original", "fake_caught"] | None = None,
+    limit: int = Query(default=30, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> OfficialPage:
+    """« Fil officiel »: what the institutions really published and the fakes caught imitating it,
+    newest first. Only newsrooms that publish (`is_public`) appear; a fake whose original is not
+    public is left out (its diff would show the original's words)."""
+    stmt = (
+        select(Communique, Workspace)
+        .join(Workspace, Workspace.id == Communique.workspace_id)
+        .where(Workspace.is_public.is_(True))
+    )
+    if newsroom:
+        stmt = stmt.where(Workspace.slug == newsroom)
+    if kind:
+        stmt = stmt.where(Communique.status == kind)
+    if q:
+        like = f"%{q}%"
+        stmt = stmt.where(
+            or_(
+                Communique.title.ilike(like),
+                Communique.issuer.ilike(like),
+                Communique.number.ilike(like),
+                Communique.text.ilike(like),
+            )
+        )
+    rows = (await db.execute(stmt.order_by(Communique.created_at.desc()).limit(1000))).all()
+    wanted = {(c.location or {}).get("original_id") for c, _ in rows if c.status == "fake_caught"}
+    public_originals = {
+        str(c.id): c
+        for c, _ in (
+            await db.execute(
+                select(Communique, Workspace)
+                .join(Workspace, Workspace.id == Communique.workspace_id)
+                .where(
+                    Workspace.is_public.is_(True),
+                    Communique.id.in_([uuid.UUID(i) for i in wanted if i]),
+                )
+            )
+        ).all()
+    }
+    kept = [
+        (c, w)
+        for c, w in rows
+        if c.status == "original" or (c.location or {}).get("original_id") in public_originals
+    ]
+    page = kept[offset : offset + limit]
+    counts = await _public_fake_counts(db, [c.id for c, _ in page if c.status == "original"])
+    items = []
+    for c, w in page:
+        loc = c.location or {}
+        original = public_originals.get(loc.get("original_id") or "")
+        signature = (c.sealed or {}).get("signature")
+        items.append(
+            OfficialOut(
+                id=c.id,
+                kind=c.status,
+                issuer=c.issuer,
+                number=c.number,
+                issued_on=c.issued_on,
+                title=c.title,
+                text=c.text,
+                url=c.url,
+                is_demo=c.is_demo,
+                created_at=c.created_at,
+                newsroom=NewsroomOut(slug=w.slug, name=w.name),
+                confirmed=1 + len(c.confirmed_by or []) >= CONFIRMED_AT,
+                sealed=bool(signature),
+                seal_url=seal_url(c.id, signature) if signature else None,
+                fakes=counts.get(str(c.id), 0),
+                original=OriginalRef(
+                    id=original.id,
+                    issuer=original.issuer,
+                    number=original.number,
+                    issued_on=original.issued_on,
+                    title=original.title,
+                )
+                if original
+                else None,
+                diff=loc.get("diff") or [],
+                changed_numbers=loc.get("changed_numbers") or [],
+                summary=loc.get("summary"),
+            )
+        )
+    return OfficialPage(items=items, total=len(kept))
+
+
+async def _public_fake_counts(db: AsyncSession, ids: list[uuid.UUID]) -> dict[str, int]:
+    if not ids:
+        return {}
+    key = Communique.location["original_id"].astext
+    rows = await db.execute(
+        select(key, func.count())
+        .join(Workspace, Workspace.id == Communique.workspace_id)
+        .where(
+            Communique.status == "fake_caught",
+            key.in_([str(i) for i in ids]),
+            Workspace.is_public.is_(True),
+        )
+        .group_by(key)
+    )
+    return {k: n for k, n in rows.all()}
+
+
 # --- word by word -----------------------------------------------------------------------------
 
 
