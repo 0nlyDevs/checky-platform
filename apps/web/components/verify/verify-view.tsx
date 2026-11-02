@@ -431,7 +431,7 @@ function Board({
 
   return (
     <div className="mt-8 max-w-5xl space-y-8" aria-live="polite">
-      <div className="grid gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+      <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
         <section className="rounded-md border border-border bg-card p-5">
           <h2 className="font-display text-sm font-bold">{sent?.text ? v.message : v.link}</h2>
           {result?.site || sent?.url ? (

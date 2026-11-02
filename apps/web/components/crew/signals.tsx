@@ -113,12 +113,12 @@ export function PublicStrip({ r }: { r: CrewResult }) {
       <dl className="flex flex-wrap gap-x-2 gap-y-1">
         {rows.map(([label, value], i) => (
           <div key={label} className="inline">
-            {i > 0 && (
-              <span className="mr-2 text-muted-foreground" aria-hidden>
+            <dt className="inline font-bold">{label} :</dt> <dd className="inline">{value}</dd>
+            {i < rows.length - 1 && (
+              <span className="ml-2 text-muted-foreground" aria-hidden>
                 ·
               </span>
             )}
-            <dt className="inline font-bold">{label} :</dt> <dd className="inline">{value}</dd>
           </div>
         ))}
       </dl>
