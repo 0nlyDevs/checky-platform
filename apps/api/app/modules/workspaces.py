@@ -3,14 +3,15 @@ import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from fastapi import APIRouter
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 
 from app.core.access import Admin, AnyMember, Anyone, Db, get_membership
 from app.core.errors import ApiError
-from app.core.models import Invitation, Membership, Workspace, auth_user
+from app.core.models import DEFAULT_BEATS, Invitation, Membership, Workspace, auth_user
 from app.core.security import User
 
 router = APIRouter(tags=["workspaces"])
@@ -47,8 +48,57 @@ class InvitationOut(BaseModel):
 
 
 class NewsroomSettings(BaseModel):
+    """A newsroom's own rules, kept in `workspace.settings` (JSONB): a field left out of a PATCH
+    keeps its value, and a newsroom that never set one reads the default."""
+
+    # A journalist signs (`verified`), a different editor releases (`published`).
     double_signature: bool = False
+    # « Mode sans IA »: the model nodes are skipped, the facts still show.
     ai_enabled: bool = True
+    # The newsroom's beats (rubriques), offered in Ma rubrique and used to file claims.
+    beats: list[str] = Field(default_factory=lambda: list(DEFAULT_BEATS), max_length=40)
+    # Dates shown to the newsroom and the flashes of the day are counted in this time zone.
+    timezone: str = "Indian/Antananarivo"
+    country: str = Field(default="Madagascar", min_length=2, max_length=80)
+    # The newsroom's home region: an SMS from there lands in this newsroom first (optional).
+    region: str | None = Field(default=None, max_length=120)
+
+    @field_validator("beats")
+    @classmethod
+    def clean_beats(cls, value: list[str]) -> list[str]:
+        out: list[str] = []
+        for beat in value:
+            beat = re.sub(r"\s+", " ", beat).strip().lower()
+            if not 1 <= len(beat) <= 40:
+                raise ValueError("A beat is 1 to 40 characters long")
+            if beat not in out:
+                out.append(beat)
+        return out
+
+    @field_validator("timezone")
+    @classmethod
+    def known_zone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            raise ValueError(
+                "Unknown time zone (use an IANA name such as Indian/Antananarivo)"
+            ) from exc
+        return value
+
+    @field_validator("country", "region")
+    @classmethod
+    def trimmed(cls, value: str | None) -> str | None:
+        value = re.sub(r"\s+", " ", value).strip() if value else None
+        return value or None
+
+
+def newsroom_settings(ws: Workspace) -> NewsroomSettings:
+    """The stored settings with the defaults filled in; an unreadable old value falls back."""
+    try:
+        return NewsroomSettings.model_validate(ws.settings or {})
+    except ValueError:
+        return NewsroomSettings()
 
 
 class WorkspaceSettingsOut(BaseModel):
@@ -92,7 +142,7 @@ async def get_workspace(member: Anyone, db: Db) -> WorkspaceSettingsOut:
         name=ws.name,
         slug=ws.slug,
         is_public=ws.is_public,
-        settings=NewsroomSettings.model_validate(ws.settings or {}),
+        settings=newsroom_settings(ws),
     )
 
 
@@ -111,7 +161,7 @@ async def update_workspace(body: WorkspacePatch, admin: Admin, db: Db) -> Worksp
         name=ws.name,
         slug=ws.slug,
         is_public=ws.is_public,
-        settings=NewsroomSettings.model_validate(ws.settings or {}),
+        settings=newsroom_settings(ws),
     )
 
 

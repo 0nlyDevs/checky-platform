@@ -65,3 +65,45 @@ def test_admin_changes_role_and_removes_member(as_user):
     assert r.json()["role"] == "editor"
     assert alice.delete(f"/api/v1/workspaces/{ws}/members/bob").status_code == 204
     assert bob.get(f"/api/v1/workspaces/{ws}/members").status_code == 404
+
+
+def test_settings_default_and_partial_patch(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    s = alice.get(f"/api/v1/workspaces/{ws}").json()["settings"]
+    assert s["double_signature"] is False and s["ai_enabled"] is True
+    assert s["timezone"] == "Indian/Antananarivo" and s["country"] == "Madagascar"
+    assert "énergie" in s["beats"] and s["region"] is None
+    r = alice.patch(
+        f"/api/v1/workspaces/{ws}",
+        json={"settings": {"beats": [" Énergie ", "santé", "énergie", "Cyclones  et routes"]}},
+    )
+    s = r.json()["settings"]
+    assert s["beats"] == ["énergie", "santé", "cyclones et routes"]
+    # a field left out keeps its value
+    r = alice.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"ai_enabled": False}})
+    s = r.json()["settings"]
+    assert s["ai_enabled"] is False and s["beats"][0] == "énergie"
+    r = alice.patch(
+        f"/api/v1/workspaces/{ws}",
+        json={"settings": {"timezone": "Europe/Paris", "country": "France", "region": "Bretagne"}},
+    )
+    assert r.json()["settings"]["timezone"] == "Europe/Paris"
+    assert r.json()["settings"]["region"] == "Bretagne"
+
+
+def test_settings_refuse_unknown_zone_and_empty_beat(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    bad_zone = {"settings": {"timezone": "Mars/Olympus"}}
+    assert alice.patch(f"/api/v1/workspaces/{ws}", json=bad_zone).status_code == 422
+    bad_beat = {"settings": {"beats": ["  "]}}
+    assert alice.patch(f"/api/v1/workspaces/{ws}", json=bad_beat).status_code == 422
+
+
+def test_only_admin_changes_settings(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    _join(alice, bob, ws, role="editor")
+    r = bob.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"double_signature": True}})
+    assert r.status_code == 403
