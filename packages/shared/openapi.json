@@ -11,6 +11,7 @@
           "health"
         ],
         "summary": "Health",
+        "description": "Database, storage and each AI provider: up, down or not configured.\n\n`ok` means the database is up, nothing configured is down, and at least one AI provider\nanswers (when any is configured).",
         "operationId": "health_api_v1_health_get",
         "responses": {
           "200": {
@@ -18,9 +19,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Health Api V1 Health Get"
+                  "$ref": "#/components/schemas/HealthOut"
                 }
               }
             }
@@ -1297,6 +1296,57 @@
         ],
         "title": "ActivityOut"
       },
+      "Check": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "up",
+              "down",
+              "not_configured"
+            ],
+            "title": "Status"
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "Check"
+      },
       "CommentIn": {
         "properties": {
           "body": {
@@ -1483,6 +1533,35 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "HealthOut": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "checks": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Check"
+            },
+            "type": "object",
+            "title": "Checks"
+          },
+          "ai": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Check"
+            },
+            "type": "object",
+            "title": "Ai"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ok",
+          "checks",
+          "ai"
+        ],
+        "title": "HealthOut"
       },
       "InvitationIn": {
         "properties": {

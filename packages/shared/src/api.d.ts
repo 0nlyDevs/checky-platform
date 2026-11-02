@@ -11,7 +11,13 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health */
+        /**
+         * Health
+         * @description Database, storage and each AI provider: up, down or not configured.
+         *
+         *     `ok` means the database is up, nothing configured is down, and at least one AI provider
+         *     answers (when any is configured).
+         */
         get: operations["health_api_v1_health_get"];
         put?: never;
         post?: never;
@@ -316,6 +322,20 @@ export interface components {
              */
             created_at: string;
         };
+        /** Check */
+        Check: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "up" | "down" | "not_configured";
+            /** Latency Ms */
+            latency_ms?: number | null;
+            /** Detail */
+            detail?: string | null;
+            /** Model */
+            model?: string | null;
+        };
         /** CommentIn */
         CommentIn: {
             /** Body */
@@ -381,6 +401,19 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HealthOut */
+        HealthOut: {
+            /** Ok */
+            ok: boolean;
+            /** Checks */
+            checks: {
+                [key: string]: components["schemas"]["Check"];
+            };
+            /** Ai */
+            ai: {
+                [key: string]: components["schemas"]["Check"];
+            };
         };
         /** InvitationIn */
         InvitationIn: {
@@ -610,9 +643,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": {
-                        [key: string]: unknown;
-                    };
+                    "application/json": components["schemas"]["HealthOut"];
                 };
             };
         };

@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 # Services and APIs are not packages; keep this list in sync with docs/PRD.md.
 SERVICES = [
-    ("Supabase (Postgres, pgvector, Storage)", "Hosted service, free plan", "https://supabase.com/terms"),
+    ("Neon (Postgres, pgvector, Object Storage)", "Hosted service, free plan", "https://neon.com/terms-of-service"),
     ("Vercel (web hosting)", "Hosted service, Hobby plan", "https://vercel.com/legal/terms"),
     ("Render (API hosting)", "Hosted service, free plan", "https://render.com/terms"),
     ("Groq API (LLM, Whisper)", "Hosted API, free tier", "https://groq.com/terms-of-use/"),

@@ -21,7 +21,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
 
-# Better Auth's user table (schema `better_auth`; Supabase reserves `auth`), read-only here and never migrated by Alembic.
+# Better Auth's user table (schema `better_auth`), read-only here and never migrated by Alembic.
 auth_user = Table(
     "user",
     Base.metadata,

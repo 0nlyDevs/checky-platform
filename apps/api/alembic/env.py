@@ -75,7 +75,7 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    # A fresh database (CI, a new Supabase project) has no `app` schema yet.
+    # A fresh database (CI, a new Neon project) has no `app` schema yet.
     connection.execute(text("CREATE SCHEMA IF NOT EXISTS app"))
     connection.commit()
     context.configure(

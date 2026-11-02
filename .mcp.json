@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "supabase": {
+    "neon": {
       "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=mrtuhyupracdihvzlyam"
+      "url": "https://mcp.neon.tech/mcp"
     }
   }
 }

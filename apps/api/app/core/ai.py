@@ -35,8 +35,8 @@ log = logging.getLogger("fanilo.ai")
 
 # name -> (OpenAI-compatible base URL, default model)
 PROVIDERS: dict[str, tuple[str, str]] = {
-    "groq": ("https://api.groq.com/openai/v1", "llama-3.3-70b-versatile"),
-    "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-2.5-flash"),
+    "groq": ("https://api.groq.com/openai/v1", "openai/gpt-oss-120b"),
+    "gemini": ("https://generativelanguage.googleapis.com/v1beta/openai", "gemini-3.5-flash-lite"),
     "nvidia": ("https://integrate.api.nvidia.com/v1", "meta/llama-3.3-70b-instruct"),
 }
 
@@ -181,6 +181,31 @@ async def _attempts(workspace_id: uuid.UUID | None, attempt):
                 errors.append(f"{provider.name}: {error}")
                 break
     raise AiUnavailable(errors)
+
+
+async def check_providers() -> dict[str, dict[str, Any]]:
+    """Up/down per provider in LLM_PROVIDERS order, via the free `/models` list (no tokens)."""
+    configured = {p.name: p for p in providers()}
+
+    async def check(name: str) -> tuple[str, dict[str, Any]]:
+        p = configured.get(name)
+        if p is None:
+            return name, {"status": "not_configured"}
+        started = time.monotonic()
+        try:
+            async with httpx.AsyncClient(transport=_transport, timeout=5) as http:
+                resp = await http.get(
+                    f"{p.base_url}/models", headers={"Authorization": f"Bearer {p.api_key}"}
+                )
+            status = "up" if resp.status_code < 400 else "down"
+            detail = None if status == "up" else f"HTTP {resp.status_code}"
+        except httpx.HTTPError as e:
+            status, detail = "down", type(e).__name__
+        latency = int((time.monotonic() - started) * 1000)
+        return name, {"status": status, "model": p.model, "latency_ms": latency, "detail": detail}
+
+    names = [n for n in get_settings().llm_provider_list if n in PROVIDERS]
+    return dict(await asyncio.gather(*(check(n) for n in names)))
 
 
 # --- dev cache --------------------------------------------------------------------------

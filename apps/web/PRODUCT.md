@@ -28,7 +28,7 @@ Built for the local newsroom reality: French and Malagasy content, field conditi
 - Mobile-first PWA installed on phones; also used on laptops at the desk.
 - Shared workspaces with live updates: items, comments and job progress appear without refresh.
 - Content types: pasted text, links, screenshots, photos, PDFs, audio interviews.
-- The live demo runs on free tiers (Vercel, Render, Supabase, free AI APIs) and must survive slow venue Wi-Fi.
+- The live demo runs on free tiers (Vercel, Render, Neon, free AI APIs) and must survive slow venue Wi-Fi.
 
 ## Capabilities and Constraints
 

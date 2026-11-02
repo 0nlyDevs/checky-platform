@@ -74,7 +74,7 @@ The hard limits come from the hackathon rules, the free tiers we rely on, and th
 
 **From free tiers**
 
-- Supabase free: 500 MB database, 500 MB file storage, 2 projects, project pauses after 1 week of inactivity.
+- Neon free: 1 GB database and 5 GB object storage per project, compute scales to zero when idle and wakes on the next query (a few seconds), 10 branches per project. Database and files live in one Neon project.
 - Vercel Hobby: non-commercial use only; no persistent WebSocket connections.
 - Render free: service spins down after 15 minutes idle (about 1 minute to wake), ephemeral filesystem, no free background workers.
 - AI free tiers have per-minute and per-day rate limits that change without notice; free-tier data may be used by providers.
@@ -91,7 +91,7 @@ Two services share one Postgres database: Next.js owns the UI and authentication
 
 &#91;embedded content: architecture · 2 services, 3 backing services\]
 
-The browser talks to both services; files go straight from the browser to Supabase Storage through a signed URL that FastAPI issues, so large uploads never pass through the API.
+The browser talks to both services; files go straight from the browser to Neon Object Storage through a presigned URL that FastAPI issues, so large uploads never pass through the API.
 
 | Layer | Choice | Notes |
 | --- | --- | --- |
@@ -100,8 +100,8 @@ The browser talks to both services; files go straight from the browser to Supaba
 | Auth | Better Auth in Next.js, JWT plugin | FastAPI verifies tokens with the JWKS endpoint |
 | API | FastAPI (Python), Pydantic, SQLAlchemy + Alembic | OpenAPI schema generates the TypeScript client |
 | Realtime | python-socketio on FastAPI; socket.io-client in the browser | SSE for streaming AI answers |
-| Database | Postgres + pgvector (Supabase free) | Better Auth tables and app tables in one database, separate schemas |
-| File storage | Supabase Storage (S3-compatible) | Never on the API server's disk |
+| Database | Postgres 18 + pgvector (Neon free, project `fanilo` in the 0nlydevs org, Frankfurt) | Better Auth tables and app tables in one database, separate schemas. Chosen over Supabase Postgres on 25 Oct: wakes automatically instead of pausing, free branching |
+| File storage | Neon Object Storage (S3-compatible, private bucket `uploads`, same Neon project) | Never on the API server's disk; boto3 presigned URLs; branches with the database |
 | Background jobs | Postgres job table, worker loop in the API process | No extra service to host; queued jobs survive restarts |
 | Language models | Groq (primary), Gemini (fallback), NVIDIA NIM (third) | All called through one OpenAI-compatible gateway |
 | Embeddings | One provider, chosen after the 25 Oct test: Gemini Embedding or NVIDIA | Model name stored with every vector |
@@ -140,7 +140,7 @@ One flexible model, `item`, that becomes the domain object on day one (a claim, 
 
 ### M4. Files and sources (P1)
 
-- Upload images, PDFs and audio (max 25 MB) through a signed upload URL straight to Supabase Storage.
+- Upload images, PDFs and audio (max 25 MB) through a presigned upload URL straight to Neon Object Storage.
 - Attach files to items. Store type, size, hash and metadata.
 - Add a web source by URL: fetch, extract the main text with trafilatura, store title, author, date and text.
 - Images: read EXIF metadata and offer a reverse image search link.
@@ -290,7 +290,7 @@ The UI should look like a calm, trustworthy newsroom tool: one design system set
 
 ## Data model
 
-Better Auth manages its own tables (`user`, `session`, `account`, `verification`, `jwks`) in the `better_auth` schema (Supabase reserves `auth` for its own auth service); our tables live in the `app` schema, all with UUID primary keys and `created_at` / `updated_at`.
+Better Auth manages its own tables (`user`, `session`, `account`, `verification`, `jwks`) in the `better_auth` schema (not `auth`, which hosted Postgres platforms often reserve); our tables live in the `app` schema, all with UUID primary keys and `created_at` / `updated_at`.
 
 | Table | Key fields | Notes |
 | --- | --- | --- |
@@ -392,12 +392,12 @@ fanilo-base/
 
 | Variable | Used by | Example |
 | --- | --- | --- |
-| `DATABASE_URL` | web, api | Supabase Postgres connection string |
+| `DATABASE_URL` | web, api | Neon Postgres connection string (direct, not pooled; `sslmode=require` is translated for asyncpg) |
 | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` | web | random 32 bytes; web URL |
 | `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE` | api | `https://<web>/api/auth/jwks` |
 | `NEXT_PUBLIC_API_URL` | web | API base URL |
 | `CORS_ORIGINS` | api | web URL |
-| `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `STORAGE_BUCKET` | api |  |
+| `STORAGE_ENDPOINT`, `STORAGE_REGION`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY`, `STORAGE_BUCKET` | api | Neon branch storage endpoint and credential; bucket `uploads` (production), `uploads-dev` (local) |
 | `LLM_PROVIDERS` | api | `groq,gemini,nvidia` (order = fallback order) |
 | `GROQ_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY` | api | one set per team member if needed |
 | `LLM_MODEL_GROQ`, `LLM_MODEL_GEMINI`, `LLM_MODEL_NVIDIA` | api | model names chosen after testing |
@@ -409,9 +409,9 @@ fanilo-base/
 
 - Web: Vercel Hobby, connected to the repo, root `apps/web`.
 - API + in-process worker: Render free web service (Docker), or Railway trial.
-- Database and storage: Supabase free project; migrations run with Alembic on deploy.
+- Database and file storage: one Neon free project (`fanilo`, org 0nlydevs); migrations run with Alembic on deploy.
 - A GitHub Action regenerates the TypeScript client when the OpenAPI schema changes, and fails the build if types are out of date.
-- Before the pitch: open the API health page 5 minutes ahead to wake the service, and check the Supabase project is active.
+- Before the pitch: open the API health page 5 minutes ahead to wake the service, and open Paramètres so the Neon database wakes up.
 
 ## Testing and demo readiness
 
@@ -429,7 +429,7 @@ We test the paths the demo will walk, not coverage numbers.
 - [ ] Embedding comparison: 20 French and Malagasy sentences, top-3 search accuracy per provider; choose one.
 - [ ] Transcription quality on a French and a Malagasy voice note.
 - [ ] Rate-limit behavior: 30 quick requests in a row do not crash the UI.
-- [ ] Supabase project active, Render service awake, all keys loaded.
+- [ ] Paramètres shows database, storage and AI providers up; Render service awake; all keys loaded.
 
 **Dry run (1 November)**
 
@@ -459,7 +459,7 @@ The biggest risk is guessing the wrong features: time spent on F1 to F5 is lost 
 | UI polish eats the time needed for the core | Beautiful screens on a broken flow | Design system first, then polish only screens whose flow already works end to end |
 | A free AI tier rate-limits or blocks us during the event | Features stop working | Three providers with automatic fallback; one key per member; response cache |
 | Render service asleep at pitch time | 1-minute blank screen in front of the jury | Wake it 5 minutes before; backup screen recording |
-| Supabase project paused after a week of inactivity | App down on the day | Use it daily; check it on 2 and 4 Nov morning |
+| Neon database asleep at the first request | A few seconds' delay on the first screen | Open Paramètres a few minutes before the demo to wake it |
 | Weak Malagasy support in embeddings or transcription | Poor results on local content | Test on 25 Oct; pick the best provider; show French in the demo if Malagasy is weak |
 | Venue internet slow or down | Cannot deploy or call AI | Phone hotspot as backup; local Docker setup works offline except AI calls |
 | Better Auth and FastAPI JWT setup breaks | Nothing works across services | Built and tested first (P1); one integration test in CI |
@@ -480,7 +480,7 @@ The biggest risk is guessing the wrong features: time spent on F1 to F5 is lost 
 ## Sources
 
 - [FANILO hackathon rules (PDF)](https://homemade.mg/media/img/reglement_hackathon_fanilo.pdf)
-- [Supabase pricing](https://supabase.com/pricing)
+- [Neon pricing](https://neon.com/pricing)
 - [Vercel Hobby plan](https://vercel.com/docs/plans/hobby)
 - [Render free tier](https://render.com/docs/free)
 - [Railway plans](https://docs.railway.com/pricing/plans)

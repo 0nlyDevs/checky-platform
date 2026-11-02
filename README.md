@@ -32,8 +32,8 @@ How the pieces talk:
 - **Realtime** updates go over Socket.IO from the API.
 - **AI** calls go through one gateway (`apps/api/app/core/ai.py`) that falls back from Groq to
   Gemini to NVIDIA when a provider fails.
-- **In production:** web on Vercel, API on Render, database and file storage on Supabase
-  (project `fanilo`). Deployment is not set up yet.
+- **In production:** web on Vercel, API on Render, database and file storage on **Neon**
+  (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
 
 ## Access you need
 
@@ -42,7 +42,7 @@ Ask the project owner (TsioryJonathan) for:
 | Access | Why | Needed for |
 |---|---|---|
 | GitHub org **0nlyDevs**, repo `fanilo-base` | code, CI | everything |
-| Supabase org, project **fanilo** | database password, service key, logs | deploying, M4 files |
+| Neon org **0nlydevs**, project **fanilo** | database and file storage, credentials | deploying, migrating production, M4 files |
 | Groq / Gemini / NVIDIA API keys (or create your own free ones) | AI features | anything using AI |
 | Vercel and Render (later) | deployment | demo |
 
@@ -98,8 +98,9 @@ cp .env apps/web/.env.local
 | `BETTER_AUTH_URL` | `http://localhost:3000` | where the web app runs |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | where the API runs |
 | `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE`, `CORS_ORIGINS` | keep the example values | must point to the web app's address |
-| `SUPABASE_URL` | `https://mrtuhyupracdihvzlyam.supabase.co` | Supabase project `fanilo` |
-| `SUPABASE_SERVICE_KEY` | secret | Supabase dashboard → Project Settings → API keys (secret key) |
+| `STORAGE_ENDPOINT`, `STORAGE_REGION` | branch storage endpoint, `eu-central-1` | Neon console → project `fanilo` → Object storage → Connect |
+| `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY` | secret (`nak_…` / `nsk_…`) | same panel → Reveal credential |
+| `STORAGE_BUCKET` | `uploads-dev` | `uploads` is the production bucket |
 | `GROQ_API_KEY` | secret | [console.groq.com](https://console.groq.com/keys) |
 | `GEMINI_API_KEY` | secret | [aistudio.google.com](https://aistudio.google.com/apikey) |
 | `NVIDIA_API_KEY` | secret | [build.nvidia.com](https://build.nvidia.com/) |
@@ -240,17 +241,33 @@ Next.js 16 is newer than most tutorials and AI training data: read
 | Login works but every API call is 401 | the web address differs from `AUTH_ISSUER` / `AUTH_AUDIENCE` / `AUTH_JWKS_URL` in `.env` |
 | CORS error in the browser | add the web address to `CORS_ORIGINS` and restart the API |
 | `relation "user" does not exist` | the `better_auth` schema or its tables are missing: redo step 5 |
+| Not sure which service is down | open **Paramètres** in the app (or `GET /api/v1/health`): database, storage and each AI provider, with the missing env variable named |
 | AI routes return 503 `ai_unavailable` | no AI key in `.env`, or every provider failed (see `app.ai_call`) |
 | `npm` warns it blocked an install script | harmless |
 
-## Supabase (production database and files)
+## Production database (Neon)
 
-Project **fanilo** (`mrtuhyupracdihvzlyam`, region eu-central-1). Already set up: `vector`
-extension, schemas `app` and `better_auth` with all tables, private bucket `uploads` (50 MB per
-file).
+Project **fanilo** in the Neon org **0nlydevs** (id `green-heart-84751490`, AWS Frankfurt,
+Postgres 18, free plan). Set up with `vector`, `better_auth` and `app` at the current migration.
 
-- The free plan **pauses a project after about a week with no activity**. If it shows as paused
-  in the dashboard, click Restore; keep it in use before the hackathon.
-- To migrate it, run `uv run alembic upgrade head` with `DATABASE_URL` set to the Supabase
-  connection string (Dashboard → Connect → session pooler).
-- Never use the service key in the browser; only the API uses it.
+- Its connection string is `PROD_DATABASE_URL` in `.env` (ask the owner, or Neon console →
+  project → Connect, with **connection pooling off**). The app itself never reads that variable.
+- Migrate production after a new migration:
+  ```bash
+  cd apps/api && DATABASE_URL="$PROD_DATABASE_URL" uv run alembic upgrade head
+  ```
+  and after a Better Auth upgrade, run the Better Auth CLI the same way.
+- The database sleeps when idle; the first request after a pause takes a few seconds. Open
+  Paramètres a few minutes before a demo to wake it.
+- Neon branches give a free copy of the database (for a risky migration or a demo snapshot).
+
+## File storage (Neon Object Storage)
+
+Same Neon project, S3-compatible, private buckets: **`uploads`** (production) and
+**`uploads-dev`** (local development). The browser uploads and downloads through short-lived
+presigned URLs issued by the API (`apps/api/app/core/storage.py`); files never pass through the
+API and nothing is publicly readable.
+
+- Storage belongs to a database **branch** (here `production`): its endpoint is in the branch's
+  Connect panel, and a new Neon branch gets its own copy of the files.
+- Never put the storage secret in the web app or the browser; only the API uses it.

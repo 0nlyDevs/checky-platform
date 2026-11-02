@@ -19,7 +19,8 @@ Milestones from the PRD: **P1 core by 27 Oct**, **P2 AI layer by 30 Oct**, **fre
 - **No Docker for now.** Use the local Postgres. `docker-compose.yml` exists but is optional/unused.
 - **Verify before claiming done:** run the tests/lint/typecheck, and for UI drive it in a real browser (Playwright, see "Testing the UI").
 - **Look up current docs with Context7** (MCP, user scope) before using an API of Next.js 16, Better Auth, Tailwind v4, dnd-kit, FastAPI, etc.; training data is out of date for these.
-- **Supabase MCP** is configured for this repo in `.mcp.json`, scoped to project `fanilo` (`mrtuhyupracdihvzlyam`, eu-central-1, org TsioryJonathan's Org). OAuth in the browser via `/mcp` → supabase → Authenticate. Use it for logs, advisors and SQL; ask before destructive operations.
+- **Neon MCP** is configured in `.mcp.json` (`https://mcp.neon.tech/mcp`); authenticate it via `/mcp` → neon → Authenticate (OAuth in the browser). Use it for SQL, branches and logs on project `fanilo`; ask before destructive operations. The Neon console itself is driven through the user's **Brave** (Claude in Chrome), where they are signed in.
+- **Production = one Neon project** `fanilo` (`green-heart-84751490`) in the **0nlydevs** org (free plan, AWS Frankfurt, Postgres 18, `vector` 0.8.6), for both the **database** and **object storage**. Database: direct (non-pooled) URL in `PROD_DATABASE_URL` (`.env`, quoted because of `&`); migrate with `DATABASE_URL="$PROD_DATABASE_URL" uv run alembic upgrade head`; `Settings.async_database_url` turns libpq `sslmode` into asyncpg `ssl` and drops `channel_binding`. Storage: S3-compatible, branch `production` endpoint, path-style, private buckets `uploads` (prod) and `uploads-dev` (local), CORS open; `STORAGE_*` env; `app/core/storage.py` (boto3, `presign_upload`/`presign_download`, `check`). No Supabase anywhere any more.
 - **Never put secrets in commits.** `.env` and `apps/web/.env.local` are gitignored and hold the real local values (DB password, auth secret). `.env.example` has placeholders only.
 
 ## Stack and layout
@@ -38,7 +39,7 @@ fanilo-base/
 Key architecture decisions (all reflected in the PRD):
 
 - **Auth:** Better Auth runs in Next.js (email + password, `jwt` plugin, 15-min EdDSA JWTs). The browser gets a token from `/api/auth/token` and calls FastAPI with `Authorization: Bearer`. FastAPI verifies against `/api/auth/jwks` (`app/core/security.py`). Issuer and audience = `BETTER_AUTH_URL` and must match `AUTH_ISSUER` / `AUTH_AUDIENCE` on the API.
-- **One Postgres, two schemas:** `better_auth` (Better Auth tables, created by its CLI; not `auth`, which Supabase reserves and does not let us write to) and `app` (ours, Alembic). User ids in `app` are Better Auth ids (text), no cross-schema FK. `better_auth."user"` is declared read-only in `app/core/models.py` for name joins and excluded from Alembic.
+- **One Postgres, two schemas:** `better_auth` (Better Auth tables, created by its CLI; not `auth`, which hosted platforms such as Supabase reserve) and `app` (ours, Alembic). User ids in `app` are Better Auth ids (text), no cross-schema FK. `better_auth."user"` is declared read-only in `app/core/models.py` for name joins and excluded from Alembic.
 - **No Redis.** Background jobs = `app.job` table claimed with `SELECT … FOR UPDATE SKIP LOCKED` by worker loops inside the API process (`app/workers/queue.py`, `JOB_WORKERS`, default 2). Add a job kind with `@handler("kind")`. Interrupted jobs are requeued on startup.
 - **Realtime:** Socket.IO on the API (same port). Handshake requires the JWT; client emits `join` with a workspace id (membership checked). Events: `item.created|updated|deleted`, `comment.created`, `job.progress|done|failed`, `demo.reset`.
 - **Generic item model:** `app.item` with `type`, `status`, `tags`, and a JSONB `data` merged on PATCH (new day-one fields need no migration). Claim fields currently in `data`: `ref` (FAN-0142), `first_seen_at` (ISO), `origin` (facebook|whatsapp|tiktok|radio|press|other), `verdict` (confirmed), `verdict_suggested` (AI), `source_count`, `assignee_id`, `demo`.
@@ -48,15 +49,15 @@ Key architecture decisions (all reflected in the PRD):
 
 ## API (FastAPI, prefix `/api/v1`)
 
-Implemented: `GET /health` (DB only so far) · `GET /me` (with memberships) · `POST /workspaces` · `GET /workspaces/{ws}/members` (with names/emails) · `PATCH|DELETE /workspaces/{ws}/members/{user}` (last-admin guarded) · `POST /workspaces/{ws}/invitations` · `POST /invitations/{token}/accept` (single use, 7 days) · items CRUD + filters `GET|POST /workspaces/{ws}/items`, `GET|PATCH|DELETE …/items/{id}` · `GET|POST …/items/{id}/comments` · `GET /workspaces/{ws}/activity?entity_id=` · `GET …/jobs/{id}`, `POST …/jobs/{id}/retry` · `POST /workspaces/{ws}/demo/reset` (admin; seeds 8 claims) · `POST /workspaces/{ws}/ai/complete` (JSON) and `POST …/ai/stream` (SSE: `delta` `{text}` events, then `done` with the full completion, or `error`).
+Implemented: `GET /health` (public; database, storage and each AI provider as `up|down|not_configured` with latency; providers checked via their free `/models` list; cached 15 s; `ok` = DB up, nothing configured down, at least one configured AI provider up) · `GET /me` (with memberships) · `POST /workspaces` · `GET /workspaces/{ws}/members` (with names/emails) · `PATCH|DELETE /workspaces/{ws}/members/{user}` (last-admin guarded) · `POST /workspaces/{ws}/invitations` · `POST /invitations/{token}/accept` (single use, 7 days) · items CRUD + filters `GET|POST /workspaces/{ws}/items`, `GET|PATCH|DELETE …/items/{id}` · `GET|POST …/items/{id}/comments` · `GET /workspaces/{ws}/activity?entity_id=` · `GET …/jobs/{id}`, `POST …/jobs/{id}/retry` · `POST /workspaces/{ws}/demo/reset` (admin; seeds 8 claims) · `POST /workspaces/{ws}/ai/complete` (JSON) and `POST …/ai/stream` (SSE: `delta` `{text}` events, then `done` with the full completion, or `error`).
 
 Roles: journalist (create, edit own), editor (edit/delete all), admin (members, invites, demo reset). Dependencies `AnyMember`, `Editor`, `Admin` in `app/core/access.py`.
 
-Not yet: files/sources (M4), RAG `/search` `/ask` (M8), transcription (M9), agent (M10), full `/health` (M12).
+Not yet: files/sources (M4), RAG `/search` `/ask` (M8), transcription (M9), agent (M10), M12 seed script (needs M4/M9).
 
 ## Web app
 
-Routes: `/connexion`, `/inscription` (auth) · `/` (redirects to first workspace, or onboarding with optional demo data) · `/w/[ws]/affirmations` (day grid + table; `?vue=tableau` = board) · `/w/[ws]/affirmations/[id]` (detail) · `/w/[ws]/membres` · `/invitation/[token]`. `proxy.ts` does the optimistic cookie redirect (Next 16 name for middleware).
+Routes: `/connexion`, `/inscription` (auth) · `/` (redirects to first workspace, or onboarding with optional demo data) · `/w/[ws]/affirmations` (day grid + table; `?vue=tableau` = board) · `/w/[ws]/affirmations/[id]` (detail) · `/w/[ws]/membres` · `/w/[ws]/parametres` (service health + admin demo reset) · `/invitation/[token]`. `proxy.ts` does the optimistic cookie redirect (Next 16 name for middleware).
 
 Data: SWR + `lib/api.ts` (`api()` adds the JWT, caches it until 1 min before expiry). Realtime via `hooks/use-workspace-socket.ts` (refetches after reconnect). `hooks/use-workspace.ts` gives my role and a user-id → name map. Server-side session read: `lib/session.ts` (`'use cache: private'`, behind Suspense in `app/(app)/layout.tsx`).
 
@@ -78,7 +79,7 @@ Rules that must not break:
 
 ## Local setup and commands
 
-Prereqs on this machine: Node 26 / npm 12, Python 3.13 via uv, local PostgreSQL 18 (user `postgres`, password in `.env`). Databases: `fanilo` (app) and `fanilo_test` (tests). **pgvector is not installed locally** (needed for M8; Supabase has it).
+Prereqs on this machine: Node 26 / npm 12, Python 3.13 via uv, local PostgreSQL 18 (user `postgres`, password in `.env`). Databases: `fanilo` (app) and `fanilo_test` (tests). **pgvector is not installed locally** (needed for M8; Neon has it).
 
 ```bash
 npm install                                   # root, installs all workspaces
@@ -115,23 +116,25 @@ Playwright browsers are installed in `~/.cache/ms-playwright`. Drive flows with 
 - The API runs without `--reload` in background tests: restart it after API code changes.
 - `npm` blocks some install scripts (unrs-resolver); harmless.
 
-## Status (24 Oct 2026, after M7)
+## Status (25 Oct 2026)
 
 Done, on `dev`, CI green:
-- M1 auth + roles, M2 workspaces/members/invitations, M3 items/comments/activity, M5 realtime, M6 Postgres job queue, M7 AI gateway (mocked tests only; no real keys yet)
+- M1 auth + roles, M2 workspaces/members/invitations, M3 items/comments/activity, M5 realtime, M6 Postgres job queue, M7 AI gateway (tested for real on Gemini: complete, stream, tool calls), M12 health endpoint + Paramètres screen + admin demo reset button
 - Web: design system, auth pages, onboarding, app shell, claims day grid + table, claim detail (verdict confirm, comments, history, assignee, status), **F2 verification board** (drag/touch/keyboard + "Déplacer vers…"), members screen + invitation links, PWA manifest + icons
 - CI: API tests on pgvector Postgres, web typecheck/lint, generated API types and THIRD_PARTY.md up to date
-- **Supabase project `fanilo`** set up (24 Oct): `vector` 0.8.2 in schema `extensions`, schemas `app` + `better_auth` with all tables at the current Alembic head, private bucket `uploads` (50 MB per file), `app`/`better_auth` revoked from `anon`/`authenticated`, security advisor clean. Migrations so far were applied through the MCP from the local schema; once `DATABASE_URL` for Supabase is known, run `alembic upgrade head` against it directly instead.
+- **Neon project `fanilo`** (25 Oct): `vector`, `better_auth` (Better Auth CLI) and `app` (Alembic, head) created; sign-up → JWT → API → workspace verified end to end against it, test data removed.
+- **Neon object storage** (25 Oct): buckets `uploads` and `uploads-dev` (private); presigned PUT/GET, 403 on anonymous reads and CORS preflight verified for real; `/health` storage check = HEAD bucket.
+- The old **Supabase** project `fanilo` (`mrtuhyupracdihvzlyam`, user's personal org) is no longer used by anything; deleting it is the user's call.
 
 ## Next steps (in order)
 
 Not blocked:
-1. **M12:** `/health` also reports storage and each AI provider; a health page in the web app; admin "reset demo data" button (endpoint exists).
+1. **M4 files/sources** on Neon storage (presigned upload, file rows attached to items, EXIF, trafilatura for URLs), then M8 RAG.
+2. **Embedding test** (Gemini now; NVIDIA when its key exists) and the M12 seed script after M4/M9.
 
 Blocked on the user:
-- **Supabase secrets** (the MCP cannot read them): the secret/service key (Dashboard → Project Settings → API keys) into `SUPABASE_SERVICE_KEY`, and the database password for a Supabase `DATABASE_URL` (use the session pooler string for Render/Vercel). `SUPABASE_URL` is already in `.env`. → M4 files/sources (signed upload URLs, EXIF, trafilatura for URLs), then M8 RAG.
-- **AI keys** (Groq, Gemini, NVIDIA in `.env`) → real calls, M9 transcription (Groq Whisper), F1 claim checker, F3 interview to quotes, F5 verdict card.
+- **AI keys:** Groq set (key `fanilo`, personal org, Default Project; default model `openai/gpt-oss-120b` since `llama-3.3-70b-versatile` is gone; Groq also lists `qwen/qwen3.8-27b`, `whisper-large-v3(-turbo)`). Gemini set (key `fanilo`, AI Studio free-tier project `nixos`, shared quota with the user's other keys there). NVIDIA still missing. Browser automation works in the user's **Brave** (Claude extension connected), where they are signed in. Gemini models move fast and the flash models are often 503/slow on the free tier: the default is `gemini-3.5-flash-lite` (2–3 s); list current ones with `GET https://generativelanguage.googleapis.com/v1beta/openai/models`. → real calls on more providers, M9 transcription (Groq Whisper), F1 claim checker, F3 interview to quotes, F5 verdict card.
 - **Embedding test** (planned 25 Oct): ~20 French + ~20 Malagasy sentences, pick Gemini vs NVIDIA by top-3 accuracy; set `EMBED_PROVIDER/MODEL/DIM` once.
-- **Deployment:** Vercel (root `apps/web`) and Render free (Docker, API + in-process workers); Supabase as the database.
+- **Deployment:** Vercel (root `apps/web`) and Render free (Docker, API + in-process workers, Frankfurt); Neon for database and storage (production bucket `uploads`).
 
 Open questions (from the PRD): team registration page needed? prizes? Gemini free tier usable from Madagascar? a free vision model for screenshot OCR? a free web search API for the agent? Render free vs Railway trial?
