@@ -279,7 +279,38 @@ def test_diffuse_draws_truth_stops_and_keeps_malagasy_until_reread(as_user, mode
     actions = [
         a["action"] for a in alice.get(f"/api/v1/workspaces/{ws}/activity?entity_id={item}").json()
     ]
-    assert actions.count("diffuse") == 2
+    assert actions.count("diffuse") == 2 and actions.count("relu_mg") == 1
+
+
+def test_malagasy_formats_stay_locked_until_a_logged_reread(as_user, model):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    item = _published(alice, ws)
+    base = f"/api/v1/workspaces/{ws}/items/{item}"
+    assert alice.get(base + "/relu-mg").json() == {"relu_mg": None}
+    assert alice.get(base + "/diffusion").json()["relu_mg"] is None
+    # The tick cannot be forged through the ordinary edit.
+    forged = alice.patch(base, json={"data": {"relu_mg": {"by": "bob", "at": "2026-11-02"}}})
+    assert forged.status_code in (403, 409, 422)
+    tick = alice.post(base + "/relu-mg").json()["relu_mg"]
+    assert tick["by"] == "alice" and tick["name"] == "Alice Rabe" and tick["current"] is True
+    body = {"routes": [{"channel": "sms", "place": "Abonnés"}], "formats": ["sms_mg", "text_mg"]}
+    assert alice.post(base + "/diffuse", json=body).json()["dropped"] == []
+    carnet = alice.get(base + "/carnet").json()["entries"]
+    assert any(e["text"] == "Formats en malgache relus par un locuteur" for e in carnet)
+    # A new explanation needs a new reading.
+    alice.post(
+        base + "/sign", json={"verdict": "false", "reason": REASON + " Précision.", "publish": True}
+    )
+    assert alice.get(base + "/relu-mg").json()["relu_mg"]["current"] is False
+    assert alice.post(base + "/diffuse", json=body).json()["dropped"] == ["sms_mg", "text_mg"]
+    alice.post(base + "/relu-mg")
+    assert alice.delete(base + "/relu-mg").json() == {"relu_mg": None}
+    actions = [
+        a["action"] for a in alice.get(f"/api/v1/workspaces/{ws}/activity?entity_id={item}").json()
+    ]
+    assert actions.count("relu_mg") == 2 and actions.count("relu_mg_undo") == 1
+    assert as_user("bob").post(base + "/relu-mg").status_code == 404
 
 
 def test_partner_radio_marks_a_flash_broadcast_with_its_token(as_user, client, model):

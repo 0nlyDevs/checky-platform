@@ -46,6 +46,8 @@ SIGNATURE_FIELDS = {
     "published_by",
     "published_at",
     "byline",
+    # « Relu en malgache »: who reread the Malagasy formats, set only through its own route.
+    "relu_mg",
 }
 VERDICTS = ("true", "false", "misleading", "unverifiable")
 Verdict = Literal["true", "false", "misleading", "unverifiable"]
@@ -572,6 +574,8 @@ def _entry_text(action: str, diff: dict, titles: dict[str, str], contacts: dict[
         return "Commentaire dans le fil"
     if action == "update" and "status" in diff:
         return "Statut modifié"
+    if isinstance(diff.get("carnet"), str):  # a module writes its own line (relu, voix…)
+        return diff["carnet"]
     return "Dossier modifié"
 
 
