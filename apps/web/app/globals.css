@@ -524,7 +524,8 @@
   background: var(--nav-hover);
   color: var(--nav-active);
 }
-.tab[data-current]:hover {
+.tab[data-current]:hover,
+.tab[data-current][aria-expanded="true"] {
   background: transparent;
 }
 .tab[data-current] {
