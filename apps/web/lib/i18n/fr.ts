@@ -1,4 +1,5 @@
 // Every UI string lives here so Malagasy can be added as a sibling file.
+import { plural } from "@/lib/when";
 import { crew } from "./fr/crew";
 import { dossier } from "./fr/dossier";
 import { publicLayer } from "./fr/publicLayer";
@@ -89,7 +90,7 @@ export const fr = {
     waitingAction: "Les voir",
     ago: (d: string) => `il y a ${d}`,
     noFirstSeen: "Heure inconnue",
-    total: (n: number) => (n === 1 ? "1 dossier" : `${n} dossiers`),
+    total: (n: number) => plural(n, "dossier", "dossiers"),
     columns: {
       ref: "Réf.",
       claim: "Affirmation",
@@ -99,7 +100,7 @@ export const fr = {
       seenAt: "Vue à",
       author: "Ajoutée par",
     },
-    sources: (n: number) => (n === 0 ? "Aucune source" : n === 1 ? "1 source" : `${n} sources`),
+    sources: (n: number) => plural(n, "source", "sources"),
     emptyTitle: "Aucun dossier pour l'instant",
     emptyLead: "Ouvrez le premier dossier : un post, une rumeur, une capture qui circule.",
     noMatchTitle: "Aucun dossier ne correspond",
@@ -192,6 +193,8 @@ export const fr = {
       undo: "Annuler",
       undone: "Verdict rétabli",
     },
+    statusMoved: (label: string) => `Dossier passé en « ${label} »`,
+    statusRestored: (label: string) => `Dossier remis en « ${label} »`,
     readOnly: "Seul l'auteur ou un éditeur peut modifier cette affirmation.",
     saved: "Modification enregistrée",
     saveFailed: "La modification n'a pas été enregistrée. Réessayez.",
@@ -217,7 +220,7 @@ export const fr = {
   members: {
     title: "Membres",
     lead: "Les personnes qui vérifient dans cet espace, et ce que chacune peut faire.",
-    count: (n: number) => (n === 1 ? "1 membre" : `${n} membres`),
+    count: (n: number) => plural(n, "membre", "membres"),
     you: "vous",
     role: "Rôle",
     remove: "Retirer",

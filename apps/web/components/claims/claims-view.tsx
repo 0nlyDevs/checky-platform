@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { IconArrowRight, IconColumns, IconFolderOpen, IconMagnifyingGlass, IconRows, IconWifiSlash } from "@/lib/icons";
 import { toast } from "sonner";
+import { undoable } from "@/lib/undo";
 import { Board } from "@/components/claims/board";
 import { DossierList } from "@/components/claims/dossier-list";
 import { NewClaimSheet } from "@/components/claims/new-claim-sheet";
@@ -136,6 +137,9 @@ export function ClaimsView() {
       upsert({ ...previous, status: to });
       try {
         upsert(await api<Item>(`/workspaces/${ws}/items/${previous.id}`, { method: "PATCH", body: JSON.stringify({ status: to }) }));
+        undoable(t.claims.board.moved(c.ref, t.status[to]), async () =>
+          upsert(await api<Item>(`/workspaces/${ws}/items/${previous.id}`, { method: "PATCH", body: JSON.stringify({ status: previous.status }) })),
+        );
       } catch (e) {
         upsert(previous);
         toast.error(e instanceof ApiError && e.status === 403 ? t.claims.board.cannotMove : t.detail.saveFailed);

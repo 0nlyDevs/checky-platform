@@ -15,6 +15,7 @@ import { PublicStrip, Reliability, RiskNote, ToneCard } from "@/components/crew/
 import { type AgentEvent, type CrewResult, frDate, hostOf, type Numbered } from "@/components/crew/types";
 import { claimSteps, type Step, StepLine, type StepState } from "@/components/flow/step-line";
 import { Button } from "@/components/ui/button";
+import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { API_URL, api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { postStream } from "@/lib/sse";
@@ -490,6 +491,9 @@ function Board({
         </p>
       )}
 
+      {/* What has not arrived yet holds its place, flat and at its final size, so nothing moves when it lands. */}
+      {!result && !error && (running || Object.values(steps).some((x) => x.status !== "waiting")) && <PendingBlocks />}
+
       {result && !result.needs_text && (
         <>
           <Facts r={result} ws={ws} />
@@ -546,6 +550,25 @@ function Board({
   );
 }
 
+/** Flat placeholders (no shimmer) for the blocks a live check has not delivered yet, in their final order. */
+function PendingBlocks() {
+  return (
+    <div aria-hidden className="space-y-8">
+      <div data-pending="facts" className="h-[5.625rem] rounded-md bg-raised" />
+      <div data-pending="wall">
+        <div className="h-7 w-52 rounded-md bg-raised" />
+        <div className="mt-0.5 h-5 w-80 max-w-full rounded-md bg-raised" />
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-[10.25rem] rounded-md bg-raised" />
+          ))}
+        </div>
+      </div>
+      <div data-pending="lecture" className="h-[14rem] rounded-md bg-raised" />
+    </div>
+  );
+}
+
 /** What fact-checkers, the web and Wikipedia say: each result arrives, then stays still to be read. */
 function Wall({ r, picked, toggle }: { r: Result; picked: Set<string>; toggle: (u: string) => void }) {
   const rows = (r.results ?? []).filter((x) => x.url);
@@ -588,6 +611,7 @@ function Wall({ r, picked, toggle }: { r: Result; picked: Set<string>; toggle: (
 /** Beside the check: the dossiers still open (oldest first) and what the desk settled lately. */
 function DeskColumn({ ws }: { ws: string }) {
   const { data } = useSWR<ItemPage>(`/workspaces/${ws}/items?limit=200`, fetcher);
+  const column = useStickyColumn<HTMLElement>();
   const claims = useMemo(() => (data?.items ?? []).map(toClaim), [data]);
   const open = claims
     .filter((x) => x.status === "to_check" || x.status === "in_progress")
@@ -598,7 +622,7 @@ function DeskColumn({ ws }: { ws: string }) {
     .sort((a, b) => b.item.updated_at.localeCompare(a.item.updated_at))
     .slice(0, 3);
   return (
-    <aside className="space-y-8 @6xl:pt-14">
+    <aside ref={column} className="space-y-8 min-[1101px]:sticky min-[1101px]:self-start @6xl:pt-14">
       <section>
         <h2 className="flex items-baseline justify-between gap-3 font-display text-lg font-bold">
           {v.open}

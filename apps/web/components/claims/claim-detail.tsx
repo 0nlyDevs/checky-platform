@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { IconArrowLeft, IconCircleNotch, IconImage, IconPencilSimple, IconWarning } from "@/lib/icons";
 import { toast } from "sonner";
+import { undoable } from "@/lib/undo";
 import { RoutePanel } from "@/components/claims/route-panel";
 import { VerdictCard } from "@/components/claims/verdict-card";
 import { CarnetPanel } from "@/components/dossier/carnet";
@@ -18,12 +19,14 @@ import { hasResearch, type NewsroomSettings, readByline, readReading, readResear
 import { WhoPanel } from "@/components/dossier/who-panel";
 import { claimSteps, StepDisc, type StepState } from "@/components/flow/step-line";
 import { formatDuration, formatTime } from "@/lib/time";
+import { exact, relative } from "@/lib/when";
 import { StatusLabel, toClaim, VERDICT_META } from "@/components/claims/verdict";
 import { VerdictDecision } from "@/components/claims/verdict-decision";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { SourcesPanel } from "@/components/sources/sources-panel";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
@@ -32,15 +35,6 @@ import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
 
 const dayFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
-const rtf = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
-
-function ago(iso: string, now: Date) {
-  const s = (new Date(iso).getTime() - now.getTime()) / 1000;
-  if (s > -60) return "à l'instant";
-  if (s > -3600) return rtf.format(Math.round(s / 60), "minute");
-  if (s > -86400) return rtf.format(Math.round(s / 3600), "hour");
-  return rtf.format(Math.round(s / 86400), "day");
-}
 
 const textareaClass =
   "w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";
@@ -160,6 +154,7 @@ function RiskBadge({ item }: { item: Item }) {
 
 export function ClaimDetail() {
   const { ws, id } = useParams<{ ws: string; id: string }>();
+  const column = useStickyColumn<HTMLElement>();
   const router = useRouter();
   const base = `/workspaces/${ws}/items/${id}`;
   const { data: item, error, mutate } = useSWR<Item>(base, fetcher);
@@ -253,6 +248,22 @@ export function ClaimDetail() {
     mutate(next, { revalidate: false });
     mutateHistory();
     revalidate(`${base}/trajet`);
+  }
+
+  /** A change already saved is put back on the server, then on screen. */
+  async function putBack(change: ItemPatch) {
+    const res = await api<Item>(base, { method: "PATCH", body: JSON.stringify(change) });
+    mutate(res, { revalidate: false });
+    mutateHistory();
+  }
+
+  /** Moving a dossier from one status to another is reversible: the toast offers to move it back. */
+  async function changeStatus(status: Status) {
+    if (!claim) return;
+    const before = claim.status;
+    if (status === before) return;
+    const ok = await patch({ status }, { status });
+    if (ok) undoable(t.detail.statusMoved(t.status[status]), () => putBack({ status: before }), t.detail.statusRestored(t.status[before]));
   }
 
   async function runReading() {
@@ -388,7 +399,7 @@ export function ClaimDetail() {
                     <Label htmlFor="claim-status" className="sr-only">
                       {t.detail.status}
                     </Label>
-                    <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => patch({ status }, { status })}>
+                    <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => void changeStatus(status as Status)}>
                       <SelectTrigger id="claim-status" aria-label={t.detail.status} className="h-10 min-w-40 bg-card">
                         <SelectValue />
                       </SelectTrigger>
@@ -441,7 +452,7 @@ export function ClaimDetail() {
           </Step>
         </div>
 
-        <aside className="space-y-8">
+        <aside ref={column} className="space-y-8 min-[1101px]:sticky min-[1101px]:self-start">
           <WhoPanel ws={ws} itemId={id} />
           <Section id="details" title={t.detail.details}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
@@ -524,8 +535,8 @@ export function ClaimDetail() {
                     <p className="flex flex-wrap items-baseline gap-x-2">
                       <span className="font-medium">{name(e.actor)}</span>
                       {e.kind === "event" && <span>{e.body}</span>}
-                      <time dateTime={e.at} className="text-muted-foreground tabular">
-                        {ago(e.at, now)}
+                      <time dateTime={e.at} title={exact(e.at)} className="text-muted-foreground tabular">
+                        {relative(e.at, now)}
                       </time>
                     </p>
                     {e.kind === "comment" && <p className="mt-0.5 whitespace-pre-line text-pretty">{e.body}</p>}

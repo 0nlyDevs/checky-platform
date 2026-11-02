@@ -700,3 +700,25 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Undo toast: a bar runs down the 6 s the « Annuler » stays available; it waits while the pointer is on it.
+   Drawn as a background so sonner's own pseudo-elements stay untouched. */
+[data-sonner-toast].undo-toast[data-styled="true"] {
+  background-image: linear-gradient(color-mix(in srgb, currentColor 50%, transparent), color-mix(in srgb, currentColor 50%, transparent));
+  background-repeat: no-repeat;
+  background-position: left bottom;
+  background-size: 100% 3px;
+  animation: undo-bar var(--undo-ms, 6000ms) linear forwards;
+}
+[data-sonner-toaster]:hover .undo-toast {
+  animation-play-state: paused;
+}
+@keyframes undo-bar {
+  from { background-size: 100% 3px; }
+  to { background-size: 0% 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast].undo-toast[data-styled="true"] {
+    animation: none;
+  }
+}

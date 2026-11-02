@@ -6,6 +6,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { IconArrowCounterClockwise, IconArrowsClockwise, IconCheck, IconCircleNotch, IconMinusCircle, IconWarning } from "@/lib/icons";
 import { toast } from "sonner";
+import { undoable } from "@/lib/undo";
 import { NewsroomRules } from "@/components/claims/publication-panel";
 import { BeatsSection, PlaceSection } from "@/components/settings/newsroom-sections";
 import { PeopleAsk } from "@/components/settings/people-ask";
@@ -125,11 +126,12 @@ function PublicSection({ ws }: { ws: string }) {
   const { data, mutate } = useSWR<{ is_public: boolean }>(`/workspaces/${ws}`, fetcher);
   const [pending, setPending] = useState(false);
 
-  async function toggle(on: boolean) {
+  async function toggle(on: boolean, undo = true) {
     setPending(true);
     try {
       await mutate(api<{ is_public: boolean }>(`/workspaces/${ws}`, { method: "PATCH", body: JSON.stringify({ is_public: on }) }), { revalidate: false });
-      toast.success(t.settings.publicSaved(on));
+      if (undo) undoable(t.settings.publicSaved(on), () => toggle(!on, false));
+      else toast.success(t.settings.publicSaved(on));
     } catch {
       toast.error(t.settings.publicFailed);
     } finally {
