@@ -32,8 +32,21 @@ async def get_membership(db: AsyncSession, ws: uuid.UUID, user_id: str) -> Membe
     )
 
 
+async def _membership(db: AsyncSession, ws: uuid.UUID, user_id: str) -> Membership | None:
+    """The membership, read in a transaction that is closed at once.
+
+    The request's session lives as long as the route, and an SSE route (crew, ask, agent…) keeps
+    it for minutes: left open, this read would hold a pooled connection « idle in transaction »
+    for the whole stream. Committing a read-only transaction releases the connection; the route
+    begins a new one when it touches the database again.
+    """
+    m = await get_membership(db, ws, user_id)
+    await db.commit()
+    return m
+
+
 async def require_member(ws: uuid.UUID, user: User, db: Db) -> Member:
-    if await get_membership(db, ws, user.id) is None:
+    if await _membership(db, ws, user.id) is None:
         # 404, not 403: outsiders must not learn the workspace exists.
         raise ApiError(404, "not_found", "Workspace not found")
     return Member(user=user, workspace_id=ws)
