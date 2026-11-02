@@ -421,7 +421,7 @@ function Board({
     evidence: steps.search.summary || undefined,
     conclusion:
       steps.verdict.status === "done"
-        ? `${VERDICT_META[steps.verdict.summary as Verdict]?.label ?? steps.verdict.summary} · ${t.flow.state.suggested}`
+        ? (VERDICT_META[steps.verdict.summary as Verdict]?.label ?? steps.verdict.summary)
         : steps.verdict.status === "waiting" && k.noLecture[steps.verdict.summary]
           ? k.noLecture[steps.verdict.summary]
           : undefined,
