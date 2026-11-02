@@ -259,7 +259,7 @@ Each interactive component lists rest, hover, focus-visible, pressed, selected/c
 - **Do** draw an AI suggestion dashed and a journalist's confirmation solid; the final verdict is a journalist's click.
 - **Do** pair every verdict with its icon and word, and every status with an ink icon from `lib/icons.ts`.
 - **Do** measure a new text pair in light and dark (`lib/tokens.ts`, `npm test`).
-- **Do** pad the page when the assistant opens on desktop (`lg:pr-[25rem]`) and use the bottom sheet on phone.
+- **Do** keep the canvas gutters (inset 24 px + 84 px from 901 px up) so the floating corners (preference dock bottom-left, Checky bottom-right) never cover content; the assistant opens as a panel growing out of the Checky corner.
 - **Do** handle real data: long titles wrap, URLs truncate in the middle with the full URL in `title`, a missing value is a grey dash, plurals are French.
 
 ### Don't:
