@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { NavItem } from "@/components/shell/nav";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { IconCaretDown, IconDotsThree } from "@/lib/icons";
@@ -10,6 +10,11 @@ import { t } from "@/lib/i18n/fr";
 import { foldTabs } from "@/lib/priority-nav";
 
 type Tab = NavItem & { href: string };
+
+/** Marks the one tab whose label reads ink on the paper pill (`data-lit`), or none. */
+function light(list: HTMLElement | null, lit: HTMLElement | null) {
+  list?.querySelectorAll<HTMLElement>(".tab").forEach((tab) => tab.toggleAttribute("data-lit", tab === lit));
+}
 
 /** The tabs a workspace shows, with their addresses and the one that is lit. */
 export function useTabs(ws: string | undefined, items: NavItem[]) {
@@ -33,31 +38,70 @@ export function TabIsland({ ws, items }: { ws?: string; items: NavItem[] }) {
   const ghost = useRef<HTMLDivElement>(null);
   const island = useRef<HTMLUListElement>(null);
   const pill = useRef<HTMLSpanElement>(null);
-  const placed = useRef(false);
+  // Where the pill was last put, and for which tab.
+  const last = useRef<{ tab: number; x: number; w: number } | null>(null);
+  // The frame that keeps the lit label under the sliding pill (0 when the pill rests).
+  const follow = useRef(0);
   const [visible, setVisible] = useState(tabs.length);
+  useEffect(() => () => cancelAnimationFrame(follow.current), []);
 
   // The pill follows the current tab (or « Plus » when it holds it): transform + width, 0.5 s.
+  // It slides only when the current tab changes; when its own tab moves (first paint, fonts, a
+  // resize that folds it into « Plus ») it is put there at once, as in the mockup.
   const place = useCallback(() => {
     const el = island.current?.querySelector<HTMLElement>("[data-current]");
     const p = pill.current;
     if (!p) return;
     if (!el) {
       p.style.opacity = "0";
+      last.current = null;
+      light(island.current, null);
       return;
     }
-    if (!placed.current) p.style.transition = "none";
-    p.style.opacity = "1";
-    p.style.width = `${el.offsetWidth}px`;
     // the tab is measured inside the list, the pill inside the island: add the island's padding
-    p.style.transform = `translateX(${el.offsetLeft + (island.current?.offsetLeft ?? 0)}px)`;
-    if (!placed.current) {
+    const x = el.offsetLeft + (island.current?.offsetLeft ?? 0);
+    const w = el.offsetWidth;
+    const prev = last.current;
+    if (prev && prev.tab === active && prev.x === x && prev.w === w) {
+      if (!follow.current) light(island.current, el);
+      return;
+    }
+    const instant = !prev || prev.tab === active;
+    if (instant) p.style.transition = "none";
+    p.style.opacity = "1";
+    p.style.width = `${w}px`;
+    p.style.transform = `translateX(${x}px)`;
+    cancelAnimationFrame(follow.current);
+    follow.current = 0;
+    if (instant) {
       void p.offsetWidth;
       p.style.transition = "";
-      placed.current = true;
-      // from now on the pill carries the current tab; before, the tab paints its own paper
-      p.parentElement?.setAttribute("data-pill", "");
+      light(island.current, el);
+    } else {
+      // The ink label belongs on the paper: a tab is lit only while the pill sits under its centre,
+      // so a label never turns ink over the ink island ahead of the sliding pill.
+      const step = () => {
+        const list = island.current;
+        if (!list) return;
+        const r = p.getBoundingClientRect();
+        if (p.getAnimations().length) {
+          const under = Array.from(list.querySelectorAll<HTMLElement>(".tab")).find((tab) => {
+            const c = tab.getBoundingClientRect();
+            return r.left <= c.left + c.width / 2 && c.left + c.width / 2 <= r.right;
+          });
+          light(list, under ?? null);
+          follow.current = requestAnimationFrame(step);
+        } else {
+          light(list, list.querySelector<HTMLElement>("[data-current]"));
+          follow.current = 0;
+        }
+      };
+      follow.current = requestAnimationFrame(step);
     }
-  }, []);
+    last.current = { tab: active, x, w };
+    // from now on the pill carries the current tab; before, the tab paints its own paper
+    p.parentElement?.setAttribute("data-pill", "");
+  }, [active]);
 
   const fit = useCallback(() => {
     const room = wrap.current?.clientWidth ?? 0;
