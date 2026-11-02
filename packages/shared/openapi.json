@@ -3110,6 +3110,64 @@
           }
         }
       }
+    },
+    "/api/v1/workspaces/{ws}/image-check": {
+      "post": {
+        "tags": [
+          "image-check"
+        ],
+        "summary": "Image Check",
+        "operationId": "image_check_api_v1_workspaces__ws__image_check_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImageIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3555,6 +3613,46 @@
         ],
         "title": "CompleteOut"
       },
+      "DetectorOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "not_configured",
+              "not_validated",
+              "unavailable",
+              "assessed"
+            ],
+            "title": "Status"
+          },
+          "assessment": {
+            "type": "string",
+            "enum": [
+              "detected",
+              "none",
+              "inconclusive"
+            ],
+            "title": "Assessment",
+            "default": "inconclusive"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "DetectorOut"
+      },
       "DictationOut": {
         "properties": {
           "text": {
@@ -3727,6 +3825,112 @@
           "ai"
         ],
         "title": "HealthOut"
+      },
+      "ImageFacts": {
+        "properties": {
+          "width": {
+            "type": "integer",
+            "title": "Width"
+          },
+          "height": {
+            "type": "integer",
+            "title": "Height"
+          },
+          "format": {
+            "type": "string",
+            "title": "Format"
+          },
+          "ai_markers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ai Markers"
+          },
+          "content_credentials": {
+            "type": "boolean",
+            "title": "Content Credentials"
+          },
+          "exif": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Exif"
+          }
+        },
+        "type": "object",
+        "required": [
+          "width",
+          "height",
+          "format",
+          "ai_markers",
+          "content_credentials",
+          "exif"
+        ],
+        "title": "ImageFacts"
+      },
+      "ImageIn": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "ImageIn"
+      },
+      "ImageOut": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "assessment": {
+            "type": "string",
+            "enum": [
+              "detected",
+              "none",
+              "inconclusive"
+            ],
+            "title": "Assessment"
+          },
+          "image": {
+            "$ref": "#/components/schemas/ImageFacts"
+          },
+          "detector": {
+            "$ref": "#/components/schemas/DetectorOut"
+          },
+          "reverse_search": {
+            "items": {
+              "$ref": "#/components/schemas/SearchLink"
+            },
+            "type": "array",
+            "title": "Reverse Search"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "assessment",
+          "image",
+          "detector",
+          "reverse_search",
+          "limitations"
+        ],
+        "title": "ImageOut"
       },
       "InvitationIn": {
         "properties": {
@@ -4379,6 +4583,24 @@
           "query"
         ],
         "title": "SearchIn"
+      },
+      "SearchLink": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url"
+        ],
+        "title": "SearchLink"
       },
       "Segment": {
         "properties": {

@@ -84,6 +84,9 @@ def _clean_db():
     from app.modules import guide
 
     guide._GUIDES.clear()
+    from app.modules import imagecheck
+
+    imagecheck._IMAGES.clear()
     from app.core import websearch
 
     websearch._cache.clear()

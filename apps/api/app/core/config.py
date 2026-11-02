@@ -76,6 +76,12 @@ class Settings(BaseSettings):
     # How long a provider key is set aside after a 429 or repeated failures (seconds).
     ai_cooldown: float = 30.0
 
+    # Optional pixel detector. Off until an operator configures AND evaluates a service.
+    # Only this server holds its credential; selected image bytes never go to it by default.
+    image_detector_url: str = ""
+    image_detector_token: str = ""
+    image_detector_validated: bool = False
+
     @property
     def async_database_url(self) -> str:
         """Same DATABASE_URL as the web app, with the asyncpg driver for SQLAlchemy.

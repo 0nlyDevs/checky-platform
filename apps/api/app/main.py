@@ -16,6 +16,7 @@ from app.modules import (
     demo,
     guide,
     health,
+    imagecheck,
     items,
     jobs,
     linkcheck,
@@ -70,6 +71,7 @@ api.include_router(public.router, prefix="/api/v1")
 api.include_router(guide.router, prefix="/api/v1")
 api.include_router(copilot.router, prefix="/api/v1")
 api.include_router(linkcheck.router, prefix="/api/v1")
+api.include_router(imagecheck.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)

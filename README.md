@@ -42,6 +42,11 @@ How the pieces talk:
   React Native). A video, photo or link shared to FANILO from WhatsApp, Facebook or TikTok is
   uploaded, transcribed and checked through the same API. It signs in through Better Auth's Expo
   plugin (`apps/web/lib/auth.ts`, trusted scheme `fanilo://`).
+- **Browser extension:** [`0nlyDevs/fanilo-extension`](https://github.com/0nlyDevs/fanilo-extension)
+  checks selected text and public links/images in a side panel. It uses the website's session
+  JWT and the existing newsroom routes, plus `POST /workspaces/{ws}/image-check` for image
+  provenance hints. It never confirms or publishes a verdict. Its README covers local installation.
+  The optional pixel-detector contract and evaluation gate are in [`docs/IMAGE_DETECTOR.md`](docs/IMAGE_DETECTOR.md).
 
 ## Access you need
 
