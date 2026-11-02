@@ -11,6 +11,7 @@ export type TokenName =
   | "muted-foreground"
   | "primary"
   | "primary-foreground"
+  | "primary-hover"
   | "nav"
   | "nav-foreground"
   | "nav-hover"
@@ -20,6 +21,10 @@ export type TokenName =
   | "tag-inverted-foreground"
   | "toast"
   | "toast-foreground"
+  | "image-1"
+  | "image-2"
+  | "image-3"
+  | "image-strong"
   | "verdict-true"
   | "verdict-true-on"
   | "verdict-true-soft"
@@ -46,6 +51,7 @@ export const light: Record<TokenName, string> = {
   "muted-foreground": "#55544e",
   primary: "#0a0a0b",
   "primary-foreground": "#f3f2ee",
+  "primary-hover": "#1f1f22",
   nav: "#0a0a0b",
   "nav-foreground": "#b9b8b2",
   "nav-hover": "#1f1f22",
@@ -55,6 +61,11 @@ export const light: Record<TokenName, string> = {
   "tag-inverted-foreground": "#f3f2ee",
   toast: "#0a0a0b",
   "toast-foreground": "#f3f2ee",
+  // Image examination (EXIF, AI traces): a teal scale, never a verdict colour; text stays foreground.
+  "image-1": "#e6f3f6",
+  "image-2": "#cce7ee",
+  "image-3": "#a9d6e2",
+  "image-strong": "#04809f",
   "verdict-true": "#0b6b3a",
   "verdict-true-on": "#ffffff",
   "verdict-true-soft": "#e1f3e8",
@@ -82,6 +93,8 @@ export const dark: Record<TokenName, string> = {
   "muted-foreground": "#a6a5a0",
   primary: "#f3f2ee",
   "primary-foreground": "#0a0a0b",
+  // The primary is a paper fill in dark: its hover is a slightly darker paper, the label stays ink.
+  "primary-hover": "#e2e1da",
   nav: "#1c1c1f",
   "nav-foreground": "#b4b3ad",
   "nav-hover": "#2a2a2e",
@@ -92,6 +105,10 @@ export const dark: Record<TokenName, string> = {
   "tag-inverted-foreground": "#0a0a0b",
   toast: "#f3f2ee",
   "toast-foreground": "#0a0a0b",
+  "image-1": "#0f1a1d",
+  "image-2": "#13272c",
+  "image-3": "#18383f",
+  "image-strong": "#4cc9e4",
   "verdict-true": "#3ddc84",
   "verdict-true-on": "#0a0a0b",
   "verdict-true-soft": "#0f2219",
@@ -122,11 +139,15 @@ export const PAIRS: ReadonlyArray<[fg: TokenName, bg: TokenName]> = [
   ["muted-foreground", "raised"],
   ["muted-foreground", "active"],
   ["primary-foreground", "primary"],
+  ["primary-foreground", "primary-hover"],
   ["nav-foreground", "nav"],
   ["nav-foreground", "nav-hover"],
   ["nav-active-foreground", "nav-active"],
   ["tag-inverted-foreground", "tag-inverted"],
   ["toast-foreground", "toast"],
+  ["foreground", "image-1"],
+  ["foreground", "image-2"],
+  ["foreground", "image-3"],
   ...VERDICTS.flatMap((v): Array<[TokenName, TokenName]> => [
     [`verdict-${v}-ink`, `verdict-${v}-soft`],
     [`verdict-${v}-ink`, "background"],

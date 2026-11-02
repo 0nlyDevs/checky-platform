@@ -66,6 +66,14 @@ export const fr = {
     comingSoon: "Bientôt",
     needsWorkspace: "Créez d'abord un espace",
     skip: "Aller au contenu",
+    main: "Navigation principale",
+    more: "Plus",
+    moreLabel: "Autres espaces",
+    account: "Votre compte",
+    preferences: "Préférences",
+    search: "Rechercher partout (Ctrl K)",
+    toDark: "Thème sombre",
+    toLight: "Thème clair",
   },
   onboarding: {
     title: "Créez l'espace de votre rédaction",
@@ -707,6 +715,8 @@ export const fr = {
   assistant: {
     open: "Ouvrir l'assistant",
     close: "Fermer l'assistant",
+    ask: "Demander à Checky",
+    hint: "Une question ? Demandez à Checky",
     title: "Assistant Checky",
     leadPublic: "Je réponds à partir des verdicts publiés par les rédactions et je cite mes dossiers. Je peux aussi préparer un signalement, vous dire où en sont les vôtres et vous ouvrir la bonne page. Je n'invente jamais de verdict.",
     leadDesk: "Je lis le desk et vos sources : ce qui circule depuis le plus longtemps, la nuit en bref, les affirmations sans source. Je prépare les actions, vous confirmez. Je ne confirme jamais un verdict et je ne publie jamais.",
@@ -757,8 +767,6 @@ export const fr = {
     voiceTurnOn: "Passer en mode voix : je vous écoute et je réponds à voix haute",
     voiceTurnOff: "Mode voix activé. Touchez pour revenir au clavier",
     // Voice mode: the panel's foot says where the spoken conversation stands.
-    short: "Assistant",
-    launcherHint: "Une question, à l'écrit ou à voix haute",
     stage: {
       listening: "Je vous écoute",
       transcribing: "Je transcris",

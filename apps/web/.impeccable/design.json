@@ -6,7 +6,7 @@
     "colorMeta": {
       "chalk": {
         "role": "neutral",
-        "displayName": "Chalk",
+        "displayName": "Paper",
         "canonical": "#f3f2ee",
         "oklch": "oklch(96.1% 0.005 95.1)"
       },
@@ -48,19 +48,19 @@
       },
       "border": {
         "role": "neutral",
-        "displayName": "Hairline",
+        "displayName": "Hairline (ink at 10 %)",
         "canonical": "#dcdbd7",
         "oklch": "oklch(89.1% 0.006 95.1)"
       },
       "rule": {
         "role": "neutral",
-        "displayName": "Rule",
+        "displayName": "Rule (ink at 7 %)",
         "canonical": "#e2e1de",
         "oklch": "oklch(91.0% 0.004 91.4)"
       },
       "input": {
         "role": "neutral",
-        "displayName": "Field Edge",
+        "displayName": "Control border (ink at 24 %)",
         "canonical": "#bbbab7",
         "oklch": "oklch(78.9% 0.004 91.5)"
       },
@@ -69,36 +69,6 @@
         "displayName": "Destructive Brick",
         "canonical": "#b3231a",
         "oklch": "oklch(49.9% 0.181 29.1)"
-      },
-      "sidebar": {
-        "role": "neutral",
-        "displayName": "Rail",
-        "canonical": "#0a0a0b",
-        "oklch": "oklch(14.5% 0.002 286.1)"
-      },
-      "sidebar-accent": {
-        "role": "neutral",
-        "displayName": "Rail Hover",
-        "canonical": "#1f1f22",
-        "oklch": "oklch(24.1% 0.006 286.0)"
-      },
-      "citron": {
-        "role": "primary",
-        "displayName": "Citron",
-        "canonical": "#0a0a0b",
-        "oklch": "oklch(14.5% 0.002 286.1)"
-      },
-      "citron-foreground": {
-        "role": "primary",
-        "displayName": "Ink on Citron",
-        "canonical": "#f3f2ee",
-        "oklch": "oklch(96.1% 0.005 95.1)"
-      },
-      "citron-ink": {
-        "role": "primary",
-        "displayName": "Citron Ink",
-        "canonical": "#0a0a0b",
-        "oklch": "oklch(14.5% 0.002 286.1)"
       },
       "live": {
         "role": "neutral",
@@ -286,18 +256,6 @@
         "canonical": "#ff6a5f",
         "oklch": "oklch(70.8% 0.184 27.0)"
       },
-      "dark-sidebar": {
-        "role": "neutral",
-        "displayName": "Rail (dark)",
-        "canonical": "#1c1c1f",
-        "oklch": "oklch(22.8% 0.006 285.9)"
-      },
-      "dark-sidebar-border": {
-        "role": "neutral",
-        "displayName": "Sidebar Border (dark)",
-        "canonical": "#2a2a2e",
-        "oklch": "oklch(28.7% 0.007 285.9)"
-      },
       "dark-live": {
         "role": "neutral",
         "displayName": "Live Ink (dark)",
@@ -411,6 +369,174 @@
         "displayName": "Verdict Unverifiable Ink (dark)",
         "canonical": "#6aa8ff",
         "oklch": "oklch(72.7% 0.143 257.1)"
+      },
+      "primary": {
+        "role": "primary",
+        "displayName": "Ink primary",
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
+      },
+      "primary-foreground": {
+        "role": "primary",
+        "displayName": "Paper on ink",
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "Ink primary hover",
+        "canonical": "#1f1f22",
+        "oklch": "oklch(24.1% 0.006 286.0)"
+      },
+      "dark-primary": {
+        "role": "primary",
+        "displayName": "Paper primary (dark)",
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
+      },
+      "dark-primary-foreground": {
+        "role": "primary",
+        "displayName": "Ink on paper (dark)",
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
+      },
+      "dark-primary-hover": {
+        "role": "primary",
+        "displayName": "Paper primary hover (dark)",
+        "canonical": "#e2e1da",
+        "oklch": "oklch(90.9% 0.009 100.0)"
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "#e9e8e2",
+        "oklch": "oklch(93.0% 0.008 98.9)"
+      },
+      "active": {
+        "role": "neutral",
+        "displayName": "Active / hover fill",
+        "canonical": "#e2e1da",
+        "oklch": "oklch(90.9% 0.009 100.0)"
+      },
+      "nav": {
+        "role": "neutral",
+        "displayName": "Nav island",
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
+      },
+      "nav-foreground": {
+        "role": "neutral",
+        "displayName": "Nav label",
+        "canonical": "#b9b8b2",
+        "oklch": "oklch(78.2% 0.008 98.9)"
+      },
+      "nav-hover": {
+        "role": "neutral",
+        "displayName": "Nav hover",
+        "canonical": "#1f1f22",
+        "oklch": "oklch(24.1% 0.006 286.0)"
+      },
+      "nav-active": {
+        "role": "neutral",
+        "displayName": "Nav pill (paper, both themes)",
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
+      },
+      "nav-active-foreground": {
+        "role": "neutral",
+        "displayName": "Nav pill label (ink, both themes)",
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
+      },
+      "dark-nav": {
+        "role": "neutral",
+        "displayName": "Nav island (dark)",
+        "canonical": "#1c1c1f",
+        "oklch": "oklch(22.8% 0.006 285.9)"
+      },
+      "dark-nav-foreground": {
+        "role": "neutral",
+        "displayName": "Nav label (dark)",
+        "canonical": "#b4b3ad",
+        "oklch": "oklch(76.6% 0.008 98.9)"
+      },
+      "dark-nav-hover": {
+        "role": "neutral",
+        "displayName": "Nav hover (dark)",
+        "canonical": "#2a2a2e",
+        "oklch": "oklch(28.7% 0.007 285.9)"
+      },
+      "tag-inverted": {
+        "role": "neutral",
+        "displayName": "Inverted tag",
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
+      },
+      "dark-tag-inverted": {
+        "role": "neutral",
+        "displayName": "Inverted tag (dark)",
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
+      },
+      "toast": {
+        "role": "neutral",
+        "displayName": "Toast",
+        "canonical": "#0a0a0b",
+        "oklch": "oklch(14.5% 0.002 286.1)"
+      },
+      "dark-toast": {
+        "role": "neutral",
+        "displayName": "Toast (dark)",
+        "canonical": "#f3f2ee",
+        "oklch": "oklch(96.1% 0.005 95.1)"
+      },
+      "image-1": {
+        "role": "tertiary",
+        "displayName": "Image 1",
+        "canonical": "#e6f3f6",
+        "oklch": "oklch(95.5% 0.014 213.1)"
+      },
+      "dark-image-1": {
+        "role": "tertiary",
+        "displayName": "Image 1 (dark)",
+        "canonical": "#0f1a1d",
+        "oklch": "oklch(20.9% 0.017 216.6)"
+      },
+      "image-2": {
+        "role": "tertiary",
+        "displayName": "Image 2",
+        "canonical": "#cce7ee",
+        "oklch": "oklch(91.0% 0.030 215.1)"
+      },
+      "dark-image-2": {
+        "role": "tertiary",
+        "displayName": "Image 2 (dark)",
+        "canonical": "#13272c",
+        "oklch": "oklch(25.8% 0.028 215.6)"
+      },
+      "image-3": {
+        "role": "tertiary",
+        "displayName": "Image 3",
+        "canonical": "#a9d6e2",
+        "oklch": "oklch(84.8% 0.050 215.8)"
+      },
+      "dark-image-3": {
+        "role": "tertiary",
+        "displayName": "Image 3 (dark)",
+        "canonical": "#18383f",
+        "oklch": "oklch(32.0% 0.039 213.8)"
+      },
+      "image-strong": {
+        "role": "tertiary",
+        "displayName": "Image strong",
+        "canonical": "#04809f",
+        "oklch": "oklch(55.7% 0.103 222.8)"
+      },
+      "dark-image-strong": {
+        "role": "tertiary",
+        "displayName": "Image strong (dark)",
+        "canonical": "#4cc9e4",
+        "oklch": "oklch(77.8% 0.115 214.8)"
       }
     },
     "typographyMeta": {
@@ -449,31 +575,31 @@
     },
     "shadows": [
       {
-        "name": "sheet-lift",
-        "value": "0 -18px 40px -24px rgb(23 26 24 / 0.45)",
-        "purpose": "Assistant as a phone bottom sheet; none when docked."
+        "name": "float",
+        "value": "0 1px 2px rgba(10,10,11,.10), 0 10px 30px -12px rgba(10,10,11,.30)",
+        "purpose": "Only what floats: menus, dialogs, the preference dock, the Checky button and its panel, toasts. Dark: 0 1px 2px rgba(0,0,0,.5), 0 10px 30px -12px rgba(0,0,0,.7)."
       },
       {
         "name": "step-breathe",
         "value": "0 0 0 7px color-mix(in srgb, var(--action) 35%, transparent)",
-        "purpose": "Pulsing ring of the active step disc."
+        "purpose": "Pulsing ring of the active step disc (ink)."
       },
       {
         "name": "recording-pulse",
-        "value": "0 0 0 6px rgb(157 56 46 / 0.2)",
+        "value": "assistant-pulse 1.2s",
         "purpose": "Microphone and voice button while listening."
       }
     ],
     "motion": [
       {
-        "name": "ease-out-expo",
-        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Default easing for arrivals, highlights, verdict landing, the assistant dock padding."
+        "name": "ease-out",
+        "value": "cubic-bezier(.22,1,.36,1)",
+        "purpose": "Things that arrive and slide: the tab pill (0.5 s), the « Plus » menu, dock flags (0.35 s), the Checky label (0.4 s), the assistant panel growing from its corner (0.45 s), the ripple (650 ms)."
       },
       {
-        "name": "signal-mark",
-        "value": "0.9s ease-out-expo, stagger 220ms + 150ms",
-        "purpose": "Citron highlighter sweep on flagged phrases."
+        "name": "ease-theme",
+        "value": "cubic-bezier(.65,0,.35,1)",
+        "purpose": "The theme switch: a View Transition where a diagonal slit through the centre draws across, holds, then opens to full screen, 1.5 s; instant without the API or under reduced motion."
       },
       {
         "name": "arrive",
@@ -491,24 +617,36 @@
         "purpose": "Only the active step moves continuously."
       },
       {
+        "name": "hint-draw",
+        "value": "stroke 1.1s ease-theme, then the arrow head 0.35s",
+        "purpose": "The first-visit arrow to Checky, drawn once."
+      },
+      {
         "name": "reduced-motion",
         "value": "all animations and transitions 0.01ms",
-        "purpose": "prefers-reduced-motion: reduce."
+        "purpose": "prefers-reduced-motion: reduce; the ripple and the theme reveal are skipped."
       }
     ],
     "breakpoints": [
       {
-        "name": "md",
-        "value": "768px"
+        "name": "phone",
+        "value": "≤ 640px",
+        "note": "The tabs become an ink bar at the thumb (4 places + « Plus »); the dock leaves; Checky floats above the bar."
+      },
+      {
+        "name": "corners overlay",
+        "value": "≤ 900px",
+        "note": "Inset 16 px, tabs on a second row, the corners overlay and the page gets 112 px of bottom padding."
+      },
+      {
+        "name": "canvas gutters",
+        "value": "≥ 901px",
+        "note": "Gutters of inset 24 px + 84 px so the corners never cover content."
       },
       {
         "name": "lg",
         "value": "1024px",
-        "note": "Desk rail, assistant docked at 400px with page padding."
-      },
-      {
-        "name": "@3xl container",
-        "value": "48rem"
+        "note": "Two-column screens (Vérifier, a dossier)."
       },
       {
         "name": "@4xl container",
@@ -519,28 +657,44 @@
   },
   "components": [
     {
-      "name": "Action Button",
-      "kind": "button",
-      "refersTo": "button-action",
-      "description": "The one citron action of a screen (variant=\"action\", size=\"xl\").",
-      "html": "<button class=\"ds-btn-action\">Vérifier cette information <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button>",
-      "css": ".ds-btn-action { display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:1px solid transparent; border-radius:3px; background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; transition: background .15s, transform .15s; } .ds-btn-action:hover { background: color-mix(in oklch, var(--action, #0a0a0b), var(--foreground, #0a0a0b) 8%); } .ds-btn-action:active { transform: translateY(1px); } .ds-btn-action:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
-    },
-    {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Ink button for confirmations inside a flow.",
-      "html": "<button class=\"ds-btn-primary\">Confirmer « Faux »</button>",
-      "css": ".ds-btn-primary { height:32px; padding:0 10px; border:1px solid transparent; border-radius:3px; background: var(--primary, #0a0a0b); color: var(--primary-foreground, #f3f2ee); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--primary, #0a0a0b) 85%, transparent); } .ds-btn-primary:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
+      "description": "The one action of a screen: ink, fully round, 40 px (44 on touch). Hover = slightly lighter ink (dark: the paper fill darkens to #e2e1da); the label never changes colour.",
+      "html": "<button class=\"ds-btn-primary\">Vérifier cette information</button>",
+      "css": ".ds-btn-primary { height:40px; padding:0 18px; border:0; border-radius:999px; background: var(--primary, #0a0a0b); color: var(--primary-foreground, #f3f2ee); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:600; cursor:pointer; } .ds-btn-primary:hover { background: var(--primary-hover, #1f1f22); color: var(--primary-foreground, #f3f2ee); } .ds-btn-primary:active { transform: scale(.97); } .ds-btn-primary:focus-visible { outline:2px solid var(--foreground, #0a0a0b); outline-offset:3px; }"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Secondary actions: retry, cancel, sign in on ink.",
+      "description": "Secondary actions: a control border, raised on hover with the text unchanged.",
       "html": "<button class=\"ds-btn-outline\">Réessayer</button>",
-      "css": ".ds-btn-outline { height:32px; padding:0 10px; border:1px solid var(--border, #dcdbd7); border-radius:3px; background: var(--background, #f3f2ee); color: var(--foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-outline:hover { background: var(--muted, #e9e8e2); } .ds-btn-outline:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
+      "css": ".ds-btn-outline { height:40px; padding:0 18px; border:1px solid var(--input, rgba(10,10,11,.24)); border-radius:999px; background: transparent; color: var(--foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:600; cursor:pointer; } .ds-btn-outline:hover { background: var(--raised, #e9e8e2); color: var(--foreground, #0a0a0b); } .ds-btn-outline:focus-visible { outline:2px solid var(--foreground, #0a0a0b); outline-offset:3px; }"
+    },
+    {
+      "name": "Tab Island",
+      "kind": "navigation",
+      "refersTo": "tab-island",
+      "description": "The desk's tabs: an ink island centred in the top bar, a paper pill sliding under the current tab (0.5 s, ease-out); its label is the fixed ink in both themes. Priority+ folds what does not fit into « Plus » from the end.",
+      "html": "<nav class=\"ds-island\"><a href=\"#\">Ma rubrique</a><a href=\"#\" aria-current=\"page\">Vérifier</a><a href=\"#\">Dossiers</a><a href=\"#\">Plus ▾</a></nav>",
+      "css": ".ds-island { display:inline-flex; gap:2px; padding:5px; border-radius:999px; background: var(--nav, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-island a { display:inline-flex; align-items:center; height:38px; padding:0 14px; border-radius:999px; color: var(--nav-foreground, #b9b8b2); font-size:14px; font-weight:500; text-decoration:none; white-space:nowrap; } .ds-island a:hover { color: var(--nav-active, #f3f2ee); } .ds-island a[aria-current=page] { background: var(--nav-active, #f3f2ee); color: var(--nav-active-foreground, #0a0a0b); font-weight:600; }"
+    },
+    {
+      "name": "Preference Dock",
+      "kind": "toolbar",
+      "refersTo": "preference-dock",
+      "description": "Bottom-left corner: one floating object holding theme and settings; each label flags out to the right on hover and focus.",
+      "html": "<div class=\"ds-dock\"><button aria-label=\"Thème sombre\">☾</button><button aria-label=\"Paramètres\">⚙</button></div>",
+      "css": ".ds-dock { display:inline-flex; flex-direction:column; gap:4px; padding:6px; border-radius:30px; background: var(--card, #fbfaf7); border:1px solid var(--border, rgba(10,10,11,.1)); box-shadow: 0 1px 2px rgba(10,10,11,.10), 0 10px 30px -12px rgba(10,10,11,.30); } .ds-dock button { width:48px; height:48px; border:0; border-radius:50%; background:transparent; color: var(--foreground, #0a0a0b); font-size:20px; cursor:pointer; } .ds-dock button:hover { background: var(--raised, #e9e8e2); }"
+    },
+    {
+      "name": "Checky Button",
+      "kind": "button",
+      "refersTo": "checky-button",
+      "description": "Bottom-right corner: the assistant's door, 60 px ink, the label slides out to the left on hover and focus, the icon stays centred in its 60 px box; the panel grows out of this corner.",
+      "html": "<button class=\"ds-checky\"><span>Demander à Checky</span><i>✦</i></button>",
+      "css": ".ds-checky { display:inline-flex; align-items:center; height:60px; padding:0; border:0; border-radius:999px; background: var(--primary, #0a0a0b); color: var(--primary-foreground, #f3f2ee); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:15px; font-weight:600; box-shadow: 0 1px 2px rgba(10,10,11,.10), 0 10px 30px -12px rgba(10,10,11,.30); cursor:pointer; } .ds-checky span { padding-left:22px; } .ds-checky i { display:grid; place-items:center; width:60px; height:60px; font-style:normal; font-size:24px; }"
     },
     {
       "name": "Check Field",
@@ -548,15 +702,7 @@
       "refersTo": "check-field",
       "description": "The big paste field with its toolbar and the action button.",
       "html": "<form class=\"ds-field\"><textarea rows=\"3\" placeholder=\"Ex. : « Analakely sous l'eau ce matin, partagez ! »\"></textarea><div class=\"ds-field-bar\"><button type=\"button\" class=\"ds-field-ghost\">Dicter le message</button><button type=\"submit\" class=\"ds-field-go\">Vérifier <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button></div></form>",
-      "css": ".ds-field { max-width:640px; border:1px solid var(--input, #bbbab7); border-radius:3px; background: var(--card, #fbfaf7); } .ds-field:focus-within { border-color: var(--foreground, #0a0a0b); box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground, #0a0a0b) 15%, transparent); } .ds-field textarea { display:block; width:100%; resize:none; border:0; background:transparent; padding:16px 16px 8px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:18px; line-height:1.625; color: var(--foreground, #0a0a0b); outline:none; } .ds-field textarea::placeholder { color: var(--muted-foreground, #55544e); opacity:1; } .ds-field-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--border, #dcdbd7); } .ds-field-ghost { height:40px; padding:0 10px; border:0; border-radius:3px; background:transparent; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; cursor:pointer; } .ds-field-ghost:hover { background: var(--muted, #e9e8e2); } .ds-field-go { margin-left:auto; display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:0; border-radius:3px; background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; } .ds-field-go:focus-visible, .ds-field-ghost:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
-    },
-    {
-      "name": "Desk Rail",
-      "kind": "nav",
-      "refersTo": "nav-item-active",
-      "description": "Light rail; the active item carries the citron.",
-      "html": "<nav class=\"ds-rail\"><a class=\"is-active\" href=\"#\">Vérifier</a><a href=\"#\">Dossiers</a><a href=\"#\">Sources</a></nav>",
-      "css": ".ds-rail { width:216px; padding:12px; background: var(--sidebar, #0a0a0b); display:flex; flex-direction:column; gap:4px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-rail a { display:block; padding:10px 12px; border-radius:3px; color: var(--sidebar-foreground, #0a0a0b); text-decoration:none; transition: background .15s; } .ds-rail a:hover { background: var(--sidebar-accent, #1f1f22); } .ds-rail a.is-active { background: var(--sidebar-primary, #0a0a0b); color: var(--sidebar-primary-foreground, #0a0a0b); font-weight:700; } .ds-rail a:focus-visible { outline:2px solid var(--sidebar-ring, #0a0a0b); outline-offset:2px; }"
+      "css": ".ds-field { max-width:640px; border:1px solid var(--input, rgba(10,10,11,.24)); border-radius:20px; background: var(--card, #fbfaf7); } .ds-field:focus-within { border-color: var(--foreground, #0a0a0b); box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground, #0a0a0b) 15%, transparent); } .ds-field textarea { display:block; width:100%; resize:none; border:0; background:transparent; padding:16px 16px 8px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:18px; line-height:1.625; color: var(--foreground, #0a0a0b); outline:none; } .ds-field textarea::placeholder { color: var(--muted-foreground, #55544e); opacity:1; } .ds-field-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--border, rgba(10,10,11,.1)); } .ds-field-ghost { height:40px; padding:0 10px; border:0; border-radius:20px; background:transparent; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; cursor:pointer; } .ds-field-ghost:hover { background: var(--muted, #e9e8e2); } .ds-field-go { margin-left:auto; display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:0; border-radius:20px; background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; } .ds-field-go:focus-visible, .ds-field-ghost:focus-visible { outline:2px solid var(--ring, #0a0a0b); outline-offset:2px; }"
     },
     {
       "name": "Verdict Chips",
@@ -564,71 +710,84 @@
       "refersTo": "verdict-chip-false",
       "description": "Confirmed verdict = soft fill; AI suggestion = dashed outline. Always icon + word.",
       "html": "<div class=\"ds-chips\"><span class=\"ds-chip ds-false\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/></svg> Faux</span><span class=\"ds-chip ds-sugg\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> Trompeur <span class=\"ds-sugg-note\">· suggéré</span></span></div>",
-      "css": ".ds-chips { display:flex; gap:12px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:2px; font-size:14px; font-weight:700; white-space:nowrap; } .ds-false { background: var(--verdict-false-soft, #f4dfda); color: var(--verdict-false-ink, #872e25); } .ds-sugg { border:1px dashed currentColor; background:transparent; color: var(--verdict-misleading-ink, #6f4600); font-weight:500; } .ds-sugg-note { font-weight:400; }"
+      "css": ".ds-chips { display:flex; gap:12px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:999px; font-size:14px; font-weight:700; white-space:nowrap; } .ds-false { background: var(--verdict-false-soft, #fbe3e0); color: var(--verdict-false-ink, #b3231a); } .ds-sugg { border:2px dashed currentColor; background:transparent; color: var(--verdict-misleading-ink, #8a5700); font-weight:500; } .ds-sugg-note { font-weight:400; }"
     },
     {
       "name": "Verdict Block",
       "kind": "card",
       "refersTo": "verdict-block-misleading",
       "description": "The conclusion stated: 2px border, solid once confirmed, dashed while suggested.",
-      "html": "<div class=\"ds-vblock\"><p class=\"ds-vword\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"34\" height=\"34\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> Trompeur</p><p class=\"ds-vnote\">Suggéré par FANILO</p></div>",
-      "css": ".ds-vblock { max-width:520px; padding:20px; border:2px dashed currentColor; border-radius:3px; background: var(--verdict-misleading-soft, #f8ebcf); color: var(--verdict-misleading-ink, #6f4600); animation: ds-land .5s cubic-bezier(.16,1,.3,1) both; } .ds-vblock:hover { border-style:solid; } .ds-vword { margin:0; display:flex; align-items:center; gap:10px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:36px; font-weight:800; letter-spacing:-0.025em; line-height:1; } .ds-vnote { margin:6px 0 0; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:700; } @keyframes ds-land { from { opacity:0; transform:scale(1.04); } }"
+      "html": "<div class=\"ds-vblock\"><p class=\"ds-vword\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"34\" height=\"34\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> Trompeur</p><p class=\"ds-vnote\">Suggéré par Checky</p></div>",
+      "css": ".ds-vblock { max-width:520px; padding:20px; border:2px dashed currentColor; border-radius:20px; background: var(--verdict-misleading-soft, #f9ecd2); color: var(--verdict-misleading-ink, #8a5700); animation: ds-land .5s cubic-bezier(.16,1,.3,1) both; } .ds-vblock:hover { border-style:solid; } .ds-vword { margin:0; display:flex; align-items:center; gap:10px; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:36px; font-weight:800; letter-spacing:-0.025em; line-height:1; } .ds-vnote { margin:6px 0 0; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; font-weight:700; } @keyframes ds-land { from { opacity:0; transform:scale(1.04); } }"
     },
     {
       "name": "Numbered Line",
       "kind": "custom",
       "refersTo": "step-disc-active",
-      "description": "Signature: 01 L'affirmation, 02 Les éléments, 03 La conclusion; done ink disc, active citron disc that breathes, waiting outlined.",
+      "description": "Signature: 01 L'affirmation, 02 Les éléments, 03 La conclusion; done ink disc, active ink disc that breathes, waiting outlined.",
       "html": "<ol class=\"ds-line\"><li><span class=\"ds-disc ds-done\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></span><div><b>L'affirmation</b><p>2 affirmations, 3 signes d'alerte</p></div></li><li><span class=\"ds-disc ds-active\">02</span><div><b>Les éléments</b> <small>en cours</small><p>Fact-checkeurs, web, sources de la rédaction</p></div></li><li><span class=\"ds-disc ds-wait\">03</span><div><b class=\"ds-dim\">La conclusion</b><p>Un verdict expliqué, toujours confirmé par la rédaction.</p></div></li></ol>",
-      "css": ".ds-line { list-style:none; margin:0; padding:0; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-line li { position:relative; display:flex; gap:16px; padding-bottom:24px; } .ds-line li:last-child { padding-bottom:0; } .ds-line li:not(:last-child)::after { content:\"\"; position:absolute; top:40px; bottom:0; left:20px; width:1px; background: var(--foreground, #0a0a0b); } .ds-line li:nth-child(2)::after { background: var(--border, #dcdbd7); } .ds-disc { position:relative; z-index:1; display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:50%; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-weight:700; font-size:15px; font-variant-numeric:tabular-nums; } .ds-done { background: var(--foreground, #0a0a0b); color: var(--action, #0a0a0b); } .ds-active { background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); animation: ds-breathe 1.6s ease-in-out infinite; } .ds-wait { border:1px solid var(--input, #bbbab7); background: var(--card, #fbfaf7); color: var(--muted-foreground, #55544e); } .ds-line b { font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:17px; } .ds-line small { font-size:14px; color: var(--muted-foreground, #55544e); } .ds-line p { margin:2px 0 0; font-size:14px; color: var(--muted-foreground, #55544e); } .ds-line .ds-dim { color: var(--muted-foreground, #55544e); } @keyframes ds-breathe { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--action, #0a0a0b) 35%, transparent); } }"
+      "css": ".ds-line { list-style:none; margin:0; padding:0; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-line li { position:relative; display:flex; gap:16px; padding-bottom:24px; } .ds-line li:last-child { padding-bottom:0; } .ds-line li:not(:last-child)::after { content:\"\"; position:absolute; top:40px; bottom:0; left:20px; width:1px; background: var(--foreground, #0a0a0b); } .ds-line li:nth-child(2)::after { background: var(--border, rgba(10,10,11,.1)); } .ds-disc { position:relative; z-index:1; display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:50%; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-weight:700; font-size:15px; font-variant-numeric:tabular-nums; } .ds-done { background: var(--foreground, #0a0a0b); color: var(--action, #0a0a0b); } .ds-active { background: var(--action, #0a0a0b); color: var(--action-foreground, #0a0a0b); animation: ds-breathe 1.6s ease-in-out infinite; } .ds-wait { border:1px solid var(--input, rgba(10,10,11,.24)); background: var(--card, #fbfaf7); color: var(--muted-foreground, #55544e); } .ds-line b { font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:17px; } .ds-line small { font-size:14px; color: var(--muted-foreground, #55544e); } .ds-line p { margin:2px 0 0; font-size:14px; color: var(--muted-foreground, #55544e); } .ds-line .ds-dim { color: var(--muted-foreground, #55544e); } @keyframes ds-breathe { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--action, #0a0a0b) 35%, transparent); } }"
     },
     {
       "name": "Live Panel",
       "kind": "card",
       "refersTo": "live-panel",
-      "description": "Ink panel where FANILO's work shows live (« Le travail de FANILO »).",
-      "html": "<section class=\"ds-live\"><h2>Le travail de FANILO <span><i></i> En cours</span></h2><ol><li><time>15:55:27</time> Lecture du message…</li><li><time>15:55:29</time> Recherche chez les fact-checkeurs</li></ol></section>",
-      "css": ".ds-live { max-width:420px; padding:16px; border-radius:3px; background: var(--live, #0a0a0b); color: var(--live-foreground, #f3f2ee); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-live h2 { margin:0; display:flex; justify-content:space-between; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:14px; font-weight:700; } .ds-live h2 span { display:inline-flex; align-items:center; gap:6px; } .ds-live i { width:8px; height:8px; border-radius:50%; background: var(--action, #0a0a0b); animation: ds-pulse 1s ease-in-out infinite; } .ds-live ol { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:8px; font-size:14px; } .ds-live li { display:flex; gap:12px; animation: ds-arrive .45s cubic-bezier(.16,1,.3,1) both; } .ds-live time { font-size:12px; color: var(--live-muted, #b9b8b2); font-variant-numeric:tabular-nums; } @keyframes ds-pulse { 50% { opacity:.4; } } @keyframes ds-arrive { from { opacity:0; transform:translateY(6px); } }"
+      "description": "Ink panel where Checky's work shows live (« Le travail de Checky »).",
+      "html": "<section class=\"ds-live\"><h2>Le travail de Checky <span><i></i> En cours</span></h2><ol><li><time>15:55:27</time> Lecture du message…</li><li><time>15:55:29</time> Recherche chez les fact-checkeurs</li></ol></section>",
+      "css": ".ds-live { max-width:420px; padding:16px; border-radius:20px; background: var(--live, #0a0a0b); color: var(--live-foreground, #f3f2ee); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; } .ds-live h2 { margin:0; display:flex; justify-content:space-between; font-family: var(--font-bricolage, \"Bricolage Grotesque\"), sans-serif; font-size:14px; font-weight:700; } .ds-live h2 span { display:inline-flex; align-items:center; gap:6px; } .ds-live i { width:8px; height:8px; border-radius:50%; background: var(--action, #0a0a0b); animation: ds-pulse 1s ease-in-out infinite; } .ds-live ol { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:8px; font-size:14px; } .ds-live li { display:flex; gap:12px; animation: ds-arrive .45s cubic-bezier(.16,1,.3,1) both; } .ds-live time { font-size:12px; color: var(--live-muted, #b9b8b2); font-variant-numeric:tabular-nums; } @keyframes ds-pulse { 50% { opacity:.4; } } @keyframes ds-arrive { from { opacity:0; transform:translateY(6px); } }"
     },
     {
       "name": "Highlighter",
       "kind": "custom",
       "refersTo": "citron",
-      "description": ".signal-mark: citron sweep behind phrases FANILO flagged.",
+      "description": ".signal-mark: a phrase Checky flagged, underlined 2 px in the text colour, 3 px below.",
       "html": "<p class=\"ds-msg\">URGENT : la JIRAMA annonce <mark class=\"ds-mark\">12 h de délestage par jour</mark> à Toamasina dès lundi. <mark class=\"ds-mark\" style=\"--i:1\">Partagez avant que ce soit supprimé</mark> !</p>",
-      "css": ".ds-msg { max-width:520px; padding:16px; border-radius:3px; background: var(--muted, #e9e8e2); color: var(--foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:18px; line-height:1.625; } .ds-mark { color:inherit; padding:0 .12em; border-radius:2px; -webkit-box-decoration-break:clone; box-decoration-break:clone; background: linear-gradient(var(--action, #0a0a0b), var(--action, #0a0a0b)) no-repeat 0 0 / 100% 100%; animation: ds-mark .9s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i, 0) * 220ms + 150ms); } @keyframes ds-mark { from { background-size: 0% 100%; } }"
+      "css": ".ds-msg { max-width:520px; padding:16px; border-radius:20px; background: var(--muted, #e9e8e2); color: var(--foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:18px; line-height:1.625; } .ds-mark { color:inherit; background:none; text-decoration: underline 2px var(--foreground, #0a0a0b); text-underline-offset:3px; }"
+    },
+    {
+      "name": "Image Trace",
+      "kind": "status",
+      "refersTo": "image-trace",
+      "description": "What the examination of an image found about AI generation: teal tints 1/2/3 for none / inconclusive / detected, edged with the rule / dashed strong / solid strong teal; icons Image / MagnifyingGlass / Sparkle; the text stays foreground. Never a verdict colour.",
+      "html": "<p class=\"ds-trace\">✦ Traces d'un générateur d'images IA dans le fichier : Midjourney.</p>",
+      "css": ".ds-trace { max-width:520px; padding:8px 12px; border:2px solid var(--image-strong, #04809f); border-radius:15px; background: var(--image-3, #a9d6e2); color: var(--foreground, #0a0a0b); font-family: var(--font-bricolage, \"Bricolage Grotesque\"), system-ui, sans-serif; font-size:14px; }"
     }
   ],
   "narrative": {
     "northStar": "Ink and paper",
-    "overview": "FANILO reads like civic signage for rumours: a chalk ground, green-black ink, square-ish edges, heavy Bricolage Grotesque words and one citron that says \"here\". The same world serves the newsroom desk (`/w/…`) and the public site (`/`, `/verifies`, `/signaler`, `/suivi`, sign-in and sign-up); there is no second identity. A screen is a notice board you can act on: a big field to paste a message, a numbered line that shows how far a dossier has come, and verdicts stated as words with icons, never as colour alone.\n\nThe organising device is the **numbered line**: 01 L'affirmation, 02 Les éléments, 03 La conclusion. It explains the method on the home page, runs live on Vérifier, sits mini on each dossier row and runs down the gutter of a claim's page. FANILO's own work shows in an **ink panel** (the live log « Le travail de FANILO », the public answer, the newsroom band), so machine activity is always visually separate from the journalist's page. The AI only suggests: suggestion is drawn dashed, a journalist's confirmation is drawn solid.\n\nDensity is calm and legible rather than packed: Bricolage Grotesque for every word a person reads (a cracked phone in full sun is the reference reader), generous 18px leads, 44–48px touch targets for the main controls. Motion is short and once: highlights sweep in, sources arrive, the verdict lands, the active step breathes; all of it collapses under `prefers-reduced-motion`.",
+    "overview": "Checky reads like ink on paper: a paper ground, near-black ink, generous round shapes, Bricolage Grotesque for every word and Cormorant Garamond italic only for what someone actually said. Colour lives on verdicts and nowhere else. The same world serves the newsroom desk (`/w/…`) and the public site (`/`, `/verifies`, `/signaler`, `/suivi`, sign-in and sign-up).\n\nThe desk has no rail: a quiet top bar says where you are (wordmark and workspace, an ink tab island with a sliding paper pill, the avatar), and the corners hold what you can do: the preference dock bottom-left, the Checky button bottom-right, out of which the assistant grows. The organising device of every screen is the **numbered line**: 1 L'affirmation, 2 Les éléments, 3 La conclusion.",
     "keyCharacteristics": [
-      "One world for desk and public site; light and dark themes from the same tokens.",
-      "Citron (`#0a0a0b`) only for the one action of a screen, the active step and highlights.",
-      "Verdicts always icon + word on their own four-token family; status always ink icons.",
-      "AI suggestion dashed, confirmed solid.",
-      "The numbered line 01/02/03 as the reused signature.",
-      "Ink panels for FANILO's live work; square-ish corners (2–4px); flat, no ambient shadows."
+      "Colour only on verdicts; everything else is ink, paper and their tints (image examination uses its own teal scale, never a verdict colour).",
+      "One typeface for everything (Bricolage Grotesque), one italic serif for verbatim quotations and the wordmark dot.",
+      "Generous radius: cards 20, controls and chips fully round, menus 18, small tags 6.",
+      "Verdicts always icon + word on their own four-token family; AI suggestion dashed, confirmed solid.",
+      "Shadows only on what floats (menus, dialogs, the corners, toasts); depth elsewhere is tone and hairline.",
+      "The desk shell: tab island centred, preference dock and Checky button in the corners on the bar's 24 px inset, canvas gutters so the corners never cover content."
     ],
     "rules": [
       {
-        "name": "The One Citron Rule",
-        "body": "Citron marks the one action of a screen, the active step, the active nav item and highlighted phrases. Never a verdict, a status, a decoration or a second competing button.",
+        "name": "The Colour-Is-Verdict Rule",
+        "body": "No hue outside the four verdict families (and the teal of image examination). The one action of a screen is the ink primary; the citron of the previous identity is gone.",
         "section": "colors"
       },
       {
         "name": "The Word-and-Icon Rule",
-        "body": "A verdict is always its lucide icon plus its word in the verdict's ink. Colour alone never carries a verdict.",
+        "body": "A verdict is always its Phosphor duotone icon (`lib/icons.ts`) plus its word in the verdict's ink. Colour alone never carries a verdict.",
+        "section": "colors"
+      },
+      {
+        "name": "The Paired-Token Rule",
+        "body": "Every filled background is used with its own foreground: primary / primary-foreground (hover primary-hover, same label), nav / nav-foreground, nav-active / nav-active-foreground (the fixed ink in both themes), verdict soft / ink, verdict fill / on, tag-inverted, toast. A class that sets one without the other is a bug.",
         "section": "colors"
       },
       {
         "name": "The Status-Is-Not-Truth Rule",
-        "body": "Workflow status (À vérifier CircleDashed, En cours Timer, Vérifié ShieldCheck, Publié Radio) uses ink icons, muted only for « À vérifier »; never a verdict colour.",
+        "body": "Workflow status uses ink icons, never a verdict colour.",
         "section": "colors"
       },
       {
         "name": "The 4.5 Rule",
-        "body": "Every text pair is ≥ 4.5:1 in both themes, measured against its real ground. No opacity on text; placeholders use `muted-foreground`; disabled controls sit at 60 %.",
+        "body": "Every text pair is at least 4.5:1 in both themes against its real ground (`lib/tokens.ts`, `npm test`). No opacity on text; placeholders and disabled labels use muted-foreground. Focus is a 2 px ring in the text colour, 3 px offset.",
         "section": "colors"
       },
       {
@@ -637,36 +796,35 @@
         "section": "typography"
       },
       {
-        "name": "The Two-Voices Rule",
-        "body": "Bricolage Grotesque speaks (titles, numbers, verdicts); Atkinson is read. Do not set paragraphs in Bricolage Grotesque or verdict words in Atkinson.",
+        "name": "The Quote Rule",
+        "body": "Cormorant Garamond italic (`.quote`) is for verbatim words (the verdict quote, a source's phrase, a transcript line) and the wordmark dot, nothing else.",
         "section": "typography"
       },
       {
-        "name": "The Flat-Ground Rule",
-        "body": "Cards and panels sit flat on a hairline or a tonal change. A shadow means \"this is moving or live\", never \"this is important\".",
+        "name": "The Corner Rule",
+        "body": "Only the preference dock and the Checky button float, on the top bar's inset; from 901 px the canvas keeps gutters of inset + 84 px so they never cover content. A shadow means \"this floats\", never \"this is important\".",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** build every new screen from these tokens and components: `.page-title` H1 with meta under it, the check field, `StepLine`/`StepDisc` for progress, `VerdictChip`/`VerdictBadge`/the verdict block for verdicts, the live panel for anything FANILO is doing.",
-      "**Do** give each screen exactly one `variant=\"action\"` button; everything else is primary, outline or ghost.",
-      "**Do** draw an AI suggestion dashed and a journalist's confirmation solid, and leave the final verdict to a journalist's explicit click.",
-      "**Do** pair every verdict with its icon and word, and every status with its ink lucide icon.",
-      "**Do** measure every new text pair in light and dark against its real ground (≥ 4.5:1); use `*-ink` tokens for coloured text on light grounds.",
-      "**Do** keep corners at 2–4px and edges as 1px hairlines; reserve full rounds for discs, avatars and pills.",
-      "**Do** pad the page when the assistant opens on desktop (`lg:pr-[25rem]`) and use the bottom sheet on phone.",
-      "**Do** keep motion single-shot (`.arrive`, `.verdict-land`, `.signal-mark`) except the active step and recording indicators, and respect `prefers-reduced-motion`.",
-      "**Do** use the shared neutral quote rule (1px hairline on the left of a quoted passage) for verbatim quotes; it is a quotation mark, not an accent."
+      "**Do** build every screen from these tokens: `.page-title` H1 with meta under it, the check field, `StepLine`/`StepDisc`, the verdict components, the live panel.",
+      "**Do** use exactly one primary button per screen.",
+      "**Do** draw an AI suggestion dashed and a journalist's confirmation solid; the final verdict is a journalist's click.",
+      "**Do** pair every verdict with its icon and word, and every status with an ink icon from `lib/icons.ts`.",
+      "**Do** measure a new text pair in light and dark (`lib/tokens.ts`, `npm test`).",
+      "**Do** keep the canvas gutters so the floating corners never cover content; the assistant opens as a panel growing out of the Checky corner.",
+      "**Do** keep motion single-shot except the active step and recording indicators, and honour `prefers-reduced-motion` (no ripple, instant theme switch).",
+      "**Do** handle real data: long titles wrap, URLs truncate in the middle with the full URL in `title`, a missing value is a grey dash, plurals are French."
     ],
     "donts": [
-      "**Don't** use citron for a verdict, a status, an icon bullet, a badge that is not the active step or a second action on the same screen.",
-      "**Don't** carry a verdict by colour alone, or colour a status with a verdict family.",
-      "**Don't** put an uppercase tracked eyebrow or kicker above a heading.",
-      "**Don't** add coloured border-left accents to cards, callouts or rows.",
-      "**Don't** let the assistant float over the page on desktop.",
+      "**Don't** add a colour that is not a verdict (or the image teal); no gradient, no accent.",
+      "**Don't** carry a verdict by colour alone, or colour a status or an AI trace with a verdict family.",
+      "**Don't** set a filled background without its own foreground token; theme text on the paper nav pill is 1:1 in dark.",
+      "**Don't** put an uppercase tracked eyebrow above a heading, or coloured border-left accents.",
       "**Don't** set text in opacity or in the `input` stroke colour.",
-      "**Don't** add ambient shadows to cards; depth is tone and hairline.",
-      "**Don't** bring back the retired worlds (« Grille d'antenne » green rail and signal yellow, « Le dossier » manila, Anton, Special Elite, halftoned photographs) in the app. The pitch kit (`docs/pitch/`, `scripts/pitch_video.py`) still uses Anton, Special Elite and the photographs in `public/site/`; they belong to the pitch kit only and are not part of the app's system."
+      "**Don't** add ambient shadows to cards, or float anything besides the two corners, menus, dialogs and toasts.",
+      "**Don't** set verbatim quotations in the sans, or other text in Cormorant.",
+      "**Don't** bring back the retired worlds (citron and chalk, Archivo, Atkinson, « Grille d'antenne », « Le dossier »)."
     ]
   }
 }

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { IconArrowCounterClockwise, IconCircleNotch, IconMicrophone, IconPaperPlaneTilt, IconStop, IconX } from "@/lib/icons";
 import { useAssistant } from "@/components/assistant/assistant-context";
 import { VerdictChip } from "@/components/claims/verdict";
@@ -50,6 +50,7 @@ type Turn = {
 const YES = /^(oui|ouais|ok|okay|d'accord|dacord|vas[- ]y|envoie|envoyez|confirme|confirmer|c'est bon|eny|eka|ie)\b/i;
 const NO = /^(non|annule|annuler|stop|laisse|tsia|aza)\b/i;
 const STORE = "fanilo:assistant";
+const noop = () => () => {};
 
 function stored(key: string): Turn[] {
   try {
@@ -71,7 +72,15 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   const router = useRouter();
   const pathname = usePathname();
   const key = `${STORE}:${ws ?? "public"}`;
-  const { open, setOpen } = useAssistant();
+  const { open, setOpen: show, launcher } = useAssistant();
+  // Closing hands the focus back to the corner button it came from.
+  const setOpen = useCallback(
+    (next: boolean) => {
+      show(next);
+      if (!next) launcher.current?.focus();
+    },
+    [show, launcher],
+  );
   const [text, setText] = useState("");
   // The conversation survives page changes (the agent itself opens pages) for this tab.
   const [turns, setTurns] = useState<Turn[]>(() => stored(key));
@@ -113,7 +122,10 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
       stopSpeaking();
     }
   }, [voice, open]);
-  const canRecord = typeof window !== "undefined" && "MediaRecorder" in window && !!navigator.mediaDevices?.getUserMedia;
+  // The panel is always in the page (it grows out of the corner); what it holds comes from this
+  // tab's storage and the browser's abilities, so it is drawn once hydrated.
+  const hydrated = useSyncExternalStore(noop, () => true, () => false);
+  const canRecord = hydrated && "MediaRecorder" in window && !!navigator.mediaDevices?.getUserMedia;
 
   useEffect(() => {
     log.current?.scrollTo({ top: log.current.scrollHeight, behavior: "smooth" });
@@ -127,11 +139,11 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   useEffect(() => {
     // reopen after a page the agent opened (a different layout mounts a new widget)
     try {
-      if (JSON.parse(sessionStorage.getItem(key) ?? "{}").open) requestAnimationFrame(() => setOpen(true));
+      if (JSON.parse(sessionStorage.getItem(key) ?? "{}").open) requestAnimationFrame(() => show(true));
     } catch {
       // nothing to restore
     }
-  }, [key, setOpen]);
+  }, [key, show]);
   useEffect(() => {
     if (!open) return;
     input.current?.focus();
@@ -355,8 +367,19 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
 
   return (
     <>
-      {open && (
-        <section className="assistant-panel" data-scope={scope} data-voice={voice || undefined} role="complementary" aria-labelledby="assistant-title">
+      {/* Always mounted so it can grow out of the corner and shrink back; inert while closed. */}
+      <section
+        id="assistant-panel"
+        className="assistant-panel"
+        data-scope={scope}
+        data-open={open || undefined}
+        data-voice={voice || undefined}
+        role="dialog"
+        aria-labelledby="assistant-title"
+        inert={!open}
+      >
+        {hydrated && (
+        <>
           <header className="assistant-head">
             <h2 id="assistant-title">{a.title}</h2>
             {!!turns.length && (
@@ -520,8 +543,9 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
             </div>
           </form>
           )}
-        </section>
-      )}
+        </>
+        )}
+      </section>
     </>
   );
 }
