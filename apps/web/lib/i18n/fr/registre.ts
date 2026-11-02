@@ -176,7 +176,6 @@ export const registre = {
     failed: "Impossible de charger le fil.",
     original: "Original",
     fake: "Faux repéré",
-    imitates: (ref: string) => `Ce texte imite ${ref}.`,
     more: "Lire le texte",
     copy: "Copier le lien",
     copied: "Lien copié.",
