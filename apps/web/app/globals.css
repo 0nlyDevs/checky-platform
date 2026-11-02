@@ -532,7 +532,6 @@ html:has([data-desk-bar]) {
   font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
-  transition: color 0.35s var(--ease-out);
 }
 .tab:hover,
 .tab[aria-expanded="true"] {
@@ -544,8 +543,13 @@ html:has([data-desk-bar]) {
   background: transparent;
 }
 .tab[data-current] {
-  color: var(--nav-active-foreground);
   font-weight: 600;
+}
+/* The label turns ink only while the paper pill is under it (`data-lit`, set by tab-island.tsx as
+   the pill slides), at once: a colour fade would cross the ink island and vanish on it. */
+.tab[data-lit],
+.tab-island:not([data-pill]) .tab[data-current] {
+  color: var(--nav-active-foreground);
 }
 /* Before the pill is measured (first paint, no script), the current tab paints its own paper. */
 .tab-island:not([data-pill]) .tab[data-current] {
@@ -555,7 +559,8 @@ html:has([data-desk-bar]) {
   outline: 2px solid var(--nav-active);
   outline-offset: -4px;
 }
-.tab[data-current]:focus-visible {
+.tab[data-lit]:focus-visible,
+.tab-island:not([data-pill]) .tab[data-current]:focus-visible {
   outline-color: var(--nav-active-foreground);
 }
 .tab-icon {
