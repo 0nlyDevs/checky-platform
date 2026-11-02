@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { IconArrowLeft, IconCircleNotch, IconImage, IconPencilSimple, IconWarning } from "@/lib/icons";
 import { toast } from "sonner";
+import { undoable } from "@/lib/undo";
 import { RoutePanel } from "@/components/claims/route-panel";
 import { VerdictCard } from "@/components/claims/verdict-card";
 import { CarnetPanel } from "@/components/dossier/carnet";
@@ -257,6 +258,22 @@ export function ClaimDetail() {
     revalidate(`${base}/trajet`);
   }
 
+  /** A change already saved is put back on the server, then on screen. */
+  async function putBack(change: ItemPatch) {
+    const res = await api<Item>(base, { method: "PATCH", body: JSON.stringify(change) });
+    mutate(res, { revalidate: false });
+    mutateHistory();
+  }
+
+  /** Moving a dossier from one status to another is reversible: the toast offers to move it back. */
+  async function changeStatus(status: Status) {
+    if (!claim) return;
+    const before = claim.status;
+    if (status === before) return;
+    const ok = await patch({ status }, { status });
+    if (ok) undoable(t.detail.statusMoved(t.status[status]), () => putBack({ status: before }), t.detail.statusRestored(t.status[before]));
+  }
+
   async function runReading() {
     try {
       const job = await api<{ id: string }>(`${base}/analyze`, { method: "POST" });
@@ -390,7 +407,7 @@ export function ClaimDetail() {
                     <Label htmlFor="claim-status" className="sr-only">
                       {t.detail.status}
                     </Label>
-                    <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => patch({ status }, { status })}>
+                    <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => void changeStatus(status as Status)}>
                       <SelectTrigger id="claim-status" aria-label={t.detail.status} className="h-10 min-w-40 bg-card">
                         <SelectValue />
                       </SelectTrigger>

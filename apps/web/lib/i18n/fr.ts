@@ -192,6 +192,8 @@ export const fr = {
       undo: "Annuler",
       undone: "Verdict rétabli",
     },
+    statusMoved: (label: string) => `Dossier passé en « ${label} »`,
+    statusRestored: (label: string) => `Dossier remis en « ${label} »`,
     readOnly: "Seul l'auteur ou un éditeur peut modifier cette affirmation.",
     saved: "Modification enregistrée",
     saveFailed: "La modification n'a pas été enregistrée. Réessayez.",
