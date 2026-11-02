@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Cormorant_Garamond } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
+import { RippleListener } from "@/components/shell/ripple";
 import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/lib/brand";
 import "./globals.css";
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ThemeProvider>
           {children}
           <Toaster position="bottom-center" />
+          <RippleListener />
         </ThemeProvider>
       </body>
     </html>
