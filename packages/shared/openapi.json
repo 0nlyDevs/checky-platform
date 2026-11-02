@@ -2134,6 +2134,74 @@
           }
         }
       }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/post": {
+      "post": {
+        "tags": [
+          "card"
+        ],
+        "summary": "Write Post",
+        "operationId": "write_post_api_v1_workspaces__ws__items__item_id__post_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3023,6 +3091,39 @@
           "score"
         ],
         "title": "Passage"
+      },
+      "PostIn": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg"
+            ],
+            "title": "Language",
+            "default": "fr"
+          }
+        },
+        "type": "object",
+        "title": "PostIn"
+      },
+      "PostOut": {
+        "properties": {
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "language",
+          "text"
+        ],
+        "title": "PostOut"
       },
       "RoleIn": {
         "properties": {

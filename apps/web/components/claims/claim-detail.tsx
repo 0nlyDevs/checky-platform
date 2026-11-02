@@ -10,6 +10,7 @@ import { ArrowLeft, LoaderCircle, Pencil, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AirtimeStrip } from "@/components/claims/airtime-strip";
 import { AnalysisPanel } from "@/components/claims/analysis-panel";
+import { VerdictCard } from "@/components/claims/verdict-card";
 import { formatTime } from "@/components/claims/day-grid";
 import { StatusLabel, toClaim, VERDICT_META, VerdictBadge } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
@@ -364,6 +365,13 @@ export function ClaimDetail() {
             <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.analysis.lead}</p>
             <AnalysisPanel ws={ws} item={item} sourceCount={claim.sources} />
           </Section>
+
+          {claim.verdict && (
+            <Section title={t.card.title}>
+              <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.card.lead}</p>
+              <VerdictCard key={claim.verdict} ws={ws} item={item} verdict={claim.verdict} />
+            </Section>
+          )}
 
           <Section title={`${t.detail.comments}${comments?.length ? ` (${comments.length})` : ""}`}>
             {comments && comments.length === 0 && <p className="text-muted-foreground">{t.detail.noComments}</p>}

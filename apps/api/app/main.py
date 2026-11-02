@@ -10,6 +10,7 @@ from app.core.errors import install_error_handlers
 from app.modules import (
     agent,
     ai,
+    card,
     checker,
     demo,
     health,
@@ -60,6 +61,7 @@ api.include_router(checker.router, prefix="/api/v1")
 api.include_router(rag.router, prefix="/api/v1")
 api.include_router(agent.router, prefix="/api/v1")
 api.include_router(quotes.router, prefix="/api/v1")
+api.include_router(card.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)
