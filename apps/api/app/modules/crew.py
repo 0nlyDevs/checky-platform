@@ -35,6 +35,7 @@ from collections.abc import AsyncIterable
 from datetime import UTC, date, datetime
 from typing import Any
 
+import httpx
 from fastapi import APIRouter, Depends
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import Field
@@ -1223,7 +1224,12 @@ async def public_facts(db, text: str | None, url: str | None = None) -> dict[str
     async def fact_checkers(state):
         if not full:
             raise Skip("Aucun texte")
-        return {"fact_checks": await fact_checks_for(plan, full)}
+        try:
+            return {"fact_checks": await fact_checks_for(plan, full)}
+        except (websearch.SearchUnavailable, httpx.HTTPError) as exc:
+            # None, not []: the public page says the search was down, never « nothing found ».
+            log.info("public facts: fact-checkers unavailable (%s)", type(exc).__name__)
+            return {"fact_checks": None}
 
     async def fiabilite(state):
         target = page.get("final_url") or url
@@ -1251,7 +1257,7 @@ async def public_facts(db, text: str | None, url: str | None = None) -> dict[str
     )
     out: dict[str, Any] = {
         "provenance": state.get("provenance"),
-        "fact_checks": state.get("fact_checks") or [],
+        "fact_checks": state.get("fact_checks", []),
         "credibility": state.get("credibility"),
         "tone": state.get("tone"),
         "risk": state.get("risk"),
@@ -1262,11 +1268,20 @@ async def public_facts(db, text: str | None, url: str | None = None) -> dict[str
     }
     if not full:
         return out
-    # The database checks share the caller's session, one after the other.
+    # The database checks share the caller's session, one after the other. Only public newsrooms
+    # are asked, and never with their Annuaire contacts: a visitor sees the original, not the desk.
+    from app.modules import public
+
+    rooms = [w.id for w in await public.public_newsrooms(db)]
     try:
         from app.modules.registry import match_text
 
-        out["registry"] = await match_text(db, None, full)
+        for ws_id in rooms:
+            found = await match_text(db, ws_id, full, with_contacts=False)
+            if isinstance(found, dict):
+                out["registry"] = found  # kept even at « none »: the registry was asked
+                if found.get("status") not in (None, "none"):
+                    break
     except (ImportError, AttributeError):
         pass
     except Exception as exc:  # noqa: BLE001 - one fact down never hides the others
@@ -1275,7 +1290,8 @@ async def public_facts(db, text: str | None, url: str | None = None) -> dict[str
     try:
         from app.modules.figures import check_numbers
 
-        out["figures"] = await check_numbers(db, None, full)
+        if rooms:
+            out["figures"] = await check_numbers(db, rooms[0], full)
     except (ImportError, AttributeError):
         pass
     except Exception as exc:  # noqa: BLE001 - one fact down never hides the others

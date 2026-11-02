@@ -95,7 +95,7 @@ def test_no_confidence_when_the_journalist_signed_another_verdict(as_user, no_re
 
 def test_a_fact_checkers_review_is_relayed_as_theirs(as_user, monkeypatch):
     async def reviews(query, k=6):
-        assert "jirama" in query and "urgent" in query
+        assert "jirama" in query.lower() and "urgent" in query.lower()
         return [
             {
                 "title": "Non, la JIRAMA n'annonce pas 72 heures de délestage à Antananarivo",
