@@ -554,7 +554,7 @@ function Board({
 function PendingBlocks() {
   return (
     <div aria-hidden className="space-y-8">
-      <div data-pending="facts" className="h-[12rem] rounded-md bg-raised" />
+      <div data-pending="facts" className="h-[5.625rem] rounded-md bg-raised" />
       <div data-pending="wall">
         <div className="h-7 w-52 rounded-md bg-raised" />
         <div className="mt-0.5 h-5 w-80 max-w-full rounded-md bg-raised" />
@@ -622,7 +622,7 @@ function DeskColumn({ ws }: { ws: string }) {
     .sort((a, b) => b.item.updated_at.localeCompare(a.item.updated_at))
     .slice(0, 3);
   return (
-    <aside ref={column} className="space-y-8 @5xl:sticky @5xl:self-start @6xl:pt-14">
+    <aside ref={column} className="space-y-8 min-[1101px]:sticky min-[1101px]:self-start @6xl:pt-14">
       <section>
         <h2 className="flex items-baseline justify-between gap-3 font-display text-lg font-bold">
           {v.open}
