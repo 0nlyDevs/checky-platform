@@ -13,6 +13,7 @@ import { PeopleAsk } from "@/components/settings/people-ask";
 import { RadiosSection } from "@/components/settings/radios-section";
 import { SmsSimulator } from "@/components/settings/sms-simulator";
 import { MembersView } from "@/components/members/members-view";
+import { VerificationSection } from "@/components/verification/status";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
@@ -219,6 +220,7 @@ export function SettingsView() {
         <div className="space-y-8">
           {/* The newsroom's own rules first; then what the public asks and where verdicts go back out;
               service health and the demo last. Every journalist of the newsroom sets them. */}
+          <VerificationSection ws={ws} />
           <MembersView embedded />
           <NewsroomRules ws={ws} />
           <BeatsSection ws={ws} />

@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge } from "@/components/verification/status";
 import Link from "next/link";
 import { useState } from "react";
 import { Evidence, ShareActions, type SignedVerdict, VerdictBlock } from "@/components/site/public/public-verdict";
@@ -139,6 +140,7 @@ function Signed({ v }: { v: SignedVerdict }) {
           {c.by(v.newsroom.name, day(v.signed_at ?? v.published_at))}
           {v.ref && <span className="font-normal tabular"> · {v.ref}</span>}
         </p>
+        <VerifiedBadge className="mt-1" />
       </VerdictBlock>
       <Evidence v={v} />
       <ShareActions v={v} />

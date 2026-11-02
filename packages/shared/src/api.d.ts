@@ -2220,6 +2220,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/countries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Countries
+         * @description Every country, French names, for the request form, Réglages and the Veille map.
+         */
+        get: operations["list_countries_api_v1_public_countries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/requests": {
         parameters: {
             query?: never;
@@ -3123,6 +3143,13 @@ export interface components {
              * @default true
              */
             own: boolean;
+        };
+        /** CountryOut */
+        CountryOut: {
+            /** Code */
+            code: string;
+            /** Name */
+            name: string;
         };
         /** CrewIn */
         CrewIn: {
@@ -10045,6 +10072,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_countries_api_v1_public_countries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CountryOut"][];
                 };
             };
         };

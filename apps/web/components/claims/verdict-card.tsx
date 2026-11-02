@@ -36,7 +36,7 @@ function host(url: string) {
 }
 
 /** 540 × 540 CSS pixels, exported at 2× = 1080 × 1080, the size Facebook and WhatsApp show square. */
-function Card({ item, verdict, reason, sources, lang, desk }: { item: Item; verdict: Verdict; reason: string; sources: Source[]; lang: Lang; desk: string }) {
+function Card({ item, verdict, reason, sources, lang, desk, verified }: { item: Item; verdict: Verdict; reason: string; sources: Source[]; lang: Lang; desk: string; verified: boolean }) {
   const m = VERDICT_META[verdict];
   const Icon = m.icon;
   const words = t.card.words[lang];
@@ -72,6 +72,7 @@ function Card({ item, verdict, reason, sources, lang, desk }: { item: Item; verd
       <div style={{ borderTop: `1px solid ${C.rule}`, margin: "0 28px", padding: "14px 0 18px", display: "flex", alignItems: "center", gap: 10, color: C.muted }} className="text-sm">
         {ref && <span className="font-display text-base font-bold tabular" style={{ color: C.ink }}>{ref}</span>}
         <span className="truncate">{words.by(desk)}</span>
+        {verified && <span className="ml-auto shrink-0 font-bold" style={{ color: C.ink }}>✓ {words.verified}</span>}
       </div>
     </div>
   );
@@ -90,7 +91,9 @@ export function VerdictCard({ ws, item, verdict, onShared }: { ws: string; item:
   const cardRef = useRef<HTMLDivElement>(null);
   const { data: sources } = useSWR<Source[]>(`/workspaces/${ws}/sources?item_id=${item.id}`, fetcher);
   const { data: me } = useSWR<Me>("/me", fetcher);
-  const desk = me?.memberships.find((m) => m.workspace_id === ws)?.name ?? brand.name;
+  const membership = me?.memberships.find((m) => m.workspace_id === ws);
+  const desk = membership?.name ?? brand.name;
+  const verified = membership?.verification === "approved";
   const text = post ?? posts[lang] ?? "";
 
   async function write() {
@@ -154,7 +157,7 @@ export function VerdictCard({ ws, item, verdict, onShared }: { ws: string; item:
           {/* Exported at full size; shown scaled down on narrow screens. */}
           <div className="origin-top-left max-sm:[zoom:0.6]">
             <div ref={cardRef} className="w-[540px]">
-              <Card item={item} verdict={verdict} reason={reason} sources={sources ?? []} lang={lang} desk={desk} />
+              <Card item={item} verdict={verdict} reason={reason} sources={sources ?? []} lang={lang} desk={desk} verified={verified} />
             </div>
           </div>
         </div>

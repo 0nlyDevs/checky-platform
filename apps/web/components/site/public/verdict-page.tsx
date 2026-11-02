@@ -1,5 +1,6 @@
 "use client";
 
+import { VerifiedBadge } from "@/components/verification/status";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -45,6 +46,7 @@ export function VerdictPage() {
         {t.publicLayer.check.signed.by(v.newsroom.name, day(v.signed_at ?? v.published_at))}
         {v.ref && <span className="tabular"> · {v.ref}</span>}
       </p>
+      <VerifiedBadge className="mt-1" />
 
       <div className="mt-6 grid gap-10 md:mt-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0">

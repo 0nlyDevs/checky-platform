@@ -68,6 +68,9 @@ import {
   Users,
   VideoCamera,
   Warning,
+  LockSimple,
+  HourglassMedium,
+  GlobeHemisphereEast,
   Waveform,
   WifiSlash,
   X,
@@ -146,6 +149,9 @@ export const IconTimer = duo(Timer);
 export const IconUsers = duo(Users);
 export const IconVideoCamera = duo(VideoCamera);
 export const IconWarning = duo(Warning);
+export const IconLockSimple = duo(LockSimple);
+export const IconHourglass = duo(HourglassMedium);
+export const IconGlobe = duo(GlobeHemisphereEast);
 export const IconWaveform = duo(Waveform);
 export const IconWifiSlash = duo(WifiSlash);
 export const IconX = duo(X);

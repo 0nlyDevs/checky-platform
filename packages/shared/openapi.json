@@ -8222,6 +8222,32 @@
         }
       }
     },
+    "/api/v1/public/countries": {
+      "get": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "List Countries",
+        "description": "Every country, French names, for the request form, Réglages and the Veille map.",
+        "operationId": "list_countries_api_v1_public_countries_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CountryOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Countries Api V1 Public Countries Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/platform/requests": {
       "get": {
         "tags": [
@@ -10921,6 +10947,24 @@
           "is_demo"
         ],
         "title": "ContactOut"
+      },
+      "CountryOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "name"
+        ],
+        "title": "CountryOut"
       },
       "CrewIn": {
         "properties": {

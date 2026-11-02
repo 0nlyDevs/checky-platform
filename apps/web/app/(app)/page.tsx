@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RequestForm } from "@/components/verification/request-form";
 import { api, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 
@@ -30,6 +31,8 @@ function Onboarding() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [draft] = useState(readDraft);
+  // Step 2: the newsroom exists and works privately; its verification request can wait.
+  const [created, setCreated] = useState<{ id: string; name: string } | null>(null);
 
   // No newsroom yet: say why this screen comes first, once, as a toast.
   useEffect(() => {
@@ -55,12 +58,31 @@ function Onboarding() {
       } catch {
         // Storage may be unavailable; nothing to clean.
       }
-      await globalMutate("/me");
-      router.replace(`/w/${ws.id}/rubrique`);
+      // /me is refreshed when leaving step 2: refreshing it now would send Home to the newsroom.
+      toast.dismiss("name-first");
+      setCreated({ id: ws.id, name: ws.name });
+      setPending(false);
     } catch {
       setError(t.auth.errors.generic);
       setPending(false);
     }
+  }
+
+  if (created) {
+    const go = () => {
+      void globalMutate("/me");
+      router.replace(`/w/${created.id}/rubrique`);
+    };
+    return (
+      <div className="mx-auto max-w-2xl px-5 py-12 lg:py-16">
+        <p className="text-sm font-bold text-muted-foreground">{t.verification.onboarding.step}</p>
+        <h1 className="page-title mt-1 text-balance">{t.verification.onboarding.title}</h1>
+        <p className="mt-2 max-w-prose text-muted-foreground">{t.verification.onboarding.lead}</p>
+        <div className="mt-8">
+          <RequestForm ws={created.id} outlet={created.name} onSent={go} onLater={go} />
+        </div>
+      </div>
+    );
   }
 
   return (

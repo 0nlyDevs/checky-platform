@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import useSWR from "swr";
-import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon, IconPlus, IconSignOut, IconSun } from "@/lib/icons";
+import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon, IconPlus, IconSealCheck, IconSignOut, IconSun } from "@/lib/icons";
 import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
 import { openPalette } from "@/components/shell/command-palette";
@@ -25,6 +25,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { clearApiToken, fetcher } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { VerificationBanner } from "@/components/verification/status";
 import { t } from "@/lib/i18n/fr";
 import type { SessionUser } from "@/lib/session";
 import { toggleThemeWithReveal } from "@/lib/theme-reveal";
@@ -70,7 +71,7 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
 }
 
 /** The avatar: who is signed in, the newsroom's pages (Équipe, Paramètres), the theme, sign out. */
-function UserMenu({ user, ws, team }: { user: SessionUser; ws?: string; team: boolean }) {
+function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: string; team: boolean; admin?: boolean }) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
 
@@ -101,6 +102,16 @@ function UserMenu({ user, ws, team }: { user: SessionUser; ws?: string; team: bo
                 </Link>
               </DropdownMenuItem>
             ))}
+          </>
+        )}
+        {admin && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/checky">
+                <IconSealCheck className="size-4" aria-hidden /> {t.verification.review.menu}
+              </Link>
+            </DropdownMenuItem>
           </>
         )}
         <DropdownMenuSeparator />
@@ -160,9 +171,10 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
             <button type="button" className="bar-icon" data-ripple onClick={openPalette} aria-label={t.nav.search} aria-keyshortcuts="Control+K">
               <IconMagnifyingGlass className="size-5" aria-hidden />
             </button>
-            <UserMenu user={user} ws={ws} team />
+            <UserMenu user={user} ws={ws} team admin={Boolean(me?.platform_admin)} />
           </div>
         </header>
+        {ws && <VerificationBanner ws={ws} />}
 
         <main id="contenu" tabIndex={-1} className="desk-main outline-none">
           {children}

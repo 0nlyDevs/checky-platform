@@ -6,6 +6,7 @@ import { publicLayer } from "./fr/publicLayer";
 import { registre } from "./fr/registre";
 import { rubrique } from "./fr/rubrique";
 import { team } from "./fr/team";
+import { verification } from "./fr/verification";
 
 /** A distance in days, rounded the way a person says it (same rounding as the API's dates.span). */
 const span = (days: number) => {
@@ -308,6 +309,7 @@ export const fr = {
         claim: "L'affirmation",
         sources: "Sources",
         by: (desk: string) => `Vérifié par ${desk}`,
+        verified: "Rédaction vérifiée par Checky",
         verdicts: { true: "Vrai", misleading: "Trompeur", false: "Faux", unverifiable: "Invérifiable" },
       },
       mg: {
@@ -315,6 +317,8 @@ export const fr = {
         claim: "Ilay filazana",
         sources: "Loharano",
         by: (desk: string) => `Nohamarinin'ny ${desk}`,
+        // Needs a native speaker's check, like the other Malagasy card labels.
+        verified: "Voamarin'i Checky",
         verdicts: { true: "Marina", misleading: "Mamitaka", false: "Diso", unverifiable: "Tsy hay antoka" },
       },
     },
@@ -810,6 +814,7 @@ export const fr = {
   rubrique,
   publicLayer,
   team,
+  verification,
 } as const;
 
 export const t = fr;
