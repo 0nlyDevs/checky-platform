@@ -300,20 +300,15 @@ class PublicTrajetOut(BaseModel):
 
 @router.get("/public/verdicts/{item_id}/trajet")
 async def public_trajet(item_id: uuid.UUID, db: Db) -> PublicTrajetOut:
-    """« Où la correction est passée »: the truth side only (no proof, no notes) and the counts."""
-    row = (
-        await db.execute(
-            select(Item)
-            .join(Workspace, Workspace.id == Item.workspace_id)
-            .where(
-                Item.id == item_id,
-                Workspace.is_public.is_(True),
-                Item.status == "published",
-            )
-        )
-    ).scalar_one_or_none()
-    if row is None:
+    """« Où la correction est passée »: the truth side only (no proof, no notes) and the counts.
+    Same visibility as `/public/verdicts/{id}`: a public newsroom's published claim with a
+    confirmed verdict, nothing else."""
+    from app.modules.public import _published
+
+    found = (await db.execute(_published().where(Item.id == item_id))).first()
+    if found is None:
         raise ApiError(404, "not_found", "Verdict not found")
+    row = found[0]
     full = await read_trajet(db, row)
     return PublicTrajetOut(
         truth=[
@@ -418,7 +413,6 @@ class FormatsOut(BaseModel):
 
 @router.get("/workspaces/{ws}/items/{item_id}/diffusion")
 async def formats(item_id: uuid.UUID, member: AnyMember, db: Db) -> FormatsOut:
-    from app.core.models import Workspace
 
     item = await _get_item(db, member, item_id)
     if item.status != "published" or item.data.get("verdict") not in (

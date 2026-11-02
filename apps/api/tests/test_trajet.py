@@ -120,3 +120,19 @@ def test_demo_seed_draws_the_pitch_rumours_road(as_user):
     assert alice.post(f"/api/v1/workspaces/{ws}/demo/reset").status_code == 200
     item = asyncio.run(find())
     assert len(alice.get(f"/api/v1/workspaces/{ws}/items/{item.id}/trajet").json()["rumour"]) == 4
+
+
+def test_public_trajet_hides_a_published_claim_without_a_confirmed_verdict(as_user, client):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    item = _claim(alice, ws, verdict_suggested="false")
+
+    async def force_published():
+        async with SessionLocal() as db:
+            row = await db.get(Item, uuid.UUID(item))
+            row.status = "published"  # as an older route could leave it, with no verdict
+            await db.commit()
+
+    asyncio.run(force_published())
+    assert client.get(f"/api/v1/public/verdicts/{item}/trajet").status_code == 404
