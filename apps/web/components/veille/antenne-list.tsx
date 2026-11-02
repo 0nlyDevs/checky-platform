@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { IconCircleDashed, IconCircleNotch, IconRadio, IconShieldCheck, IconTimer, type Icon } from "@/lib/icons";
+import { IconCircleDashed, IconCircleNotch, IconRadio, IconShieldCheck, IconTimer, IconWarning, type Icon } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { VerdictChip } from "@/components/claims/verdict";
 import { DemoTag, when } from "@/components/rubrique/bits";
@@ -100,6 +100,12 @@ export function AntenneList({
                 {a.reports(row.reports)}
               </span>
               {row.regions_24h.length > 0 && <span className="text-muted-foreground">{row.regions_24h.join(", ")}</span>}
+              {row.alert && (
+                <Link href={`/w/${ws}/veille#alerte-${row.alert.id}` as never} className="inline-flex items-center gap-1 font-bold underline-offset-4 hover:underline">
+                  <IconWarning className="size-4" aria-hidden />
+                  {t.rubrique.alerts.badge(row.alert.ref ?? "")}
+                </Link>
+              )}
               {row.demo && <DemoTag />}
             </p>
             <p className="mt-1 font-bold text-pretty">{row.claim}</p>

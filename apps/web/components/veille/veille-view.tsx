@@ -14,12 +14,13 @@ import { PeopleAsk } from "@/components/settings/people-ask";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "@/components/rubrique/bits";
 import { MeteoPanel } from "@/components/rubrique/meteo-panel";
-import type { AntenneRow, FeedEntry, FeedOut, MapOut, Meteo, Prefs } from "@/components/rubrique/types";
+import type { Alert, AntenneRow, FeedEntry, FeedOut, MapOut, Meteo, Prefs } from "@/components/rubrique/types";
 import { useMe } from "@/components/rubrique/use-me";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
+import { AlertsList } from "./alerts-panel";
 import { AntenneList } from "./antenne-list";
 import { SignalsPanel, useSignalToasts } from "./signals-panel";
 import { VeilleurView } from "./veilleur-view";
@@ -118,6 +119,7 @@ function DeskVeille({ ws }: { ws: string }) {
   const countryChoices = map.data ? [...new Set([map.data.home, ...map.data.countries.map((c) => c.country)])] : [];
   const countOf = (c: string) => map.data?.countries.find((x) => x.country === c)?.last_7d ?? 0;
   const antenne = useSWR<AntenneRow[]>(`/workspaces/${ws}/antenne`, fetcher);
+  const alerts = useSWR<Alert[]>(`/workspaces/${ws}/alerts`, fetcher, { refreshInterval: 120_000 });
   const meteo = useSWR<Meteo>(`/workspaces/${ws}/meteo${qs({ region })}`, fetcher, { keepPreviousData: true });
   const prefs = useSWR<Prefs>(`/workspaces/${ws}/me/prefs`, fetcher);
 
@@ -125,6 +127,7 @@ function DeskVeille({ ws }: { ws: string }) {
     void feed.mutate();
     void map.mutate();
     void antenne.mutate();
+    void alerts.mutate();
   };
   const toastSignal = useSignalToasts();
   const { online } = useWorkspaceSocket(ws, {
@@ -132,6 +135,10 @@ function DeskVeille({ ws }: { ws: string }) {
     "clip.updated": reload,
     "item.created": reload,
     "item.updated": reload,
+    "alert.updated": () => {
+      void alerts.mutate();
+      void antenne.mutate();
+    },
     "signal.matched": (p) => {
       toastSignal(p);
       void feed.mutate();
@@ -231,6 +238,12 @@ function DeskVeille({ ws }: { ws: string }) {
 
       <div className="grid gap-x-10 gap-y-10 px-4 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-8">
+          {/* Alerts first: a dangerous rumour coming back through several channels. */}
+          {alerts.data && alerts.data.length > 0 && (
+            <Section id="alertes" title={t.rubrique.alerts.title} lead={t.rubrique.alerts.lead}>
+              <AlertsList ws={ws} alerts={alerts.data} actions onChanged={reload} />
+            </Section>
+          )}
           <section aria-labelledby="carte" className="overflow-hidden rounded-md border border-border bg-card">
             <div className="flex flex-wrap items-start justify-between gap-3 px-4 pt-3 pb-3">
               <div className="min-w-0">

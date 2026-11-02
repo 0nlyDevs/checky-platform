@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { claimSteps, StepLine } from "@/components/flow/step-line";
 import { StatusLabel, toClaim, VerdictBadge } from "@/components/claims/verdict";
+import { AlertsList } from "@/components/veille/alerts-panel";
 import { AntenneList } from "@/components/veille/antenne-list";
 import { useSignalToasts } from "@/components/veille/signals-panel";
 import { useMe } from "@/components/rubrique/use-me";
@@ -21,7 +22,7 @@ import { cn } from "@/lib/utils";
 import { BeatPicker } from "./beat-picker";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "./bits";
 import { MeteoPanel } from "./meteo-panel";
-import type { AngleCard, Circulating, ContactCard, FigureCard, Rubrique } from "./types";
+import type { Alert, AngleCard, Circulating, ContactCard, FigureCard, Rubrique } from "./types";
 
 const r = t.rubrique;
 
@@ -237,6 +238,7 @@ export function RubriqueView() {
   const query = all ? "?beat=*&region=*" : "";
   const key = joined ? `/workspaces/${ws}/rubrique${query}` : null;
   const { data, error, mutate } = useSWR<Rubrique>(key, fetcher, { refreshInterval: 120_000 });
+  const alerts = useSWR<Alert[]>(joined ? `/workspaces/${ws}/alerts` : null, fetcher, { refreshInterval: 120_000 });
 
   const refresh = () => void mutate();
   const toastSignal = useSignalToasts();
@@ -245,6 +247,7 @@ export function RubriqueView() {
     "item.updated": refresh,
     "clip.created": refresh,
     "clip.updated": refresh,
+    "alert.updated": () => void alerts.mutate(),
     "signal.matched": toastSignal,
     reconnected: refresh,
   });
@@ -367,6 +370,20 @@ export function RubriqueView() {
             </div>
 
             <aside className={cn("min-w-0 space-y-10")}>
+              {alerts.data && alerts.data.length > 0 && (
+                <Section
+                  id="alertes"
+                  title={t.rubrique.alerts.title}
+                  lead={t.rubrique.alerts.leadShort}
+                  action={
+                    <Link href={`/w/${ws}/veille#alertes` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
+                      {t.rubrique.alerts.all}
+                    </Link>
+                  }
+                >
+                  <AlertsList ws={ws} alerts={alerts.data} limit={3} />
+                </Section>
+              )}
               <MeteoPanel ws={ws} meteo={data.meteo} />
               <Section
                 id="antenne"

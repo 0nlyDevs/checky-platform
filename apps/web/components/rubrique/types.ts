@@ -76,6 +76,43 @@ export type AntenneRow = {
   latest: AntenneClip;
   clip_ids: string[];
   demo: boolean;
+  alert?: AlertRef | null;
+};
+
+/** The open alert a rumour's reports belong to (app/modules/alerts.py). */
+export type AlertRef = { id: string; ref: string | null; level: string; reports: number };
+
+export type AlertMember = {
+  key: string;
+  kind: string;
+  title: string;
+  excerpt: string;
+  at: string;
+  region: string | null;
+  place: string | null;
+  station: string | null;
+  item_id: string | null;
+  url: string | null;
+  risk: string;
+  demo: boolean;
+};
+
+export type Alert = {
+  id: string;
+  ref: string | null;
+  title: string;
+  state: "open" | "closed";
+  level: string;
+  code_level: string | null;
+  override: { level: string; reason: string; by: string; at: string } | null;
+  reasons: { kind: string; quote: string }[];
+  facts: { reports: number; kinds: Record<string, number>; stations: string[]; regions: string[]; first_at: string | null; last_at: string | null; hours: number | null };
+  members: AlertMember[];
+  excluded: string[];
+  closed: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  demo: boolean;
 };
 
 export type ContactCard = {
