@@ -61,3 +61,153 @@ def test_the_danger_level_needs_a_reason_and_a_member(as_user):
     assert alice.put(url, json={"level": "high"}).status_code == 422
     assert alice.put(url, json={"level": "extreme", "reason": "parce que"}).status_code == 422
     assert bob.put(url, json={"level": "high", "reason": "parce que"}).status_code == 404
+
+
+# --- grouping
+KIDNAP_FR = (
+    "Un auditeur affirme que des voleurs d'enfants ont enlevé une fillette près du marché de "
+    "Mahajanga hier soir."
+)
+KIDNAP_FR_2 = (
+    "Enlèvement d'enfant au marché : des voleurs d'enfants rôderaient à Antsohihy, gardez les "
+    "enfants à la maison."
+)
+KIDNAP_MG = (
+    "Nilaza ny mpihaino iray fa nisy ankizy nalaina an-keriny teo akaikin'ny tsena tany "
+    "Antsohihy, mpangalatra ankizy no nanao izany."
+)
+RICE = "Le prix du riz a encore augmenté au marché de Toamasina cette semaine selon un auditeur."
+RICE_2 = "Le prix du riz augmente au marché de Toamasina, disent les commerçants."
+
+
+def _clip(c, ws, text, station, language="fr", region=None):
+    from tests.test_veille import _clip as clip
+
+    extra = {"location": {"region": region}} if region else {}
+    return clip(c, ws, text, station=station, language=language, **extra)
+
+
+def _alerts(c, ws, state="open"):
+    r = c.get(f"/api/v1/workspaces/{ws}/alerts?state={state}")
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def _scan(c, ws):
+    r = c.post(f"/api/v1/workspaces/{ws}/alerts/scan")
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+def test_concepts_make_french_and_malagasy_variants_meet():
+    from app.modules.alerts import concepts, word_overlap
+
+    fr, mg = concepts(KIDNAP_FR), concepts(KIDNAP_MG)
+    assert {"enlevement", "enfant", "marche"} <= fr & mg
+    assert "mahajanga" not in fr and "antsohihy" not in mg  # another town is the same story
+    assert word_overlap(fr, mg) >= 0.34
+    assert word_overlap(concepts(RICE), fr) < 0.34
+
+
+def test_variants_across_radios_and_regions_become_one_alert(as_user):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    _clip(alice, ws, KIDNAP_FR, "Radio Boeny (démo)", region="Boeny")
+    _clip(alice, ws, KIDNAP_MG, "Radio Sofia (démo)", language="mg", region="Sofia")
+    _dossier(alice, ws, KIDNAP_FR_2, risk="high")
+    _clip(alice, ws, RICE, "Radio Boeny (démo)")
+    _clip(alice, ws, RICE_2, "Radio Toamasina (démo)")
+
+    assert _scan(alice, ws) == {"created": 1, "updated": 0}
+    [alert] = _alerts(alice, ws)
+    assert alert["ref"] == "ALR-0001" and alert["state"] == "open"
+    assert alert["level"] == "high"
+    facts = alert["facts"]
+    assert facts["reports"] == 3
+    assert sorted(facts["stations"]) == ["Radio Boeny (démo)", "Radio Sofia (démo)"]
+    assert sorted(facts["regions"]) == ["Boeny", "Sofia"]
+    assert facts["kinds"] == {"clip": 2, "item": 1}
+    assert facts["hours"] is not None
+    assert any(r["kind"] == "accusation" for r in alert["reasons"])
+    # the rice price circulates too, but it puts nobody in danger: no alert
+    assert all("riz" not in m["title"] for m in alert["members"])
+    # alerts stay out of the dossiers list
+    listed = alice.get(f"/api/v1/workspaces/{ws}/items?type=claim").json()["items"]
+    assert all(i["type"] == "claim" for i in listed)
+    # scanning again changes nothing; a new variant joins the open alert
+    assert _scan(alice, ws) == {"created": 0, "updated": 0}
+    _clip(alice, ws, KIDNAP_FR_2 + " Encore un appel.", "Radio Boeny (démo)", region="Boeny")
+    assert _scan(alice, ws) == {"created": 0, "updated": 1}
+    assert _alerts(alice, ws)[0]["facts"]["reports"] == 4
+
+
+def test_a_journalists_adjusted_level_raises_an_alert(as_user):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    a = _dossier(alice, ws, "Coupure d'eau de trois jours annoncée à Toamasina", risk="low")
+    _dossier(alice, ws, "Trois jours sans eau à Toamasina, coupure annoncée", risk="low")
+    assert _scan(alice, ws)["created"] == 0
+    alice.put(
+        f"/api/v1/workspaces/{ws}/items/{a}/risk",
+        json={"level": "high", "reason": "Ruée sur les bidons dans les quartiers"},
+    )
+    assert _scan(alice, ws)["created"] == 1
+
+
+def test_journalists_split_and_merge_and_code_respects_it(as_user):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    _clip(alice, ws, KIDNAP_FR, "Radio Boeny (démo)", region="Boeny")
+    _clip(alice, ws, KIDNAP_MG, "Radio Sofia (démo)", language="mg", region="Sofia")
+    _dossier(alice, ws, KIDNAP_FR_2, risk="high")
+    _scan(alice, ws)
+    [alert] = _alerts(alice, ws)
+    mg = next(m["key"] for m in alert["members"] if m["station"] == "Radio Sofia (démo)")
+    url = f"/api/v1/workspaces/{ws}/alerts/{alert['id']}"
+
+    r = alice.post(f"{url}/split", json={"keys": [mg]})
+    assert r.status_code == 201, r.text
+    other = r.json()
+    assert [m["key"] for m in other["members"]] == [mg] and other["ref"] == "ALR-0002"
+    first = alice.get(url).json()
+    assert mg in first["excluded"] and first["facts"]["reports"] == 2
+    _scan(alice, ws)
+    assert mg not in {m["key"] for m in alice.get(url).json()["members"]}
+    assert alice.post(f"{url}/split", json={"keys": ["clip:nope"]}).status_code == 422
+
+    r = alice.post(f"{url}/merge", json={"other_id": other["id"]})
+    assert r.status_code == 200
+    assert r.json()["facts"]["reports"] == 3 and mg not in r.json()["excluded"]
+    closed = alice.get(f"/api/v1/workspaces/{ws}/alerts/{other['id']}").json()
+    assert closed["state"] == "closed" and closed["closed"]["reason"] == "merged"
+    assert len(_alerts(alice, ws)) == 1
+
+
+def test_embeddings_group_variants_with_no_word_in_common(as_user, monkeypatch):
+    from app.core import embed
+    from app.modules import alerts
+
+    alerts._vectors.clear()
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    _dossier(alice, ws, "Des voleurs d'enfants rôdent près des écoles", risk="high")
+    _dossier(alice, ws, "Mpangalatra zaza mivezivezy manodidina ny sekoly", risk="high")
+    monkeypatch.setattr(alerts, "concepts", lambda text: set(text.lower().split()))
+
+    async def fake(texts):
+        return [[1.0, 0.1] for _ in texts]
+
+    monkeypatch.setattr(embed, "configured", lambda: True)
+    monkeypatch.setattr(embed, "embed", fake)
+    assert _scan(alice, ws)["created"] == 1
+
+
+def test_alerts_are_private_to_the_newsroom(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws, _ = _newsroom(alice)
+    _clip(alice, ws, KIDNAP_FR, "Radio Boeny (démo)", region="Boeny")
+    _dossier(alice, ws, KIDNAP_FR_2, risk="high")
+    _scan(alice, ws)
+    [alert] = _alerts(alice, ws)
+    assert bob.get(f"/api/v1/workspaces/{ws}/alerts").status_code == 404
+    assert bob.get(f"/api/v1/workspaces/{ws}/alerts/{alert['id']}").status_code == 404
