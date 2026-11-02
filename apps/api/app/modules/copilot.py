@@ -435,7 +435,7 @@ async def act(body: ActIn, member: AnyMember, db: Db) -> ActOut:
             "origin": body.origin,
             "source_count": 0,
         }
-        made = await items.create_item(
+        made = await items._create_item(
             items.ItemIn(title=body.title, body=body.body, data=data), member, db
         )
         return ActOut(kind=body.kind, item_id=made.id, ref=data["ref"])

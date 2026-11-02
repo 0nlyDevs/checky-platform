@@ -21,13 +21,14 @@ _NEXT = text(
         COALESCE(settings, '{}'::jsonb),
         '{ref_counter}',
         to_jsonb(GREATEST(
-            COALESCE((settings->>'ref_counter')::int, 0),
-            (SELECT COALESCE(MAX(substring(i.data->>'ref' FROM '^FAN-(\d+)$')::int), 0)
+            COALESCE(CASE WHEN settings->>'ref_counter' ~ '^[0-9]{1,18}$'
+                          THEN (settings->>'ref_counter')::bigint END, 0),
+            (SELECT COALESCE(MAX(substring(i.data->>'ref' FROM '^FAN-([0-9]{1,18})$')::bigint), 0)
              FROM app.item i WHERE i.workspace_id = :ws)
         ) + 1)
     )
     WHERE id = :ws
-    RETURNING (settings->>'ref_counter')::int
+    RETURNING (settings->>'ref_counter')::bigint
     """
 )
 

@@ -72,3 +72,36 @@ def test_the_counter_seeds_itself_from_the_existing_refs(as_user):
             return first, second
 
     assert asyncio.run(go()) == ("FAN-0145", "FAN-0201")
+
+
+def test_clients_cannot_poison_a_newsrooms_reference_counter(as_user):
+    alice = as_user("alice")
+    ws = uuid.UUID(_workspace(alice))
+    base = f"/api/v1/workspaces/{ws}/items"
+    huge = "FAN-" + "9" * 1000
+    assert alice.post(base, json={"title": "forged", "data": {"ref": huge}}).status_code == 422
+    made = alice.post(base, json={"title": "ordinary"})
+    assert made.status_code == 201
+    item_id = made.json()["id"]
+    assert alice.patch(f"{base}/{item_id}", json={"data": {"ref": huge}}).status_code == 422
+    assert _allocate(ws, 1) == ["FAN-0001"]
+
+
+def test_existing_oversized_reference_does_not_break_allocation(as_user):
+    ws = uuid.UUID(_workspace(as_user("alice")))
+
+    async def seed():
+        async with SessionLocal() as db:
+            db.add(
+                Item(
+                    workspace_id=ws,
+                    author_id="alice",
+                    type="claim",
+                    title="old bad ref",
+                    data={"ref": "FAN-" + "9" * 1000},
+                )
+            )
+            await db.commit()
+
+    asyncio.run(seed())
+    assert _allocate(ws, 1) == ["FAN-0001"]

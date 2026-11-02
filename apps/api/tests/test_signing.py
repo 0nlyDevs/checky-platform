@@ -6,14 +6,19 @@ from sqlalchemy import select
 from app.core.db import SessionLocal
 from app.core.models import Route, Source
 from app.modules.signing import rating_verdict
+from tests.ref_fixture import set_ref
 from tests.test_newsroom_resources import invite
 from tests.test_workspaces import _verify, _workspace
 
 
 def _claim(c, ws, title="72 heures de délestage à Antananarivo", **data):
+    ref = data.pop("ref", None)
     r = c.post(f"/api/v1/workspaces/{ws}/items", json={"title": title, "data": data})
     assert r.status_code == 201
-    return r.json()["id"]
+    item_id = r.json()["id"]
+    if ref:
+        set_ref(item_id, ref)
+    return item_id
 
 
 def _routes(item_id):

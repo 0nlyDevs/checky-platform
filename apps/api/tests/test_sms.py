@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.main import app
+from tests.ref_fixture import set_ref
 
 CLAIM = "72 heures de délestage dès demain sur tout Antananarivo, selon la JIRAMA"
 RUMOUR = "délestage de 72 heures sur tout Antananarivo selon la JIRAMA, partagez !"
@@ -31,12 +32,14 @@ def _newsroom(c, name="Desk du matin", **settings):
 
 
 def _claim(c, ws, title, status="published", verdict="false", ref="FAN-0145", **data):
-    data = {"ref": ref, **({"verdict": verdict} if verdict else {}), **data}
+    data = {**({"verdict": verdict} if verdict else {}), **data}
     r = c.post(
         f"/api/v1/workspaces/{ws}/items", json={"title": title, "status": status, "data": data}
     )
     assert r.status_code == 201, r.text
-    return r.json()["id"]
+    item_id = r.json()["id"]
+    set_ref(item_id, ref)
+    return item_id
 
 
 def sms(text, sender=PHONE, headers=GW):

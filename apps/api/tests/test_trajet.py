@@ -5,16 +5,21 @@ from datetime import UTC, datetime, timedelta
 from app.core.db import SessionLocal
 from app.core.models import Item
 from app.modules import trajet
+from tests.ref_fixture import set_ref
 from tests.test_workspaces import _verify, _workspace
 
 
 def _claim(c, ws, **data):
+    ref = data.pop("ref", None)
     r = c.post(
         f"/api/v1/workspaces/{ws}/items",
         json={"title": "72 heures de délestage à Antananarivo", "data": data},
     )
     assert r.status_code == 201
-    return r.json()["id"]
+    item_id = r.json()["id"]
+    if ref:
+        set_ref(item_id, ref)
+    return item_id
 
 
 def _stop(ws, item_id, **kw):

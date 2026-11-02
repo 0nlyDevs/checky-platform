@@ -122,6 +122,13 @@ async def list_items(
 
 @router.post("/workspaces/{ws}/items", status_code=201)
 async def create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
+    if "ref" in body.data:
+        raise ApiError(422, "protected_fields", "References are assigned by the server")
+    return await _create_item(body, member, db)
+
+
+async def _create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
+    """Create an item from a trusted server flow, which may have allocated its reference."""
     from app.modules.signing import SIGNATURE_FIELDS, publication_guard
 
     if SIGNATURE_FIELDS & body.data.keys():
@@ -181,8 +188,8 @@ async def update_item(item_id: uuid.UUID, body: ItemPatch, member: AnyMember, db
     item = await _get_item(db, member, item_id)
     from app.modules.signing import SIGNATURE_FIELDS, publication_guard
 
-    if body.data is not None and SIGNATURE_FIELDS & body.data.keys():
-        raise ApiError(422, "protected_fields", "Use the signature endpoint")
+    if body.data is not None and (SIGNATURE_FIELDS | {"ref"}) & body.data.keys():
+        raise ApiError(422, "protected_fields", "Signature fields and references are server-owned")
     changes = body.model_dump(exclude_unset=True)
     status = body.status or item.status
     title = body.title or item.title

@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from app.core import websearch
 from app.core.config import get_settings
 from app.main import app
+from tests.ref_fixture import set_ref
 
 RUMOUR = (
     "URGENT ⚠️ COMMUNIQUÉ N° 2026-118 de la JIRAMA : délestage de 72 heures à partir du 3 novembre "
@@ -47,12 +48,14 @@ def _newsroom(c, public=True):
 
 
 def _claim(c, ws, title, status="published", verdict="false", **data):
-    data = {"ref": "FAN-0145", **({"verdict": verdict} if verdict else {}), **data}
+    data = {**({"verdict": verdict} if verdict else {}), **data}
     r = c.post(
         f"/api/v1/workspaces/{ws}/items", json={"title": title, "status": status, "data": data}
     )
     assert r.status_code == 201, r.text
-    return r.json()["id"]
+    item_id = r.json()["id"]
+    set_ref(item_id, "FAN-0145")
+    return item_id
 
 
 def test_signed_verdict_comes_first_with_its_confidence_in_words(as_user, monkeypatch):

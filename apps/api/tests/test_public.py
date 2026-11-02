@@ -3,6 +3,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
+from tests.ref_fixture import set_ref
 from tests.test_workspaces import _verify
 
 
@@ -20,11 +21,13 @@ def _claim(c, ws, title, status="published", verdict="false", **data):
         json={
             "title": title,
             "status": status,
-            "data": {"ref": "FAN-0001", "verdict": verdict, **data},
+            "data": {"verdict": verdict, **data},
         },
     )
     assert r.status_code == 201
-    return r.json()["id"]
+    item_id = r.json()["id"]
+    set_ref(item_id, "FAN-0001")
+    return item_id
 
 
 def test_archive_shows_only_published_verdicts_of_public_newsrooms(as_user):
@@ -244,7 +247,7 @@ def test_flashes_of_the_day_and_short_links(as_user, monkeypatch):
         "Une vidéo montre l'inondation d'Analakely ce matin",
         reason="Images de 2019. Elles circulent chaque année.",
     )
-    alice.patch(f"/api/v1/workspaces/{ws}/items/{first}", json={"data": {"ref": "FAN-0142"}})
+    set_ref(first, "FAN-0142")
     _claim(alice, ws, "Le bac est reporté", status="in_progress")
     anon = TestClient(app)
     out = anon.get(f"/api/v1/public/flashs?newsroom={slug}").json()
