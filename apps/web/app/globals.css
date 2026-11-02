@@ -542,9 +542,6 @@ html:has([data-desk-bar]) {
 .tab[data-current][aria-expanded="true"] {
   background: transparent;
 }
-.tab[data-current] {
-  font-weight: 600;
-}
 /* The label turns ink only while the paper pill is under it (`data-lit`, set by tab-island.tsx as
    the pill slides), at once: a colour fade would cross the ink island and vanish on it. */
 .tab[data-lit],
