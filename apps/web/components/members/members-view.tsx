@@ -72,7 +72,8 @@ function Invite({ ws }: { ws: string }) {
   );
 }
 
-export function MembersView() {
+/** The team, as a section of Réglages (`embedded`) or on its own. */
+export function MembersView({ embedded = false }: { embedded?: boolean }) {
   const { ws } = useParams<{ ws: string }>();
   const key = `/workspaces/${ws}/members`;
   const { data: members, error, mutate } = useSWR<Member[]>(key, fetcher);
@@ -92,9 +93,9 @@ export function MembersView() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
+    <div id="equipe" className={embedded ? "scroll-mt-24" : "mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8"}>
       <header className="pb-6">
-        <h1 className="page-title">{t.members.title}</h1>
+        {embedded ? <h2 className="font-display text-xl font-bold">{t.members.title}</h2> : <h1 className="page-title">{t.members.title}</h1>}
         <p className="mt-1 text-muted-foreground">
           {t.members.lead}
           {members && <span className="tabular"> · {t.members.count(members.length)}</span>}

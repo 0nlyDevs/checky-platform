@@ -15,9 +15,9 @@ type Tab = NavItem & { href: string };
 export function useTabs(ws: string | undefined, items: NavItem[]) {
   const pathname = usePathname();
   const tabs: Tab[] = ws ? items.filter((i) => i.path).map((i) => ({ ...i, href: `/w/${ws}/${i.path}` })) : [];
-  // Analyser lives inside Vérifier now: its old address still lights Vérifier.
+  // A tab also lights for the sections it groups (Annuaire: documents, registre, chiffres…).
   const active = tabs.findIndex(
-    (tab) => pathname.startsWith(tab.href) || (tab.path === "verifier" && !!ws && pathname.startsWith(`/w/${ws}/analyser`)),
+    (tab) => pathname.startsWith(tab.href) || (!!ws && (tab.also ?? []).some((p) => pathname.startsWith(`/w/${ws}/${p}`))),
   );
   return { tabs, active };
 }

@@ -9,7 +9,7 @@ import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon,
 import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
 import { openPalette } from "@/components/shell/command-palette";
-import { CARNET_NAV, NAV, WORKSPACE_NAV } from "@/components/shell/nav";
+import { NAV, WORKSPACE_NAV } from "@/components/shell/nav";
 import { PreferenceDock } from "@/components/shell/preference-dock";
 import { TabBar, TabIsland } from "@/components/shell/tab-island";
 import {
@@ -138,7 +138,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
   const { data: me } = useSWR<Me>("/me", fetcher);
 
   // Le carnet's shelves follow the daily places; priority+ folds whatever does not fit.
-  const items = [...NAV, ...CARNET_NAV];
+  const items = NAV;
   return (
     <AssistantProvider scope="desk">
       <div data-app-shell className="min-h-dvh bg-background">

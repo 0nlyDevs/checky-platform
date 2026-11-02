@@ -190,7 +190,7 @@ export const rubrique = {
   },
 
   angles: {
-    title: "Angles",
+    title: "Angles de reportage",
     lead: "Partez d'un sujet : Checky réunit ce que la rédaction sait déjà, puis suggère des angles qui s'appuient sur ces faits numérotés. Ce sont des pistes ; vous choisissez.",
     topic: "Votre sujet",
     topicPlaceholder: "délestage, examens, peste…",

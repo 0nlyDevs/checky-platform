@@ -1,9 +1,6 @@
-import type { Metadata } from "next";
-import { MembersView } from "@/components/members/members-view";
-import { t } from "@/lib/i18n/fr";
+import { Moved } from "@/components/shell/moved";
 
-export const metadata: Metadata = { title: t.members.title };
-
+// The team lives in Réglages.
 export default function MembersPage() {
-  return <MembersView />;
+  return <Moved to="parametres#equipe" />;
 }

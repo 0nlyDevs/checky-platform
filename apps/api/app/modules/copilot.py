@@ -67,8 +67,8 @@ dans le même tour.
 - Pour trouver des sources hors du desk : search_outside (fact-checkeurs et web en une fois) ou \
 search_wikipedia, puis lis la page avec fetch_url. Propose de joindre les bonnes avec propose_attach_link (le journaliste confirme). \
 Préfère les sources primaires et la presse reconnue aux publications de réseaux sociaux.
-- Pour aller sur une page du desk (Vérifier, qui est l'accueil ; les dossiers ; le tableau ; \
-interroger nos sources ; les sources ; les membres ; les paramètres) : open_page. Pour une affirmation : \
+- Pour aller sur une page de la rédaction (Ma rubrique ; Vérifier ; les dossiers ; le tableau ; \
+interroger nos sources ; les sources ; la veille ; l'annuaire ; l'équipe ; les réglages) : open_page. Pour une affirmation : \
 open_claim. N'ouvre pas la page où le journaliste se trouve déjà.
 - Pour agir (créer une affirmation, joindre un lien, lancer l'analyse, changer le statut, ouvrir une \
 affirmation) utilise les outils propose_* et open_claim. Rien n'est fait tant que le journaliste n'a \
@@ -95,14 +95,17 @@ class DeskContext(AgentContext):
 
 # The desk's pages the copilot can open (key → path under /w/{ws}/, label).
 DESK_PAGES = {
+    "rubrique": ("rubrique", "Ma rubrique"),
     "affirmations": ("affirmations", "Les dossiers"),
     "tableau": ("affirmations?vue=tableau", "Le tableau de vérification"),
     "verifier": ("verifier", "Vérifier"),
     "sources_ask": ("verifier?mode=sources", "Interroger nos sources"),
     "sources": ("sources", "Les sources"),
     "enregistrements": ("sources?vue=enregistrements", "Les enregistrements"),
-    "membres": ("membres", "L'équipe"),
-    "parametres": ("parametres", "Paramètres"),
+    "veille": ("veille", "La veille"),
+    "annuaire": ("annuaire", "L'annuaire"),
+    "membres": ("parametres#equipe", "L'équipe"),
+    "parametres": ("parametres", "Réglages"),
 }
 
 
@@ -367,10 +370,11 @@ COPILOT_TOOLS: Tools = {
     "open_page": (
         open_page,
         (
-            "Open a page of the desk: affirmations (the dossiers, as a list), tableau "
-            "(the board), verifier (check a message or a link: the home of the desk), sources_ask "
-            "(ask every source of the newsroom), sources, "
-            "enregistrements (audio sources), membres, parametres."
+            "Open a page of the newsroom: rubrique (my page, the home), affirmations (the "
+            "dossiers, as a list), tableau (the board), verifier (check a message or a link), "
+            "sources_ask (ask every source of the newsroom), sources, enregistrements (audio "
+            "sources), veille (what circulates), annuaire (contacts, documents, communiqués, "
+            "figures), membres (the team), parametres (settings)."
         ),
         {
             "type": "object",

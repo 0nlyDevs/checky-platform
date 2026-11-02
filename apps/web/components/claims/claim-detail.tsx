@@ -29,6 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { SourcesPanel } from "@/components/sources/sources-panel";
+import { AnglesPanel } from "@/components/rubrique/angles-view";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
@@ -579,6 +580,14 @@ export function ClaimDetail() {
             )}
           </section>
         )}
+
+        {/* Need 8: story angles for this dossier, each resting on its facts. */}
+        <section aria-labelledby="angles" className="space-y-3">
+          <h2 id="angles" className="font-display text-xl font-bold">
+            {t.rubrique.angles.title}
+          </h2>
+          <AnglesPanel ws={ws} itemId={id} />
+        </section>
 
         <CarnetPanel ws={ws} item={item} />
       </div>

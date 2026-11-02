@@ -1,9 +1,6 @@
-import type { Metadata } from "next";
-import { TranscriptionsView } from "@/components/sources/transcriptions-view";
-import { t } from "@/lib/i18n/fr";
+import { Moved } from "@/components/shell/moved";
 
-export const metadata: Metadata = { title: t.transcriptions.title };
-
+// Recordings are sources: their page is Dossiers › Sources › Enregistrements.
 export default function TranscriptionsPage() {
-  return <TranscriptionsView />;
+  return <Moved to="sources?vue=enregistrements" />;
 }
