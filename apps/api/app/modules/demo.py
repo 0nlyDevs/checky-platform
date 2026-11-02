@@ -1,5 +1,6 @@
 """Demo data for the pitch: plausible public claims, clearly synthetic (M12)."""
 
+import logging
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter
@@ -10,6 +11,7 @@ from app.core.access import Admin, Db
 from app.core.activity import broadcast, record
 from app.core.models import Item, Source, Workspace
 
+log = logging.getLogger("fanilo.demo")
 router = APIRouter(tags=["demo"])
 
 # (minutes ago first seen, title, status, verdict, suggested verdict, origin, source count, tags)
@@ -193,6 +195,40 @@ DEMO_SOURCES = {
 DEMO_SOURCE_DATES = {8: "2023-03-14"}
 
 
+# Every newsroom resource module (contacts, originals, figures, routes, clips, prefs, SMS…) may
+# export `seed_demo(db, workspace_id, user_id, items)` where `items` maps the demo refs
+# (FAN-0137…) to the created claims. Each seed is idempotent and runs on its own: a failure in
+# one shelf is logged and never blocks the demo.
+SEED_MODULES = (
+    "directory",
+    "registry",
+    "figures",
+    "trajet",
+    "veille",
+    "rubrique",
+    "sms",
+)
+
+
+async def seed_extras(db, workspace_id, user_id, items: dict[str, Item]) -> None:
+    import importlib
+
+    for name in SEED_MODULES:
+        try:
+            module = importlib.import_module(f"app.modules.{name}")
+        except ImportError:
+            continue
+        seed = getattr(module, "seed_demo", None)
+        if seed is None:
+            continue
+        try:
+            await seed(db, workspace_id, user_id, items)
+            await db.commit()
+        except Exception:
+            log.exception("demo seed %s failed", name)
+            await db.rollback()
+
+
 @router.post("/workspaces/{ws}/demo/reset")
 async def reset_demo(admin: Admin, db: Db) -> dict:
     # The demo newsroom shows its published verdicts and takes public tips, for the pitch.
@@ -203,6 +239,7 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
     await db.execute(delete(Source).where(Source.item_id.in_(items)))
     await db.execute(delete(Item).where(Item.workspace_id == admin.workspace_id))
     created_sources = []
+    by_ref: dict[str, Item] = {}
     now = datetime.now(UTC)
     for i, (ago, title, status, verdict, suggested, origin, sources, tags) in enumerate(
         DEMO_CLAIMS
@@ -228,6 +265,7 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
         )
         db.add(item)
         await db.flush()
+        by_ref[item.data["ref"]] = item
         await record(db, admin.workspace_id, admin.user.id, "item", item.id, "create")
         if i in DEMO_SOURCES:
             title, text = DEMO_SOURCES[i]
@@ -249,6 +287,7 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
             await db.flush()
             created_sources.append(source.id)
     await db.commit()
+    await seed_extras(db, admin.workspace_id, admin.user.id, by_ref)
     from app.modules.rag import queue_embedding
 
     for source_id in created_sources:
