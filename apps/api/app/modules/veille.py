@@ -24,7 +24,7 @@ from typing import Any, Literal
 
 from fastapi import APIRouter
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import dates, seasons, storage
@@ -1253,7 +1253,101 @@ async def meteo(member: AnyMember, db: Db, region: str | None = None) -> dict[st
 
 
 # ------------------------------------------------------------------------------- demo seed
+DEMO_SIGNALS = ("délestage", "enlèvement")
 # Fictional stations and bulletins, flagged « démo » (location.demo). The Malagasy sentence is
 # what a veilleur would type (to be reread by a native speaker).
-# A citizen's tip, and two verdicts of earlier years so that « Ça revient » has something to
-# show on a fresh demo. Fictional, flagged `demo`.
+DEMO_CLIPS: tuple[dict[str, Any], ...] = (
+    {
+        "station": "RDJ (démo)",
+        "at": (6, 0),
+        "language": "fr",
+        "region": "Analamanga",
+        "text": (
+            "Au journal de 6 heures, un auditeur affirme que la JIRAMA prévoit 72 heures de "
+            "délestage dès demain sur tout Antananarivo, communiqué à l'appui."
+        ),
+        "ref": "FAN-0145",
+    },
+    {
+        "station": "Radio Fanambarana Toamasina (démo)",
+        "at": (7, 30),
+        "language": "mg",
+        "region": "Atsinanana",
+        "text": (
+            "Nilaza ny mpihaino iray fa hisy fahatapahan-jiro mandritra ny 12 ora isan'andro "
+            "eto Toamasina manomboka rahampitso."
+        ),
+        "ref": None,
+    },
+    {
+        "station": "Radio Feon'i Boeny (démo)",
+        "at": (8, 15),
+        "language": "fr",
+        "region": "Boeny",
+        "text": (
+            "Un appel d'auditeur affirme qu'un enlèvement d'enfant a eu lieu près du marché de "
+            "Mahajanga hier soir ; la gendarmerie n'a rien confirmé à l'antenne."
+        ),
+        "ref": None,
+    },
+)
+
+
+def _demo_moment(hour: int, minute: int) -> datetime:
+    """Today at that time in Madagascar, or yesterday when that time has not come yet."""
+    now = dates.now()
+    moment = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    return moment - timedelta(days=1) if moment > now else moment
+
+
+def _region_place(region: str, name: str | None = None) -> dict[str, Any]:
+    _, lat, lng = MG_REGIONS[region]
+    return {
+        "name": name or region,
+        "country": "Madagascar",
+        "region": region,
+        "lat": lat,
+        "lng": lng,
+    }
+
+
+async def seed_demo(db: AsyncSession, workspace_id: uuid.UUID, user_id: str, items) -> None:
+    """Three radio clips (the RDJ one already follows FAN-0145), two watched words and the
+    season rules. Idempotent: the demo clips and words are replaced. No item is added here: the
+    demo's claims are `demo.DEMO_CLAIMS` (« Ça revient » shows once verdicts of earlier years
+    exist)."""
+    await db.execute(
+        delete(RadioClip).where(
+            RadioClip.workspace_id == workspace_id,
+            RadioClip.location["demo"].astext == "true",
+        )
+    )
+    await db.execute(
+        delete(Signal).where(
+            Signal.workspace_id == workspace_id, Signal.word.in_(list(DEMO_SIGNALS))
+        )
+    )
+    await seasons.seed(db)
+    for word in DEMO_SIGNALS:
+        db.add(Signal(workspace_id=workspace_id, created_by=user_id, word=word))
+
+    created = []
+    for spec in DEMO_CLIPS:
+        item = (items or {}).get(spec["ref"]) if spec["ref"] else None
+        clip = RadioClip(
+            workspace_id=workspace_id,
+            created_by=user_id,
+            station=spec["station"],
+            heard_text=spec["text"],
+            language=spec["language"],
+            recorded_at=_demo_moment(*spec["at"]),
+            location={**_region_place(spec["region"]), "demo": True},
+            item_id=item.id if item is not None else None,
+            status="followed" if item is not None else "new",
+        )
+        db.add(clip)
+        created.append(clip)
+
+    await db.commit()
+    for clip in created:
+        await match_signals(db, workspace_id, clip.heard_text, "clip")

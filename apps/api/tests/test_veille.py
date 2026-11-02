@@ -11,7 +11,7 @@ from sqlalchemy import func, select, update
 from app.core import dates, storage
 from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import Item, Job, PublicQuestion, RadioClip, Route, Season, Source
+from app.core.models import Item, Job, PublicQuestion, RadioClip, Route, Season, Signal, Source
 from app.modules import veille
 from app.workers import queue, radio_capture, veille_poll
 from tests.test_public import _claim, _newsroom
@@ -488,3 +488,21 @@ def test_radio_capture_skips_quietly_without_ffmpeg(as_user, monkeypatch):
 
 
 # --- demo
+def test_the_demo_seeds_clips_words_and_seasons_idempotently(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    for _ in range(2):
+        assert alice.post(base + "/demo/reset").status_code == 200
+    rows = alice.get(base + "/antenne").json()
+    assert sum(r["reports"] for r in rows) == 3 and all(r["demo"] for r in rows)
+    rdj = next(r for r in rows if r["stations"] == ["RDJ (démo)"])
+    assert rdj["status"] == "followed" and rdj["ref"] == "FAN-0145"
+    malagasy = next(r for r in rows if r["latest"]["language"] == "mg")
+    assert malagasy["latest"]["text_from"] == "veilleur" and malagasy["status"] == "new"
+    words = {s["word"]: s["hits"] for s in alice.get(base + "/signals").json()}
+    assert words == {"délestage": 1, "enlèvement": 1}
+    assert alice.get(base + "/meteo").json()["seasons"]
+    feed = alice.get(base + "/veille").json()
+    assert feed["counts"]["clip"] == 3 and all(e["demo"] for e in feed["entries"])
+    assert _db(lambda db: db.scalar(select(func.count()).select_from(Signal))) == 2

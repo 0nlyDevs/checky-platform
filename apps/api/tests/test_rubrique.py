@@ -282,3 +282,19 @@ async def _count(db):
     from sqlalchemy import func, select
 
     return await db.scalar(select(func.count()).select_from(Communique))
+
+
+def test_the_demo_gives_the_admin_the_pitch_beat(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    assert alice.post(base + "/demo/reset").status_code == 200
+    prefs = alice.get(base + "/me/prefs").json()
+    assert prefs["beats"] == ["énergie"] and prefs["regions"] == ["Analamanga"]
+    page = alice.get(base + "/rubrique").json()
+    refs = [(c["item"] or {}).get("data", {}).get("ref") for c in page["circulating"]]
+    assert "FAN-0145" in refs
+    assert any(
+        c["kind"] == "clip" and c.get("station", "").startswith("Radio Fanambarana")
+        for c in page["circulating"]
+    )

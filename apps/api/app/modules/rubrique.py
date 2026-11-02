@@ -982,3 +982,12 @@ async def documents(
 
 
 # ------------------------------------------------------------------------------- demo seed
+async def seed_demo(db: AsyncSession, workspace_id: uuid.UUID, user_id: str, items) -> None:
+    """The admin's morning page follows énergie in Analamanga (the pitch rumour's beat)."""
+    await save_prefs(
+        db,
+        workspace_id,
+        user_id,
+        PrefsIn(beats=["énergie"], regions=["Analamanga"], language="fr"),
+    )
+    await db.commit()
