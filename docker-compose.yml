@@ -1,0 +1,21 @@
+# Optional (not used yet): Postgres + pgvector and Redis in containers. Local dev uses your own Postgres.
+services:
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: fanilo
+      POSTGRES_PASSWORD: fanilo
+      POSTGRES_DB: fanilo
+    ports: ["5432:5432"]
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./infra/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fanilo"]
+      interval: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+volumes:
+  db-data:
