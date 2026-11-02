@@ -5,11 +5,14 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
-import { IconArrowCounterClockwise, IconArrowRight, IconArrowSquareOut, IconCalendarDots, IconCircleNotch, IconMicrophone, IconSealCheck, IconSparkle, IconStop } from "@/lib/icons";
-import { AgentTrace, ResearchDetails, type AgentEvent, type ResearchExtras } from "@/components/verify/research-details";
-import { research } from "@/lib/i18n/fr/research";
+import { IconAddressBook, IconArrowCounterClockwise, IconArrowRight, IconArrowSquareOut, IconCalendarDots, IconCircleNotch, IconMicrophone, IconStop } from "@/lib/icons";
 import { AskView } from "@/components/ask/ask-view";
 import { toClaim, VERDICT_META, VerdictChip } from "@/components/claims/verdict";
+import { CrewLog } from "@/components/crew/crew-log";
+import { Facts } from "@/components/crew/facts";
+import { Lecture } from "@/components/crew/lecture";
+import { PublicStrip, Reliability, RiskNote, ToneCard } from "@/components/crew/signals";
+import { type AgentEvent, type CrewResult, frDate, hostOf } from "@/components/crew/types";
 import { claimSteps, type Step, StepLine, type StepState } from "@/components/flow/step-line";
 import { Button } from "@/components/ui/button";
 import { API_URL, api, ApiError, fetcher } from "@/lib/api";
@@ -19,44 +22,16 @@ import { cn } from "@/lib/utils";
 
 const v = t.verify;
 const c = t.linkCheck;
+const k = t.crew;
 type StepKey = "read" | "claims" | "search" | "verdict";
 type Run = { status: "waiting" | "running" | "done" | "failed"; summary: string };
-type Found = { n: number; kind: string; title: string; url: string; snippet: string; date?: string | null; read_status?: string; passages?: string[] };
-type Evidence = { result: number; stance: "supports" | "contradicts" | "context"; quote: string };
-type Result = ResearchExtras & {
-  url: string | null;
-  platform: string | null;
-  kind?: "page" | "post" | "image" | "text";
-  title?: string;
-  site?: string | null;
-  author?: string | null;
-  published_at?: string | null;
-  days_old?: number | null; // worked out by the API
-  excerpt?: string;
-  summary?: string;
-  claims?: string[];
-  signals?: { type: string; quote: string; why: string }[];
-  results?: Found[];
-  analysis?: { verdict: Verdict; reason: string; evidence: Evidence[]; missing: string };
-  image?: { ai_markers?: string[]; content_credentials?: boolean; exif?: Record<string, string> };
-  reverse_search?: { name: string; url: string }[];
-  tracked?: { item_id: string; ref: string | null; title: string } | null;
-  needs_text?: boolean;
-};
-type LogLine = { id: number; at: Date; text: string; state: Run["status"] };
+type Result = CrewResult;
 
 const KEYS: StepKey[] = ["read", "claims", "search", "verdict"];
 const STALE_DAYS = 30; // the API's dates.STALE_DAYS
 const ORIGIN: Record<string, string> = { facebook: "facebook", whatsapp: "whatsapp", tiktok: "tiktok" };
-const fresh = () => Object.fromEntries(KEYS.map((k) => [k, { status: "waiting", summary: "" }])) as Record<StepKey, Run>;
-const clock = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-const host = (u: string) => {
-  try {
-    return new URL(u).hostname.replace(/^www\./, "");
-  } catch {
-    return u;
-  }
-};
+const fresh = () => Object.fromEntries(KEYS.map((key) => [key, { status: "waiting", summary: "" }])) as Record<StepKey, Run>;
+const host = hostOf;
 
 /** What was pasted becomes a link to read and/or the text itself. */
 function split(input: string): { url: string | null; text: string | null } {
@@ -167,20 +142,21 @@ export function VerifyView() {
   const [input, setInput] = useState(params.get("lien") ?? "");
   const [sent, setSent] = useState<{ url: string | null; text: string | null } | null>(null);
   const [running, setRunning] = useState(false);
-  const [aiEnabled, setAiEnabled] = useState(true);
-  const [agents, setAgents] = useState<AgentEvent[]>([]);
+  // « Sans IA » for this run; the newsroom's own setting (Paramètres) always wins.
+  const { data: newsroom } = useSWR<{ settings?: { ai_enabled?: boolean } }>(`/workspaces/${ws}`, fetcher);
+  const newsroomAi = newsroom?.settings?.ai_enabled !== false;
+  const [noAi, setNoAi] = useState(false);
+  const aiEnabled = newsroomAi && !noAi;
+  const [agents, setAgents] = useState<Record<string, AgentEvent>>({});
+  const [runs, setRuns] = useState<Record<string, number>>({});
   const [steps, setSteps] = useState(fresh);
-  const [log, setLog] = useState<LogLine[]>([]);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [claim, setClaim] = useState(0);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [tracking, setTracking] = useState(false);
   const started = useRef(false);
-  const seq = useRef(0);
   const dictation = useDictation((said) => setInput((prev) => (prev.trim() ? `${prev.trim()} ${said}` : said)));
-
-  const say = (text: string, state: Run["status"]) => setLog((all) => [...all, { id: ++seq.current, at: new Date(), text, state }]);
 
   async function run() {
     const body = split(input);
@@ -190,28 +166,25 @@ export function VerifyView() {
     setSent(body);
     setRunning(true);
     setSteps(fresh());
-    setAgents([]);
-    setLog([]);
+    setAgents({});
+    setRuns({});
     setResult(null);
     setError(null);
     try {
       await postStream(`/workspaces/${ws}/crew`, { ...body, ai_enabled: aiEnabled }, (event, data) => {
         if (event === "agent") {
           const agent = data as AgentEvent;
-          setAgents(previous => [...previous.filter(a => a.agent !== agent.agent), agent]);
+          setAgents((all) => ({ ...all, [agent.agent]: agent }));
+          if (agent.status === "running") setRuns((all) => ({ ...all, [agent.agent]: (all[agent.agent] ?? 0) + 1 }));
         } else if (event === "step") {
           const d = data as { key: StepKey; status: Run["status"]; summary: string };
           setSteps((all) => ({ ...all, [d.key]: { status: d.status, summary: d.summary } }));
-          if (d.status === "running") say(v.log[d.key], "running");
-          else if (d.status === "failed") say(`${v.log.failed} : ${d.summary || c.steps[d.key]}`, "failed");
-          else if (d.key === "verdict") say(`${v.conclusion} : ${VERDICT_META[d.summary as Verdict]?.label ?? d.summary}`, "done");
-          else if (d.summary) say(d.summary, "done");
         } else if (event === "result") {
           const r = data as Result;
           setResult(r);
           setClaim(0);
-          const cited = new Set((r.analysis?.evidence ?? []).map((e) => e.result));
-          setPicked(new Set((r.results ?? []).filter((x) => x.kind === "fact-check" || cited.has(x.n)).map((x) => x.url)));
+          const cited = new Set((r.analysis?.evidence ?? []).map((e) => e.n ?? e.result));
+          setPicked(new Set((r.results ?? []).filter((x) => x.url && (x.kind === "fact-check" || cited.has(x.n))).map((x) => x.url)));
         } else if (event === "error") {
           setError((data as { code?: string }).code === "ai_unavailable" ? c.busy : c.failed);
         }
@@ -259,8 +232,8 @@ export function VerifyView() {
     setResult(null);
     setError(null);
     setSteps(fresh());
-    setAgents([]);
-    setLog([]);
+    setAgents({});
+    setRuns({});
     setInput("");
   }
 
@@ -349,9 +322,13 @@ export function VerifyView() {
                 </div>
               </form>
 
-              <label className="mt-4 flex items-center gap-2 text-sm"><input type="checkbox" checked={aiEnabled} disabled={running} onChange={e => setAiEnabled(e.target.checked)} className="size-4" />{research.ai}</label>
-              {!aiEnabled && <p className="mt-1 text-sm text-muted-foreground">{research.noAi}</p>}
-              <AgentTrace agents={agents} />
+              <div className="mt-3 max-w-4xl">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-bold">
+                  <input type="checkbox" checked={!aiEnabled} disabled={running || !newsroomAi} onChange={(e) => setNoAi(e.target.checked)} className="size-4 accent-[var(--foreground)]" />
+                  {k.noAi.label}
+                </label>
+                {!aiEnabled && <p className="mt-0.5 text-sm text-muted-foreground">{newsroomAi ? k.noAi.hint : k.noAi.newsroomOff}</p>}
+              </div>
               {!touched ? (
                 <section className="mt-12 max-w-4xl">
                   <h2 className="font-display text-xl font-bold">{v.how}</h2>
@@ -362,7 +339,8 @@ export function VerifyView() {
                   ws={ws}
                   sent={sent}
                   steps={steps}
-                  log={log}
+                  agents={agents}
+                  runs={runs}
                   running={running}
                   result={result}
                   error={error}
@@ -389,7 +367,8 @@ function Board({
   ws,
   sent,
   steps,
-  log,
+  agents,
+  runs,
   running,
   result,
   error,
@@ -404,7 +383,8 @@ function Board({
   ws: string;
   sent: { url: string | null; text: string | null } | null;
   steps: Record<StepKey, Run>;
-  log: LogLine[];
+  agents: Record<string, AgentEvent>;
+  runs: Record<string, number>;
   running: boolean;
   result: Result | null;
   error: string | null;
@@ -418,19 +398,18 @@ function Board({
 }) {
   const states = lineStates(steps);
   const quotes = (result?.signals ?? []).map((s) => s.quote);
-  const count = result?.results?.length ?? Number(steps.search.summary.match(/\d+/)?.[0] ?? 0);
   const notes: Partial<Record<Step, React.ReactNode>> = {
     claim: steps.claims.summary || steps.read.summary || undefined,
     evidence: steps.search.summary || undefined,
     conclusion:
       steps.verdict.status === "done"
         ? `${VERDICT_META[steps.verdict.summary as Verdict]?.label ?? steps.verdict.summary} · ${t.flow.state.suggested}`
-        : result && !running && !result.analysis
-          ? v.noConclusion
+        : steps.verdict.status === "waiting" && k.noLecture[steps.verdict.summary]
+          ? k.noLecture[steps.verdict.summary]
           : undefined,
   };
   const message = sent?.text ?? result?.excerpt ?? "";
-  const date = result?.published_at ? new Date(`${result.published_at.slice(0, 10)}T00:00:00Z`) : null;
+  const date = frDate(result?.published_at);
 
   return (
     <div className="mt-8 max-w-5xl space-y-8" aria-live="polite">
@@ -441,9 +420,9 @@ function Board({
             <p className="mt-1 flex flex-wrap items-baseline gap-x-2 text-sm text-muted-foreground">
               <span className="font-bold text-foreground">{result?.site ?? host(sent?.url ?? "")}</span>
               {result?.author && <span>{c.by(result.author)}</span>}
-              {date && !Number.isNaN(date.getTime()) && (
+              {date && (
                 <time className="tabular" dateTime={result!.published_at!}>
-                  {date.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })}
+                  {date}
                 </time>
               )}
             </p>
@@ -460,20 +439,7 @@ function Board({
               {c.old(result.days_old)}
             </p>
           )}
-          {!!result?.signals?.length && (
-            <div className="mt-5 border-t border-border pt-4">
-              <h3 className="text-sm font-bold">{v.signals}</h3>
-              <ul className="mt-2 space-y-2">
-                {result.signals.map((s, i) => (
-                  <li key={i} className="arrive text-sm" style={{ "--i": i } as React.CSSProperties}>
-                    <span className="font-bold">{c.signal[s.type] ?? s.type}</span> · <span className="quote text-muted-foreground">« {s.quote} »</span>
-                    {s.why && <span className="block text-pretty text-muted-foreground">{s.why}</span>}
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-xs text-muted-foreground">{c.signalsNote}</p>
-            </div>
-          )}
+          <RiskNote risk={result?.risk} />
           {sent?.url && (
             <a href={sent.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4">
               {c.openOriginal} <IconArrowSquareOut className="size-3.5" aria-hidden />
@@ -483,26 +449,7 @@ function Board({
 
         <div className="space-y-5">
           <StepLine states={states} notes={notes} />
-          <section className="rounded-md bg-live p-4 text-live-foreground">
-            <h2 className="flex items-center justify-between gap-3 font-display text-sm font-bold">
-              {v.live}
-              <span className="flex items-center gap-1.5 text-xs font-bold">
-                <span className={cn("size-2 rounded-full", running ? "animate-pulse bg-action" : "bg-live-muted")} aria-hidden />
-                {running ? v.liveNow : v.liveDone}
-              </span>
-            </h2>
-            <ol className="mt-3 space-y-1.5 text-sm">
-              {log.map((l) => (
-                <li key={l.id} className="arrive flex items-baseline gap-3">
-                  <time className="shrink-0 text-xs text-live-muted tabular">{clock.format(l.at)}</time>
-                  <span className={cn("min-w-0 text-pretty", l.state === "failed" && "text-verdict-false-ink dark:text-verdict-false")}>{l.text}</span>
-                </li>
-              ))}
-            </ol>
-            {count > 0 && (
-              <p className="arrive mt-3 inline-flex rounded-full border border-live-border px-2.5 py-0.5 font-display text-sm font-bold tabular">{v.sourcesCount(count)}</p>
-            )}
-          </section>
+          <CrewLog agents={agents} runs={runs} running={running} />
         </div>
       </div>
 
@@ -527,8 +474,15 @@ function Board({
 
       {result && !result.needs_text && (
         <>
-          <Conclusion r={result} />
-          <ResearchDetails data={result} ws={ws} />
+          <Facts r={result} ws={ws} />
+          <Wall r={result} picked={picked} toggle={toggle} />
+          <Lecture r={result} />
+          {(result.credibility || result.tone || !!result.framing?.length) && (
+            <div className="grid items-start gap-4 md:grid-cols-2">
+              {result.credibility && <Reliability c={result.credibility} />}
+              <ToneCard tone={result.tone} framing={result.framing} />
+            </div>
+          )}
           {(result.claims?.length ?? 0) > 1 && (
             <section>
               <h2 className="font-display text-lg font-bold">{c.claims}</h2>
@@ -547,8 +501,15 @@ function Board({
               </fieldset>
             </section>
           )}
-          {(result.image || result.reverse_search) && <ImageFacts r={result} />}
-          <Wall r={result} picked={picked} toggle={toggle} />
+          <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+            <IconAddressBook className="size-4 shrink-0" aria-hidden />
+            <span className="font-bold">{k.contact}</span>
+            <span className="text-muted-foreground">{k.contactHelp}</span>
+            <Link href={`/w/${ws}/annuaire` as never} className="font-bold underline underline-offset-4">
+              {k.openDirectory}
+            </Link>
+          </p>
+          <PublicStrip r={result} />
 
           <div className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-background px-4 py-3 lg:bottom-0 lg:mx-0 lg:px-0">
             <Button variant="action" size="xl" onClick={onTrack} disabled={tracking}>
@@ -567,62 +528,9 @@ function Board({
   );
 }
 
-/** The suggestion lands once, as a block: dashed outline on the verdict's soft ground, word first. */
-function Conclusion({ r }: { r: Result }) {
-  const a = r.analysis;
-  if (!a) return r.claims?.length ? <p className="text-muted-foreground">{c.noVerdict}</p> : null;
-  const m = VERDICT_META[a.verdict];
-  const Icon = m.icon;
-  const byN = new Map((r.results ?? []).map((x) => [x.n, x]));
-  return (
-    <section className="verdict-land">
-      <h2 className="sr-only">{v.conclusion}</h2>
-      <div className={cn("rounded-md border-2 border-dashed p-5 md:p-6", m.soft, m.ink, "border-current")}>
-        <p className="flex items-center gap-3 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          <Icon className="size-9 shrink-0 md:size-11" aria-hidden />
-          {m.label}
-        </p>
-        <p className="mt-1 text-sm font-bold">{v.suggestedBy}</p>
-        {a.reason && <p className="mt-4 max-w-[70ch] text-lg text-pretty text-foreground">{a.reason}</p>}
-        {a.missing && (
-          <p className="mt-3 max-w-[70ch] text-pretty text-foreground">
-            <span className="font-bold">{c.missing} :</span> {a.missing}
-          </p>
-        )}
-      </div>
-      {!!a.evidence.length && (
-        <div className="mt-4">
-          <h3 className="text-sm font-bold">{v.restsOn}</h3>
-          <ul className="mt-2 grid gap-2 md:grid-cols-2">
-            {a.evidence.map((e, i) => {
-              const src = byN.get(e.result);
-              return (
-                <li key={i} className="arrive rounded-md border border-border bg-card p-3 text-sm" style={{ "--i": i } as React.CSSProperties}>
-                  <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="rounded-sm bg-muted px-1.5 py-px text-xs font-bold">{c.stance[e.stance]}</span>
-                    {src ? (
-                      <a href={src.url} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 font-bold hover:underline">
-                        <span className="truncate">{src.title}</span>
-                        <IconArrowSquareOut className="size-3 shrink-0 text-muted-foreground" aria-hidden />
-                      </a>
-                    ) : (
-                      <span>{c.result(e.result)}</span>
-                    )}
-                  </p>
-                  <blockquote className="quote mt-1.5 text-pretty text-muted-foreground">« {e.quote} »</blockquote>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
-    </section>
-  );
-}
-
 /** What fact-checkers, the web and Wikipedia say: each result arrives, then stays still to be read. */
 function Wall({ r, picked, toggle }: { r: Result; picked: Set<string>; toggle: (u: string) => void }) {
-  const rows = r.results ?? [];
+  const rows = (r.results ?? []).filter((x) => x.url);
   if (!r.claims?.length && !rows.length) return null;
   return (
     <section>
@@ -637,8 +545,10 @@ function Wall({ r, picked, toggle }: { r: Result; picked: Set<string>; toggle: (
                   <input type="checkbox" checked={picked.has(x.url)} onChange={() => toggle(x.url)} aria-label={c.attach(x.title)} className="mt-1 size-4 shrink-0 accent-[var(--foreground)]" />
                   <span className="min-w-0 flex-1 text-sm">
                     <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className={cn("rounded-sm px-1.5 py-px text-xs font-bold", x.kind === "fact-check" ? "bg-foreground text-background" : "bg-muted")}>{c.kind[x.kind] ?? x.kind}</span>
+                      <span className="font-display text-xs font-bold tabular">[{x.n}]</span>
+                      <span className={cn("rounded-sm px-1.5 py-px text-xs font-bold", x.kind === "fact-check" ? "bg-foreground text-background" : "bg-muted")}>{x.kind === "recheck" ? k.recheck : (c.kind[x.kind] ?? x.kind)}</span>
                       <span className="text-muted-foreground">{host(x.url)}</span>
+                      <span className="text-muted-foreground">· {frDate(x.date) ?? k.undated}</span>
                     </span>
                     <a href={x.url} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="mt-1.5 block font-bold text-pretty hover:underline">
                       {x.title}
@@ -653,44 +563,6 @@ function Wall({ r, picked, toggle }: { r: Result; picked: Set<string>; toggle: (
       ) : (
         <p className="mt-2 text-muted-foreground">{c.noResults}</p>
       )}
-    </section>
-  );
-}
-
-function ImageFacts({ r }: { r: Result }) {
-  const img = r.image;
-  const camera = [img?.exif?.Make, img?.exif?.Model].filter(Boolean).join(" ");
-  return (
-    <section className="rounded-md border border-border bg-card p-5">
-      <h2 className="font-display text-lg font-bold">{c.image}</h2>
-      <div className="mt-2 space-y-2 text-sm">
-        {img &&
-          (img.ai_markers?.length ? (
-            <p className="flex items-start gap-1.5 font-bold text-verdict-misleading-ink">
-              <IconSparkle className="mt-0.5 size-4 shrink-0" aria-hidden />
-              {c.imageMarkers(img.ai_markers.join(", "))}
-            </p>
-          ) : (
-            <p className="text-muted-foreground">{c.imageNoMarkers}</p>
-          ))}
-        {img?.content_credentials && (
-          <p className="flex items-start gap-1.5">
-            <IconSealCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
-            {c.imageCredentials}
-          </p>
-        )}
-        {camera && <p>{c.imageCamera(camera)}</p>}
-        {!!r.reverse_search?.length && (
-          <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span className="text-muted-foreground">{c.reverse} :</span>
-            {r.reverse_search.map((x) => (
-              <a key={x.name} href={x.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-bold underline underline-offset-4">
-                {x.name} <IconArrowSquareOut className="size-3" aria-hidden />
-              </a>
-            ))}
-          </p>
-        )}
-      </div>
     </section>
   );
 }
