@@ -56,7 +56,7 @@ function errorText(e: unknown) {
 /**
  * 03 La conclusion. Knowing is not publishing: the reading only suggests, the journalist picks the
  * verdict, writes the public explanation and signs. « Signer et publier » is the screen's one
- * citron action; under double signature a journalist signs and another editor publishes.
+ * citron action: the journalist who signs publishes.
  */
 export function VerdictDecision({
   ws,
@@ -65,8 +65,6 @@ export function VerdictDecision({
   reasonDraft,
   byline,
   canSign,
-  canRelease,
-  doubleSignature,
   isPublic,
   onSaved,
 }: {
@@ -76,9 +74,6 @@ export function VerdictDecision({
   reasonDraft: string;
   byline: Byline | null;
   canSign: boolean;
-  /** An editor who did not sign it, under double signature. */
-  canRelease: boolean;
-  doubleSignature: boolean;
   isPublic: boolean;
   onSaved: (item: Item) => void;
 }) {
@@ -121,18 +116,6 @@ export function VerdictDecision({
     }
   }
 
-  async function release() {
-    setBusy(true);
-    try {
-      onSaved(await api<Item>(`${base}/release`, { method: "POST" }));
-      toast.success(s.released);
-    } catch (e) {
-      toast.error(errorText(e));
-    } finally {
-      setBusy(false);
-    }
-  }
-
   const confirmDialog = (
     <AlertDialog.Root open={!!asking} onOpenChange={(open) => !open && setAsking(null)}>
       <AlertDialog.Portal>
@@ -166,7 +149,7 @@ export function VerdictDecision({
                 <AlertDialog.Action asChild>
                   <Button variant="action" size="xl" onClick={() => void sign(asking.publish, asking.verdict, asking.text)}>
                     <IconStamp aria-hidden />
-                    {asking.publish ? s.signPublish : s.signOnly}
+                    {s.signPublish}
                   </Button>
                 </AlertDialog.Action>
               </div>
@@ -186,16 +169,7 @@ export function VerdictDecision({
           {signedReason && <p className="mt-3 max-w-[70ch] text-pretty text-foreground">{signedReason}</p>}
         </VerdictBlock>
         {published && <p className="text-sm text-muted-foreground">{isPublic ? s.publishedNote : s.privateNote}</p>}
-        {!published && doubleSignature &&
-          (canRelease ? (
-            <Button variant="action" size="xl" onClick={release} disabled={busy}>
-              {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
-              {s.release}
-            </Button>
-          ) : (
-            <p className="text-sm">{s.waitingRelease}</p>
-          ))}
-        {!published && !doubleSignature && canSign && (
+        {!published && canSign && (
           <Button variant="action" size="xl" onClick={() => setAsking({ publish: true, verdict: signedVerdict, text: signedReason })} disabled={busy || signedReason.trim().length < 10}>
             {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
             {s.signPublish}
@@ -300,11 +274,10 @@ export function VerdictDecision({
 
           <PublicStrip />
 
-          {doubleSignature && <p className="text-sm text-muted-foreground">{s.double}</p>}
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="action" size="xl" disabled={busy || !choice || tooShort} onClick={() => choice && setAsking({ publish: !doubleSignature, verdict: choice, text: reason })}>
+            <Button variant="action" size="xl" disabled={busy || !choice || tooShort} onClick={() => choice && setAsking({ publish: true, verdict: choice, text: reason })}>
               {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconStamp aria-hidden />}
-              {busy ? s.signing : doubleSignature ? s.signOnly : s.signPublish}
+              {busy ? s.signing : s.signPublish}
             </Button>
             {signed && (
               <Button variant="ghost" onClick={() => setEditing(false)} disabled={busy}>

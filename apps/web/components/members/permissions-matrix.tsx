@@ -12,7 +12,6 @@ const m = t.team.matrix;
 
 type Permissions = {
   roles: string[];
-  double_signature: boolean;
   capabilities: { key: string; roles: Record<string, boolean>; scope: "own" | null; route: string }[];
 };
 
@@ -81,7 +80,6 @@ export function PermissionsMatrix({ ws }: { ws: string }) {
             </table>
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{m.ownNote}</p>
-          <p className="mt-1 text-sm font-medium">{data.double_signature ? m.double : m.single}</p>
         </>
       )}
     </section>

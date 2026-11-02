@@ -9,7 +9,7 @@ a verdict out. Routes:
   verdict and its analysis reason (« Signer les N »);
 - `POST …/items/{id}/adopt {review}` « Reprendre ce verdict »: a fact-checker's published review
   becomes source [1] and the newsroom signs its conclusion, credited to it;
-- `POST …/items/{id}/release` under double signature, another editor publishes the signed version.
+- `POST …/items/{id}/release` « Publier la version signée »: publishes what was signed earlier.
 
 Once a verdict is published the truth gets its first stop (« Page publique ») and the people who
 asked are told (`sms.notify_signed`, when that module exists).
@@ -73,21 +73,12 @@ def digest(title, body, data):
 
 
 async def publication_guard(db, member, status, title, body, data):
+    """Nothing reaches the public without a newsroom verdict; the journalist who signs publishes
+    (« Signer et publier »)."""
     if status != "published":
         return
     if data.get("verdict") not in VERDICTS:
         raise ApiError(409, "no_verdict", "A newsroom verdict is required to publish")
-    workspace = await db.get(Workspace, member.workspace_id)
-    if not (workspace.settings or {}).get("double_signature"):
-        return
-    if not member.at_least("editor"):
-        raise ApiError(403, "editor_required", "An editor must release this verdict")
-    if not data.get("signed_by") or data.get("signed_digest") != digest(title, body, data):
-        raise ApiError(409, "signature_required", "Sign the current version before publication")
-    if data["signed_by"] == member.user.id:
-        raise ApiError(
-            409, "second_signer_required", "A different editor must release this verdict"
-        )
 
 
 async def names(db: AsyncSession, ids) -> dict[str, str]:
@@ -158,8 +149,7 @@ async def _apply(
         "byline": {"newsroom": ws.name, "journalist": signer, "signed_at": at},
     }
     data["signed_digest"] = digest(item.title, item.body, data)
-    # Under double signature a signature only verifies; another editor releases (`/release`).
-    published = publish and not (ws.settings or {}).get("double_signature")
+    published = publish
     item.status = "published" if published else "verified"
     if published:
         data["published_by"], data["published_at"] = member.user.id, at
@@ -238,8 +228,8 @@ async def sign(item_id: uuid.UUID, body: SignIn, member: AnyMember, db: Db) -> I
 
 @router.post("/workspaces/{ws}/items/{item_id}/release")
 async def release(item_id: uuid.UUID, member: Editor, db: Db) -> ItemOut:
-    """« Publier la version signée »: an editor publishes what a journalist signed, as long as
-    nothing changed since (same digest) and, under double signature, someone else signed it."""
+    """« Publier la version signée »: publishes what was signed, as long as nothing changed since
+    (same digest)."""
     item = await _locked(db, member, item_id)
     if item.status == "published":
         raise ApiError(409, "already_published", "This verdict is already published")

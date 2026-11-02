@@ -380,7 +380,7 @@ export type Attestation = {
   issued_at: string;
 };
 
-export type NewsroomSettings = { id: string; name: string; slug: string; is_public: boolean; settings?: { double_signature: boolean; ai_enabled: boolean } };
+export type NewsroomSettings = { id: string; name: string; slug: string; is_public: boolean; settings?: { ai_enabled: boolean } };
 
 // --- dates, in French, on the reader's clock -------------------------------------------------
 

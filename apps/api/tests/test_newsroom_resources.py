@@ -51,18 +51,14 @@ def test_contacts_figures_and_originals_are_workspace_scoped(as_user):
     )
 
 
-def test_double_signature_cannot_be_bypassed_and_requires_current_version(as_user):
+def test_publication_needs_a_verdict_and_keeps_signed_content(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
-    invite(alice, ws, bob, "editor")
+    invite(alice, ws, bob, "journalist")
     base = f"/api/v1/workspaces/{ws}"
-    assert alice.patch(base, json={"settings": {"double_signature": True}}).status_code == 200
     item = alice.post(base + "/items", json={"title": "Port hours"}).json()
     path = base + "/items/" + item["id"]
-    assert (
-        alice.patch(path, json={"status": "published", "data": {"verdict": "true"}}).status_code
-        == 409
-    )
+    assert alice.patch(path, json={"status": "published"}).status_code == 409  # no verdict
     assert alice.patch(path, json={"data": {"signed_by": "bob"}}).status_code == 422
     signed = alice.post(
         path + "/sign",
@@ -72,17 +68,9 @@ def test_double_signature_cannot_be_bypassed_and_requires_current_version(as_use
             "publish": True,
         },
     )
-    assert signed.status_code == 200 and signed.json()["status"] == "verified"
-    assert alice.patch(path, json={"status": "published"}).status_code == 409
-    assert alice.patch(path, json={"title": "Changed assertion"}).status_code == 200
-    assert bob.patch(path, json={"status": "published"}).status_code == 409
-    alice.post(
-        path + "/sign",
-        json={"verdict": "true", "reason": "The revised assertion matches the notice."},
-    )
-    assert bob.patch(path, json={"status": "published"}).status_code == 200
+    assert signed.status_code == 200 and signed.json()["status"] == "published"
     # Published content cannot be silently replaced while retaining the old signature.
-    assert bob.patch(path, json={"title": "Entirely different assertion"}).status_code == 409
+    assert alice.patch(path, json={"title": "Entirely different assertion"}).status_code == 409
 
 
 def test_issuer_can_only_read_own_entries_and_veilleur_cannot_read_desk(as_user):

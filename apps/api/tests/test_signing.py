@@ -75,28 +75,28 @@ def test_private_newsroom_publishes_without_a_public_page_stop(as_user):
     assert _routes(item) == []
 
 
-def test_double_signature_needs_another_editor_to_release(as_user):
+def test_signer_publishes_and_a_signed_version_can_be_published_later(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
     invite(alice, ws, bob, "editor")
-    alice.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"double_signature": True}})
     item = _claim(alice, ws)
     path = f"/api/v1/workspaces/{ws}/items/{item}"
     assert bob.post(path + "/release").status_code == 409  # nothing signed yet
     signed = alice.post(
         path + "/sign",
-        json={
-            "verdict": "false",
-            "reason": "Le communiqué original dit 4 heures.",
-            "publish": True,
-        },
+        json={"verdict": "false", "reason": "Le communiqué original dit 4 heures."},
     ).json()
     assert signed["status"] == "verified"
-    assert alice.post(path + "/release").json()["error"]["code"] == "second_signer_required"
     released = bob.post(path + "/release")
     assert released.status_code == 200 and released.json()["status"] == "published"
     assert released.json()["data"]["published_by"] == "bob"
     assert bob.post(path + "/release").json()["error"]["code"] == "already_published"
+    other = _claim(alice, ws)
+    at_once = alice.post(
+        f"/api/v1/workspaces/{ws}/items/{other}/sign",
+        json={"verdict": "true", "reason": "Le relevé officiel le confirme.", "publish": True},
+    ).json()
+    assert at_once["status"] == "published" and at_once["data"]["published_by"] == "alice"
 
 
 def test_batch_signs_suggestions_with_their_reason_and_says_why_others_wait(as_user):

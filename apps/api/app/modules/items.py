@@ -186,14 +186,17 @@ async def update_item(item_id: uuid.UUID, body: ItemPatch, member: AnyMember, db
     if body.data is not None and SIGNATURE_FIELDS & body.data.keys():
         raise ApiError(422, "protected_fields", "Use the signature endpoint")
     changes = body.model_dump(exclude_unset=True)
-    await publication_guard(
-        db,
-        member,
-        body.status or item.status,
-        body.title or item.title,
-        body.body if body.body is not None else item.body,
-        {**item.data, **(body.data or {})},
-    )
+    status = body.status or item.status
+    title = body.title or item.title
+    text = body.body if body.body is not None else item.body
+    data = {**item.data, **(body.data or {})}
+    await publication_guard(db, member, status, title, text, data)
+    # A published verdict carries a signature: what the public reads cannot change under it.
+    if status == "published" and item.data.get("signed_by"):
+        from app.modules.signing import digest
+
+        if digest(title, text, data) != item.data.get("signed_digest"):
+            raise ApiError(409, "signature_required", "Sign the new version before publication")
     diff = {}
     for field, value in changes.items():
         if field == "data":

@@ -8,7 +8,7 @@ import { publication as t } from "@/lib/i18n/fr/publication";
 import { IconBroadcast, IconMinusCircle, IconStamp } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
-type Settings = { settings: { double_signature: boolean; ai_enabled: boolean } };
+type Settings = { settings: { ai_enabled: boolean } };
 
 const s = dossier.sign.strip;
 
@@ -46,11 +46,11 @@ export function NewsroomRules({ ws }: { ws: string }) {
   async function save(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true); setError(false);
     const form = new FormData(e.currentTarget);
-    try { await api(path, { method: "PATCH", body: JSON.stringify({ settings: { double_signature: form.has("double"), ai_enabled: form.has("ai") } }) }); await mutate(); }
+    try { await api(path, { method: "PATCH", body: JSON.stringify({ settings: { ai_enabled: form.has("ai") } }) }); await mutate(); }
     catch { setError(true); } finally { setBusy(false); }
   }
   return <section className="rounded-md border border-border p-5"><h2 className="font-semibold">{t.settings}</h2><p className="mt-1 text-sm text-muted-foreground">{t.settingsHelp}</p>{data && <form key={JSON.stringify(data.settings)} onSubmit={save} className="mt-4 space-y-3">
-    <label className="flex items-center gap-3"><input type="checkbox" name="double" defaultChecked={data.settings.double_signature} className="size-4" />{t.doubleToggle}</label>
+
     <label className="flex items-center gap-3"><input type="checkbox" name="ai" defaultChecked={data.settings.ai_enabled} className="size-4" />{t.aiToggle}</label>
     {error && <p role="alert">{t.failed}</p>}<Button disabled={busy}>{t.save}</Button>
   </form>}</section>;

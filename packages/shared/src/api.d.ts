@@ -1596,8 +1596,8 @@ export interface paths {
         put?: never;
         /**
          * Release
-         * @description « Publier la version signée »: an editor publishes what a journalist signed, as long as
-         *     nothing changed since (same digest) and, under double signature, someone else signed it.
+         * @description « Publier la version signée »: publishes what was signed, as long as nothing changed since
+         *     (same digest).
          */
         post: operations["release_api_v1_workspaces__ws__items__item_id__release_post"];
         delete?: never;
@@ -3849,11 +3849,6 @@ export interface components {
          */
         NewsroomSettings: {
             /**
-             * Double Signature
-             * @default false
-             */
-            double_signature: boolean;
-            /**
              * Ai Enabled
              * @default true
              */
@@ -4052,8 +4047,6 @@ export interface components {
         PermissionsOut: {
             /** Roles */
             roles: string[];
-            /** Double Signature */
-            double_signature: boolean;
             /** Capabilities */
             capabilities: components["schemas"]["Capability"][];
         };

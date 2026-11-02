@@ -78,7 +78,7 @@ def test_settings_default_and_partial_patch(as_user):
     alice = as_user("alice")
     ws = _workspace(alice)
     s = alice.get(f"/api/v1/workspaces/{ws}").json()["settings"]
-    assert s["double_signature"] is False and s["ai_enabled"] is True
+    assert "double_signature" not in s and s["ai_enabled"] is True
     assert s["timezone"] == "Indian/Antananarivo" and s["country"] == "Madagascar"
     assert "énergie" in s["beats"] and s["region"] is None
     r = alice.patch(
@@ -112,7 +112,7 @@ def test_only_admin_changes_settings(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
     _join(alice, bob, ws, role="editor")
-    r = bob.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"double_signature": True}})
+    r = bob.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"ai_enabled": False}})
     assert r.status_code == 403
 
 
@@ -136,18 +136,10 @@ def test_permission_matrix_follows_the_routes_dependencies(as_user):
     assert grid["edit_own"]["journalist"] and not grid["edit_all"]["journalist"]
     assert grid["edit_all"]["editor"] and grid["delete"]["editor"]
     assert not grid["delete"]["journalist"]
-    assert grid["release"] == {
-        "admin": True,
-        "editor": True,
-        "journalist": False,
-        "veilleur": False,
-        "issuer": False,
-    }
     assert grid["invite"] == {r: r == "admin" for r in out["roles"]}
     assert grid["demo_reset"] == grid["invite"] == grid["settings"]
     sign = next(c for c in out["capabilities"] if c["key"] == "sign")
     assert sign["scope"] == "own" and sign["roles"]["journalist"]
-    assert out["double_signature"] is False
     assert as_user("mallory").get(f"/api/v1/workspaces/{ws}/permissions").status_code == 404
 
 

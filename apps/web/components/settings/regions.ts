@@ -29,7 +29,6 @@ export const MG_REGIONS = [
 export const TIMEZONES = ["Indian/Antananarivo", "Indian/Comoro", "Indian/Mayotte", "Indian/Reunion", "Indian/Mauritius", "Africa/Nairobi", "Europe/Paris", "UTC"] as const;
 
 export type NewsroomSettings = {
-  double_signature: boolean;
   ai_enabled: boolean;
   beats: string[];
   timezone: string;

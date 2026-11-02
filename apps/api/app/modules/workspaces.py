@@ -73,8 +73,6 @@ class NewsroomSettings(BaseModel):
     """A newsroom's own rules, kept in `workspace.settings` (JSONB): a field left out of a PATCH
     keeps its value, and a newsroom that never set one reads the default."""
 
-    # A journalist signs (`verified`), a different editor releases (`published`).
-    double_signature: bool = False
     # « Mode sans IA »: the model nodes are skipped, the facts still show.
     ai_enabled: bool = True
     # The newsroom's beats (rubriques), offered in Ma rubrique and used to file claims.
@@ -278,8 +276,6 @@ CAPABILITIES: list[tuple[str, str, str, object, str | None]] = [
     # signing.sign: the author or an editor; a journalist signs their own dossiers
     ("sign", "POST", "/workspaces/{ws}/items/{item_id}/sign", AnyMember, "own"),
     ("publish", "POST", "/workspaces/{ws}/items/{item_id}/sign", AnyMember, "own"),
-    # signing.publication_guard: under double signature, an editor releases the signed version
-    ("release", "PATCH", "/workspaces/{ws}/items/{item_id}", AnyMember, "editor"),
     ("register", "POST", "/workspaces/{ws}/registry", Issuer, None),
     ("seal", "POST", "/workspaces/{ws}/registry/{id}/seal", Issuer, None),
     ("record_clip", "POST", "/workspaces/{ws}/radio-clips", Veilleur, None),
@@ -299,7 +295,6 @@ class Capability(BaseModel):
 
 class PermissionsOut(BaseModel):
     roles: list[str]
-    double_signature: bool
     capabilities: list[Capability]
 
 
@@ -335,7 +330,6 @@ def _route_roles(routes, method: str, path: str) -> set[str] | None:
 
 @router.get("/workspaces/{ws}/permissions")
 async def permissions(member: Anyone, db: Db, request: Request) -> PermissionsOut:
-    ws = await db.get(Workspace, member.workspace_id)
     rows = []
     for key, method, path, fallback, rule in CAPABILITIES:
         allowed = _route_roles(request.app.routes, method, path)
@@ -353,7 +347,6 @@ async def permissions(member: Anyone, db: Db, request: Request) -> PermissionsOu
         )
     return PermissionsOut(
         roles=list(ROLES),
-        double_signature=newsroom_settings(ws).double_signature,
         capabilities=rows,
     )
 

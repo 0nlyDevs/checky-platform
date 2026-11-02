@@ -342,9 +342,7 @@ export function ClaimDetail() {
     : null;
   const steps = claimSteps(claim);
   const originLabel = claim.origin ? (t.origins[claim.origin as keyof typeof t.origins] ?? claim.origin) : null;
-  const signedBy = typeof item.data.signed_by === "string" ? item.data.signed_by : null;
   const canSign = Boolean(me && (item.author_id === me.id || claim.assigneeId === me.id || isEditor));
-  const double = Boolean(newsroom?.settings?.double_signature);
   const aiEnabled = newsroom?.settings?.ai_enabled ?? true;
   const analysisReason = typeof (item.data.analysis as { reason?: unknown } | undefined)?.reason === "string" ? String((item.data.analysis as { reason: string }).reason) : "";
   const thread = [
@@ -443,8 +441,6 @@ export function ClaimDetail() {
                 reasonDraft={analysisReason}
                 byline={readByline(item)}
                 canSign={canSign}
-                canRelease={double && isEditor && Boolean(signedBy) && signedBy !== me?.id}
-                doubleSignature={double}
                 isPublic={Boolean(newsroom?.is_public)}
                 onSaved={saved}
               />

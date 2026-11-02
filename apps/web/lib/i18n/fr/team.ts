@@ -20,7 +20,6 @@ export const team = {
       delete: "Supprimer un dossier",
       sign: "Signer un verdict",
       publish: "Publier un verdict",
-      release: "Libérer un verdict (double signature)",
       register: "Enregistrer un original au registre",
       seal: "Sceller un communiqué",
       record_clip: "Enregistrer un extrait radio",

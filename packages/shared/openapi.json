@@ -6166,7 +6166,7 @@
           "signing"
         ],
         "summary": "Release",
-        "description": "« Publier la version signée »: an editor publishes what a journalist signed, as long as\nnothing changed since (same digest) and, under double signature, someone else signed it.",
+        "description": "« Publier la version signée »: publishes what was signed, as long as nothing changed since\n(same digest).",
         "operationId": "release_api_v1_workspaces__ws__items__item_id__release_post",
         "security": [
           {
@@ -13008,11 +13008,6 @@
       },
       "NewsroomSettings": {
         "properties": {
-          "double_signature": {
-            "type": "boolean",
-            "title": "Double Signature",
-            "default": false
-          },
           "ai_enabled": {
             "type": "boolean",
             "title": "Ai Enabled",
@@ -13569,10 +13564,6 @@
             "type": "array",
             "title": "Roles"
           },
-          "double_signature": {
-            "type": "boolean",
-            "title": "Double Signature"
-          },
           "capabilities": {
             "items": {
               "$ref": "#/components/schemas/Capability"
@@ -13584,7 +13575,6 @@
         "type": "object",
         "required": [
           "roles",
-          "double_signature",
           "capabilities"
         ],
         "title": "PermissionsOut"
