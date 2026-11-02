@@ -28,6 +28,9 @@ def fake_storage(monkeypatch):
     async def delete(key):
         OBJECTS.pop(key, None)
 
+    async def write(key, body, content_type):
+        OBJECTS[key] = body
+
     monkeypatch.setattr(storage, "configured", lambda: True)
     monkeypatch.setattr(
         storage, "presign_upload", lambda key, mime, expires=600: f"https://s3.test/{key}?put"
@@ -40,6 +43,7 @@ def fake_storage(monkeypatch):
     monkeypatch.setattr(storage, "head", head)
     monkeypatch.setattr(storage, "read", read)
     monkeypatch.setattr(storage, "delete", delete)
+    monkeypatch.setattr(storage, "write", write)
 
 
 def _upload(client, ws, filename, mime, data, item_id=None):
@@ -361,6 +365,110 @@ def test_a_video_is_transcribed_from_its_soundtrack(as_user, whisper, monkeypatc
     assert alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}/transcript").status_code == 200
     r = alice.post(f"/api/v1/workspaces/{ws}/sources/{src['id']}/transcribe", json={})
     assert r.status_code == 202
+
+
+def test_video_keyframes_are_stored_with_their_blurred_copy_and_reverse_search(
+    as_user, whisper, monkeypatch
+):
+    async def fake_video(raw, mime):
+        return {"duration_s": 4.0}, b"", "", ""
+
+    async def frames(raw, duration, ffmpeg):
+        assert raw == b"fake-video" and duration == 4.0
+        return [
+            {"at_s": i, "jpeg": b"\xff\xd8frame%d" % i, "dhash": f"{i:016x}", "flat": False}
+            for i in range(4)
+        ]
+
+    def blur(raw):
+        # The second frame shows a face.
+        return (b"blurred", 1) if raw.endswith(b"1") else (raw, 0)
+
+    monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)
+    monkeypatch.setattr(ingest.media, "sample_frames", frames)
+    monkeypatch.setattr(ingest.media, "blur_faces", blur)
+    monkeypatch.setattr(ingest.shutil, "which", lambda name: "/usr/bin/ffmpeg")
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    made = _upload(alice, ws, "clip.mp4", "video/mp4", b"fake-video").json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()
+    previews = src["file"]["keyframes"]
+    assert [f["at_s"] for f in previews] == [0, 1, 2, 3]
+    assert [f["faces"] for f in previews] == [0, 1, 0, 0]
+    shown = [f["image_url"].removeprefix("https://s3.test/").removesuffix("?get") for f in previews]
+    # The frame with a face is shown blurred; the original stays next to it, inside the desk.
+    assert OBJECTS[shown[1]] == b"blurred" and shown[1].endswith("1.blur.jpg")
+    assert OBJECTS[shown[0]] == b"\xff\xd8frame0"
+    assert OBJECTS[shown[1].replace(".blur.jpg", ".jpg")] == b"\xff\xd8frame1"
+    assert all("lens.google.com/uploadbyurl" in f["reverse_search"][0]["url"] for f in previews)
+    # Reverse-search engines only ever receive the blurred copy.
+    assert all("1.blur.jpg" in link["url"] for link in previews[1]["reverse_search"])
+    assert not any(
+        "frames%2F1.jpg" in link["url"] for f in previews for link in f["reverse_search"]
+    )
+
+
+def test_failed_face_detection_hides_the_frame_but_keeps_the_source(as_user, whisper, monkeypatch):
+    async def fake_video(raw, mime):
+        return {"duration_s": 3.0}, b"", "", ""
+
+    async def frames(raw, duration, ffmpeg):
+        return [{"at_s": 0.0, "jpeg": b"raw-face", "dhash": "0f0f0f0f0f0f0f0f", "flat": False}]
+
+    def unavailable(raw):
+        raise RuntimeError("no detector")
+
+    monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)
+    monkeypatch.setattr(ingest.media, "sample_frames", frames)
+    monkeypatch.setattr(ingest.media, "blur_faces", unavailable)
+    monkeypatch.setattr(ingest.shutil, "which", lambda name: "/usr/bin/ffmpeg")
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    made = _upload(alice, ws, "clip.mp4", "video/mp4", b"fake-video").json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()
+    assert src["status"] == "ready"
+    [frame] = src["file"]["keyframes"]
+    assert frame["faces"] is None and frame["image_url"] is None
+    assert frame["reverse_search"] == []
+
+
+def test_an_image_with_a_face_is_shown_and_searched_blurred(as_user, monkeypatch):
+    from app.modules import linkcheck
+
+    monkeypatch.setattr(ingest.media, "blur_faces", lambda raw: (b"blurred", 2))
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    made = _upload(alice, ws, "foule.jpg", "image/jpeg", _jpeg_with_exif()).json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()
+    picture = src["file"]["picture"]
+    assert picture["faces"] == 2 and picture["image_url"].endswith("foule.blur.jpg?get")
+    assert OBJECTS[picture["image_url"].removeprefix("https://s3.test/").removesuffix("?get")] == (
+        b"blurred"
+    )
+    assert all("foule.blur.jpg" in link["url"] for link in picture["reverse_search"])
+    # The link check hands reverse-search engines the same blurred copy, never the upload.
+    page = asyncio.run(linkcheck.read_source(uuid.UUID(ws), uuid.UUID(made["id"])))
+    assert page["image_url"].endswith("foule.blur.jpg?get")
+
+
+def test_an_image_whose_faces_could_not_be_checked_never_leaves_the_desk(as_user, monkeypatch):
+    from app.modules import linkcheck
+
+    def unavailable(raw):
+        raise RuntimeError("no detector")
+
+    monkeypatch.setattr(ingest.media, "blur_faces", unavailable)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    made = _upload(alice, ws, "foule.jpg", "image/jpeg", _jpeg_with_exif()).json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()
+    assert src["file"]["picture"] == {"faces": None, "image_url": None, "reverse_search": []}
+    page = asyncio.run(linkcheck.read_source(uuid.UUID(ws), uuid.UUID(made["id"])))
+    assert "image_url" not in page
 
 
 def test_a_silent_video_is_ready_without_a_transcript(as_user, whisper, monkeypatch):

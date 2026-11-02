@@ -1,11 +1,16 @@
-"""Pictures as evidence: keyframes of a video, a 64-bit image fingerprint, faces blurred.
+"""Pictures as evidence: keyframes of a video, a 64-bit image memory, faces blurred by default.
 
 Derived files live next to the original in object storage, described in `file.meta`:
 
     image  {"dhash": "…16 hex…", "flat": bool, "faces": 0|n|None, "blur_key": key|None}
     video  {"keyframes": [{"at_s", "dhash", "flat", "faces", "key", "blur_key"}]}
 
-`faces` is None when detection could not run: such a picture never leaves the desk.
+`faces` is None when detection could not run: such a picture never leaves the desk and is shown
+hidden inside it until a journalist reveals it.
+
+Contract for other modules:
+    frames_out(file) / image_out(file)        -> desk URLs, faces, reverse search on the blurred copy
+    safe_url(file)                            -> a URL safe to leave the desk (faces blurred), or None
 """
 
 import asyncio
@@ -19,6 +24,7 @@ from typing import Any
 from PIL import Image, ImageOps, ImageStat
 
 from app.core import storage
+from app.core.models import File
 
 log = logging.getLogger("checky.media")
 
@@ -272,3 +278,68 @@ async def derive_video(raw: bytes, duration_s: float, key: str, ffmpeg: str) -> 
             }
         )
     return out
+
+
+# --- reading it back --------------------------------------------------------------------------
+
+
+def shown_key(entry: dict[str, Any], key: str | None = None) -> str | None:
+    """The picture to show by default: the blurred copy when faces were found, the picture itself
+    when none were, nothing while it is unknown."""
+    faces = entry.get("faces")
+    if faces is None:
+        return None
+    return entry.get("blur_key") if faces else (key or entry.get("key"))
+
+
+def _shown(key: str | None) -> dict[str, Any]:
+    """The desk URL of a picture and the reverse-search links built on that same picture: what
+    Google Lens, TinEye or Yandex receive leaves the desk, so it is the blurred copy, and nothing
+    at all while faces are unchecked (a journalist reveals the original on purpose instead)."""
+    from app.modules.linkcheck import reverse_search
+
+    if not key:
+        return {"image_url": None, "reverse_search": []}
+    url = storage.presign_download(key)
+    return {"image_url": url, "reverse_search": reverse_search(url)}
+
+
+def frames_out(file: File) -> list[dict[str, Any]]:
+    """A video file's keyframes for the desk: the default picture, faces, reverse search."""
+    out = []
+    for i, frame in enumerate((file.meta or {}).get("keyframes") or []):
+        key = frame.get("key") or f"{file.storage_key}/frames/{i}.jpg"
+        out.append(
+            {
+                "index": i,
+                "at_s": frame["at_s"],
+                "dhash": frame.get("dhash", ""),
+                "faces": frame.get("faces"),
+                **_shown(shown_key({**frame, "key": key})),
+            }
+        )
+    return out
+
+
+def image_out(file: File) -> dict[str, Any] | None:
+    """An image file's default picture for the desk (blurred when it shows faces)."""
+    if not file.mime.startswith("image/") or file.status != "ready":
+        return None
+    meta = file.meta or {}
+    return {"faces": meta.get("faces"), **_shown(shown_key(meta, file.storage_key))}
+
+
+def safe_url(file: File | None) -> str | None:
+    """A picture of this file that may leave the desk: faces blurred, or None (no picture, or
+    faces not checked). Videos give their first informative keyframe."""
+    if file is None or file.status != "ready":
+        return None
+    meta = file.meta or {}
+    if file.mime.startswith("image/"):
+        key = shown_key(meta, file.storage_key)
+        return storage.presign_download(key) if key else None
+    for i, frame in enumerate(meta.get("keyframes") or []):
+        key = frame.get("key") or f"{file.storage_key}/frames/{i}.jpg"
+        if not frame.get("flat") and (shown := shown_key({**frame, "key": key})):
+            return storage.presign_download(shown)
+    return None

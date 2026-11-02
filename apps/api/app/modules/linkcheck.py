@@ -27,7 +27,7 @@ from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import or_, select
 
-from app.core import ai, dates, storage, websearch
+from app.core import ai, dates, media, websearch
 from app.core.access import AnyMember
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
@@ -214,7 +214,10 @@ async def read_source(ws: uuid.UUID, source_id: uuid.UUID) -> dict[str, Any]:
         out["file"] = {"filename": file.filename, "mime": file.mime, "meta": file.meta or {}}
         if source.kind == "image":
             out["image"] = file.meta or {}
-            out["image_url"] = storage.presign_download(file.storage_key, file.filename)
+        # Reverse-search engines receive this URL: only a picture with its faces blurred (a
+        # video's first keyframe), never the upload itself.
+        if safe := media.safe_url(file):
+            out["image_url"] = safe
     return out
 
 
@@ -360,10 +363,10 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
             f"\n\nDates, calculées par Checky (elles ne font pas partie du contenu) : "
             f"{dates.today_line()} {when}"
         )
-        if page.get("kind") == "image":
-            out["reverse_search"] = reverse_search(page.get("image_url") or page["final_url"])
-        elif page.get("image_url"):
+        if page.get("image_url"):
             out["reverse_search"] = reverse_search(page["image_url"])
+        elif page.get("kind") == "image" and page.get("final_url"):
+            out["reverse_search"] = reverse_search(page["final_url"])
         if not text and page.get("kind") != "image":
             if upload:  # a silent video or an empty transcript: nothing to read the claims from
                 note = "no_speech"

@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field, model_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import dates, storage
+from app.core import dates, media, storage
 from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
@@ -85,6 +85,24 @@ class SourceIn(BaseModel):
         return self
 
 
+class FrameOut(BaseModel):
+    index: int
+    at_s: float
+    dhash: str
+    # Faces found (their blurred copy is the picture shown and searched), or None when detection
+    # failed: the picture is then hidden, with no reverse search, until a journalist reveals it.
+    faces: int | None
+    image_url: str | None
+    reverse_search: list[dict[str, str]]
+
+
+class PictureOut(BaseModel):
+    faces: int | None
+    image_url: str | None
+    # Built on the blurred copy; empty while faces are unchecked.
+    reverse_search: list[dict[str, str]]
+
+
 class FileOut(BaseModel):
     id: uuid.UUID
     filename: str
@@ -93,6 +111,9 @@ class FileOut(BaseModel):
     sha256: str | None
     meta: dict[str, Any]
     download_url: str | None
+    keyframes: list[FrameOut] = Field(default_factory=list)
+    # An image's default picture in the desk: blurred when it shows faces (`media.image_out`).
+    picture: PictureOut | None = None
 
 
 class SourceOut(BaseModel):
@@ -131,6 +152,9 @@ async def _source_out(db: AsyncSession, source: Source) -> SourceOut:
             url = (
                 storage.presign_download(f.storage_key, f.filename) if f.status == "ready" else None
             )
+            ready_video = f.status == "ready" and f.mime.startswith("video/")
+            frames = [FrameOut(**x) for x in media.frames_out(f)] if ready_video else []
+            picture = media.image_out(f)
             file_out = FileOut(
                 id=f.id,
                 filename=f.filename,
@@ -139,6 +163,8 @@ async def _source_out(db: AsyncSession, source: Source) -> SourceOut:
                 sha256=f.sha256,
                 meta=f.meta,
                 download_url=url,
+                keyframes=frames,
+                picture=PictureOut(**picture) if picture else None,
             )
             if f.sha256:
                 dupes = (

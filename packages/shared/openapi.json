@@ -13543,6 +13543,23 @@
               }
             ],
             "title": "Download Url"
+          },
+          "keyframes": {
+            "items": {
+              "$ref": "#/components/schemas/FrameOut"
+            },
+            "type": "array",
+            "title": "Keyframes"
+          },
+          "picture": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PictureOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -13883,6 +13900,64 @@
           "url"
         ],
         "title": "FormatsOut"
+      },
+      "FrameOut": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "at_s": {
+            "type": "number",
+            "title": "At S"
+          },
+          "dhash": {
+            "type": "string",
+            "title": "Dhash"
+          },
+          "faces": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faces"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "reverse_search": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Reverse Search"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "at_s",
+          "dhash",
+          "faces",
+          "image_url",
+          "reverse_search"
+        ],
+        "title": "FrameOut"
       },
       "GapOut": {
         "properties": {
@@ -15246,6 +15321,49 @@
           "score"
         ],
         "title": "Passage"
+      },
+      "PictureOut": {
+        "properties": {
+          "faces": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faces"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "reverse_search": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Reverse Search"
+          }
+        },
+        "type": "object",
+        "required": [
+          "faces",
+          "image_url",
+          "reverse_search"
+        ],
+        "title": "PictureOut"
       },
       "PostIn": {
         "properties": {

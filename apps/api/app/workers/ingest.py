@@ -10,6 +10,7 @@ import hashlib
 import io
 import ipaddress
 import json
+import logging
 import re
 import shutil
 import socket
@@ -24,7 +25,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from sqlalchemy import update
 
-from app.core import dates, storage, stt
+from app.core import dates, media, storage, stt
 from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.models import File, Source, Transcript
@@ -32,6 +33,7 @@ from app.realtime.server import emit
 from app.workers.queue import JobContext, handler
 
 MAX_PAGE_BYTES = 5 * 1024 * 1024
+log = logging.getLogger("checky.ingest")
 MAX_TEXT_CHARS = 200_000
 # Many news sites refuse unknown bots; fetch the page the way the journalist's browser would.
 HEADERS = {
@@ -367,6 +369,7 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
         title, text = "", ""
         if mime.startswith("image/"):
             meta = await asyncio.to_thread(image_meta, raw)
+            meta.update(await media.derive_image(raw, key))
         elif mime == "application/pdf":
             meta, title, text = await asyncio.to_thread(pdf_text, raw)
         elif mime.startswith("audio/"):
@@ -377,6 +380,16 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
             await _save_transcript(source_id, result)
         elif mime.startswith("video/"):
             meta, audio, audio_name, audio_mime = await video_meta_and_audio(raw, mime)
+            if ffmpeg := shutil.which("ffmpeg"):
+                try:
+                    duration = float(meta.get("duration_s") or 0)
+                    if frames := await media.derive_video(raw, duration, key, ffmpeg):
+                        meta["keyframes"] = frames
+                except Exception:
+                    # A damaged frame never loses the video, soundtrack or transcript.
+                    log.warning(
+                        "could not derive keyframes for source %s", source_id, exc_info=True
+                    )
             await ctx.progress(50)
             if audio:
                 result = await stt.transcribe(

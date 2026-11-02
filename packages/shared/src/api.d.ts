@@ -3913,6 +3913,9 @@ export interface components {
             };
             /** Download Url */
             download_url: string | null;
+            /** Keyframes */
+            keyframes?: components["schemas"]["FrameOut"][];
+            picture?: components["schemas"]["PictureOut"] | null;
         };
         /** FlashLine */
         FlashLine: {
@@ -4017,6 +4020,23 @@ export interface components {
              * @constant
              */
             delivery: "draft_only";
+        };
+        /** FrameOut */
+        FrameOut: {
+            /** Index */
+            index: number;
+            /** At S */
+            at_s: number;
+            /** Dhash */
+            dhash: string;
+            /** Faces */
+            faces: number | null;
+            /** Image Url */
+            image_url: string | null;
+            /** Reverse Search */
+            reverse_search: {
+                [key: string]: string;
+            }[];
         };
         /** GapOut */
         GapOut: {
@@ -4542,6 +4562,17 @@ export interface components {
             end_s: number | null;
             /** Score */
             score: number;
+        };
+        /** PictureOut */
+        PictureOut: {
+            /** Faces */
+            faces: number | null;
+            /** Image Url */
+            image_url: string | null;
+            /** Reverse Search */
+            reverse_search: {
+                [key: string]: string;
+            }[];
         };
         /** PostIn */
         PostIn: {
