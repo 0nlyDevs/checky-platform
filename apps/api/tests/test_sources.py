@@ -373,7 +373,7 @@ def test_video_keyframes_are_stored_with_their_blurred_copy_and_reverse_search(
     async def fake_video(raw, mime):
         return {"duration_s": 4.0}, b"", "", ""
 
-    async def frames(raw, duration, ffmpeg):
+    async def frames(raw, duration, ffmpeg, container=None):
         assert raw == b"fake-video" and duration == 4.0
         return [
             {"at_s": i, "jpeg": b"\xff\xd8frame%d" % i, "dhash": f"{i:016x}", "flat": False}
@@ -413,7 +413,7 @@ def test_failed_face_detection_hides_the_frame_but_keeps_the_source(as_user, whi
     async def fake_video(raw, mime):
         return {"duration_s": 3.0}, b"", "", ""
 
-    async def frames(raw, duration, ffmpeg):
+    async def frames(raw, duration, ffmpeg, container=None):
         return [{"at_s": 0.0, "jpeg": b"raw-face", "dhash": "0f0f0f0f0f0f0f0f", "flat": False}]
 
     def unavailable(raw):
@@ -488,7 +488,7 @@ def test_revealing_an_original_picture_is_logged_on_the_dossier(as_user, whisper
     async def fake_video(raw, mime):
         return {"duration_s": 4.0}, b"", "", ""
 
-    async def frames(raw, duration, ffmpeg):
+    async def frames(raw, duration, ffmpeg, container=None):
         return [{"at_s": 0.0, "jpeg": b"\xff\xd8face", "dhash": "0f0f0f0f0f0f0f0f", "flat": False}]
 
     monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)

@@ -42,6 +42,10 @@ SAME_IMAGE = 10
 MIN_STDDEV = 6.0
 FRAMES_MIN, FRAMES_MAX = 4, 6
 SCENE_THRESHOLD = 0.3
+# The plain containers an uploaded video may be (libavformat demuxer names: `mov` reads mp4, m4a,
+# 3gp and QuickTime, `matroska` reads webm). Playlist and meta demuxers (hls, concat, image2…) are
+# left out on purpose: their file can point ffmpeg at local paths or URLs.
+VIDEO_DEMUXERS = ("mov", "matroska", "avi", "mpegts", "mpeg", "flv", "ogg")
 
 
 # --- fingerprints ---------------------------------------------------------------------------------
@@ -154,7 +158,23 @@ async def faces_and_blur(raw: bytes, key: str) -> dict[str, Any]:
 # --- frames ------------------------------------------------------------------------------------
 
 
-async def _frame(ffmpeg: str, video: Path, at_s: float) -> bytes | None:
+def untrusted_input(container: str | None = None) -> list[str]:
+    """ffmpeg/ffprobe options to put before `-i` for an uploaded file: it may only be read as a
+    plain container (forced when probing named one), and only the file itself may be opened."""
+    args = ["-protocol_whitelist", "file,pipe", "-format_whitelist", ",".join(VIDEO_DEMUXERS)]
+    return [*args, "-f", container] if container else args
+
+
+def video_demuxer(format_name: str | None) -> str | None:
+    """The demuxer to force for what ffprobe found (`mov,mp4,m4a,3gp,3g2,mj2` -> `mov`), or None
+    when it is not one of the plain containers."""
+    names = [n for n in (format_name or "").split(",") if n]
+    if not names or not set(names) & set(VIDEO_DEMUXERS):
+        return None
+    return next(n for n in names if n in VIDEO_DEMUXERS)
+
+
+async def _frame(ffmpeg: str, video: Path, at_s: float, container: str | None) -> bytes | None:
     proc = await asyncio.create_subprocess_exec(
         ffmpeg,
         "-nostdin",
@@ -162,6 +182,7 @@ async def _frame(ffmpeg: str, video: Path, at_s: float) -> bytes | None:
         "error",
         "-ss",
         f"{at_s:.3f}",
+        *untrusted_input(container),
         "-i",
         str(video),
         "-frames:v",
@@ -187,11 +208,12 @@ async def _frame(ffmpeg: str, video: Path, at_s: float) -> bytes | None:
     return out if proc.returncode == 0 and out else None
 
 
-async def scene_changes(ffmpeg: str, video: Path) -> list[float]:
+async def scene_changes(ffmpeg: str, video: Path, container: str | None = None) -> list[float]:
     """Times (s) where the picture changes a lot, from ffmpeg's scene score. [] when unreadable."""
     proc = await asyncio.create_subprocess_exec(
         ffmpeg,
         "-nostdin",
+        *untrusted_input(container),
         "-i",
         str(video),
         "-vf",
@@ -230,20 +252,23 @@ def frame_times(duration_s: float, scenes: list[float]) -> list[float]:
     return sorted(round(t, 2) for t in picked)
 
 
-async def sample_frames(raw: bytes, duration_s: float, ffmpeg: str) -> list[dict]:
+async def sample_frames(
+    raw: bytes, duration_s: float, ffmpeg: str, container: str | None = None
+) -> list[dict]:
     """Keyframes of a video (scene changes, else evenly spaced), as JPEGs with their hash.
-    Bounded at six frames; an unreadable frame is skipped, never fatal."""
+    Bounded at six frames; an unreadable frame is skipped, never fatal. `container` is the demuxer
+    ffprobe found (`video_demuxer`); either way only the plain containers are read."""
     if not 0 < duration_s <= 6 * 3600:
         return []
     with tempfile.TemporaryDirectory() as tmp:
         video = Path(tmp) / "source-video"
         video.write_bytes(raw)
-        times = frame_times(duration_s, await scene_changes(ffmpeg, video))
+        times = frame_times(duration_s, await scene_changes(ffmpeg, video, container))
         limit = asyncio.Semaphore(2)
 
         async def sample(at_s: float) -> bytes | None:
             async with limit:
-                return await _frame(ffmpeg, video, at_s)
+                return await _frame(ffmpeg, video, at_s, container)
 
         sampled = await asyncio.gather(*(sample(at_s) for at_s in times))
     frames = []
@@ -268,10 +293,12 @@ async def derive_image(raw: bytes, key: str) -> dict[str, Any]:
     return out
 
 
-async def derive_video(raw: bytes, duration_s: float, key: str, ffmpeg: str) -> list[dict]:
+async def derive_video(
+    raw: bytes, duration_s: float, key: str, ffmpeg: str, container: str | None = None
+) -> list[dict]:
     """Keyframes stored under `<key>/frames/`, each with its hash, faces and blurred copy."""
     out = []
-    for i, frame in enumerate(await sample_frames(raw, duration_s, ffmpeg)):
+    for i, frame in enumerate(await sample_frames(raw, duration_s, ffmpeg, container)):
         frame_key = f"{key}/frames/{i}.jpg"
         await storage.write(frame_key, frame["jpeg"], "image/jpeg")
         out.append(

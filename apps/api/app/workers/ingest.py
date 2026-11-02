@@ -268,6 +268,7 @@ async def video_meta_and_audio(raw: bytes, mime: str) -> tuple[dict[str, Any], b
                     ffprobe,
                     "-v",
                     "quiet",
+                    *media.untrusted_input(),
                     "-print_format",
                     "json",
                     "-show_format",
@@ -276,6 +277,10 @@ async def video_meta_and_audio(raw: bytes, mime: str) -> tuple[dict[str, Any], b
                 )
             )
             fmt = probe.get("format") or {}
+            # A playlist or meta file (hls, concat…) could make ffmpeg read local files or URLs.
+            if not (container := media.video_demuxer(fmt.get("format_name"))):
+                raise ValueError("Unsupported video container")
+            meta["container"] = container
             video = next(
                 (x for x in probe.get("streams") or [] if x.get("codec_type") == "video"), {}
             )
@@ -310,6 +315,7 @@ async def video_meta_and_audio(raw: bytes, mime: str) -> tuple[dict[str, Any], b
             ffmpeg,
             "-v",
             "error",
+            *media.untrusted_input(meta.get("container")),
             "-i",
             str(src),
             "-vn",
@@ -383,7 +389,8 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
             if ffmpeg := shutil.which("ffmpeg"):
                 try:
                     duration = float(meta.get("duration_s") or 0)
-                    if frames := await media.derive_video(raw, duration, key, ffmpeg):
+                    container = meta.get("container")
+                    if frames := await media.derive_video(raw, duration, key, ffmpeg, container):
                         meta["keyframes"] = frames
                 except Exception:
                     # A damaged frame never loses the video, soundtrack or transcript.
