@@ -183,7 +183,8 @@ One flexible model, `item`, for the domain objects (a claim, a story, a rumor, a
 ### M10. Agent
 
 - A simple loop: model, tool calls, results, until an answer or a limit of 6 steps.
-- Starting tools: `search_sources` (RAG), `fetch_url`, `find_claims`; `web_search` only if a free search API is found.
+- Starting tools: `search_sources` (RAG), `fetch_url`, `find_claims`, `web_search`. Dedicated search
+  optionally uses Tavily's free API; keyless HTML search is a best-effort legacy fallback.
 - Each step is shown in the UI (tool called, short result), so the reasoning is visible in the demo.
 - Adding a tool means writing one Python function with a typed signature and a docstring.
 
@@ -272,6 +273,10 @@ Five features cover the journalist's main verification tasks, from checking a cl
   empty results are distinguished. Up to three sources are read for literal passages, with
   unread search snippets clearly labelled. Similar wording is a possible reprise, not proof of
   independent corroboration. No source count is presented as a confidence score.
+- Dedicated web search uses an operator's server-side Tavily key, never a visitor account.
+  Only verified free-plan usage without pay-as-you-go is accepted. Basic search, no automatic
+  depth upgrade, no generated answer and no POST retry. API activation needs a key; no paid
+  search service is activated by the repository. Setup is in `docs/WEB_SEARCH.md`.
 - Selected text is checked independently of the surrounding page. No passive page reading,
   content scripts, browsing history, provider keys or cookie-reading permission.
 - Connection is optional at save time or for newsroom analysis. It reuses the website session JWT,

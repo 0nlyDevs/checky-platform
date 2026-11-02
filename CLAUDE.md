@@ -82,6 +82,13 @@ of independent corroboration. Private detector access is not enabled anonymously
 Direct search connections prefer IPv4 (`SEARCH_IPV4_ONLY`); configured environment proxies and
 TLS verification are preserved. An independent search service gets an early execution slot so
 one slow engine cannot consume the whole budget before other services are attempted.
+Dedicated search: `WEB_SEARCH_PROVIDER=auto|tavily|duckduckgo`. `auto` chooses Tavily only when
+`TAVILY_API_KEY` is configured; otherwise legacy HTML search remains best-effort. Before every
+uncached Tavily search, the backend verifies `/usage`: only Researcher/free accounts with a
+plan limit ≤1,000, remaining quota and pay-as-you-go disabled are accepted. Search is always
+`basic`, with automatic upgrades and generated answers disabled. No POST retry or automatic
+HTML fallback on API failure. Keys stay server-side; users need no account. This provider
+cannot be activated or production-tested without an operator's key. Setup: `docs/WEB_SEARCH.md`.
 Public URL downloads pin a checked public IP for each redirect, preserving Host/TLS SNI, so
 the HTTP transport cannot re-resolve an attacker-controlled domain to an internal address.
 Connection is optional for saving a dossier or choosing newsroom analysis: the extension uses

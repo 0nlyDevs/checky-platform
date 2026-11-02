@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Literal
 from urllib.parse import parse_qsl, urlencode
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -36,6 +37,8 @@ class Settings(BaseSettings):
     # API key with that API enabled.
     google_factcheck_api_key: str = ""
     search_ipv4_only: bool = True
+    web_search_provider: Literal["auto", "tavily", "duckduckgo"] = "auto"
+    tavily_api_key: str = ""
     # Empty means the gateway's default model for that provider.
     llm_model_groq: str = ""
     llm_model_gemini: str = ""

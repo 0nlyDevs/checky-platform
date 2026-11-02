@@ -35,7 +35,9 @@ How the pieces talk:
   comma-separated list; a key that hits its quota is set aside and the next one is used.
 - **Agents** (Vérifier's deep search, the docked assistant's desk copilot and public guide) share
   one tool loop and one set of guardrails (`apps/api/app/modules/guard.py`); they search the web,
-  Wikipedia and fact-checkers without any key (`apps/api/app/core/websearch.py`).
+  Wikipedia and fact-checkers (`apps/api/app/core/websearch.py`). Dedicated web search uses
+  Tavily when configured; keyless HTML search is best-effort and may fail on hosting IPs.
+  See [`docs/WEB_SEARCH.md`](docs/WEB_SEARCH.md) for the free-plan setup and cost guards.
 - **In production:** web on Vercel, API on Render, database and file storage on **Neon**
   (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
 - **Phone app:** [`0nlyDevs/fanilo-mobile`](https://github.com/0nlyDevs/fanilo-mobile) (Expo,

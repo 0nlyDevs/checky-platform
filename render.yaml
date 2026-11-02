@@ -63,4 +63,5 @@ services:
       - key: AI_CACHE
         value: "true"
       # Optional, added by hand in the dashboard when wanted: CLAUDE_API_KEY, ELEVENLABS_API_KEY,
-      # GOOGLE_FACTCHECK_API_KEY.
+      # GOOGLE_FACTCHECK_API_KEY. For dedicated web search: TAVILY_API_KEY and WEB_SEARCH_PROVIDER=tavily.
+      # Tavily must use the free Researcher plan with pay-as-you-go disabled; see docs/WEB_SEARCH.md.

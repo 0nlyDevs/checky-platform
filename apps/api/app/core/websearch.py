@@ -1,12 +1,14 @@
 """Searching outside the newsroom's own files: the web, Wikipedia and published fact-checks.
 
-No key needed: the web goes through DuckDuckGo's HTML page and Wikipedia through its public API
-(paid search APIs such as Brave's were left out on purpose). Results are kept 10 minutes in memory, so an agent
-asking twice costs one request. Reading a found page is the agent's `fetch_url` (SSRF-guarded).
+The web uses Tavily's dedicated API when configured, otherwise best-effort DuckDuckGo HTML.
+Tavily requests are restricted to the free plan without pay-as-you-go and basic search only.
+Wikipedia uses its public API. Results are kept 10 minutes in memory. Reading a found page is
+the agent's `fetch_url` (SSRF-guarded).
 """
 
 import asyncio
 import html
+import json
 import os
 import re
 import time
@@ -215,17 +217,135 @@ def localised(query: str) -> str:
     return q if any(w in q.lower() for w in LOCAL) else f"{q} Madagascar"
 
 
+def provider() -> str:
+    settings = get_settings()
+    if settings.web_search_provider == "auto":
+        return "tavily" if settings.tavily_api_key.strip() else "duckduckgo"
+    return settings.web_search_provider
+
+
+async def _tavily_json(http: httpx.AsyncClient, method: str, path: str, **kwargs) -> dict:
+    """Fixed API origin, no redirects/retries, bounded JSON, and no credential in errors."""
+    async with http.stream(
+        method, f"https://api.tavily.com/{path}", follow_redirects=False, **kwargs
+    ) as response:
+        if response.status_code != 200:
+            raise SearchUnavailable(
+                f"Tavily {path} HTTP {response.status_code}",
+                reason="blocked" if response.status_code == 429 else "unavailable",
+            )
+        raw = bytearray()
+        async for chunk in response.aiter_bytes():
+            raw.extend(chunk)
+            if len(raw) > 1_000_000:
+                raise SearchUnavailable("Tavily response too large")
+    try:
+        value = json.loads(raw)
+    except (ValueError, UnicodeError) as exc:
+        raise SearchUnavailable("Tavily returned invalid JSON") from exc
+    if not isinstance(value, dict):
+        raise SearchUnavailable("Tavily returned an invalid object")
+    return value
+
+
+def _free_tavily_budget(usage: dict) -> None:
+    """Fail closed: do not issue a credit-consuming search for paid/overage-enabled accounts."""
+    try:
+        account = usage["account"]
+        key = usage["key"]
+        free = str(account["current_plan"]).casefold() in ("researcher", "free")
+        plan_limit, plan_usage = int(account["plan_limit"]), int(account["plan_usage"])
+        no_overage = int(account["paygo_limit"] or 0) == 0 and int(account["paygo_usage"] or 0) == 0
+        key_limit = int(key.get("limit") or plan_limit)
+        key_usage = int(key["usage"])
+    except (KeyError, TypeError, ValueError, OverflowError) as exc:
+        raise SearchUnavailable("Tavily free usage could not be verified") from exc
+    if not free or not no_overage or not 0 < plan_limit <= 1000:
+        raise SearchUnavailable("Tavily requires a free plan with pay-as-you-go disabled")
+    if plan_usage < 0 or key_usage < 0 or plan_usage >= plan_limit or key_usage >= key_limit:
+        raise SearchUnavailable("Tavily free quota is exhausted")
+
+
+async def _tavily(query: str, k: int, domains: list[str] | None = None) -> list[dict[str, Any]]:
+    key = get_settings().tavily_api_key.strip()
+    if not key:
+        raise SearchUnavailable("Tavily API key is not configured")
+    try:
+        async with _client(
+            {"Authorization": f"Bearer {key}", "Accept": "application/json"}
+        ) as http:
+            usage = await _tavily_json(http, "GET", "usage", timeout=3)
+            _free_tavily_budget(usage)
+            data = await _tavily_json(
+                http,
+                "POST",
+                "search",
+                timeout=7,
+                json={
+                    "query": query,
+                    "search_depth": "basic",
+                    "auto_parameters": False,
+                    "topic": "general",
+                    "max_results": min(max(k, 1), 20),
+                    "include_answer": False,
+                    "include_raw_content": False,
+                    "include_images": False,
+                    "include_domains": domains or [],
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise SearchUnavailable(
+            "Tavily request failed",
+            reason="timeout" if isinstance(exc, httpx.TimeoutException) else "unavailable",
+        ) from exc
+    if not isinstance(data.get("results"), list):
+        raise SearchUnavailable("Tavily returned no results field")
+    out, seen = [], set()
+    for item in data["results"]:
+        if not isinstance(item, dict):
+            continue
+        url = item.get("url")
+        if not isinstance(url, str) or len(url) > 2000:
+            continue
+        try:
+            parsed = urlparse(url)
+        except ValueError:
+            continue
+        if (
+            parsed.scheme not in ("https", "http")
+            or not parsed.hostname
+            or parsed.username
+            or parsed.password
+            or url in seen
+        ):
+            continue
+        seen.add(url)
+        out.append(
+            {
+                "url": url,
+                "title": _text(str(item.get("title") or ""))[:500],
+                "snippet": _text(str(item.get("content") or ""))[:1200],
+            }
+        )
+        if len(out) >= k:
+            break
+    if data["results"] and not out:
+        raise SearchUnavailable("Tavily returned unusable results")
+    return out
+
+
 async def web(query: str, k: int = 6) -> list[dict[str, Any]]:
     """Web results [{title, url, snippet}], best first."""
     query = query.strip()[:1000]  # retain fact-check site filters appended to a short query
+    backend = provider()
 
     async def fetch():
         try:
-            return await _duckduckgo(query, k)
+            return await _tavily(query, k) if backend == "tavily" else await _duckduckgo(query, k)
         except httpx.HTTPError as e:
             raise SearchUnavailable(type(e).__name__) from e
 
-    return await _cached(f"web|{k}|{query}", fetch)
+    return await _cached(f"web|{backend}|{k}|{query}", fetch)
 
 
 async def _claim_reviews(query: str, k: int) -> list[dict[str, Any]]:
@@ -271,9 +391,15 @@ async def fact_checks(query: str, k: int = 6) -> list[dict[str, Any]]:
             reviews = await _cached(f"claims|{k}|{query}", lambda: _claim_reviews(query, k))
         except httpx.HTTPError:
             reviews = []
-    sites = " OR ".join(sorted({f"site:{d.split('/')[0]}" for d in FACT_CHECKERS}))
     try:
-        found = await web(f"{query} ({sites})", k + 4)
+        if provider() == "tavily":
+            domains = sorted({domain.split("/")[0] for domain in FACT_CHECKERS})
+            found = await _cached(
+                f"fact-search|tavily|{k}|{query}", lambda: _tavily(query, k + 4, domains)
+            )
+        else:
+            sites = " OR ".join(sorted({f"site:{d.split('/')[0]}" for d in FACT_CHECKERS}))
+            found = await web(f"{query} ({sites})", k + 4)
     except SearchUnavailable:
         if reviews:
             return reviews
@@ -283,10 +409,25 @@ async def fact_checks(query: str, k: int = 6) -> list[dict[str, Any]]:
         r
         for r in found
         # the fact-checking section itself, not the rest of a newspaper's site
-        if any(f"//{d}" in r["url"] or f".{d}" in r["url"] for d in FACT_CHECKERS)
-        and r["url"] not in known
+        if _fact_checker_url(r["url"]) and r["url"] not in known
     ]
     return (reviews + on_sites)[:k]
+
+
+def _fact_checker_url(url: str) -> bool:
+    try:
+        parsed = urlparse(url)
+        host = (parsed.hostname or "").lower()
+    except ValueError:
+        return False
+    for entry in FACT_CHECKERS:
+        domain, _, section = entry.partition("/")
+        if host != domain and not host.endswith("." + domain):
+            continue
+        prefix = "/" + section.rstrip("/")
+        if not section or parsed.path == prefix or parsed.path.startswith(prefix + "/"):
+            return True
+    return False
 
 
 async def wikipedia(query: str, lang: str = "fr", k: int = 3) -> list[dict[str, Any]]:

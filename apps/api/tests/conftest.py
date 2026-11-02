@@ -65,6 +65,9 @@ def _no_paid_voice(monkeypatch):
     from app.core.config import get_settings
 
     monkeypatch.setattr(get_settings(), "elevenlabs_api_key", "")
+    # A developer's optional search key must never spend real credits in tests.
+    monkeypatch.setattr(get_settings(), "tavily_api_key", "")
+    monkeypatch.setattr(get_settings(), "web_search_provider", "auto")
 
 
 @pytest.fixture(autouse=True)
