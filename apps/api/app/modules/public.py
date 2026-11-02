@@ -14,13 +14,14 @@ from typing import Literal
 import httpx
 from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field, HttpUrl
-from sqlalchemy import func, select
+from sqlalchemy import select
 
 from app.core import ai, keys, stt
 from app.core.access import Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
+from app.core.http import shared as shared_http
 from app.core.models import Item, Source, Workspace
 from app.core.words import words
 
@@ -112,6 +113,19 @@ def _published():
     )
 
 
+def _distinct(rows):
+    """One entry per rumour: the same claim with the same verdict, published by several newsrooms (or
+    by the same desk twice), shows once, its first row kept (callers order newest or best first)."""
+    seen, out = set(), []
+    for row in rows:
+        item = next(x for x in row if isinstance(x, Item))
+        key = (frozenset(words(item.title)) or item.title, (item.data or {}).get("verdict"))
+        if key not in seen:
+            seen.add(key)
+            out.append(row)
+    return out
+
+
 async def _verdict(db: Db, item: Item, ws: Workspace) -> VerdictOut:
     d = item.data or {}
     titles = (await db.scalars(select(Source.title).where(Source.item_id == item.id))).all()
@@ -151,13 +165,10 @@ async def list_verdicts(
     if q:
         like = f"%{q.strip()}%"
         query = query.where(Item.title.ilike(like) | Item.body.ilike(like))
-    total = await db.scalar(select(func.count()).select_from(query.subquery()))
-    rows = (
-        await db.execute(
-            query.order_by(Item.updated_at.desc()).limit(min(limit, 50)).offset(offset)
-        )
-    ).all()
-    return VerdictPage(items=[await _verdict(db, i, w) for i, w in rows], total=total or 0)
+    # The archive is small: read it newest first, keep one entry per rumour, then page.
+    rows = _distinct((await db.execute(query.order_by(Item.updated_at.desc()).limit(1000))).all())
+    page = rows[offset : offset + min(limit, 50)]
+    return VerdictPage(items=[await _verdict(db, i, w) for i, w in page], total=len(rows))
 
 
 @router.get("/verdicts/{item_id}")
@@ -183,7 +194,8 @@ async def match(body: MatchIn, db: Db) -> list[MatchOut]:
         if score >= 0.4:
             scored.append((score, item, ws))
     scored.sort(key=lambda r: r[0], reverse=True)
-    return [MatchOut(score=round(s, 2), verdict=await _verdict(db, i, w)) for s, i, w in scored[:3]]
+    best = _distinct(scored)[:3]
+    return [MatchOut(score=round(s, 2), verdict=await _verdict(db, i, w)) for s, i, w in best]
 
 
 async def _next_ref(db: Db, ws: uuid.UUID) -> str:
@@ -298,7 +310,7 @@ async def find_published(db: Db, text: str, k: int = 5) -> list[VerdictOut]:
         if asked and known and (hit := len(asked & known)):
             scored.append((hit / len(asked), item, ws))
     scored.sort(key=lambda r: r[0], reverse=True)
-    return [await _verdict(db, i, w) for s, i, w in scored[:k] if s >= 0.2]
+    return [await _verdict(db, i, w) for s, i, w in _distinct(scored)[:k] if s >= 0.2]
 
 
 @router.post("/ask")
@@ -406,15 +418,14 @@ async def _tts(text: str, lang: str) -> bytes:
     status = 0
     for api_key in keys.rotation("elevenlabs", keys.split(s.elevenlabs_api_key)):
         try:
-            async with httpx.AsyncClient(transport=_tts_transport, timeout=30) as http:
-                r = await http.post(
-                    TTS_URL.format(voice=s.elevenlabs_voice_id),
-                    params={"output_format": "mp3_44100_64"},
-                    headers={"xi-api-key": api_key, "accept": "audio/mpeg"},
-                    json={"text": text, "model_id": s.elevenlabs_model_mg, "language_code": None}
-                    if lang == "mg"
-                    else {"text": text, "model_id": s.elevenlabs_model, "language_code": "fr"},
-                )
+            r = await shared_http("tts", _tts_transport, 30).post(
+                TTS_URL.format(voice=s.elevenlabs_voice_id),
+                params={"output_format": "mp3_44100_64"},
+                headers={"xi-api-key": api_key, "accept": "audio/mpeg"},
+                json={"text": text, "model_id": s.elevenlabs_model_mg, "language_code": None}
+                if lang == "mg"
+                else {"text": text, "model_id": s.elevenlabs_model, "language_code": "fr"},
+            )
         except httpx.HTTPError:
             keys.set_aside("elevenlabs", api_key, s.ai_cooldown)
             continue

@@ -26,10 +26,11 @@ SERVICES = [
     ("DuckDuckGo HTML search (agent web search, no key)", "Public web page", "https://duckduckgo.com/terms"),
     ("Wikipedia / Wikimedia API (agent search; article text CC BY-SA)", "Public API, content CC BY-SA 4.0", "https://foundation.wikimedia.org/wiki/Policy:Terms_of_Use"),
     ("Google Fact Check Tools API (optional)", "Hosted API, free with a key", "https://developers.google.com/fact-check/tools/api"),
-    ("Google Fonts: Public Sans, Barlow Condensed", "SIL Open Font License 1.1", "https://fonts.google.com"),
-    ("Google Fonts: Anton (Vernon Adams), self-hosted", "SIL Open Font License 1.1", "https://fonts.google.com/specimen/Anton"),
-    ("Google Fonts: Special Elite (Astigmatic), self-hosted", "Apache License 2.0", "https://fonts.google.com/specimen/Special+Elite"),
-    ("Photographs of Antananarivo, Wikimedia Commons, halftoned (landing and sign-in, credited in the footer)", "CC BY-SA 4.0, CC BY-SA 2.0, CC0", "apps/web/public/site/credits.json"),
+    ("Google Fonts: Archivo, Atkinson Hyperlegible Next (the app)", "SIL Open Font License 1.1", "https://fonts.google.com"),
+    ("Google Fonts: Public Sans (pitch deck and video)", "SIL Open Font License 1.1", "https://fonts.google.com/specimen/Public+Sans"),
+    ("Google Fonts: Anton (Vernon Adams), self-hosted (pitch deck and video)", "SIL Open Font License 1.1", "https://fonts.google.com/specimen/Anton"),
+    ("Google Fonts: Special Elite (Astigmatic), self-hosted (pitch deck and video)", "Apache License 2.0", "https://fonts.google.com/specimen/Special+Elite"),
+    ("Photographs of Antananarivo, Wikimedia Commons, halftoned (pitch deck)", "CC BY-SA 4.0, CC BY-SA 2.0, CC0", "apps/web/public/site/credits.json"),
 ]
 
 

@@ -96,9 +96,9 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button size="lg" className="h-10">
-          <Plus aria-hidden />
-          {t.claims.newClaim}
+        <Button variant="action" size="lg" className="size-11 px-0 sm:h-10 sm:w-auto sm:px-4" aria-label={t.claims.newClaim}>
+          <Plus className="size-5 sm:size-4" aria-hidden />
+          <span className="hidden sm:inline">{t.claims.newClaim}</span>
         </Button>
       </SheetTrigger>
       <SheetContent className="w-full gap-0 sm:max-w-md">

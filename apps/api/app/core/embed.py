@@ -11,7 +11,7 @@ import time
 
 import httpx
 
-from app.core import ai, keys
+from app.core import ai, http, keys
 from app.core.config import get_settings
 
 BATCH = 64
@@ -59,12 +59,11 @@ async def _batch(p: ai.Provider, texts: list[str]) -> list[list[float]]:
         for attempt in range(max(1, s.ai_attempts)):
             started = time.monotonic()
             try:
-                async with httpx.AsyncClient(transport=_transport, timeout=s.ai_timeout) as http:
-                    resp = await http.post(
-                        f"{p.base_url}/embeddings",
-                        headers={"Authorization": f"Bearer {key}"},
-                        json={"model": p.model, "input": texts, "dimensions": s.embed_dim},
-                    )
+                resp = await http.shared("embed", _transport, s.ai_timeout).post(
+                    f"{p.base_url}/embeddings",
+                    headers={"Authorization": f"Bearer {key}"},
+                    json={"model": p.model, "input": texts, "dimensions": s.embed_dim},
+                )
                 if resp.status_code in (401, 403, 429):
                     errors.append(f"HTTP {resp.status_code}")
                     await ai._log(log_as, started, errors[-1], None)

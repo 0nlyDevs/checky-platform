@@ -8,10 +8,10 @@ import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { ArrowLeft, ImageIcon, LoaderCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { AirtimeStrip } from "@/components/claims/airtime-strip";
 import { AnalysisPanel } from "@/components/claims/analysis-panel";
 import { VerdictCard } from "@/components/claims/verdict-card";
-import { formatTime } from "@/components/claims/day-grid";
+import { claimSteps, StepDisc, type StepState } from "@/components/flow/step-line";
+import { formatDuration, formatTime } from "@/lib/time";
 import { StatusLabel, toClaim, VERDICT_META } from "@/components/claims/verdict";
 import { statusAfter, VerdictDecision } from "@/components/claims/verdict-decision";
 import { Button } from "@/components/ui/button";
@@ -81,11 +81,41 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
 function Section({ title, children, id }: { title: string; children: React.ReactNode; id?: string }) {
   return (
     <section aria-labelledby={id} className="border-t border-border pt-5">
-      <h2 id={id} className="mb-4 font-semibold">
+      <h2 id={id} className="mb-4 font-display text-lg font-bold">
         {title}
       </h2>
       {children}
     </section>
+  );
+}
+
+/**
+ * One part of the dossier on the numbered line: its disc in the gutter, a rule down to the next
+ * disc (ink once the next part has started), the part's content beside it.
+ */
+function Step({ n, state, next, children }: { n: number; state: StepState; next?: StepState; children: React.ReactNode }) {
+  return (
+    <div className="relative grid grid-cols-[1.5rem_minmax(0,1fr)] gap-x-3 pb-12 md:grid-cols-[2.5rem_minmax(0,1fr)] md:gap-x-5">
+      {next && (
+        <span
+          aria-hidden
+          className={cn("absolute top-8 bottom-2 left-3 w-px md:top-12 md:left-5", next === "waiting" ? "bg-border" : "bg-foreground")}
+        />
+      )}
+      <StepDisc n={n} state={state} size="sm" className="mt-1 md:hidden" />
+      <StepDisc n={n} state={state} size="lg" className="hidden md:grid" />
+      <div className="min-w-0">{children}</div>
+    </div>
+  );
+}
+
+/** A part's heading: the step's name, and its state while it is being worked on. */
+function StepTitle({ id, title, state }: { id: string; title: string; state: StepState }) {
+  return (
+    <h2 id={id} className="mb-4 flex flex-wrap items-baseline gap-x-3 pt-0.5 font-display text-xl font-bold md:pt-1.5">
+      {title}
+      {state !== "done" && state !== "waiting" && <span className="font-sans text-sm font-normal text-muted-foreground">{t.flow.state[state]}</span>}
+    </h2>
   );
 }
 
@@ -255,6 +285,7 @@ export function ClaimDetail() {
       ? t.detail.seenAt(formatTime(seen))
       : t.detail.seenOn(dayFmt.format(seen), formatTime(seen))
     : null;
+  const steps = claimSteps(claim);
   const originLabel = claim.origin ? (t.origins[claim.origin as keyof typeof t.origins] ?? claim.origin) : null;
   const thread = [
     ...(comments ?? []).map((c) => ({ kind: "comment" as const, id: c.id, at: c.created_at, actor: c.author_id, body: c.body })),
@@ -267,85 +298,87 @@ export function ClaimDetail() {
     <div className="mx-auto max-w-[90rem] px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <BackLink ws={ws} />
 
-      <header className="mt-4">
-        <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-muted-foreground">
-          <span className="font-display text-lg font-semibold tracking-wide text-foreground tabular">{claim.ref}</span>
-          {seenText && <span className="ml-1 tabular">{seenText}</span>}
-          {originLabel && <span>· {originLabel}</span>}
-        </p>
-        {editing ? (
-          <form id="edit-claim" onSubmit={saveText} className="mt-3 max-w-3xl space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-title">{t.claims.form.claim}</Label>
-              <textarea id="edit-title" name="title" required maxLength={300} rows={2} defaultValue={item.title} className={cn(textareaClass, "text-lg font-medium")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-body">{t.detail.context}</Label>
-              <textarea id="edit-body" name="body" rows={4} defaultValue={item.body} placeholder={t.claims.form.contextPlaceholder} className={textareaClass} />
-            </div>
-            <div className="flex gap-2">
-              <Button type="submit" disabled={saving}>
-                {saving && <LoaderCircle className="animate-spin" aria-hidden />}
-                {t.detail.save}
-              </Button>
-              <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
-                {t.detail.cancel}
-              </Button>
-            </div>
-          </form>
-        ) : (
-          <>
-            <div className="mt-2 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <h1 className="max-w-4xl text-2xl leading-snug font-semibold tracking-tight text-balance lg:text-[1.75rem]">
-                {item.title}
-              </h1>
-              <div className="flex shrink-0 items-center gap-2">
-                <Label htmlFor="claim-status" className="sr-only">
-                  {t.detail.status}
-                </Label>
-                <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => patch({ status }, { status })}>
-                  <SelectTrigger id="claim-status" aria-label={t.detail.status} className="h-9 min-w-40 flex-1 bg-card lg:flex-none">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {STATUSES.map((st) => (
-                      <SelectItem key={st} value={st}>
-                        <StatusLabel status={st} />
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {canEdit && (
-                  <Button variant="outline" className="h-9 shrink-0" onClick={() => setEditing(true)}>
-                    <Pencil aria-hidden />
-                    {t.detail.edit}
-                  </Button>
-                )}
+      <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12">
+        {/* The dossier follows the numbered line: what is claimed, what the sources say, the conclusion. */}
+        <div className="min-w-0">
+          <Step n={1} state={steps.claim} next={steps.evidence}>
+            <header>
+              {editing ? (
+                <form id="edit-claim" onSubmit={saveText} className="max-w-3xl space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-title">{t.claims.form.claim}</Label>
+                    <textarea id="edit-title" name="title" required maxLength={300} rows={2} defaultValue={item.title} className={cn(textareaClass, "text-lg font-medium")} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-body">{t.detail.context}</Label>
+                    <textarea id="edit-body" name="body" rows={4} defaultValue={item.body} placeholder={t.claims.form.contextPlaceholder} className={textareaClass} />
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={saving}>
+                      {saving && <LoaderCircle className="animate-spin" aria-hidden />}
+                      {t.detail.save}
+                    </Button>
+                    <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
+                      {t.detail.cancel}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <>
+                  <h1 className="max-w-4xl font-display text-2xl leading-tight font-extrabold tracking-tight text-balance md:pt-0.5 lg:text-[2rem]">{item.title}</h1>
+              <p className="mt-2 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-muted-foreground">
+                <span className="font-display font-bold text-foreground tabular">{claim.ref}</span>
+                {seenText && <span className="tabular">· {seenText}</span>}
+                {originLabel && <span>· {originLabel}</span>}
+                {seen && <span className="tabular">· {t.claims.board.circulating(formatDuration(now.getTime() - seen.getTime()))}</span>}
+              </p>
+                  {/* Context belongs with the claim it explains; when there is none, nothing takes its place. */}
+                  {item.body && <p className="mt-3 max-w-[70ch] whitespace-pre-line text-pretty">{item.body}</p>}
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <Label htmlFor="claim-status" className="sr-only">
+                      {t.detail.status}
+                    </Label>
+                    <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => patch({ status }, { status })}>
+                      <SelectTrigger id="claim-status" aria-label={t.detail.status} className="h-10 min-w-40 bg-card">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {STATUSES.map((st) => (
+                          <SelectItem key={st} value={st}>
+                            <StatusLabel status={st} />
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {canEdit && (
+                      <Button variant="outline" className="h-10 shrink-0" onClick={() => setEditing(true)}>
+                        <Pencil aria-hidden />
+                        {t.detail.edit}
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
+            </header>
+          </Step>
+
+          <Step n={2} state={steps.evidence} next={steps.conclusion}>
+            <section aria-labelledby="evidence">
+              <StepTitle id="evidence" title={`${t.flow.steps.evidence}${claim.sources ? ` (${claim.sources})` : ""}`} state={steps.evidence} />
+              <SourcesPanel ws={ws} itemId={id} />
+              <div className="mt-8">
+                <h3 className="mb-3 font-bold">{t.detail.analysisTitle}</h3>
+                <AnalysisPanel ws={ws} item={item} sourceCount={claim.sources} />
               </div>
-            </div>
-            {/* Context belongs with the claim it explains; when there is none, nothing takes its place. */}
-            {item.body && <p className="mt-3 max-w-[70ch] whitespace-pre-line text-pretty text-muted-foreground">{item.body}</p>}
-          </>
-        )}
-        <div className="max-w-4xl">
-          <AirtimeStrip claim={claim} now={now} />
-        </div>
-      </header>
+            </section>
+          </Step>
 
-      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-12">
-        {/* The journalist's order: look at the evidence, then decide. */}
-        <div className="min-w-0 space-y-8">
-          <Section id="evidence" title={`${t.detail.evidence}${claim.sources ? ` (${claim.sources})` : ""}`}>
-            <SourcesPanel ws={ws} itemId={id} />
-            <div className="mt-8">
-              <h3 className="mb-3 text-sm font-semibold">{t.detail.analysisTitle}</h3>
-              <AnalysisPanel ws={ws} item={item} sourceCount={claim.sources} />
-            </div>
-          </Section>
-
-          <Section id="verdict" title={t.detail.verdictTitle}>
-            <VerdictDecision claim={claim} canEdit={canEdit} sourceCount={claim.sources} onDecide={decide} />
-          </Section>
+          <Step n={3} state={steps.conclusion}>
+            <section aria-labelledby="verdict">
+              <StepTitle id="verdict" title={t.flow.steps.conclusion} state={steps.conclusion} />
+              <VerdictDecision claim={claim} canEdit={canEdit} sourceCount={claim.sources} onDecide={decide} />
+            </section>
+          </Step>
 
           {claim.verdict && (
             <Section id="card" title={t.card.title}>

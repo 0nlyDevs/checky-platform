@@ -33,7 +33,7 @@ How the pieces talk:
 - **AI** calls go through one gateway (`apps/api/app/core/ai.py`) that falls back from Groq to
   Gemini to NVIDIA (and Claude, once its key is set) when a provider fails. Every key may be a
   comma-separated list; a key that hits its quota is set aside and the next one is used.
-- **Agents** (Vérifier's deep search, the floating assistant's desk copilot and public guide) share
+- **Agents** (Vérifier's deep search, the docked assistant's desk copilot and public guide) share
   one tool loop and one set of guardrails (`apps/api/app/modules/guard.py`); they search the web,
   Wikipedia and fact-checkers without any key (`apps/api/app/core/websearch.py`).
 - **In production:** web on Vercel, API on Render, database and file storage on **Neon**
@@ -248,16 +248,17 @@ The browser follows it with Socket.IO events `job.progress` / `job.done` / `job.
 3. Live updates: `useWorkspaceSocket(workspaceId, { "item.updated": … })` from
    `hooks/use-workspace-socket.ts`.
 4. **Every** user-visible string goes in `apps/web/lib/i18n/fr.ts`.
-5. Follow `apps/web/DESIGN.md`. The rules that must not break:
-   - signal yellow `#f2c230` only for "now", focus and selection (never buttons or verdicts);
-   - a verdict is always **icon + label**, never colour alone;
-   - status icons never use verdict colours.
-6. Public pages (landing `/accueil`, `/connexion`, `/inscription`) are a separate world ("Le dossier":
-   a case file in manila, ink and one alarm red; Anton headlines, a typewriter for labels only).
-   Read the "Public pages" part of `CLAUDE.md` before touching them, and check a change with the
-   design-taste inspector (command there). Pieces live in `apps/web/public/site/dossier/` with their
-   credits; every rumour on these pages is fictional. The public, no-account features live there too:
-   `/verifies`, `/signaler`, `/suivi/[token]` (API `/api/v1/public/*`, only for newsrooms that opted in).
+5. Follow `apps/web/DESIGN.md` (one world, « Le signal clair », for the desk and the public pages).
+   The rules that must not break:
+   - citron `#d7f45b` only for the one action of a screen (`<Button variant="action">`), the active
+     step and highlights; never a verdict, a status or decoration;
+   - a verdict is always **icon + label**, never colour alone; an AI suggestion is a dashed outline,
+     a confirmed verdict is solid;
+   - status icons never use verdict colours;
+   - reuse the numbered line (`components/flow/step-line.tsx`) wherever a rumour's progress shows.
+6. The public, no-account pages live in `apps/web/app/(site)/` (`/`, `/verifies`, `/signaler`,
+   `/suivi/[token]`, API `/api/v1/public/*`, only for newsrooms that opted in). Every rumour shown as
+   an example on them is fictional and labelled.
 
 Next.js 16 is newer than most tutorials and AI training data: read
 `apps/web/node_modules/next/dist/docs/` before using an unfamiliar API.

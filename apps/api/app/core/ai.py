@@ -29,7 +29,7 @@ from typing import Any, Literal, overload
 
 import httpx
 
-from app.core import claude, keys
+from app.core import claude, http, keys
 from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.models import AiCacheEntry, AiCall
@@ -217,7 +217,8 @@ def _check(resp: httpx.Response, text: str) -> None:
 
 
 def _client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=_transport, timeout=get_settings().ai_timeout)
+    """The kept-alive client for chat calls (see app/core/http.py): never closed here."""
+    return http.shared("ai", _transport, get_settings().ai_timeout)
 
 
 async def _log(
@@ -305,8 +306,8 @@ async def check_providers() -> dict[str, dict[str, Any]]:
                 "detail": detail,
             }
         try:
-            async with httpx.AsyncClient(transport=_transport, timeout=5) as http:
-                resp = await http.get(
+            async with httpx.AsyncClient(transport=_transport, timeout=5) as client:
+                resp = await client.get(
                     f"{p.base_url}/models", headers={"Authorization": f"Bearer {p.api_key}"}
                 )
             status = "up" if resp.status_code < 400 else "down"
@@ -370,12 +371,11 @@ async def _complete(messages, tools, workspace_id, params) -> Completion:
             result = Completion(provider=provider.name, **got)
             await _log(provider, started, None, workspace_id, result.tokens_in, result.tokens_out)
             return result
-        async with _client() as http:
-            resp = await http.post(
-                f"{provider.base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {provider.api_key}"},
-                json=_body(provider, messages, tools, False, params),
-            )
+        resp = await _client().post(
+            f"{provider.base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {provider.api_key}"},
+            json=_body(provider, messages, tools, False, params),
+        )
         _check(resp, resp.text)
         data = resp.json()
         msg = data["choices"][0]["message"]
@@ -436,25 +436,28 @@ class Stream:
                     await opened.aclose()
                     raise
                 return provider, started, opened, events, first
-            http = _client()
+            client = _client()
+            resp: httpx.Response | None = None
             try:
-                req = http.build_request(
+                req = client.build_request(
                     "POST",
                     f"{provider.base_url}/chat/completions",
                     headers={"Authorization": f"Bearer {provider.api_key}"},
                     json=_body(provider, self.messages, self.tools, True, self.params),
                 )
-                resp = await http.send(req, stream=True)
+                resp = await client.send(req, stream=True)
                 if resp.status_code >= 400:
                     _check(resp, (await resp.aread()).decode(errors="replace"))
                 events = _sse_events(resp)
                 first = await anext(events, None)
             except BaseException:
-                await http.aclose()
+                if resp is not None:
+                    await resp.aclose()  # the connection goes back to the shared pool
                 raise
-            return provider, started, http, events, first
+            return provider, started, resp, events, first
 
-        provider, started, http, events, first = await _attempts(
+        # `opened` is the streamed response (or Claude's stream): closing it frees the connection.
+        provider, started, opened, events, first = await _attempts(
             self.workspace_id, attempt, estimate_tokens(self.messages, self.tools)
         )
         content: list[str] = []
@@ -481,12 +484,12 @@ class Stream:
             error = f"{type(e).__name__}: {e}"
             raise
         finally:
-            await http.aclose()
+            await opened.aclose()
             tokens = (usage.get("prompt_tokens"), usage.get("completion_tokens"))
             await _log(provider, started, error, self.workspace_id, *tokens)
 
         self.completion = Completion(
-            raw=getattr(http, "raw", None),
+            raw=getattr(opened, "raw", None),
             content="".join(content),
             provider=provider.name,
             model=model,

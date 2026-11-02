@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { AudioLines, Mic, MessageCircle, RotateCcw, Send, Square, Volume2, VolumeX, X } from "lucide-react";
-import { VerdictChip } from "@/components/site/fragments";
+import { LoaderCircle, Mic, RotateCcw, Send, Square, X } from "lucide-react";
+import { useAssistant } from "@/components/assistant/assistant-context";
+import { VerdictChip } from "@/components/claims/verdict";
 import { API_URL, ApiError, api } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { type PublicVerdict, myTips, publicApi, rememberTip } from "@/lib/public-api";
+import { type Lang, speak, stopSpeaking } from "@/lib/speak";
 import { postStream } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 
 const a = t.assistant;
-type Lang = "fr" | "mg";
 type Cite = { n: number; title: string; url?: string | null; id?: string; verdict?: PublicVerdict["verdict"] };
 type Origin = keyof typeof t.origins;
 /** A change the agent proposes; nothing happens until the person confirms it here. */
@@ -58,52 +59,6 @@ function stored(key: string): Turn[] {
   }
 }
 
-const plain = (s: string) => s.replace(/\[\d+\]|【[^】]*】|\*\*/g, "").replace(/\s+/g, " ").trim();
-
-let voiceMissing = false; // the API has no ElevenLabs key: stop asking for it
-let playing: HTMLAudioElement | null = null;
-
-/** Reads an answer aloud: the ElevenLabs voice when the API has one, otherwise the browser's own. */
-async function speak(text: string, lang: Lang, onEnd: () => void) {
-  stopSpeaking();
-  if (!voiceMissing) {
-    try {
-      const res = await fetch(`${API_URL}/api/v1/public/speak`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.slice(0, 900), lang }),
-      });
-      if (res.status === 501) voiceMissing = true;
-      else if (res.ok) {
-        const url = URL.createObjectURL(await res.blob());
-        playing = new Audio(url);
-        playing.onended = playing.onerror = () => {
-          URL.revokeObjectURL(url);
-          playing = null;
-          onEnd();
-        };
-        await playing.play();
-        return;
-      }
-    } catch {
-      // fall through to the browser's voice
-    }
-  }
-  if (!("speechSynthesis" in window)) return onEnd();
-  const u = new SpeechSynthesisUtterance(plain(text));
-  const voices = speechSynthesis.getVoices();
-  u.voice = voices.find((v) => v.lang.toLowerCase().startsWith(lang)) ?? voices.find((v) => v.lang.toLowerCase().startsWith("fr")) ?? null;
-  u.lang = u.voice?.lang ?? "fr-FR";
-  u.onend = u.onerror = () => onEnd();
-  speechSynthesis.speak(u);
-}
-
-function stopSpeaking() {
-  playing?.pause();
-  playing = null;
-  if (typeof window !== "undefined" && "speechSynthesis" in window) speechSynthesis.cancel();
-}
-
 /**
  * The floating site agent on every page. Outside a workspace it is the visitors' guide (published
  * verdicts, tips, their follow-up, the right page); inside one it is the desk's copilot (the desk, its
@@ -116,7 +71,7 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   const router = useRouter();
   const pathname = usePathname();
   const key = `${STORE}:${ws ?? "public"}`;
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useAssistant();
   const [text, setText] = useState("");
   // The conversation survives page changes (the agent itself opens pages) for this tab.
   const [turns, setTurns] = useState<Turn[]>(() => stored(key));
@@ -132,6 +87,8 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   const [speaking, setSpeaking] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
+  const micBusy = useRef(false); // one recording at a time, even when two paths ask to listen
+  const meter = useRef<HTMLDivElement>(null);
   const log = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const seq = useRef(turns.reduce((m, x) => Math.max(m, x.id), 0));
@@ -139,6 +96,15 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   const turnsRef = useRef(turns);
   const voiceRef = useRef(voice);
   const openRef = useRef(open);
+  // Voice mode chains turns through callbacks made several renders earlier (listen → transcribe →
+  // ask → speak → listen): they must read the current page, language and conversation, not the
+  // ones of the render that created them (the copilot was told the page before a navigation).
+  const pathRef = useRef(pathname);
+  const langRef = useRef(lang);
+  useEffect(() => {
+    pathRef.current = pathname;
+    langRef.current = lang;
+  }, [pathname, lang]);
   useEffect(() => {
     voiceRef.current = voice;
     openRef.current = open;
@@ -165,20 +131,20 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
     } catch {
       // nothing to restore
     }
-  }, [key]);
+  }, [key, setOpen]);
   useEffect(() => {
     if (!open) return;
     input.current?.focus();
     const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     addEventListener("keydown", esc);
     return () => removeEventListener("keydown", esc);
-  }, [open]);
+  }, [open, setOpen]);
   useEffect(() => () => stopSpeaking(), []);
 
   const update = (id: number, patch: (x: Turn) => Partial<Turn>) => setTurns((all) => all.map((x) => (x.id === id ? { ...x, ...patch(x) } : x)));
 
   function history(q: string) {
-    const past = turns.filter((x) => x.state === "done").slice(-3);
+    const past = turnsRef.current.filter((x) => x.state === "done").slice(-3);
     return [
       ...past.flatMap((x) => {
         const said = [x.answer, ...(x.actions ?? []).map((ac) => ac.outcome)].filter(Boolean).join(" ");
@@ -197,7 +163,8 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
     setText("");
     let finalAnswer = "";
     let actions: Action[] = [];
-    const body = { messages, lang, page: pathname, tips: ws ? [] : myTips().map((x) => x.token) };
+    // In voice mode the agent keeps its answer short: it is read aloud.
+    const body = { messages, lang: langRef.current, page: pathRef.current, tips: ws ? [] : myTips().map((x) => x.token), voice: voiceRef.current };
     try {
       await postStream(ws ? `/workspaces/${ws}/copilot` : "/public/agent", body, (event, data) => {
         if (event === "step") update(id, (x) => ({ steps: [...(x.steps ?? []), (data as { summary: string }).summary] }));
@@ -212,7 +179,7 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
       return update(id, () => ({ state: "error", note: err instanceof ApiError && err.status === 429 ? a.tooMany : a.failed }));
     }
     const go = actions.find((ac) => ac.kind === "navigate");
-    if (go?.href && go.href !== pathname) router.push(go.href as never);
+    if (go?.href && go.href !== pathRef.current) router.push(go.href as never);
     const waiting = actions.find((ac) => ac.state === "pending");
     pending.current = waiting ? { turn: id, action: waiting } : null;
     if (voiceRef.current && finalAnswer) say(waiting ? `${finalAnswer} ${a.sayYes}` : finalAnswer);
@@ -221,7 +188,7 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
   /** Reads a line aloud in voice mode, then listens again: a hands-free conversation. */
   function say(line: string) {
     setSpeaking(true);
-    void speak(line, lang, () => {
+    void speak(line, langRef.current, () => {
       setSpeaking(false);
       if (voiceRef.current && openRef.current) void listen();
     });
@@ -267,19 +234,49 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
     }
   }
 
-  function toggleDictation() {
-    if (rec === "listening") return recorder.current?.stop();
+  function setVoiceMode(on: boolean) {
+    setVoice(on);
+    voiceRef.current = on;
+    stopSpeaking();
+    setSpeaking(false);
+    if (on && rec === "idle" && canRecord) void listen();
+    if (!on && recorder.current?.state === "recording") recorder.current.stop();
+  }
+
+  /** The voice stage's one button: stop listening, cut the voice and speak, or start listening. */
+  function stageAction() {
+    if (rec === "listening") return stopRecording();
+    if (speaking) {
+      stopSpeaking();
+      setSpeaking(false);
+    }
     if (rec === "idle") void listen();
   }
 
-  /** Records until the speaker pauses (about 1.2 s of silence after speech), then transcribes. */
+  // A recorder only stops while recording (stop() on an idle one throws), so a press during the
+  // mic's start-up does nothing.
+  function stopRecording() {
+    if (recorder.current?.state === "recording") recorder.current.stop();
+  }
+
+  function toggleDictation() {
+    if (rec === "listening") return stopRecording();
+    if (rec === "idle") void listen();
+  }
+
+  /** Records until the speaker pauses (1 s of silence after speech), then transcribes. */
   async function listen() {
+    if (micBusy.current) return;
+    micBusy.current = true;
     setNotice(null);
+    setRec("listening"); // at once: the voice stage must not say "en pause" while the mic starts
     stopSpeaking();
     let stream: MediaStream;
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
     } catch {
+      micBusy.current = false;
+      setRec("idle");
       return setNotice(a.micDenied);
     }
     const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find((m) => MediaRecorder.isTypeSupported?.(m)) ?? "";
@@ -297,6 +294,8 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
       if (mr.state !== "recording") return;
       analyser.getFloatTimeDomainData(buf);
       const rms = Math.sqrt(buf.reduce((acc, v) => acc + v * v, 0) / buf.length);
+      // the voice stage's bars follow the speaker's level, set straight on the element (no re-render)
+      meter.current?.style.setProperty("--level", Math.min(1, rms * 14).toFixed(2));
       const now = performance.now();
       if (rms > 0.025) {
         loud += 1;
@@ -304,7 +303,7 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
         if (loud > 6) heard = true; // ~100 ms of voice
       } else if (heard) {
         quietSince ||= now;
-        if (now - quietSince > 1200) return mr.stop();
+        if (now - quietSince > 1000) return mr.stop();
       }
       if (!heard && now - started > 8000) return mr.stop(); // nobody spoke
       if (now - started > 60_000) return mr.stop(); // about a minute at most
@@ -313,13 +312,15 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
     mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
     mr.onstop = async () => {
       cancelAnimationFrame(frame);
+      micBusy.current = false;
+      meter.current?.style.setProperty("--level", "0");
       stream.getTracks().forEach((tr) => tr.stop());
       void ctx.close();
       if (!heard) return setRec("idle");
       setRec("transcribing");
       try {
         const blob = new Blob(chunks, { type: (mr.mimeType || "audio/webm").split(";")[0] });
-        const res = await fetch(`${API_URL}/api/v1/public/transcribe?lang=${lang}`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
+        const res = await fetch(`${API_URL}/api/v1/public/transcribe?lang=${langRef.current}`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
         if (!res.ok) throw new Error(String(res.status));
         const { text: said } = (await res.json()) as { text: string };
         setRec("idle");
@@ -336,16 +337,27 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
     };
     recorder.current = mr;
     mr.start(250);
-    setRec("listening");
     frame = requestAnimationFrame(watch);
   }
 
+  // Where the spoken conversation stands, said in the voice stage.
+  const last = turns.at(-1);
+  const phase = rec !== "idle" ? rec : last?.state === "thinking" ? "thinking" : speaking ? "speaking" : "idle";
+  const awaiting = last?.actions?.some((ac) => ac.state === "pending");
+  const hint =
+    phase === "idle" && notice
+      ? notice
+      : phase === "listening" && awaiting
+        ? a.sayYes
+        : phase === "thinking" && last?.steps?.length
+          ? `${last.steps.at(-1)}…`
+          : a.stageHint[phase];
+
   return (
-    <div className="assistant" data-scope={scope}>
+    <>
       {open && (
-        <section className="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title">
+        <section className="assistant-panel" data-scope={scope} data-voice={voice || undefined} role="complementary" aria-labelledby="assistant-title">
           <header className="assistant-head">
-            <AudioLines className="size-5" aria-hidden />
             <h2 id="assistant-title">{a.title}</h2>
             {!!turns.length && (
               <button type="button" className="assistant-icon ml-auto" onClick={() => { stopSpeaking(); pending.current = null; setTurns([]); }} title={a.clear}>
@@ -353,17 +365,19 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
                 <span className="sr-only">{a.clear}</span>
               </button>
             )}
-            <button type="button" className={cn("assistant-icon", !turns.length && "ml-auto")} onClick={() => {
-                const on = !voice;
-                setVoice(on);
-                voiceRef.current = on;
-                stopSpeaking();
-                if (on && rec === "idle" && canRecord) void listen();
-                if (!on && recorder.current?.state === "recording") recorder.current.stop();
-              }} aria-pressed={voice} title={a.voiceMode}>
-              {voice ? <Volume2 className="size-5" aria-hidden /> : <VolumeX className="size-5" aria-hidden />}
-              <span className="sr-only">{a.voiceMode}</span>
-            </button>
+            {canRecord && (
+              <button
+                type="button"
+                className={cn("assistant-voice-toggle", !turns.length && "ml-auto")}
+                onClick={() => setVoiceMode(!voice)}
+                aria-pressed={voice}
+                title={voice ? a.voiceTurnOff : a.voiceTurnOn}
+              >
+                {voice ? <span className="assistant-dot" data-live={phase === "listening" || undefined} aria-hidden /> : <Mic className="size-4" aria-hidden />}
+                {a.voiceShort}
+                <span className="sr-only"> · {a.voiceMode}</span>
+              </button>
+            )}
             <button type="button" className="assistant-icon" onClick={() => setOpen(false)}>
               <X className="size-5" aria-hidden />
               <span className="sr-only">{a.close}</span>
@@ -372,17 +386,18 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
 
           <div ref={log} className="assistant-log" aria-live="polite">
             <p className="assistant-lead">{ws ? a.leadDesk : a.leadPublic}</p>
-            {voice && <p className="assistant-note">{a.voiceOn}</p>}
-            {turns.map((x) => (
+            {turns.map((x) => {
+              const used = x.cites?.filter((c) => citedNumbers(x.answer).has(c.n)) ?? [];
+              return (
               <div key={x.id} className="space-y-2">
                 <p className="assistant-q">{x.question}</p>
                 <div className="assistant-a" data-state={x.state}>
                   {x.state === "thinking" && <p className="text-muted-foreground">{x.steps?.at(-1) ? `${x.steps.at(-1)}…` : a.thinking}</p>}
                   {x.answer && <p className="whitespace-pre-line">{renderCites(x.answer, x.cites)}</p>}
                   {x.note && <p className={cn(x.state === "error" && "text-verdict-false-ink")}>{x.note}</p>}
-                  {x.cites?.some((c) => c.verdict) && (
+                  {used.some((c) => c.verdict) && (
                     <ul className="mt-2 space-y-1.5">
-                      {x.cites.map((c) =>
+                      {used.map((c) =>
                         c.verdict && c.url ? (
                           <li key={c.n}>
                             <Link href={c.url as never} className="assistant-file">
@@ -395,9 +410,9 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
                       )}
                     </ul>
                   )}
-                  {!!x.cites?.length && !x.cites.some((c) => c.verdict) && (
+                  {!!used.length && !used.some((c) => c.verdict) && (
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {a.passages} : {x.cites.map((c) => `[${c.n}] ${c.title}`).join(" · ")}
+                      {a.passages} : {used.map((c) => `[${c.n}] ${c.title}`).join(" · ")}
                     </p>
                   )}
                   {x.actions?.map((ac) => (
@@ -405,7 +420,8 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
                   ))}
                 </div>
               </div>
-            ))}
+              );
+            })}
             {!turns.length && (
               <div className="flex flex-wrap gap-2">
                 {(ws ? a.suggestionsDesk : a.suggestionsPublic).map((q) => (
@@ -417,6 +433,48 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
             )}
           </div>
 
+          {voice ? (
+            <div className="assistant-stage" data-phase={phase}>
+              <div className="assistant-stage-row">
+                <div ref={meter} className="assistant-meter" aria-hidden>
+                  {[0.45, 0.8, 1, 0.7, 0.5].map((k) => (
+                    <i key={k} style={{ "--k": k } as React.CSSProperties} />
+                  ))}
+                </div>
+                <div className="min-w-0 flex-1" role="status" aria-live="polite">
+                  <p className="assistant-stage-label">{a.stage[phase]}</p>
+                  <p className="assistant-stage-hint">{hint}</p>
+                </div>
+                <button
+                  type="button"
+                  className="assistant-stage-btn"
+                  onClick={stageAction}
+                  disabled={phase === "transcribing" || phase === "thinking"}
+                >
+                  {phase === "transcribing" || phase === "thinking" ? (
+                    <LoaderCircle className="size-6 animate-spin" aria-hidden />
+                  ) : phase === "listening" || phase === "speaking" ? (
+                    <Square className="size-5" aria-hidden />
+                  ) : (
+                    <Mic className="size-6" aria-hidden />
+                  )}
+                  <span className="sr-only">
+                    {phase === "listening" ? a.stageStop : phase === "speaking" ? a.stageCut : phase === "idle" ? a.stageListen : a.stageWait}
+                  </span>
+                </button>
+              </div>
+              <div className="assistant-stage-foot">
+                <label className="sr-only" htmlFor="assistant-lang">{a.language}</label>
+                <select id="assistant-lang" className="assistant-lang" value={lang} onChange={(e) => setLang(e.target.value as Lang)}>
+                  <option value="fr">FR</option>
+                  <option value="mg">MG</option>
+                </select>
+                <button type="button" className="assistant-stage-link" onClick={() => setVoiceMode(false)}>
+                  {a.typeInstead}
+                </button>
+              </div>
+            </div>
+          ) : (
           <form
             className="assistant-form"
             onSubmit={(e) => {
@@ -431,12 +489,6 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
                 <option value="fr">FR</option>
                 <option value="mg">MG</option>
               </select>
-              {speaking && (
-                <button type="button" className="assistant-icon" onClick={() => { stopSpeaking(); setSpeaking(false); }}>
-                  <Square className="size-4" aria-hidden />
-                  <span className="sr-only">{a.stopSpeaking}</span>
-                </button>
-              )}
               <span className="ml-auto text-sm text-muted-foreground">{rec === "listening" ? a.listening : rec === "transcribing" ? a.transcribing : ""}</span>
             </div>
             <div className="flex w-full items-end gap-2">
@@ -467,13 +519,18 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
               </button>
             </div>
           </form>
+          )}
         </section>
       )}
-      <button type="button" className="assistant-fab" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-label={open ? a.close : a.open}>
-        {open ? <X className="size-6" aria-hidden /> : <MessageCircle className="size-6" aria-hidden />}
-      </button>
-    </div>
+    </>
   );
+}
+
+/** The numbers an answer cites, as [1], [1, 2] or 【1】: only those are listed under it. */
+function citedNumbers(body: string) {
+  const out = new Set<number>();
+  for (const m of body.matchAll(/\[(\d+(?:\s*,\s*\d+)*)\]|【(\d+)/g)) for (const n of (m[1] ?? m[2]).split(",")) out.add(Number(n.trim()));
+  return out;
 }
 
 // [n] (or 【n】) in an answer becomes a link to the cited verdict when there is one.

@@ -100,7 +100,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </p>
         )}
 
-        <Button type="submit" size="lg" className="h-11 w-full" disabled={pending}>
+        <Button type="submit" variant="action" size="xl" className="w-full" disabled={pending}>
           {pending && <LoaderCircle className="animate-spin" aria-hidden />}
           {isSignUp ? t.auth.signUp : t.auth.signIn}
         </Button>

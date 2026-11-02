@@ -211,9 +211,12 @@ async def _tracked(ws, url: str | None, claim: str | None) -> dict[str, Any] | N
 
 async def _search(query: str, skip: str | None) -> list[dict[str, Any]]:
     found: list[dict[str, Any]] = []
-    for kind, fn in (("fact-check", websearch.fact_checks), ("web", websearch.web)):
+    for kind, fn, q in (
+        ("fact-check", websearch.fact_checks, query),
+        ("web", websearch.web, websearch.localised(query)),
+    ):
         try:
-            for r in await fn(query):
+            for r in await fn(q):
                 found.append({**r, "kind": kind})
         except websearch.SearchUnavailable:
             continue

@@ -45,6 +45,22 @@ def test_archive_shows_only_published_verdicts_of_public_newsrooms(as_user):
     assert [n["slug"] for n in anon.get("/api/v1/public/newsrooms").json()] == [slug]
 
 
+def test_a_rumour_checked_by_several_newsrooms_shows_once(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    first, _ = _newsroom(alice)
+    second, _ = _newsroom(bob)
+    rumour = "Une vidéo montre l'inondation d'Analakely ce matin"
+    _claim(alice, first, rumour)
+    newest = _claim(bob, second, rumour.upper())  # same words, accents and case aside
+    _claim(bob, second, "Une vidéo montre l'inondation d'Analakely ce matin !", verdict="true")
+    anon = TestClient(app)
+    page = anon.get("/api/v1/public/verdicts").json()
+    assert page["total"] == 2  # the same claim with another verdict is another file
+    assert newest in [v["id"] for v in page["items"]]
+    hits = anon.post("/api/v1/public/match", json={"text": "inondation Analakely vidéo"}).json()
+    assert len(hits) == 2
+
+
 def test_match_finds_a_published_verdict_and_never_invents_one(as_user):
     alice = as_user("alice")
     ws, _ = _newsroom(alice)

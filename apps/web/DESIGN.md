@@ -1,395 +1,377 @@
 ---
 name: FANILO
-description: Fact-checking desk for Malagasy newsrooms, set as a radio programme grid.
+description: Civic signage for rumours. One world, « Le signal clair », for the newsroom desk and the public site.
 colors:
-  antenna-green: "#0f3b36"
-  antenna-green-on: "#ffffff"
-  signal-yellow: "#f2c230"
-  signal-ink: "#7a5900"
-  cool-white-ground: "#f4f6f5"
-  card-white: "#ffffff"
-  green-black-ink: "#14201d"
-  muted-ink: "#4b5a56"
-  hairline-rule: "#c9d3d0"
-  input-stroke: "#b4c0bc"
-  muted-ground: "#e9eeec"
-  secondary-ground: "#e4eae8"
-  accent-ground: "#e2ebe8"
-  destructive: "#b8352b"
-  rail-foreground: "#e9f1ef"
-  rail-muted: "#a9c2bd"
-  rail-accent: "#1a4d47"
-  rail-border: "#24564f"
-  verdict-true: "#267a42"
+  chalk: "#f1f2ec"
+  ink: "#171a18"
+  card: "#ffffff"
+  secondary: "#e4e6de"
+  muted: "#e8eae3"
+  muted-foreground: "#565c55"
+  accent: "#e6e9df"
+  border: "#d3d6cc"
+  rule: "#d3d6cc"
+  input: "#8a9086"
+  destructive: "#9d382e"
+  sidebar: "#e9ebe3"
+  sidebar-accent: "#dcdfd4"
+  citron: "#d7f45b"
+  citron-foreground: "#171a18"
+  citron-ink: "#4b5c00"
+  live: "#171a18"
+  live-foreground: "#f1f2ec"
+  live-muted: "#b2b8ad"
+  live-border: "#30352f"
+  verdict-true: "#286044"
   verdict-true-on: "#ffffff"
-  verdict-true-soft: "#e2f1e6"
-  verdict-true-ink: "#1f6b38"
-  verdict-misleading: "#c98a12"
-  verdict-misleading-on: "#14201d"
-  verdict-misleading-soft: "#f8ecd2"
-  verdict-misleading-ink: "#7d5300"
-  verdict-false: "#c43d32"
+  verdict-true-soft: "#e0ece3"
+  verdict-true-ink: "#1f5238"
+  verdict-misleading: "#e0a12a"
+  verdict-misleading-on: "#171a18"
+  verdict-misleading-soft: "#f8ebcf"
+  verdict-misleading-ink: "#6f4600"
+  verdict-false: "#9d382e"
   verdict-false-on: "#ffffff"
-  verdict-false-soft: "#f8e1de"
-  verdict-false-ink: "#9c2b22"
-  verdict-unverifiable: "#66716c"
+  verdict-false-soft: "#f4dfda"
+  verdict-false-ink: "#872e25"
+  verdict-unverifiable: "#656b63"
   verdict-unverifiable-on: "#ffffff"
-  verdict-unverifiable-soft: "#e7ebe9"
-  verdict-unverifiable-ink: "#4f5a56"
-  dossier-manila: "#dcc9a3"
-  dossier-manila-deep: "#cfb98f"
-  dossier-index: "#efe4c8"
-  dossier-index-hover: "#f6eedb"
-  dossier-paper: "#fffdf7"
-  dossier-photo-white: "#ffffff"
-  dossier-ink: "#141210"
-  dossier-ink-night: "#0e0d0b"
-  dossier-ink-soft: "#4a4033"
-  dossier-ink-label: "#c9b993"
-  dossier-alarm: "#c42a20"
-  dossier-alarm-ink: "#a3231b"
-  dossier-paperclip: "#8b8f95"
-  piece-whatsapp-ground: "#e7f6d8"
-  piece-whatsapp-meta: "#4f5b52"
-  piece-facebook-name: "#1b4a9b"
-  piece-voice-wave: "#2a7d4f"
+  verdict-unverifiable-soft: "#e3e5df"
+  verdict-unverifiable-ink: "#474c45"
+  dark-background: "#121412"
+  dark-foreground: "#eceee6"
+  dark-card: "#1a1d1a"
+  dark-popover: "#1e221e"
+  dark-secondary: "#252924"
+  dark-muted: "#212520"
+  dark-muted-foreground: "#a5ab9f"
+  dark-accent: "#272c26"
+  dark-border: "#30352f"
+  dark-input: "#6c7268"
+  dark-destructive: "#e07a6c"
+  dark-sidebar: "#161916"
+  dark-sidebar-border: "#2a2f29"
+  dark-live: "#0b0d0b"
+  dark-live-muted: "#a5ab9f"
+  dark-live-border: "#2a2f29"
+  dark-verdict-true: "#4fa36f"
+  dark-verdict-true-on: "#0f1410"
+  dark-verdict-true-soft: "#17301f"
+  dark-verdict-true-ink: "#8fd3a6"
+  dark-verdict-misleading: "#e8b04a"
+  dark-verdict-misleading-on: "#121412"
+  dark-verdict-misleading-soft: "#33280f"
+  dark-verdict-misleading-ink: "#f0c97a"
+  dark-verdict-false: "#d96a5c"
+  dark-verdict-false-on: "#121412"
+  dark-verdict-false-soft: "#3a1a16"
+  dark-verdict-false-ink: "#f2a69b"
+  dark-verdict-unverifiable: "#959b91"
+  dark-verdict-unverifiable-on: "#121412"
+  dark-verdict-unverifiable-soft: "#262a25"
+  dark-verdict-unverifiable-ink: "#c3c8bf"
 typography:
+  display:
+    fontFamily: "Archivo, Atkinson Hyperlegible Next, sans-serif"
+    fontSize: "clamp(2.5rem, 1.4rem + 3.6vw, 4.6rem)"
+    fontWeight: 800
+    lineHeight: 0.95
+    letterSpacing: "-0.03em"
   headline:
-    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.75rem"
-    fontWeight: 600
-    lineHeight: 1.25
+    fontFamily: "Archivo, Atkinson Hyperlegible Next, sans-serif"
+    fontSize: "clamp(2rem, 1.5rem + 1.6vw, 2.9rem)"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "-0.02em"
+  verdict:
+    fontFamily: "Archivo, Atkinson Hyperlegible Next, sans-serif"
+    fontSize: "2.25rem"
+    fontWeight: 800
+    lineHeight: 1
     letterSpacing: "-0.025em"
   title:
-    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "1.5rem"
-    fontWeight: 600
-    letterSpacing: "-0.025em"
+    fontFamily: "Archivo, Atkinson Hyperlegible Next, sans-serif"
+    fontSize: "1.125rem"
+    fontWeight: 700
+    lineHeight: 1.4
   body:
-    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
+    fontFamily: "Atkinson Hyperlegible Next, ui-sans-serif, system-ui, sans-serif"
     fontSize: "1rem"
-    fontWeight: 400
-    fontFeature: "ss01"
-  body-table:
-    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.9375rem"
-    fontWeight: 400
-  meta:
-    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 400
-  grid-title:
-    fontFamily: "Barlow Condensed, Public Sans, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 600
-    letterSpacing: "0.025em"
-  ref:
-    fontFamily: "Barlow Condensed, Public Sans, sans-serif"
-    fontSize: "1rem"
-    fontWeight: 600
-    letterSpacing: "0.025em"
-    fontFeature: "tnum"
-  time:
-    fontFamily: "Barlow Condensed, Public Sans, sans-serif"
-    fontSize: "0.875rem"
-    fontWeight: 500
-    letterSpacing: "0.025em"
-    fontFeature: "tnum"
-  now-tag:
-    fontFamily: "Barlow Condensed, Public Sans, sans-serif"
-    fontSize: "0.75rem"
-    fontWeight: 600
-    letterSpacing: "0.05em"
-    fontFeature: "tnum"
-  wordmark:
-    fontFamily: "Barlow Condensed, Public Sans, sans-serif"
-    fontSize: "1.25rem"
-    fontWeight: 600
-    letterSpacing: "0.025em"
-  dossier-display:
-    fontFamily: "Anton, Arial Narrow, sans-serif"
-    fontSize: "clamp(44px, 5.6vw, 92px)"
-    fontWeight: 400
-    lineHeight: 0.9
-  dossier-tab:
-    fontFamily: "Anton, Arial Narrow, sans-serif"
-    fontSize: "21px"
-    fontWeight: 400
-    letterSpacing: "0.06em"
-  dossier-label:
-    fontFamily: "Special Elite, Courier New, serif"
-    fontSize: "14px"
-    fontWeight: 400
-  dossier-lead:
-    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "19px"
     fontWeight: 400
     lineHeight: 1.5
-  dossier-body:
-    fontFamily: "Public Sans, ui-sans-serif, system-ui, sans-serif"
-    fontSize: "17px"
+  lead:
+    fontFamily: "Atkinson Hyperlegible Next, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "1.125rem"
     fontWeight: 400
+    lineHeight: 1.625
+  label:
+    fontFamily: "Atkinson Hyperlegible Next, ui-sans-serif, system-ui, sans-serif"
+    fontSize: "0.875rem"
+    fontWeight: 700
+    lineHeight: 1.4
+  reference:
+    fontFamily: "Archivo, Atkinson Hyperlegible Next, sans-serif"
+    fontSize: "1rem"
+    fontWeight: 700
+    fontFeature: "tnum"
 rounded:
-  block: "3px"
-  sm: "3px"
-  md: "4px"
-  lg: "5px"
-  full: "9999px"
-  assistant-control: "6px"
-  assistant-field: "8px"
-  assistant-panel: "10px"
+  sm: "2px"
+  md: "3px"
+  lg: "4px"
+  xl: "6px"
+  sheet: "12px"
+  pill: "999px"
 spacing:
-  lane-gap: "6px"
-  cell-y: "10px"
-  gutter: "16px"
-  section: "20px"
-  page-desktop: "32px"
+  page-x-phone: "16px"
+  page-x-desk: "32px"
+  page-x-site: "40px"
+  rail: "240px"
+  assistant-dock: "400px"
+  site-max: "1408px"
+  desk-max: "1440px"
 components:
+  button-action:
+    backgroundColor: "{colors.citron}"
+    textColor: "{colors.citron-foreground}"
+    rounded: "{rounded.md}"
+    height: "48px"
+    padding: "0 20px"
+  button-action-hover:
+    backgroundColor: "color-mix(in oklch, #d7f45b, #171a18 8%)"
   button-primary:
-    backgroundColor: "{colors.antenna-green}"
-    textColor: "{colors.antenna-green-on}"
-    rounded: "{rounded.lg}"
-    padding: "0 10px"
-    height: "40px"
-  button-outline:
-    backgroundColor: "{colors.cool-white-ground}"
-    textColor: "{colors.green-black-ink}"
-    rounded: "{rounded.lg}"
-    padding: "0 10px"
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.chalk}"
+    rounded: "{rounded.md}"
     height: "32px"
-  input:
-    backgroundColor: "{colors.card-white}"
-    textColor: "{colors.green-black-ink}"
-    rounded: "{rounded.lg}"
-    padding: "4px 10px"
-    height: "40px"
-  verdict-badge:
+    padding: "0 10px"
+  button-outline:
+    backgroundColor: "{colors.chalk}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    height: "32px"
+  check-field:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+    padding: "16px 16px 8px"
+  tab-active:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.chalk}"
+    rounded: "{rounded.md}"
+    height: "44px"
+  nav-item-active:
+    backgroundColor: "{colors.citron}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.md}"
+  step-disc-active:
+    backgroundColor: "{colors.citron}"
+    textColor: "{colors.citron-foreground}"
+    rounded: "{rounded.pill}"
+    size: "40px"
+  step-disc-done:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.citron}"
+    rounded: "{rounded.pill}"
+    size: "40px"
+  step-disc-waiting:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.muted-foreground}"
+    rounded: "{rounded.pill}"
+    size: "40px"
+  verdict-chip-false:
     backgroundColor: "{colors.verdict-false-soft}"
     textColor: "{colors.verdict-false-ink}"
     rounded: "{rounded.sm}"
     padding: "2px 8px"
-  verdict-badge-suggested:
-    textColor: "{colors.verdict-misleading-ink}"
-    rounded: "{rounded.sm}"
-    padding: "2px 8px"
-  grid-block-confirmed:
-    backgroundColor: "{colors.verdict-true}"
-    textColor: "{colors.verdict-true-on}"
-    rounded: "{rounded.block}"
-    height: "32px"
-  grid-block-suggested:
+  verdict-block-misleading:
     backgroundColor: "{colors.verdict-misleading-soft}"
     textColor: "{colors.verdict-misleading-ink}"
-    rounded: "{rounded.block}"
-    height: "32px"
-  grid-block-unchecked:
-    backgroundColor: "{colors.card-white}"
-    textColor: "{colors.green-black-ink}"
-    rounded: "{rounded.block}"
-    height: "32px"
-  now-tag:
-    backgroundColor: "{colors.signal-yellow}"
-    textColor: "{colors.green-black-ink}"
-    typography: "{typography.now-tag}"
-    rounded: "{rounded.sm}"
-    padding: "2px 6px"
-  nav-rail:
-    backgroundColor: "{colors.antenna-green}"
-    textColor: "{colors.rail-foreground}"
-    width: "248px"
-  nav-rail-item-active:
-    backgroundColor: "{colors.rail-accent}"
-    textColor: "{colors.antenna-green-on}"
+    typography: "{typography.verdict}"
     rounded: "{rounded.md}"
-    padding: "8px 10px"
+    padding: "20px"
+  live-panel:
+    backgroundColor: "{colors.live}"
+    textColor: "{colors.live-foreground}"
+    rounded: "{rounded.md}"
+    padding: "16px"
+  assistant-panel:
+    backgroundColor: "{colors.card}"
+    textColor: "{colors.ink}"
+    width: "400px"
 ---
 
 # Design System: FANILO
 
 ## Overview
 
-**Creative North Star: "Grille d'antenne"**
+**Creative North Star: "Le signal clair"**
 
-The day's claims are set like a Malagasy radio station's programme grid. Every claim has airtime: a block drawn to scale from the moment it was first seen to "maintenant", on hairline hour rules from 06h to 22h. Time is the organising material; the station's deep antenna green frames the desk, and a single signal yellow marks the present moment.
+FANILO reads like civic signage for rumours: a chalk ground, green-black ink, square-ish edges, heavy Archivo words and one citron that says "here". The same world serves the newsroom desk (`/w/…`) and the public site (`/`, `/verifies`, `/signaler`, `/suivi`, sign-in and sign-up); there is no second identity. A screen is a notice board you can act on: a big field to paste a message, a numbered line that shows how far a dossier has come, and verdicts stated as words with icons, never as colour alone.
 
-The density is that of a broadcast schedule: tight 32px lanes, 6px between them, hairline rules rather than boxes, condensed numerals that line up in columns. Colour is reserved for meaning. Verdicts own four hues, status owns none, and the yellow belongs to "now". Surfaces are flat; depth appears only when the journalist focuses a block, which lifts while the rest of the grid dims.
+The organising device is the **numbered line**: 01 L'affirmation, 02 Les éléments, 03 La conclusion. It explains the method on the home page, runs live on Vérifier, sits mini on each dossier row and runs down the gutter of a claim's page. FANILO's own work shows in an **ink panel** (the live log « Le travail de FANILO », the public answer, the newsroom band), so machine activity is always visually separate from the journalist's page. The AI only suggests: suggestion is drawn dashed, a journalist's confirmation is drawn solid.
 
-The world explicitly refuses the default dashboard: a grey table with coloured pills and nothing about time. The table still exists, but as the programme listing under the grid, carrying the same rows.
+Density is calm and legible rather than packed: Atkinson Hyperlegible Next for every word a person reads (a cracked phone in full sun is the reference reader), generous 18px leads, 44–48px touch targets for the main controls. Motion is short and once: highlights sweep in, sources arrive, the verdict lands, the active step breathes; all of it collapses under `prefers-reduced-motion`.
 
 **Key Characteristics:**
-- Time drawn to scale: block length is exact circulation time.
-- Antenna-green rail, cool white ground, green-black ink, hairline hour rules.
-- One signal yellow, for the present moment and the keyboard's position.
-- Verdicts always icon plus label; status in ink only.
-- Condensed grotesk for every hour, time and FAN reference; a workhorse sans for words.
-- Flat at rest; focus lifts.
+- One world for desk and public site; light and dark themes from the same tokens.
+- Citron (`#d7f45b`) only for the one action of a screen, the active step and highlights.
+- Verdicts always icon + word on their own four-token family; status always ink icons.
+- AI suggestion dashed, confirmed solid.
+- The numbered line 01/02/03 as the reused signature.
+- Ink panels for FANILO's live work; square-ish corners (2–4px); flat, no ambient shadows.
 
 ## Colors
 
-A cool green-neutral system with one warm signal and a fixed four-colour verdict scale; every colour token has a light and a dark value (dark values in the sidecar).
+A near-neutral chalk-and-ink palette with one acid citron accent and a separate, muted verdict family.
 
 ### Primary
-- **Antenna Green** (`antenna-green`): the rail, the mobile top bar and bottom nav, the primary button, the logo tile, the light-mode focus ring and text caret. It is the station's frame, never a status.
-
-### Secondary
-- **Signal Yellow** (`signal-yellow`): the "maintenant" line and its time tag, the focus ring on grid blocks and in the rail, the keyboard ring in dark mode, text selection, and the faint tint (15%) on the selected table row. **Signal Ink** (`signal-ink`) is its text-safe partner on light grounds.
-
-### Tertiary: the verdict scale
-Four verdicts, each a family of four tokens: **fill** (grid block), **on** (text and icon on the fill), **soft** (badge and notice ground), **ink** (text on light grounds).
-- **Vrai** (`verdict-true` family): confirmed true.
-- **Trompeur** (`verdict-misleading` family): misleading. Its fill carries dark text; the offline notice also borrows its soft/ink pair.
-- **Faux** (`verdict-false` family): false. Form errors borrow its soft/ink pair.
-- **Invérifiable** (`verdict-unverifiable` family): unverifiable; a green-grey kept distinct from muted UI ink.
+- **Citron** (`citron`): the one action of a screen (`Button variant="action"`), the active step disc, the active nav item (`--sidebar-primary`), text selection and the `.signal-mark` highlighter on flagged phrases. Text on it is always ink (`citron-foreground`). On light grounds where citron must be read as text, use **Citron Ink** (`citron-ink`); in dark mode citron itself is readable (14.97:1 on the dark ground) and is also the focus ring.
 
 ### Neutral
-- **Cool White Ground** (`cool-white-ground`): page background.
-- **Card White** (`card-white`): grid panel, table, inputs and filters, unchecked blocks.
-- **Green-Black Ink** (`green-black-ink`): body text; also the fixed text colour on signal yellow in both themes.
-- **Muted Ink** (`muted-ink`): metadata, hour labels, durations, table headers.
-- **Hairline Rule** (`hairline-rule`): hour rules and all borders.
-- **Input Stroke** (`input-stroke`): field outlines and scrollbar thumb.
-- **Muted Ground** (`muted-ground`): the not-yet-aired remainder of the day (at 60%), skeletons.
-- **Rail tones** (`rail-foreground`, `rail-muted`, `rail-accent`, `rail-border`): text, secondary text, active item and hover, divider on the antenna-green rail.
+- **Chalk** (`chalk`): page ground in light mode; also the text colour on ink.
+- **Ink** (`ink`): text, `--primary` buttons, active tabs, done step discs, the rule above the dossier list, active link underlines.
+- **Card White** (`card`): fields, cards, dossier rows on hover, the specimen, the assistant panel.
+- **Muted Chalk** (`muted`) and **Secondary** (`secondary`), **Accent** (`accent`): quiet grounds (quoted messages, answer bubbles, hovers).
+- **Muted Ink** (`muted-foreground`): secondary text, placeholders, meta under titles.
+- **Hairline** (`border`, `rule`): dividers and card edges. **Field Edge** (`input`): field and waiting-disc strokes (non-text, ≥ 3:1).
+- **Rail** (`sidebar`, `sidebar-accent`): the desk's light rail and phone bars.
+- **Live Ink** (`live`, `live-foreground`, `live-muted`, `live-border`): the ink panel where FANILO's work shows (live log, public answer, assistant header and voice stage, the newsroom band, the user's own question bubble).
+- **Destructive** (`destructive`): destructive buttons only, never a verdict.
+
+### Verdicts
+Four families, each with **fill** (solid blocks such as the downloadable card), **on** (text on fill), **soft** (badge and block ground) and **ink** (verdict text on soft, chalk or card): `verdict-true` (Vrai, CircleCheck), `verdict-misleading` (Trompeur, TriangleAlert), `verdict-false` (Faux, CircleX), `verdict-unverifiable` (Invérifiable, CircleHelp). Dark mode values are the `dark-verdict-*` keys.
+
+### Dark theme
+`.dark` swaps every token (`dark-*` keys). The citron stays `#d7f45b`; the ring becomes citron; `.signal-mark` forces ink text on citron. The live panel goes a step darker than the ground (`dark-live`).
+
+### Measured contrast (WCAG, text pairs)
+Light: ink/chalk 15.58, ink/card 17.54, muted-foreground on chalk 6.10 / card 6.87 / muted 5.66 / sidebar 5.71, ink on citron 14.18, citron-ink on chalk 6.59, live-foreground/live 15.58, live-muted/live 8.65, destructive on chalk 6.14. Verdicts: on/fill 7.38, 7.77, 6.91, 5.47; ink/soft 7.44, 6.97, 6.71, 6.93; ink on chalk ≥ 7.31.
+Dark: foreground/background 15.81, foreground/card 14.53, muted-foreground on background 7.87 / card 7.23 / muted 6.61, citron on background 14.97, live-foreground/live 16.66, live-muted/live 8.29, destructive 6.32 / 5.81. Verdicts: on/fill 6.03, 9.47, 5.44, 6.50; ink/soft 8.14, 9.19, 7.99, 8.56.
+`input` (2.91 light, 3.74 dark on the ground) is a stroke colour only; never set text in it.
 
 ### Named Rules
-**The One Signal Rule.** Signal yellow means "now" or "you are here": the maintenant line, focus, selection. It never decorates, never fills a button, never marks a verdict or status.
+**The One Citron Rule.** Citron marks the one action of a screen, the active step, the active nav item and highlighted phrases. Never a verdict, a status, a decoration or a second competing button.
 
-**The Four-Token Verdict Rule.** Every verdict colour ships as fill / on / soft / ink, and text on a fill always uses its own "on" token, so every pairing holds at least 4.5:1 in both themes. A new verdict surface picks from these four; it does not invent a fifth tint.
+**The Word-and-Icon Rule.** A verdict is always its lucide icon plus its word in the verdict's ink. Colour alone never carries a verdict.
 
-**The Status Is Not Truth Rule.** Workflow status (À vérifier, En cours, Vérifié, Publié) is drawn with ink icons only (CircleDashed muted, Timer, ShieldCheck, Radio in foreground). Status never borrows a verdict colour.
+**The Status-Is-Not-Truth Rule.** Workflow status (À vérifier CircleDashed, En cours Timer, Vérifié ShieldCheck, Publié Radio) uses ink icons, muted only for « À vérifier »; never a verdict colour.
+
+**The 4.5 Rule.** Every text pair is ≥ 4.5:1 in both themes, measured against its real ground. No opacity on text; placeholders use `muted-foreground`; disabled controls sit at 60 %.
 
 ## Typography
 
-**Display Font:** Barlow Condensed 500/600 (fallback Public Sans), loaded via next/font as `--font-display`.
-**Body Font:** Public Sans (fallback ui-sans-serif, system-ui), with stylistic set `ss01` on.
+**Display Font:** Archivo (500–800, `--font-archivo`, fallback Atkinson Hyperlegible Next)
+**Body Font:** Atkinson Hyperlegible Next (`--font-atkinson`, fallback ui-sans-serif, system-ui)
 
-**Character:** Barlow Condensed is the programme-grid voice, the face on a station schedule board: narrow, upright, numerals that stack. Public Sans is the plain civic workhorse for everything a journalist reads as language.
+**Character:** Archivo is the signage voice: heavy, tight, for titles, numbers, references and verdict words. Atkinson Hyperlegible Next is for everything a person reads, chosen for legibility on poor screens.
 
 ### Hierarchy
-- **Headline** (Public Sans 600, 1.75rem, tight leading and tracking): the page title ("Affirmations").
-- **Title** (Public Sans 600, 1.5rem): auth and onboarding titles; sheet titles step down to 1.125rem.
-- **Body** (Public Sans 400, 1rem): claim titles (500 weight), form text, leads.
-- **Body-table** (Public Sans 400, 0.9375rem): the programme listing and rail items.
-- **Meta** (Public Sans 400, 0.875rem): origin and tags, legend, status labels, verdict badges, hints.
-- **Grid title** (Barlow Condensed 600, 1rem, uppercase, 0.025em): the grid's heading ("Circulation du jour"), the only uppercase heading in the system.
-- **Ref** (Barlow Condensed 600, 1rem, 0.025em, tabular): FAN references in the table, blocks and tooltip.
-- **Time** (Barlow Condensed 500, 0.875–1rem, 0.025em, tabular): hour ruler, seen-at times, durations.
-- **Now tag** (Barlow Condensed 600, 0.75rem, uppercase, 0.05em): "MAINTENANT 18:43" on signal yellow.
-- **Wordmark** (Barlow Condensed 600, 1.25rem, 0.025em): the product name beside the logo mark.
+- **Display** (800, clamp(2.5rem…4.6rem), 0.95, −0.03em): the public home headline only, with its second line lit by `.signal-mark`.
+- **Headline / page title** (`.page-title`: 800, clamp(2rem…2.9rem), 1, −0.02em): every page's H1 on desk and site. Meta (date, counts, demo marker) goes under it in muted text.
+- **Section headline** (Archivo 800, 1.875–2.25rem, tracking-tight): public section titles (« Comment … », the newsroom band).
+- **Verdict** (Archivo 800, 1.875–2.25rem in a block, up to 3rem on the Vérifier result): the verdict word next to its icon.
+- **Title** (Archivo 700, 1.125–1.25rem): section H2s in pages and panels; step labels at 1.05rem.
+- **Body** (Atkinson 400, 1rem/1.5): reading text, dossier titles in bold. **Lead** (1.125–1.25rem, relaxed, max ~50–62ch): the line under a page title and the text in the check field.
+- **Label** (Atkinson 700, 0.875rem, sentence case): field labels, small section heads, verdict chips.
+- **Reference** (Archivo 700, tabular): FAN refs, times, counts, step numbers 01/02/03. `time` and `.tabular` always use tabular figures.
 
 ### Named Rules
-**The Airtime Face Rule.** Hours, times, durations, counts in the grid and FAN references are set in Barlow Condensed with tabular numerals; so are the wordmark, the grid title and avatar initials. Everything else, including headings, is Public Sans.
+**The Sentence-Case Rule.** Labels and headings are sentence case. No uppercase tracked eyebrow or kicker above a heading; meta sits under the title.
 
-**The Tabular Rule.** Every `time` element and every number that sits in a column uses tabular figures so values align down the listing.
+**The Two-Voices Rule.** Archivo speaks (titles, numbers, verdicts); Atkinson is read. Do not set paragraphs in Archivo or verdict words in Atkinson.
 
 ## Layout
 
-Desktop (lg, 1024px and up): a fixed 248px antenna-green rail on the left, the workspace in a container up to 90rem with 32px side padding. Page header (title, date line, primary action) sits 32px from the top; filters below (search grows, two 176px selects); then the day grid and the claims table stacked 20px apart.
-
-The day grid spans 06h to 22h (extending if now falls outside), one 32px lane per claim sorted by first seen, 6px between lanes, hairline hour rules running the full height, and the not-yet-aired remainder shaded in muted ground. Durations sit just right of the "maintenant" line.
-
-Tablet (md, 768px): the table stays tabular; the rail gives way to a top bar and bottom nav below lg.
-
-Phone (from 360px): a sticky antenna-green top bar (wordmark, workspace switcher, avatar), a fixed four-item bottom nav respecting the safe-area inset, edge-to-edge grid and list with 16px gutters. The grid becomes a horizontally scrolled six-hour window that opens on "maintenant"; block labels stay pinned in view as it scrolls. The table becomes stacked rows: ref and time on one baseline, title, then status, verdict and sources.
-
-Sign-in splits the screen on desktop: the rail colour carries a quiet, aria-hidden miniature of the grid on the left, the form (max 24rem) on the right.
+- **Desk:** a 240px light rail (`lg` and up) with the wordmark, workspace switcher, nav (Vérifier, Dossiers, Sources; Équipe and Paramètres at the foot), the assistant launcher (ink) and the user menu. Content max 1440px, `lg:px-8`. Under `lg`: a top bar (wordmark, workspace, avatar) and a fixed four-slot bottom bar (three places + Assistant), with `pb-24` on main.
+- **Public site:** sticky header on chalk (wordmark, three links, Assistant, « Espace rédaction » ink button), max 1408px, `px-4 lg:px-10`; on phone the three links drop to a second row of three equal tabs. Footer in three columns.
+- **Assistant:** docked right at 400px from `lg`, and the page is padded `lg:pr-[25rem]` while it is open, so it never covers what is read. Under `lg` it is a bottom sheet (min(64dvh, 36rem)).
+- **Vérifier (desk home):** title, lead, the big field; once run, a two-column result (the message with highlights and warning signs | the full numbered line over the ink live log), then the sources wall; open dossiers and recent verdicts in a right column on wide screens. A fixed bottom bar carries « Suivre dans le desk ».
+- **Dossiers:** title + meta, tabs with counts, search and filters, then a ruled list (ink top rule, hairline between rows). Row grid: ref and age | title with status/origin/sources | mini line | verdict | assignee; the mini line appears from the `@4xl` container width.
+- **Claim page:** content and a 320px side column on `lg`; the main column is the numbered line run down a gutter (24px phone, 40px from `md`), each part of the dossier hanging from its disc.
+- **Public home:** hero split 1.1 : 1 (headline, lead, check field, three recent verdicts | the fictional specimen), then « how it works » as three numbered cells on card, then the ink newsroom band.
+- **Rhythm:** 4px base; 16px gutters on phone; sections 56–80px apart on the public site; touch targets 44px (tabs, verdict radios, assistant controls) and 48px for the action button.
 
 ## Elevation & Depth
 
-Flat by default. Depth comes from tone (antenna-green rail against cool white, card white on the ground, muted ground for the future part of the day) and from hairline rules. Shadows appear only as a response to focus.
+Flat. Depth comes from tone (chalk ground, white cards, ink panels) and hairlines, not shadows. The only shadows are functional.
 
 ### Shadow Vocabulary
-- **Block lift** (`box-shadow: 0 6px 16px -6px rgb(15 59 54 / 0.45)`, with a 1px upward shift and a signal ring): the focused grid block.
-- **Tooltip** (`box-shadow: 0 10px 28px -10px rgb(15 59 54 / 0.4)`): the block's detail card.
+- **Sheet lift** (`box-shadow: 0 -18px 40px -24px rgb(23 26 24 / 0.45)`): the assistant as a phone bottom sheet; removed when docked.
+- **Step breathe** (`box-shadow: 0 0 0 7px color-mix(in srgb, var(--action) 35%, transparent)`, pulsing): the active step disc.
+- **Recording pulse** (`0 0 0 6px rgb(157 56 46 / 0.2)`): the microphone while listening.
+- **Drag lift**: only the card being dragged on the board lifts, tilted 1.5°. Its shadow is tinted with ink: `0 14px 32px -12px rgb(23 26 24 / 0.45)`.
 
 ### Named Rules
-**The Spotlight Rule.** Focusing a block (hover, keyboard, or a hovered table row) lifts it and dims every other lane to 40% opacity; Escape or leaving releases it. Nothing else in the system casts a shadow at rest.
+**The Flat-Ground Rule.** Cards and panels sit flat on a hairline or a tonal change. A shadow means "this is moving or live", never "this is important".
 
 ## Shapes
 
-Square-ish and tight. The base radius is 5px (`--radius: 0.3125rem`), with a derived 4px and 3px; grid blocks and verdict badges use 3px, legend swatches 2px. A block that started before the grid's first hour loses its left corners and carries a chevron with its real start time, so length stays honest. Only avatars are round. Borders are 1px hairlines; dashed strokes are reserved for AI suggestions and empty states.
+Square-ish: `--radius` is 4px, so `rounded-sm` 2px (chips, highlights), `rounded-md` 3px (buttons, fields, cards, verdict blocks), `rounded-lg` 4px. Full rounds are reserved for step discs, avatars, the voice button and small count pills. The phone sheet takes 12px top corners; chat bubbles 10px with one 2px corner pointing at the speaker. Borders are 1px hairlines; 2px for emphasis (verdict block, chosen verdict radio, the « à confirmer » banner), dashed when the thing is an AI suggestion.
 
 ## Components
 
 ### Buttons
-Calm and solid, sized for the field.
-- **Shape:** gently squared (5px).
-- **Primary:** antenna green with white text; hover drops to 80% opacity; pressed shifts down 1px. Primary actions in the app use the 40–44px height overrides, not the 32px default.
-- **Focus:** ring colour at 50% with a 3px ring, plus the global 2px outline offset 2px.
-- **Outline:** ground-coloured with a hairline border; hover to muted ground. Used for retry and clear filters.
+- **Shape:** gently squared (3px).
+- **Action** (`variant="action"`, usually `size="xl"`: 48px, 20px side padding, 16px bold, 20px icon): citron with ink text, hover mixes 8% ink in. One per screen: check / verify submit, auth submit, report submit, « Suivre dans le desk », « Nouvelle affirmation », « Revoir la suggestion ».
+- **Primary** (default): ink with chalk text, for confirmations inside a flow (« Confirmer … »).
+- **Outline / Ghost / Secondary:** chalk or transparent with muted hover; dictation, retry, cancel.
+- **Focus:** 2px ring outline offset 2px (ink in light, citron in dark). Disabled at 60 %.
 
-### Chips: verdict badge
-- **Confirmed:** soft verdict ground, verdict ink text, icon (CircleCheck, TriangleAlert, CircleX, CircleHelp) plus label, 3px radius.
-- **AI suggestion:** transparent ground, 1px dashed outline in the verdict ink, icon plus label plus "· suggéré".
-- **None:** plain muted text "Sans verdict".
+### Verdict chip and badge
+- **VerdictChip** (confirmed): soft ground, ink text, icon 14px + word, bold, 2px radius.
+- **VerdictBadge**: confirmed = soft fill; AI suggestion = 1px dashed outline in the verdict ink on transparent ground, with « · suggéré » (kept for screen readers in `compact`). No verdict = muted « Pas de verdict ».
 
-### Cards / Containers
-- **Corner Style:** 5px on desktop; grid and list go edge-to-edge (top and bottom borders only) on phones.
-- **Background:** card white on the cool ground.
-- **Shadow Strategy:** none at rest (see Elevation).
-- **Border:** 1px hairline.
-- **Internal Padding:** 16px on phones, 20px on desktop for the grid; table cells 16px by 10px.
+### Verdict block
+The conclusion stated: 2px border in the verdict ink on its soft ground, icon + word in Archivo 800 (30–36px), then « Suggéré par FANILO » with a Sparkles icon (dashed border) or the confirmation line (solid). It lands once (`.verdict-land`, 0.5s). The verdict radios below it are four 44px buttons in each verdict's ink; the chosen one gets a 2px border on soft ground. Choosing never commits: a recap card says what changes and warns when it goes against the AI suggestion.
 
 ### Inputs / Fields
-- **Style:** 1px input-stroke outline, card-white ground in the filter bar, 5px radius, 40–44px tall in use.
-- **Focus:** border turns to the ring colour with a soft ring.
-- **Error:** an inline alert on the false soft/ink pair, never red text alone.
+- **Check field:** white card, 1px `input` stroke, 3px radius; an 18px relaxed textarea, then a hairline toolbar with dictation on the left and the action button on the right. Focus: border to ink plus a 2px ink ring at 15 %.
+- **Small inputs** (search, selects): 40px, white card, shadcn defaults.
 
 ### Navigation
-- **Rail:** antenna green, 15px items with 18px lucide icons, 4px radius; active item on the rail accent with white text and medium weight; hover at 60% of the accent; unbuilt items in rail-muted at 70% with a small "Bientôt" tag. Workspace switcher and user menu sit in the rail.
-- **Bottom bar (phones):** four items, icon over 12px label; active shown by a 2px inset top bar in rail foreground.
+- **Desk rail:** items 40px, 20px icons; active = citron fill, ink bold text; others ink with `sidebar-accent` hover. Phone bar: icon in a 48×24 pill, citron when active, label under it.
+- **Public header:** active link = bold with a 2px ink underline offset 7px; others hover to accent. Phone: tabs with a 2px ink bottom border when active.
+- **Tabs (Dossiers):** 44px; active = ink fill, chalk text; counts in a 2px-radius pill, citron only on « À confirmer » when it has items.
 
-### Day grid (signature)
-The programme grid of the day. Hour ruler in the condensed face; hairline rules; one lane per claim; block from first seen to now.
-- **Confirmed verdict:** solid verdict fill, "on" text, icon + ref + title.
-- **AI suggestion:** dashed outline in verdict ink on the verdict soft ground.
-- **Unchecked:** solid outline (foreground at 60%) on card white.
-- **Maintenant:** a 2px signal-yellow line through the full height, topped by the now tag.
-- **Legend:** confirmed is a neutral ink swatch (foreground at 70%), since confirmation is a state shared by all four verdict hues; suggestion and unchecked swatches mirror their block treatments.
-- **Motion:** each block grows from its first-seen point toward now on load (`grid-extend`, 640ms, expo-out, 35ms stagger); the grid ticks every 30s. Reduced motion collapses all animation.
+### Live panel
+Ink ground, 3px radius, 16px padding; Archivo 14px bold header with a status dot (citron pulsing while running, muted when done); lines arrive one by one with a tabular muted timestamp. Used for « Le travail de FANILO », the public assistant answer and, full width, the newsroom band.
 
-## Public pages: "Le dossier"
+### The numbered line (signature)
+`StepLine` from `components/flow/step-line.tsx`, driven by `claimSteps(claim)`.
+- **Discs:** done = ink disc with a citron check (background-coloured check in dark); active = citron disc that breathes (`.step-active`); suggested = 2px dashed ink ring on card; waiting = 1px `input` ring with muted number; failed = 2px `verdict-false` ring with an X. Numbers are 01/02/03 in Archivo tabular.
+- **Rule:** 1px vertical (full) or horizontal (mini) rule, ink once the next step has started, hairline while it waits.
+- **`full`:** 40px discs, Archivo label, state word and a muted note per step; `explain` shows the method with no state.
+- **`mini`:** 24px discs, 68px per step, short labels; on each dossier row and the open-dossier cards.
+- **In the claim page:** `StepDisc` alone hangs each part of the dossier in the gutter.
 
-The landing, sign-in, sign-up and the public pages (`/verifies`, `/signaler`, `/suivi`) live in a second world: **the case file**. A rumour is treated as an affair under investigation: manila folders, index cards, typed labels, photographs pinned as pieces, and a red stamp that lands once. Contract: `.impeccable/surfaces/app-site-accueil-page-tsx.md`. CSS under `.site` and `.dossier-*` / `.pub-*` in `app/globals.css`, tokens `--site-*`.
+### Highlighter
+`.signal-mark`: a citron sweep (0.9s, staggered 220ms by `--i`) behind phrases FANILO flagged in a message, and behind the home headline's second line. Text stays its own colour (ink in dark).
 
-### Colors
-- **Manila** (`dossier-manila`, deeper `dossier-manila-deep`): the ground. **Index card** (`dossier-index`, hover `dossier-index-hover`): cards, files, the case card. **Paper** (`dossier-paper`): inputs on the card. Pieces sit on **photo white**.
-- **Ink** (`dossier-ink`; `dossier-ink-night` for the dark theme colour): text, folder tabs, the footer and the answer block. **Soft ink** (`dossier-ink-soft`): typed labels and secondary text on manila. **Label on ink** (`dossier-ink-label`): typed text on ink grounds.
-- **Alarm** (`dossier-alarm`): stamps, the current step, piece numbers. **Alarm ink** (`dossier-alarm-ink`): red text (the desk's notes), focus outline and hover of tabs.
-- Piece colours (`piece-*`) belong only to the fake WhatsApp, Facebook and voice-note fragments of the affair: they imitate the platforms, never the product.
-- Published verdict stamps reuse the desk's verdict **ink** tokens, so a verdict reads the same on both sides.
+### Assistant
+The site agent on every page. Ink header (Archivo 18px title, 40px icon buttons, the « VOIX » pill toggle: outline at rest, citron fill with a red dot while on), a log of bubbles (question = ink, answer = muted), proposals as hairline cards (ink border while pending) with a citron « Confirmer » and an outline « Annuler », and a form with a 44px textarea, mic and citron send. In voice mode the keyboard gives way to the ink **voice stage**: Archivo 22px phase word (JE VOUS ÉCOUTE, JE TRANSCRIS, JE CHERCHE, JE RÉPONDS, EN PAUSE), a hint, five level bars (citron while listening), a 56px round button (red and pulsing while listening) and « Écrire plutôt ».
 
-### Typography
-- **Anton** (`--font-anton`): headlines, folder tabs, divider tabs, stamps, uppercase only (`dossier-display`, `dossier-tab`).
-- **Special Elite** (`--font-typed`): the file's labels only (`dossier-label`): dates, refs, captions, field names. Never a sentence a visitor must read.
-- **Public Sans**: everything a visitor reads (`dossier-lead`, `dossier-body`).
-
-### Components
-- **Folder tab** (`.tab-btn`): the one action shape; ink tab, manila text, lifts 3px and turns alarm ink on hover.
-- **Stamp** (`.stamp`, text from `data-label`): lands once at an angle (scale 1.5 → 1, 280ms expo-out), then stays at 85%.
-- **Index card / file** (`.dossier-fiche`, `.pub-file`): square corners, a 2px ink rule under the typed header.
-
-### Shared with the desk
-The app shell borrows the ink rail, the manila marker, Anton page titles (`.page-title`) and the folder logo. The floating assistant is the only component drawn in both worlds: an ink button (manila on the dark desk), an ink header, a body in the desk's own card colours, and rounder corners (6 / 8 / 10px) than the desk's 5px, as it floats above either world.
-
-### Named Rules
-**The One Red Rule.** Alarm red is the stamp's colour. It marks a verdict landing, the current step and the desk's notes; it never fills a button at rest.
-
-**The Typed Label Rule.** The typewriter face labels the file; it never carries content.
+### Sources wall and specimen
+Sources arrive as hairline cards (`.arrive`, 0.45s rise, 90ms stagger). The public specimen is a white card labelled « Exemple fictif » in a 1px ink box: the message on muted ground with highlights, a done full line, then a verdict block.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** pair every verdict with its icon and French label, in badges, blocks, tooltips and filter menus.
-- **Do** put text on a verdict fill only in that verdict's "on" token, and on light grounds only in its "ink" token.
-- **Do** set hours, times, durations and FAN references in Barlow Condensed with tabular figures.
-- **Do** draw an AI suggestion as a dashed outline on soft ground, and an unchecked claim as a plain outline on card white.
-- **Do** keep every UI string in `lib/i18n/fr.ts` and the product name and logo in `lib/brand.ts` / the brand component.
-- **Do** keep corners at 5px or tighter (3px for blocks and badges).
+- **Do** build every new screen from these tokens and components: `.page-title` H1 with meta under it, the check field, `StepLine`/`StepDisc` for progress, `VerdictChip`/`VerdictBadge`/the verdict block for verdicts, the live panel for anything FANILO is doing.
+- **Do** give each screen exactly one `variant="action"` button; everything else is primary, outline or ghost.
+- **Do** draw an AI suggestion dashed and a journalist's confirmation solid, and leave the final verdict to a journalist's explicit click.
+- **Do** pair every verdict with its icon and word, and every status with its ink lucide icon.
+- **Do** measure every new text pair in light and dark against its real ground (≥ 4.5:1); use `*-ink` tokens for coloured text on light grounds.
+- **Do** keep corners at 2–4px and edges as 1px hairlines; reserve full rounds for discs, avatars and pills.
+- **Do** pad the page when the assistant opens on desktop (`lg:pr-[25rem]`) and use the bottom sheet on phone.
+- **Do** keep motion single-shot (`.arrive`, `.verdict-land`, `.signal-mark`) except the active step and recording indicators, and respect `prefers-reduced-motion`.
+- **Do** use the shared neutral quote rule (1px hairline on the left of a quoted passage) for verbatim quotes; it is a quotation mark, not an accent.
 
 ### Don't:
-- **Don't** use signal yellow for anything but now, focus and selection.
-- **Don't** colour a status with a verdict hue; status is ink icons only.
-- **Don't** show a verdict by colour alone on a functional surface.
-- **Don't** add shadows to surfaces at rest; depth is for the focused block and its tooltip.
-- **Don't** fall back to a time-blind grey table with coloured pills as the main view of claims.
+- **Don't** use citron for a verdict, a status, an icon bullet, a badge that is not the active step or a second action on the same screen.
+- **Don't** carry a verdict by colour alone, or colour a status with a verdict family.
+- **Don't** put an uppercase tracked eyebrow or kicker above a heading.
+- **Don't** add coloured border-left accents to cards, callouts or rows.
+- **Don't** let the assistant float over the page on desktop.
+- **Don't** set text in opacity or in the `input` stroke colour.
+- **Don't** add ambient shadows to cards; depth is tone and hairline.
+- **Don't** bring back the retired worlds (« Grille d'antenne » green rail and signal yellow, « Le dossier » manila, Anton, Special Elite, halftoned photographs) in the app. The pitch kit (`docs/pitch/`, `scripts/pitch_video.py`) still uses Anton, Special Elite and the photographs in `public/site/`; they belong to the pitch kit only and are not part of the app's system.

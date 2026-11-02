@@ -10,7 +10,10 @@ answer is also checked in code before anyone sees it (`check`):
   otherwise the model gets one chance to rewrite without it, and what is still unbacked is
   flagged in the answer;
 - `verdict_needs_cites`: the public guide may not say "c'est faux / vrai / trompeur" unless it
-  found published verdicts.
+  found published verdicts;
+- an answer that only announces a search ("je cherche…", "je vais vous proposer…") without having
+  called a single tool gets one nudge to do it now (`promises`), and so does an answer that says
+  it proposes an action (attach a link…) without the proposal having been made (`claims_proposal`).
 """
 
 import re
@@ -81,6 +84,46 @@ def strip_bad_cites(text: str, cited: int) -> str:
         return f"[{', '.join(map(str, ok))}]" if ok else ""
 
     return re.sub(r"\s+([.,;:])", r"\1", CITE.sub(keep, text)).strip()
+
+
+# "Je cherche des sources et je vous proposerai…" with no tool called: the model announced the work
+# instead of doing it.
+PROMISE = re.compile(
+    r"\bje (?:vais |vous )?(?:cherche|recherche|lance|vérifie|regarde|consulte|fouille)\w*|"
+    r"\bje vais (?:chercher|rechercher|lancer|vérifier|regarder|vous proposer)|"
+    r"\bje vous proposerai",
+    re.IGNORECASE,
+)
+DO_IT = (
+    "Vérification automatique : tu as annoncé une recherche sans appeler d'outil. Fais-la "
+    "maintenant avec tes outils, puis réponds avec ce qu'ils ont renvoyé."
+)
+
+
+def promises(text: str, steps: int) -> bool:
+    return steps == 0 and bool(PROMISE.search(text))
+
+
+# "Je vous propose d'attacher ce lien" with no proposal made: the card the journalist would confirm
+# does not exist.
+PROPOSAL = re.compile(
+    r"\bje (?:vous )?propose (?:d'|de |d’)?(?:attacher|joindre|ajouter|créer|lancer|passer|suivre)",
+    re.IGNORECASE,
+)
+PROPOSE_IT = (
+    "Vérification automatique : tu proposes une action sans avoir appelé l'outil propose_… qui la "
+    "prépare. Appelle-le maintenant ; rien n'est fait tant que le journaliste n'a pas confirmé."
+)
+
+
+# An empty answer (the model spent its budget reasoning): asked once more, then said plainly.
+ANSWER_NOW = "Réponds maintenant, en deux ou trois phrases, avec ce que tes outils ont renvoyé."
+EMPTY = "Je n'ai pas réussi à formuler de réponse. Reformulez la question ou réessayez."
+
+
+def claims_proposal(text: str, actions: list[dict]) -> bool:
+    made = any(a.get("kind") != "navigate" for a in actions)
+    return not made and bool(PROPOSAL.search(text))
 
 
 def from_memory(text: str, steps: int, guard: Guard) -> bool:

@@ -47,7 +47,7 @@ function Onboarding() {
         // Storage may be unavailable; nothing to clean.
       }
       await globalMutate("/me");
-      router.replace(`/w/${ws.id}/affirmations`);
+      router.replace(`/w/${ws.id}/verifier`);
     } catch {
       setError(t.auth.errors.generic);
       setPending(false);
@@ -101,7 +101,7 @@ function Home() {
   const first = me?.memberships[0];
 
   useEffect(() => {
-    if (first && !wantsNew) router.replace(`/w/${first.workspace_id}/affirmations`);
+    if (first && !wantsNew) router.replace(`/w/${first.workspace_id}/verifier`);
   }, [first, wantsNew, router]);
 
   if (error) {

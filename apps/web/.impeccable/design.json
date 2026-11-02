@@ -1,821 +1,1352 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-24T15:48:52+00:00",
+  "generatedAt": "2026-10-29T13:02:10+00:00",
   "title": "Design System: FANILO",
   "extensions": {
     "colorMeta": {
-      "antenna-green": {
-        "role": "primary",
-        "displayName": "Antenna Green",
-        "canonical": "#0f3b36",
-        "dark": "#6cbcab",
-        "cssVar": "--primary",
-        "tonalRamp": [
-          "#103d38",
-          "#1a665d",
-          "#248e82",
-          "#2fb7a7",
-          "#54d4c5",
-          "#8de2d8",
-          "#c2efea",
-          "#ebfaf8"
-        ]
-      },
-      "antenna-green-on": {
-        "role": "primary",
-        "displayName": "On Antenna Green",
-        "canonical": "#ffffff",
-        "dark": "#0d1614",
-        "cssVar": "--primary-foreground",
-        "tonalRamp": [
-          "#262626",
-          "#404040",
-          "#595959",
-          "#737373",
-          "#949494",
-          "#b8b8b8",
-          "#d9d9d9",
-          "#f2f2f2"
-        ]
-      },
-      "signal-yellow": {
-        "role": "secondary",
-        "displayName": "Signal Yellow",
-        "canonical": "#f2c230",
-        "dark": "#f2c230",
-        "cssVar": "--signal",
-        "tonalRamp": [
-          "#483705",
-          "#785c08",
-          "#a8810b",
-          "#d8a60e",
-          "#f2c435",
-          "#f7d779",
-          "#faeab7",
-          "#fdf8e7"
-        ]
-      },
-      "signal-ink": {
-        "role": "secondary",
-        "displayName": "Signal Ink",
-        "canonical": "#7a5900",
-        "dark": "#f2c230",
-        "cssVar": "--signal-ink",
-        "tonalRamp": [
-          "#4c3800",
-          "#805d00",
-          "#b28200",
-          "#e6a700",
-          "#ffc529",
-          "#ffd870",
-          "#ffeab2",
-          "#fff8e5"
-        ]
-      },
-      "cool-white-ground": {
+      "chalk": {
         "role": "neutral",
-        "displayName": "Cool White Ground",
-        "canonical": "#f4f6f5",
-        "dark": "#0d1614",
-        "cssVar": "--background",
+        "displayName": "Chalk",
+        "canonical": "#f1f2ec",
+        "oklch": "oklch(95.9% 0.008 114.2)",
         "tonalRamp": [
-          "#222a26",
-          "#394640",
-          "#506259",
-          "#677e73",
-          "#899f94",
-          "#b0bfb8",
-          "#d5ddd9",
-          "#f1f4f2"
+          "#0b0c08",
+          "#252621",
+          "#42423e",
+          "#61625d",
+          "#82837e",
+          "#a5a6a0",
+          "#c9cac4",
+          "#eeefe9"
         ]
       },
-      "card-white": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#171a18",
+        "oklch": "oklch(21.4% 0.006 156.7)",
+        "tonalRamp": [
+          "#090c0a",
+          "#232624",
+          "#3f4341",
+          "#5f6260",
+          "#808381",
+          "#a2a6a3",
+          "#c6cac7",
+          "#ebf0ed"
+        ]
+      },
+      "card": {
         "role": "neutral",
         "displayName": "Card White",
         "canonical": "#ffffff",
-        "dark": "#13201d",
-        "cssVar": "--card",
+        "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
-          "#262626",
-          "#404040",
-          "#595959",
-          "#737373",
-          "#949494",
-          "#b8b8b8",
-          "#d9d9d9",
-          "#f2f2f2"
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
         ]
       },
-      "green-black-ink": {
+      "secondary": {
         "role": "neutral",
-        "displayName": "Green-Black Ink",
-        "canonical": "#14201d",
-        "dark": "#e3ebe8",
-        "cssVar": "--foreground",
+        "displayName": "Secondary Chalk",
+        "canonical": "#e4e6de",
+        "oklch": "oklch(92.1% 0.011 118.0)",
         "tonalRamp": [
-          "#1d2f2b",
-          "#314e47",
-          "#456e64",
-          "#588d80",
-          "#7bada0",
-          "#a7c8c0",
-          "#d0e2dd",
-          "#eff5f4"
+          "#0b0c07",
+          "#242620",
+          "#41433c",
+          "#60625b",
+          "#81837c",
+          "#a4a69e",
+          "#c8cac2",
+          "#eef0e7"
         ]
       },
-      "muted-ink": {
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted Chalk",
+        "canonical": "#e8eae3",
+        "oklch": "oklch(93.4% 0.010 119.6)",
+        "tonalRamp": [
+          "#0b0c07",
+          "#242621",
+          "#41433d",
+          "#60625c",
+          "#81837d",
+          "#a4a69f",
+          "#c8cac3",
+          "#edefe8"
+        ]
+      },
+      "muted-foreground": {
         "role": "neutral",
         "displayName": "Muted Ink",
-        "canonical": "#4b5a56",
-        "dark": "#9aaba6",
-        "cssVar": "--muted-foreground",
+        "canonical": "#565c55",
+        "oklch": "oklch(46.7% 0.013 141.2)",
         "tonalRamp": [
-          "#232a28",
-          "#3a4642",
-          "#51615d",
-          "#687d78",
-          "#8a9e98",
-          "#b1bebb",
-          "#d5dcda",
-          "#f1f3f3"
+          "#080d08",
+          "#222721",
+          "#3e443d",
+          "#5d635c",
+          "#7e847d",
+          "#a1a79f",
+          "#c4cbc3",
+          "#eaf1e9"
         ]
       },
-      "hairline-rule": {
+      "accent": {
         "role": "neutral",
-        "displayName": "Hairline Rule",
-        "canonical": "#c9d3d0",
-        "dark": "#21302b",
-        "cssVar": "--rule",
+        "displayName": "Accent Chalk",
+        "canonical": "#e6e9df",
+        "oklch": "oklch(92.9% 0.014 120.3)",
         "tonalRamp": [
-          "#222a28",
-          "#394642",
-          "#50625d",
-          "#677e77",
-          "#899f98",
-          "#b0bfbb",
-          "#d5ddda",
-          "#f1f4f3"
+          "#0a0c06",
+          "#24261f",
+          "#41433b",
+          "#60625a",
+          "#81847b",
+          "#a4a69d",
+          "#c8cbc1",
+          "#edf0e6"
         ]
       },
-      "input-stroke": {
+      "border": {
         "role": "neutral",
-        "displayName": "Input Stroke",
-        "canonical": "#b4c0bc",
-        "dark": "#33473f",
-        "cssVar": "--input",
+        "displayName": "Hairline",
+        "canonical": "#d3d6cc",
+        "oklch": "oklch(87.1% 0.014 120.3)",
         "tonalRamp": [
-          "#232a27",
-          "#3a4542",
-          "#51615c",
-          "#697d76",
-          "#8b9d97",
-          "#b1beba",
-          "#d5dcda",
-          "#f1f3f3"
+          "#0a0c06",
+          "#24261f",
+          "#41433b",
+          "#60625a",
+          "#81847b",
+          "#a4a69d",
+          "#c8cbc1",
+          "#edf0e6"
         ]
       },
-      "muted-ground": {
+      "rule": {
         "role": "neutral",
-        "displayName": "Muted Ground",
-        "canonical": "#e9eeec",
-        "dark": "#18251f",
-        "cssVar": "--muted",
+        "displayName": "Rule",
+        "canonical": "#d3d6cc",
+        "oklch": "oklch(87.1% 0.014 120.3)",
         "tonalRamp": [
-          "#212b27",
-          "#384841",
-          "#4e655c",
-          "#648176",
-          "#86a297",
-          "#aec1b9",
-          "#d4deda",
-          "#f1f4f3"
+          "#0a0c06",
+          "#24261f",
+          "#41433b",
+          "#60625a",
+          "#81847b",
+          "#a4a69d",
+          "#c8cbc1",
+          "#edf0e6"
         ]
       },
-      "secondary-ground": {
+      "input": {
         "role": "neutral",
-        "displayName": "Secondary Ground",
-        "canonical": "#e4eae8",
-        "dark": "#1c2c28",
-        "cssVar": "--secondary",
+        "displayName": "Field Edge",
+        "canonical": "#8a9086",
+        "oklch": "oklch(64.5% 0.016 132.5)",
         "tonalRamp": [
-          "#212b28",
-          "#384842",
-          "#4e645d",
-          "#648178",
-          "#87a198",
-          "#afc1bb",
-          "#d4deda",
-          "#f1f4f3"
-        ]
-      },
-      "accent-ground": {
-        "role": "neutral",
-        "displayName": "Accent Ground",
-        "canonical": "#e2ebe8",
-        "dark": "#1d302b",
-        "cssVar": "--accent",
-        "tonalRamp": [
-          "#1f2d29",
-          "#344b44",
-          "#496a5f",
-          "#5e887a",
-          "#80a89a",
-          "#aac5bc",
-          "#d2e0db",
-          "#f0f5f3"
+          "#090d06",
+          "#22271f",
+          "#3f443b",
+          "#5e635a",
+          "#7f857b",
+          "#a1a79d",
+          "#c5ccc1",
+          "#eaf1e6"
         ]
       },
       "destructive": {
-        "role": "tertiary",
-        "displayName": "Destructive",
-        "canonical": "#b8352b",
-        "dark": "#e0675c",
-        "cssVar": "--destructive",
-        "tonalRamp": [
-          "#3e120e",
-          "#671e18",
-          "#912a22",
-          "#ba362b",
-          "#d65b51",
-          "#e4928b",
-          "#f1c4c1",
-          "#faebea"
-        ]
-      },
-      "rail-foreground": {
         "role": "neutral",
-        "displayName": "Rail Foreground",
-        "canonical": "#e9f1ef",
-        "dark": "#dfeae7",
-        "cssVar": "--sidebar-foreground",
+        "displayName": "Destructive Brick",
+        "canonical": "#9d382e",
+        "oklch": "oklch(48.3% 0.137 28.8)",
         "tonalRamp": [
-          "#1e2f2b",
-          "#324e47",
-          "#456d63",
-          "#598c80",
-          "#7caca0",
-          "#a8c7c0",
-          "#d0e1dd",
-          "#eff5f4"
+          "#2d0000",
+          "#510000",
+          "#752019",
+          "#9a4238",
+          "#c06458",
+          "#e68779",
+          "#ffab9c",
+          "#ffd0c0"
         ]
       },
-      "rail-muted": {
+      "sidebar": {
         "role": "neutral",
-        "displayName": "Rail Muted",
-        "canonical": "#a9c2bd",
-        "dark": "#8fada7",
-        "cssVar": "--sidebar-muted",
+        "displayName": "Rail",
+        "canonical": "#e9ebe3",
+        "oklch": "oklch(93.6% 0.011 118.0)",
         "tonalRamp": [
-          "#202d2a",
-          "#354b46",
-          "#4a6862",
-          "#5f867e",
-          "#82a69f",
-          "#abc4bf",
-          "#d2dfdd",
-          "#f0f4f4"
+          "#0b0c07",
+          "#242620",
+          "#41433c",
+          "#60625b",
+          "#81837c",
+          "#a4a69e",
+          "#c8cac2",
+          "#eef0e8"
         ]
       },
-      "rail-accent": {
+      "sidebar-accent": {
+        "role": "neutral",
+        "displayName": "Rail Hover",
+        "canonical": "#dcdfd4",
+        "oklch": "oklch(89.8% 0.015 119.1)",
+        "tonalRamp": [
+          "#0a0c06",
+          "#24261e",
+          "#41433a",
+          "#606359",
+          "#81847a",
+          "#a4a79c",
+          "#c8cbc0",
+          "#edf0e5"
+        ]
+      },
+      "citron": {
         "role": "primary",
-        "displayName": "Rail Accent",
-        "canonical": "#1a4d47",
-        "dark": "#15393a",
-        "cssVar": "--sidebar-accent",
+        "displayName": "Citron",
+        "canonical": "#d7f45b",
+        "oklch": "oklch(91.8% 0.178 119.2)",
         "tonalRamp": [
-          "#133935",
-          "#205f58",
-          "#2d857b",
-          "#3aac9e",
-          "#5fc9bc",
-          "#94dbd3",
-          "#c6ece7",
-          "#ecf9f7"
+          "#080e00",
+          "#202b00",
+          "#3c4900",
+          "#5a6a00",
+          "#7b8c2e",
+          "#9db054",
+          "#c0d478",
+          "#e5fa9d"
         ]
       },
-      "rail-border": {
-        "role": "neutral",
-        "displayName": "Rail Border",
-        "canonical": "#24564f",
-        "dark": "#1b3d38",
-        "cssVar": "--sidebar-border",
+      "citron-foreground": {
+        "role": "primary",
+        "displayName": "Ink on Citron",
+        "canonical": "#171a18",
+        "oklch": "oklch(21.4% 0.006 156.7)",
         "tonalRamp": [
-          "#173632",
-          "#265a53",
-          "#357e74",
-          "#44a295",
-          "#68c0b4",
-          "#9ad5cd",
-          "#c9e8e4",
-          "#edf7f6"
+          "#090c0a",
+          "#232624",
+          "#3f4341",
+          "#5f6260",
+          "#808381",
+          "#a2a6a3",
+          "#c6cac7",
+          "#ebf0ed"
+        ]
+      },
+      "citron-ink": {
+        "role": "primary",
+        "displayName": "Citron Ink",
+        "canonical": "#4b5c00",
+        "oklch": "oklch(44.4% 0.107 121.3)",
+        "tonalRamp": [
+          "#070f00",
+          "#1e2b00",
+          "#3a4a00",
+          "#586a17",
+          "#798c3e",
+          "#9baf61",
+          "#bed484",
+          "#e3faa9"
+        ]
+      },
+      "live": {
+        "role": "neutral",
+        "displayName": "Live Ink",
+        "canonical": "#171a18",
+        "oklch": "oklch(21.4% 0.006 156.7)",
+        "tonalRamp": [
+          "#090c0a",
+          "#232624",
+          "#3f4341",
+          "#5f6260",
+          "#808381",
+          "#a2a6a3",
+          "#c6cac7",
+          "#ebf0ed"
+        ]
+      },
+      "live-foreground": {
+        "role": "neutral",
+        "displayName": "Live Text",
+        "canonical": "#f1f2ec",
+        "oklch": "oklch(95.9% 0.008 114.2)",
+        "tonalRamp": [
+          "#0b0c08",
+          "#252621",
+          "#42423e",
+          "#61625d",
+          "#82837e",
+          "#a5a6a0",
+          "#c9cac4",
+          "#eeefe9"
+        ]
+      },
+      "live-muted": {
+        "role": "neutral",
+        "displayName": "Live Muted",
+        "canonical": "#b2b8ad",
+        "oklch": "oklch(77.5% 0.017 130.5)",
+        "tonalRamp": [
+          "#090d06",
+          "#22271e",
+          "#3f443b",
+          "#5e6359",
+          "#7f847a",
+          "#a1a79c",
+          "#c5cbc0",
+          "#ebf1e5"
+        ]
+      },
+      "live-border": {
+        "role": "neutral",
+        "displayName": "Live Rule",
+        "canonical": "#30352f",
+        "oklch": "oklch(32.2% 0.013 140.5)",
+        "tonalRamp": [
+          "#080c08",
+          "#222721",
+          "#3f443d",
+          "#5e635c",
+          "#7e847d",
+          "#a1a7a0",
+          "#c5cbc4",
+          "#eaf1e9"
         ]
       },
       "verdict-true": {
-        "role": "tertiary",
-        "displayName": "Vrai Fill",
-        "canonical": "#267a42",
-        "dark": "#3fae64",
-        "cssVar": "--verdict-true",
+        "role": "verdict",
+        "displayName": "Verdict True",
+        "canonical": "#286044",
+        "oklch": "oklch(44.3% 0.076 159.2)",
         "tonalRamp": [
-          "#123a20",
-          "#1e6135",
-          "#2a884a",
-          "#37af5f",
-          "#5ccc81",
-          "#92ddab",
-          "#c5edd2",
-          "#ecf9f0"
+          "#001301",
+          "#002f17",
+          "#134e33",
+          "#376e52",
+          "#599072",
+          "#7bb494",
+          "#9fd9b8",
+          "#c3ffdc"
         ]
       },
       "verdict-true-on": {
-        "role": "tertiary",
-        "displayName": "On Vrai",
+        "role": "verdict",
+        "displayName": "Verdict True On",
         "canonical": "#ffffff",
-        "dark": "#0d1614",
-        "cssVar": "--verdict-true-on",
+        "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
-          "#262626",
-          "#404040",
-          "#595959",
-          "#737373",
-          "#949494",
-          "#b8b8b8",
-          "#d9d9d9",
-          "#f2f2f2"
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
         ]
       },
       "verdict-true-soft": {
-        "role": "tertiary",
-        "displayName": "Vrai Soft",
-        "canonical": "#e2f1e6",
-        "dark": "#143323",
-        "cssVar": "--verdict-true-soft",
+        "role": "verdict",
+        "displayName": "Verdict True Soft",
+        "canonical": "#e0ece3",
+        "oklch": "oklch(93.2% 0.018 153.6)",
         "tonalRamp": [
-          "#193420",
-          "#2a5635",
-          "#3a784b",
-          "#4b9b60",
-          "#6fb982",
-          "#9fd1ac",
-          "#cbe6d3",
-          "#eef7f0"
+          "#060d08",
+          "#1f2821",
+          "#3b453e",
+          "#5a645d",
+          "#7b867d",
+          "#9da8a0",
+          "#c1cdc4",
+          "#e6f2e9"
         ]
       },
       "verdict-true-ink": {
-        "role": "tertiary",
-        "displayName": "Vrai Ink",
-        "canonical": "#1f6b38",
-        "dark": "#7fd69b",
-        "cssVar": "--verdict-true-ink",
+        "role": "verdict",
+        "displayName": "Verdict True Ink",
+        "canonical": "#1f5238",
+        "oklch": "oklch(39.6% 0.071 158.4)",
         "tonalRamp": [
-          "#113b1f",
-          "#1d6334",
-          "#288a48",
-          "#34b25d",
-          "#59cf80",
-          "#90dfaa",
-          "#c4eed2",
-          "#ebf9f0"
+          "#001302",
+          "#002f17",
+          "#1a4d34",
+          "#3b6e52",
+          "#5d9072",
+          "#7fb395",
+          "#a2d8b8",
+          "#c7fedd"
         ]
       },
       "verdict-misleading": {
-        "role": "tertiary",
-        "displayName": "Trompeur Fill",
-        "canonical": "#c98a12",
-        "dark": "#dda233",
-        "cssVar": "--verdict-misleading",
+        "role": "verdict",
+        "displayName": "Verdict Misleading",
+        "canonical": "#e0a12a",
+        "oklch": "oklch(75.1% 0.145 77.9)",
         "tonalRamp": [
-          "#463006",
-          "#75500a",
-          "#a4700f",
-          "#d39113",
-          "#edb03a",
-          "#f3ca7c",
-          "#f9e3b9",
-          "#fdf6e8"
+          "#230000",
+          "#431600",
+          "#643600",
+          "#865600",
+          "#a97817",
+          "#ce9b44",
+          "#f4bf6a",
+          "#ffe58f"
         ]
       },
       "verdict-misleading-on": {
-        "role": "tertiary",
-        "displayName": "On Trompeur",
-        "canonical": "#14201d",
-        "dark": "#0d1614",
-        "cssVar": "--verdict-misleading-on",
+        "role": "verdict",
+        "displayName": "Verdict Misleading On",
+        "canonical": "#171a18",
+        "oklch": "oklch(21.4% 0.006 156.7)",
         "tonalRamp": [
-          "#1d2f2b",
-          "#314e47",
-          "#456e64",
-          "#588d80",
-          "#7bada0",
-          "#a7c8c0",
-          "#d0e2dd",
-          "#eff5f4"
+          "#090c0a",
+          "#232624",
+          "#3f4341",
+          "#5f6260",
+          "#808381",
+          "#a2a6a3",
+          "#c6cac7",
+          "#ebf0ed"
         ]
       },
       "verdict-misleading-soft": {
-        "role": "tertiary",
-        "displayName": "Trompeur Soft",
-        "canonical": "#f8ecd2",
-        "dark": "#352a12",
-        "cssVar": "--verdict-misleading-soft",
+        "role": "verdict",
+        "displayName": "Verdict Misleading Soft",
+        "canonical": "#f8ebcf",
+        "oklch": "oklch(94.3% 0.039 86.1)",
         "tonalRamp": [
-          "#42310a",
-          "#6e5111",
-          "#9a7118",
-          "#c7921f",
-          "#e2b146",
-          "#eccb83",
-          "#f5e3bd",
-          "#fcf6e9"
+          "#120900",
+          "#2e240d",
+          "#4b4129",
+          "#6b6048",
+          "#8d8168",
+          "#b0a489",
+          "#d5c8ad",
+          "#faedd1"
         ]
       },
       "verdict-misleading-ink": {
-        "role": "tertiary",
-        "displayName": "Trompeur Ink",
-        "canonical": "#7d5300",
-        "dark": "#f0c56d",
-        "cssVar": "--verdict-misleading-ink",
+        "role": "verdict",
+        "displayName": "Verdict Misleading Ink",
+        "canonical": "#6f4600",
+        "oklch": "oklch(43.1% 0.093 71.6)",
         "tonalRamp": [
-          "#4c3300",
-          "#805500",
-          "#b27700",
-          "#e69800",
-          "#ffb729",
-          "#ffcf70",
-          "#ffe5b2",
-          "#fff6e5"
+          "#200000",
+          "#3f1900",
+          "#603800",
+          "#82571b",
+          "#a5793f",
+          "#c99b62",
+          "#efc085",
+          "#ffe5aa"
         ]
       },
       "verdict-false": {
-        "role": "tertiary",
-        "displayName": "Faux Fill",
-        "canonical": "#c43d32",
-        "dark": "#e0675c",
-        "cssVar": "--verdict-false",
+        "role": "verdict",
+        "displayName": "Verdict False",
+        "canonical": "#9d382e",
+        "oklch": "oklch(48.3% 0.137 28.8)",
         "tonalRamp": [
-          "#3d1310",
-          "#66201a",
-          "#8e2c24",
-          "#b7392f",
-          "#d35e54",
-          "#e2948d",
-          "#efc5c2",
-          "#faeceb"
+          "#2d0000",
+          "#510000",
+          "#752019",
+          "#9a4238",
+          "#c06458",
+          "#e68779",
+          "#ffab9c",
+          "#ffd0c0"
         ]
       },
       "verdict-false-on": {
-        "role": "tertiary",
-        "displayName": "On Faux",
+        "role": "verdict",
+        "displayName": "Verdict False On",
         "canonical": "#ffffff",
-        "dark": "#0d1614",
-        "cssVar": "--verdict-false-on",
+        "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
-          "#262626",
-          "#404040",
-          "#595959",
-          "#737373",
-          "#949494",
-          "#b8b8b8",
-          "#d9d9d9",
-          "#f2f2f2"
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
         ]
       },
       "verdict-false-soft": {
-        "role": "tertiary",
-        "displayName": "Faux Soft",
-        "canonical": "#f8e1de",
-        "dark": "#3a1b18",
-        "cssVar": "--verdict-false-soft",
+        "role": "verdict",
+        "displayName": "Verdict False Soft",
+        "canonical": "#f4dfda",
+        "oklch": "oklch(91.9% 0.024 33.5)",
         "tonalRamp": [
-          "#3f130d",
-          "#692016",
-          "#932d1f",
-          "#bd3928",
-          "#da5e4e",
-          "#e69489",
-          "#f2c6c0",
-          "#fbecea"
+          "#140705",
+          "#30211d",
+          "#4e3e3a",
+          "#6e5d58",
+          "#907d79",
+          "#b4a09b",
+          "#d8c4bf",
+          "#fee9e4"
         ]
       },
       "verdict-false-ink": {
-        "role": "tertiary",
-        "displayName": "Faux Ink",
-        "canonical": "#9c2b22",
-        "dark": "#f3a199",
-        "cssVar": "--verdict-false-ink",
+        "role": "verdict",
+        "displayName": "Verdict False Ink",
+        "canonical": "#872e25",
+        "oklch": "oklch(43.1% 0.124 28.9)",
         "tonalRamp": [
-          "#3f110e",
-          "#691d17",
-          "#932820",
-          "#bc3429",
-          "#d9594f",
-          "#e5918a",
-          "#f1c4c0",
-          "#faebea"
+          "#2d0000",
+          "#510000",
+          "#752018",
+          "#9a4237",
+          "#c06458",
+          "#e68779",
+          "#ffab9c",
+          "#ffd0c0"
         ]
       },
       "verdict-unverifiable": {
-        "role": "tertiary",
-        "displayName": "Invérifiable Fill",
-        "canonical": "#66716c",
-        "dark": "#8d9893",
-        "cssVar": "--verdict-unverifiable",
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable",
+        "canonical": "#656b63",
+        "oklch": "oklch(52.0% 0.014 137.8)",
         "tonalRamp": [
-          "#242826",
-          "#3c4340",
-          "#555e5a",
-          "#6d7973",
-          "#8e9994",
-          "#b4bbb8",
-          "#d7dbd9",
-          "#f2f3f2"
+          "#080d07",
+          "#222720",
+          "#3e443c",
+          "#5d635b",
+          "#7e847c",
+          "#a1a79f",
+          "#c5cbc2",
+          "#eaf1e8"
         ]
       },
       "verdict-unverifiable-on": {
-        "role": "tertiary",
-        "displayName": "On Invérifiable",
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable On",
         "canonical": "#ffffff",
-        "dark": "#0d1614",
-        "cssVar": "--verdict-unverifiable-on",
+        "oklch": "oklch(100.0% 0.000 89.9)",
         "tonalRamp": [
-          "#262626",
-          "#404040",
-          "#595959",
-          "#737373",
-          "#949494",
-          "#b8b8b8",
-          "#d9d9d9",
-          "#f2f2f2"
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
         ]
       },
       "verdict-unverifiable-soft": {
-        "role": "tertiary",
-        "displayName": "Invérifiable Soft",
-        "canonical": "#e7ebe9",
-        "dark": "#222c29",
-        "cssVar": "--verdict-unverifiable-soft",
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable Soft",
+        "canonical": "#e3e5df",
+        "oklch": "oklch(91.9% 0.008 121.6)",
         "tonalRamp": [
-          "#232a26",
-          "#3a4640",
-          "#516159",
-          "#687d73",
-          "#8a9e94",
-          "#b1beb8",
-          "#d5dcd9",
-          "#f1f3f2"
+          "#0b0c08",
+          "#242621",
+          "#41433e",
+          "#60625d",
+          "#81837e",
+          "#a4a6a0",
+          "#c8cac4",
+          "#edefe9"
         ]
       },
       "verdict-unverifiable-ink": {
-        "role": "tertiary",
-        "displayName": "Invérifiable Ink",
-        "canonical": "#4f5a56",
-        "dark": "#bcc6c2",
-        "cssVar": "--verdict-unverifiable-ink",
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable Ink",
+        "canonical": "#474c45",
+        "oklch": "oklch(41.0% 0.013 136.6)",
         "tonalRamp": [
-          "#242927",
-          "#3c4441",
-          "#535f5b",
-          "#6b7a75",
-          "#8d9b96",
-          "#b3bcb9",
-          "#d6dbd9",
-          "#f1f3f2"
+          "#090c07",
+          "#222720",
+          "#3f443d",
+          "#5e635c",
+          "#7f847d",
+          "#a1a79f",
+          "#c5cbc3",
+          "#eaf1e8"
+        ]
+      },
+      "dark-background": {
+        "role": "neutral",
+        "displayName": "Background (dark)",
+        "canonical": "#121412",
+        "oklch": "oklch(18.8% 0.005 145.4)",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#242624",
+          "#404340",
+          "#5f625f",
+          "#808380",
+          "#a3a6a3",
+          "#c7cac7",
+          "#ecefec"
+        ]
+      },
+      "dark-foreground": {
+        "role": "neutral",
+        "displayName": "Foreground (dark)",
+        "canonical": "#eceee6",
+        "oklch": "oklch(94.5% 0.011 118.0)",
+        "tonalRamp": [
+          "#0b0c07",
+          "#242620",
+          "#41433c",
+          "#60625b",
+          "#81837c",
+          "#a4a69f",
+          "#c8cac2",
+          "#eef0e8"
+        ]
+      },
+      "dark-card": {
+        "role": "neutral",
+        "displayName": "Card White (dark)",
+        "canonical": "#1a1d1a",
+        "oklch": "oklch(22.6% 0.007 145.3)",
+        "tonalRamp": [
+          "#090c09",
+          "#232623",
+          "#404340",
+          "#5f625f",
+          "#808380",
+          "#a2a6a2",
+          "#c6cac6",
+          "#ecf0eb"
+        ]
+      },
+      "dark-popover": {
+        "role": "neutral",
+        "displayName": "Popover (dark)",
+        "canonical": "#1e221e",
+        "oklch": "oklch(24.6% 0.009 145.3)",
+        "tonalRamp": [
+          "#090c09",
+          "#222622",
+          "#3f433f",
+          "#5e635e",
+          "#7f847f",
+          "#a1a7a1",
+          "#c5cbc5",
+          "#ebf0eb"
+        ]
+      },
+      "dark-secondary": {
+        "role": "neutral",
+        "displayName": "Secondary Chalk (dark)",
+        "canonical": "#252924",
+        "oklch": "oklch(27.5% 0.011 139.4)",
+        "tonalRamp": [
+          "#090c08",
+          "#222621",
+          "#3f433e",
+          "#5e635d",
+          "#7f847e",
+          "#a2a7a0",
+          "#c6cbc4",
+          "#ebf0e9"
+        ]
+      },
+      "dark-muted": {
+        "role": "neutral",
+        "displayName": "Muted Chalk (dark)",
+        "canonical": "#212520",
+        "oklch": "oklch(25.9% 0.011 139.4)",
+        "tonalRamp": [
+          "#090c08",
+          "#222621",
+          "#3f433e",
+          "#5e635d",
+          "#7f847e",
+          "#a2a7a0",
+          "#c6cbc4",
+          "#ebf0e9"
+        ]
+      },
+      "dark-muted-foreground": {
+        "role": "neutral",
+        "displayName": "Muted Ink (dark)",
+        "canonical": "#a5ab9f",
+        "oklch": "oklch(73.3% 0.018 128.7)",
+        "tonalRamp": [
+          "#090d05",
+          "#22271d",
+          "#3f443a",
+          "#5e6358",
+          "#7f8579",
+          "#a1a79b",
+          "#c5ccbf",
+          "#ebf1e4"
+        ]
+      },
+      "dark-accent": {
+        "role": "neutral",
+        "displayName": "Accent Chalk (dark)",
+        "canonical": "#272c26",
+        "oklch": "oklch(28.6% 0.013 140.5)",
+        "tonalRamp": [
+          "#080d08",
+          "#222721",
+          "#3e443d",
+          "#5d635c",
+          "#7e847d",
+          "#a1a7a0",
+          "#c5cbc3",
+          "#eaf1e9"
+        ]
+      },
+      "dark-border": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "#30352f",
+        "oklch": "oklch(32.2% 0.013 140.5)",
+        "tonalRamp": [
+          "#080c08",
+          "#222721",
+          "#3f443d",
+          "#5e635c",
+          "#7e847d",
+          "#a1a7a0",
+          "#c5cbc4",
+          "#eaf1e9"
+        ]
+      },
+      "dark-input": {
+        "role": "neutral",
+        "displayName": "Field Edge (dark)",
+        "canonical": "#6c7268",
+        "oklch": "oklch(54.4% 0.017 132.6)",
+        "tonalRamp": [
+          "#080d06",
+          "#22271e",
+          "#3f443b",
+          "#5e635a",
+          "#7e857a",
+          "#a1a79d",
+          "#c5ccc1",
+          "#eaf1e6"
+        ]
+      },
+      "dark-destructive": {
+        "role": "neutral",
+        "displayName": "Destructive Brick (dark)",
+        "canonical": "#e07a6c",
+        "oklch": "oklch(69.0% 0.129 29.0)",
+        "tonalRamp": [
+          "#2d0000",
+          "#510000",
+          "#752018",
+          "#9a4237",
+          "#c06457",
+          "#e68779",
+          "#ffab9c",
+          "#ffd0c0"
+        ]
+      },
+      "dark-sidebar": {
+        "role": "neutral",
+        "displayName": "Rail (dark)",
+        "canonical": "#161916",
+        "oklch": "oklch(20.9% 0.007 145.3)",
+        "tonalRamp": [
+          "#090c09",
+          "#232623",
+          "#404340",
+          "#5f625f",
+          "#808380",
+          "#a2a6a2",
+          "#c6cac6",
+          "#ebf0eb"
+        ]
+      },
+      "dark-sidebar-border": {
+        "role": "neutral",
+        "displayName": "Sidebar Border (dark)",
+        "canonical": "#2a2f29",
+        "oklch": "oklch(29.8% 0.013 140.5)",
+        "tonalRamp": [
+          "#080d08",
+          "#222721",
+          "#3e443d",
+          "#5d635c",
+          "#7e847d",
+          "#a1a7a0",
+          "#c5cbc4",
+          "#eaf1e9"
+        ]
+      },
+      "dark-live": {
+        "role": "neutral",
+        "displayName": "Live Ink (dark)",
+        "canonical": "#0b0d0b",
+        "oklch": "oklch(15.6% 0.005 145.3)",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#232623",
+          "#404340",
+          "#5f625f",
+          "#808380",
+          "#a3a6a3",
+          "#c7cac7",
+          "#ecefec"
+        ]
+      },
+      "dark-live-muted": {
+        "role": "neutral",
+        "displayName": "Live Muted (dark)",
+        "canonical": "#a5ab9f",
+        "oklch": "oklch(73.3% 0.018 128.7)",
+        "tonalRamp": [
+          "#090d05",
+          "#22271d",
+          "#3f443a",
+          "#5e6358",
+          "#7f8579",
+          "#a1a79b",
+          "#c5ccbf",
+          "#ebf1e4"
+        ]
+      },
+      "dark-live-border": {
+        "role": "neutral",
+        "displayName": "Live Rule (dark)",
+        "canonical": "#2a2f29",
+        "oklch": "oklch(29.8% 0.013 140.5)",
+        "tonalRamp": [
+          "#080d08",
+          "#222721",
+          "#3e443d",
+          "#5d635c",
+          "#7e847d",
+          "#a1a7a0",
+          "#c5cbc4",
+          "#eaf1e9"
+        ]
+      },
+      "dark-verdict-true": {
+        "role": "verdict",
+        "displayName": "Verdict True (dark)",
+        "canonical": "#4fa36f",
+        "oklch": "oklch(64.9% 0.114 154.4)",
+        "tonalRamp": [
+          "#001500",
+          "#003305",
+          "#005224",
+          "#177343",
+          "#419663",
+          "#66ba85",
+          "#8bdfa8",
+          "#b0ffcc"
+        ]
+      },
+      "dark-verdict-true-on": {
+        "role": "verdict",
+        "displayName": "Verdict True On (dark)",
+        "canonical": "#0f1410",
+        "oklch": "oklch(18.4% 0.011 151.1)",
+        "tonalRamp": [
+          "#080d09",
+          "#212722",
+          "#3e443f",
+          "#5d635e",
+          "#7e847f",
+          "#a0a7a1",
+          "#c4cbc5",
+          "#e9f1eb"
+        ]
+      },
+      "dark-verdict-true-soft": {
+        "role": "verdict",
+        "displayName": "Verdict True Soft (dark)",
+        "canonical": "#17301f",
+        "oklch": "oklch(28.3% 0.044 153.0)",
+        "tonalRamp": [
+          "#001003",
+          "#122b1b",
+          "#2f4937",
+          "#4e6955",
+          "#6f8a76",
+          "#91ae98",
+          "#b4d2bc",
+          "#d9f8e1"
+        ]
+      },
+      "dark-verdict-true-ink": {
+        "role": "verdict",
+        "displayName": "Verdict True Ink (dark)",
+        "canonical": "#8fd3a6",
+        "oklch": "oklch(80.9% 0.094 154.8)",
+        "tonalRamp": [
+          "#001400",
+          "#00310e",
+          "#00502a",
+          "#2d7149",
+          "#519369",
+          "#74b78b",
+          "#97dcae",
+          "#bcffd3"
+        ]
+      },
+      "dark-verdict-misleading": {
+        "role": "verdict",
+        "displayName": "Verdict Misleading (dark)",
+        "canonical": "#e8b04a",
+        "oklch": "oklch(79.1% 0.134 79.5)",
+        "tonalRamp": [
+          "#220000",
+          "#421700",
+          "#623700",
+          "#855700",
+          "#a87915",
+          "#cd9c43",
+          "#f3c069",
+          "#ffe68e"
+        ]
+      },
+      "dark-verdict-misleading-on": {
+        "role": "verdict",
+        "displayName": "Verdict Misleading On (dark)",
+        "canonical": "#121412",
+        "oklch": "oklch(18.8% 0.005 145.4)",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#242624",
+          "#404340",
+          "#5f625f",
+          "#808380",
+          "#a3a6a3",
+          "#c7cac7",
+          "#ecefec"
+        ]
+      },
+      "dark-verdict-misleading-soft": {
+        "role": "verdict",
+        "displayName": "Verdict Misleading Soft (dark)",
+        "canonical": "#33280f",
+        "oklch": "oklch(28.3% 0.042 85.7)",
+        "tonalRamp": [
+          "#130900",
+          "#2e230a",
+          "#4c4027",
+          "#6c6046",
+          "#8e8166",
+          "#b1a487",
+          "#d6c8ab",
+          "#fbedcf"
+        ]
+      },
+      "dark-verdict-misleading-ink": {
+        "role": "verdict",
+        "displayName": "Verdict Misleading Ink (dark)",
+        "canonical": "#f0c97a",
+        "oklch": "oklch(85.3% 0.107 83.9)",
+        "tonalRamp": [
+          "#1e0100",
+          "#3d1c00",
+          "#5c3b00",
+          "#7e5b00",
+          "#a17c2a",
+          "#c59f50",
+          "#eac375",
+          "#ffe999"
+        ]
+      },
+      "dark-verdict-false": {
+        "role": "verdict",
+        "displayName": "Verdict False (dark)",
+        "canonical": "#d96a5c",
+        "oklch": "oklch(65.3% 0.142 28.9)",
+        "tonalRamp": [
+          "#2d0000",
+          "#510000",
+          "#752018",
+          "#9a4238",
+          "#c06458",
+          "#e68779",
+          "#ffab9c",
+          "#ffd0c0"
+        ]
+      },
+      "dark-verdict-false-on": {
+        "role": "verdict",
+        "displayName": "Verdict False On (dark)",
+        "canonical": "#121412",
+        "oklch": "oklch(18.8% 0.005 145.4)",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#242624",
+          "#404340",
+          "#5f625f",
+          "#808380",
+          "#a3a6a3",
+          "#c7cac7",
+          "#ecefec"
+        ]
+      },
+      "dark-verdict-false-soft": {
+        "role": "verdict",
+        "displayName": "Verdict False Soft (dark)",
+        "canonical": "#3a1a16",
+        "oklch": "oklch(26.3% 0.052 28.5)",
+        "tonalRamp": [
+          "#1c0201",
+          "#3a1a16",
+          "#5a3732",
+          "#7c5651",
+          "#9f7771",
+          "#c39993",
+          "#e9bdb6",
+          "#ffe2db"
+        ]
+      },
+      "dark-verdict-false-ink": {
+        "role": "verdict",
+        "displayName": "Verdict False Ink (dark)",
+        "canonical": "#f2a69b",
+        "oklch": "oklch(79.6% 0.092 28.4)",
+        "tonalRamp": [
+          "#270000",
+          "#480a07",
+          "#6b2b25",
+          "#8e4b43",
+          "#b36c63",
+          "#d98f84",
+          "#ffb3a7",
+          "#ffd8cc"
+        ]
+      },
+      "dark-verdict-unverifiable": {
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable (dark)",
+        "canonical": "#959b91",
+        "oklch": "oklch(68.2% 0.016 132.5)",
+        "tonalRamp": [
+          "#090d06",
+          "#22271f",
+          "#3f443b",
+          "#5e635a",
+          "#7f847b",
+          "#a1a79d",
+          "#c5cbc1",
+          "#eaf1e6"
+        ]
+      },
+      "dark-verdict-unverifiable-on": {
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable On (dark)",
+        "canonical": "#121412",
+        "oklch": "oklch(18.8% 0.005 145.4)",
+        "tonalRamp": [
+          "#0a0c0a",
+          "#242624",
+          "#404340",
+          "#5f625f",
+          "#808380",
+          "#a3a6a3",
+          "#c7cac7",
+          "#ecefec"
+        ]
+      },
+      "dark-verdict-unverifiable-soft": {
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable Soft (dark)",
+        "canonical": "#262a25",
+        "oklch": "oklch(27.9% 0.011 139.4)",
+        "tonalRamp": [
+          "#090c08",
+          "#222621",
+          "#3f433e",
+          "#5e635d",
+          "#7f847e",
+          "#a2a7a0",
+          "#c6cbc4",
+          "#ebf0ea"
+        ]
+      },
+      "dark-verdict-unverifiable-ink": {
+        "role": "verdict",
+        "displayName": "Verdict Unverifiable Ink (dark)",
+        "canonical": "#c3c8bf",
+        "oklch": "oklch(82.6% 0.014 130.8)",
+        "tonalRamp": [
+          "#090c07",
+          "#232620",
+          "#3f443c",
+          "#5e635b",
+          "#7f847c",
+          "#a2a79e",
+          "#c6cbc2",
+          "#ebf0e7"
         ]
       }
     },
     "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Public home headline only."
+      },
       "headline": {
-        "displayName": "Headline",
-        "purpose": "Page title."
+        "displayName": "Page title",
+        "purpose": ".page-title: every H1 on desk and site."
+      },
+      "verdict": {
+        "displayName": "Verdict",
+        "purpose": "The verdict word beside its icon, in blocks and results."
       },
       "title": {
         "displayName": "Title",
-        "purpose": "Auth and onboarding titles."
+        "purpose": "Section H2s and step labels."
       },
       "body": {
         "displayName": "Body",
-        "purpose": "Claim titles, forms, leads."
+        "purpose": "Everything read."
       },
-      "body-table": {
-        "displayName": "Body (table)",
-        "purpose": "Programme listing and rail items."
+      "lead": {
+        "displayName": "Lead",
+        "purpose": "Line under a page title; check-field text."
       },
-      "meta": {
-        "displayName": "Meta",
-        "purpose": "Origin, tags, legend, status, badges, hints."
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, small heads, verdict chips; sentence case."
       },
-      "grid-title": {
-        "displayName": "Grid title",
-        "purpose": "Uppercase condensed heading of the day grid only."
-      },
-      "ref": {
-        "displayName": "FAN reference",
-        "purpose": "Stable claim references, tabular."
-      },
-      "time": {
-        "displayName": "Time",
-        "purpose": "Hour ruler, seen-at times, durations, tabular."
-      },
-      "now-tag": {
-        "displayName": "Now tag",
-        "purpose": "Maintenant time tag on signal yellow."
-      },
-      "wordmark": {
-        "displayName": "Wordmark",
-        "purpose": "Product name beside the logo mark."
+      "reference": {
+        "displayName": "Reference",
+        "purpose": "FAN refs, times, counts, step numbers; tabular."
       }
-    },
-    "radius": {
-      "base": "0.3125rem (5px) via --radius; sm 3px, md 4px, lg 5px derived"
     },
     "shadows": [
       {
-        "name": "block-lift",
-        "value": "0 6px 16px -6px rgb(15 59 54 / 0.45)",
-        "purpose": "Focused grid block, with translateY(-1px) and a 2px signal ring."
+        "name": "sheet-lift",
+        "value": "0 -18px 40px -24px rgb(23 26 24 / 0.45)",
+        "purpose": "Assistant as a phone bottom sheet; none when docked."
       },
       {
-        "name": "tooltip",
-        "value": "0 10px 28px -10px rgb(15 59 54 / 0.4)",
-        "purpose": "Detail card under a focused block."
+        "name": "step-breathe",
+        "value": "0 0 0 7px color-mix(in srgb, var(--action) 35%, transparent)",
+        "purpose": "Pulsing ring of the active step disc."
+      },
+      {
+        "name": "recording-pulse",
+        "value": "0 0 0 6px rgb(157 56 46 / 0.2)",
+        "purpose": "Microphone and voice button while listening."
       }
     ],
     "motion": [
       {
         "name": "ease-out-expo",
         "value": "cubic-bezier(0.16, 1, 0.3, 1)",
-        "purpose": "Grid block growth."
+        "purpose": "Default easing for arrivals, highlights, verdict landing, the assistant dock padding."
       },
       {
-        "name": "grid-extend",
-        "value": "scaleX(0.02) to scaleX(1), 640ms, 35ms stagger per lane",
-        "purpose": "Blocks grow from first seen toward now on load."
+        "name": "signal-mark",
+        "value": "0.9s ease-out-expo, stagger 220ms + 150ms",
+        "purpose": "Citron highlighter sweep on flagged phrases."
       },
       {
-        "name": "spotlight-dim",
-        "value": "opacity 0.4, 200ms",
-        "purpose": "Non-focused lanes when a block is focused."
+        "name": "arrive",
+        "value": "0.45s ease-out-expo, translateY(6px) to 0, stagger 90ms",
+        "purpose": "Sources on the wall, live log lines, dossier rows."
       },
       {
-        "name": "row-tint",
-        "value": "background-color 150ms",
-        "purpose": "Table row focus and selection."
+        "name": "verdict-land",
+        "value": "0.5s ease-out-expo, scale(1.04) to 1",
+        "purpose": "A verdict appears once."
+      },
+      {
+        "name": "step-breathe",
+        "value": "1.6s ease-in-out infinite",
+        "purpose": "Only the active step moves continuously."
       },
       {
         "name": "reduced-motion",
-        "value": "all animation and transition 0.01ms",
-        "purpose": "prefers-reduced-motion."
+        "value": "all animations and transitions 0.01ms",
+        "purpose": "prefers-reduced-motion: reduce."
       }
     ],
     "breakpoints": [
       {
-        "name": "sm",
-        "value": "640px",
-        "note": "filters stop wrapping full width"
-      },
-      {
         "name": "md",
-        "value": "768px",
-        "note": "stacked rows become the table"
+        "value": "768px"
       },
       {
         "name": "lg",
         "value": "1024px",
-        "note": "rail replaces top bar and bottom nav; grid fits the width instead of a 6-hour scroll window"
+        "note": "Desk rail, assistant docked at 400px with page padding."
+      },
+      {
+        "name": "@3xl container",
+        "value": "48rem"
+      },
+      {
+        "name": "@4xl container",
+        "value": "56rem",
+        "note": "Mini numbered line on dossier rows."
       }
-    ],
-    "focus": {
-      "global": "outline 2px solid var(--ring), offset 2px; ring is antenna green in light, signal yellow in dark",
-      "grid-and-rail": "2px signal ring"
-    },
-    "selection": {
-      "background": "var(--signal)",
-      "color": "#14201d"
-    }
+    ]
   },
   "components": [
+    {
+      "name": "Action Button",
+      "kind": "button",
+      "refersTo": "button-action",
+      "description": "The one citron action of a screen (variant=\"action\", size=\"xl\").",
+      "html": "<button class=\"ds-btn-action\">Vérifier cette information <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button>",
+      "css": ".ds-btn-action { display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:1px solid transparent; border-radius:3px; background: var(--action, #d7f45b); color: var(--action-foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; transition: background .15s, transform .15s; } .ds-btn-action:hover { background: color-mix(in oklch, var(--action, #d7f45b), var(--foreground, #171a18) 8%); } .ds-btn-action:active { transform: translateY(1px); } .ds-btn-action:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
+    },
     {
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "The one primary action per view, e.g. Nouvelle affirmation.",
-      "html": "<button class=\"ds-btn-primary\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><path d=\"M5 12h14\"/><path d=\"M12 5v14\"/></svg>Nouvelle affirmation</button>",
-      "css": ".ds-btn-primary { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 10px; border: 1px solid transparent; border-radius: 5px; background: var(--primary, #0f3b36); color: var(--primary-foreground, #ffffff); font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms, transform 150ms; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--primary, #0f3b36) 80%, transparent); } .ds-btn-primary:active { transform: translateY(1px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--ring, #0f3b36); outline-offset: 2px; }"
+      "description": "Ink button for confirmations inside a flow.",
+      "html": "<button class=\"ds-btn-primary\">Confirmer « Faux »</button>",
+      "css": ".ds-btn-primary { height:32px; padding:0 10px; border:1px solid transparent; border-radius:3px; background: var(--primary, #171a18); color: var(--primary-foreground, #f1f2ec); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-primary:hover { background: color-mix(in srgb, var(--primary, #171a18) 85%, transparent); } .ds-btn-primary:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
     },
     {
       "name": "Outline Button",
       "kind": "button",
       "refersTo": "button-outline",
-      "description": "Secondary actions: retry, clear filters.",
-      "html": "<button class=\"ds-btn-outline\">Effacer les filtres</button>",
-      "css": ".ds-btn-outline { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border: 1px solid var(--border, #c9d3d0); border-radius: 5px; background: var(--background, #f4f6f5); color: var(--foreground, #14201d); font-size: 14px; font-weight: 500; cursor: pointer; transition: background-color 150ms; } .ds-btn-outline:hover { background: var(--muted, #e9eeec); } .ds-btn-outline:focus-visible { outline: 2px solid var(--ring, #0f3b36); outline-offset: 2px; }"
+      "description": "Secondary actions: retry, cancel, sign in on ink.",
+      "html": "<button class=\"ds-btn-outline\">Réessayer</button>",
+      "css": ".ds-btn-outline { height:32px; padding:0 10px; border:1px solid var(--border, #d3d6cc); border-radius:3px; background: var(--background, #f1f2ec); color: var(--foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; font-weight:500; cursor:pointer; } .ds-btn-outline:hover { background: var(--muted, #e8eae3); } .ds-btn-outline:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
     },
     {
-      "name": "Search Input",
+      "name": "Check Field",
       "kind": "input",
-      "refersTo": "input",
-      "description": "Filter-bar field on card white.",
-      "html": "<label class=\"ds-input-wrap\"><span class=\"ds-sr\">Rechercher</span><input class=\"ds-input\" placeholder=\"Rechercher une affirmation\" /></label>",
-      "css": ".ds-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .ds-input { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; width: 320px; height: 40px; padding: 4px 10px; border: 1px solid var(--input, #b4c0bc); border-radius: 5px; background: var(--card, #ffffff); color: var(--foreground, #14201d); font-size: 14px; caret-color: var(--primary, #0f3b36); outline: none; transition: border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: var(--muted-foreground, #4b5a56); } .ds-input:focus-visible { border-color: var(--ring, #0f3b36); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring, #0f3b36) 50%, transparent); }"
+      "refersTo": "check-field",
+      "description": "The big paste field with its toolbar and the action button.",
+      "html": "<form class=\"ds-field\"><textarea rows=\"3\" placeholder=\"Ex. : « Analakely sous l'eau ce matin, partagez ! »\"></textarea><div class=\"ds-field-bar\"><button type=\"button\" class=\"ds-field-ghost\">Dicter le message</button><button type=\"submit\" class=\"ds-field-go\">Vérifier <svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/></svg></button></div></form>",
+      "css": ".ds-field { max-width:640px; border:1px solid var(--input, #8a9086); border-radius:3px; background: var(--card, #fff); } .ds-field:focus-within { border-color: var(--foreground, #171a18); box-shadow: 0 0 0 2px color-mix(in srgb, var(--foreground, #171a18) 15%, transparent); } .ds-field textarea { display:block; width:100%; resize:none; border:0; background:transparent; padding:16px 16px 8px; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:18px; line-height:1.625; color: var(--foreground, #171a18); outline:none; } .ds-field textarea::placeholder { color: var(--muted-foreground, #565c55); opacity:1; } .ds-field-bar { display:flex; align-items:center; gap:8px; padding:10px 12px; border-top:1px solid var(--border, #d3d6cc); } .ds-field-ghost { height:40px; padding:0 10px; border:0; border-radius:3px; background:transparent; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; cursor:pointer; } .ds-field-ghost:hover { background: var(--muted, #e8eae3); } .ds-field-go { margin-left:auto; display:inline-flex; align-items:center; gap:8px; height:48px; padding:0 20px; border:0; border-radius:3px; background: var(--action, #d7f45b); color: var(--action-foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:16px; font-weight:700; cursor:pointer; } .ds-field-go:focus-visible, .ds-field-ghost:focus-visible { outline:2px solid var(--ring, #171a18); outline-offset:2px; }"
     },
     {
-      "name": "Verdict Badge",
-      "kind": "chip",
-      "refersTo": "verdict-badge",
-      "description": "Confirmed verdict on soft ground, and AI suggestion as a dashed outline; always icon plus label.",
-      "html": "<span class=\"ds-verdicts\"><span class=\"ds-badge ds-badge-false\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/></svg>Faux</span><span class=\"ds-badge ds-badge-true\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg>Vrai</span><span class=\"ds-badge ds-badge-suggested\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg>Trompeur<span class=\"ds-badge-note\">· suggéré</span></span></span>",
-      "css": ".ds-verdicts { display: inline-flex; gap: 12px; } .ds-badge { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 3px; font-size: 14px; font-weight: 500; white-space: nowrap; } .ds-badge-false { background: var(--verdict-false-soft, #f8e1de); color: var(--verdict-false-ink, #9c2b22); } .ds-badge-true { background: var(--verdict-true-soft, #e2f1e6); color: var(--verdict-true-ink, #1f6b38); } .ds-badge-suggested { background: transparent; border: 1px dashed currentColor; color: var(--verdict-misleading-ink, #7d5300); } .ds-badge-note { font-weight: 400; opacity: .8; }"
-    },
-    {
-      "name": "Status Label",
-      "kind": "chip",
-      "refersTo": "status-label",
-      "description": "Workflow status in ink icons only; never a verdict colour.",
-      "html": "<span class=\"ds-status\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/><path d=\"m9 12 2 2 4-4\"/></svg>Vérifié</span>",
-      "css": ".ds-status { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--foreground, #14201d); white-space: nowrap; }"
-    },
-    {
-      "name": "Navigation Rail",
+      "name": "Desk Rail",
       "kind": "nav",
-      "refersTo": "nav-rail",
-      "description": "Antenna-green rail with wordmark and nav; active item on the rail accent.",
-      "html": "<nav class=\"ds-rail\"><span class=\"ds-wordmark\">FANILO</span><a class=\"ds-rail-item ds-active\" href=\"#\" aria-current=\"page\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m3 17 2 2 4-4\"/><path d=\"m3 7 2 2 4-4\"/><path d=\"M13 6h8\"/><path d=\"M13 12h8\"/><path d=\"M13 18h8\"/></svg>Affirmations</a><span class=\"ds-rail-item ds-disabled\">Sources<span class=\"ds-soon\">Bientôt</span></span></nav>",
-      "css": ".ds-rail { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; display: flex; flex-direction: column; gap: 2px; width: 248px; padding: 12px; background: var(--sidebar, #0f3b36); color: var(--sidebar-foreground, #e9f1ef); } .ds-wordmark { font-family: var(--font-barlow-condensed), 'Barlow Condensed', 'Public Sans', sans-serif; font-variant-numeric: tabular-nums; font-size: 20px; font-weight: 600; letter-spacing: .025em; padding: 8px 10px 20px; } .ds-rail-item { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 4px; font-size: 15px; color: inherit; text-decoration: none; transition: background-color 150ms; } .ds-rail-item:hover { background: color-mix(in srgb, var(--sidebar-accent, #1a4d47) 60%, transparent); } .ds-rail-item:focus-visible { outline: 2px solid var(--sidebar-ring, #f2c230); outline-offset: 2px; } .ds-active { background: var(--sidebar-accent, #1a4d47); color: var(--sidebar-accent-foreground, #ffffff); font-weight: 500; } .ds-disabled { color: color-mix(in srgb, var(--sidebar-muted, #a9c2bd) 70%, transparent); } .ds-disabled:hover { background: none; } .ds-soon { margin-left: auto; font-size: 11px; }"
+      "refersTo": "nav-item-active",
+      "description": "Light rail; the active item carries the citron.",
+      "html": "<nav class=\"ds-rail\"><a class=\"is-active\" href=\"#\">Vérifier</a><a href=\"#\">Dossiers</a><a href=\"#\">Sources</a></nav>",
+      "css": ".ds-rail { width:216px; padding:12px; background: var(--sidebar, #e9ebe3); display:flex; flex-direction:column; gap:4px; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-rail a { display:block; padding:10px 12px; border-radius:3px; color: var(--sidebar-foreground, #171a18); text-decoration:none; transition: background .15s; } .ds-rail a:hover { background: var(--sidebar-accent, #dcdfd4); } .ds-rail a.is-active { background: var(--sidebar-primary, #d7f45b); color: var(--sidebar-primary-foreground, #171a18); font-weight:700; } .ds-rail a:focus-visible { outline:2px solid var(--sidebar-ring, #171a18); outline-offset:2px; }"
     },
     {
-      "name": "Day Grid Lanes",
-      "kind": "custom",
-      "refersTo": "grid-block-confirmed",
-      "description": "Signature: claims as airtime blocks on hairline hour rules, cut by the signal-yellow maintenant line. Confirmed fill, AI suggestion dashed on soft, unchecked outline.",
-      "html": "<div class=\"ds-grid\"><div class=\"ds-ruler\"><span style=\"left:0%\">12h</span><span style=\"left:25%\">13h</span><span style=\"left:50%\">14h</span><span style=\"left:75%\">15h</span><span style=\"left:100%\">16h</span></div><div class=\"ds-lanes\"><i class=\"ds-rule\" style=\"left:0%\"></i><i class=\"ds-rule\" style=\"left:25%\"></i><i class=\"ds-rule\" style=\"left:50%\"></i><i class=\"ds-rule\" style=\"left:75%\"></i><i class=\"ds-future\" style=\"left:80%\"></i><button class=\"ds-block ds-confirmed\" style=\"left:5%;width:75%\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/></svg><b>FAN-0138</b>Une vidéo montre l'inondation</button><button class=\"ds-block ds-suggested\" style=\"left:30%;width:50%\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg><b>FAN-0139</b>Le prix du riz a doublé</button><button class=\"ds-block ds-unchecked\" style=\"left:55%;width:25%\"><b>FAN-0141</b>JIRAMA</button><span class=\"ds-now\" style=\"left:80%\"><span>Maintenant 14:48</span></span></div></div>",
-      "css": ".ds-grid { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; width: 560px; padding: 4px 20px 16px; background: var(--card, #ffffff); border: 1px solid var(--border, #c9d3d0); border-radius: 5px; color: var(--foreground, #14201d); } .ds-ruler { position: relative; height: 48px; } .ds-ruler span { font-family: var(--font-barlow-condensed), 'Barlow Condensed', 'Public Sans', sans-serif; font-variant-numeric: tabular-nums; position: absolute; top: 24px; transform: translateX(-50%); font-size: 14px; font-weight: 500; letter-spacing: .025em; color: var(--muted-foreground, #4b5a56); } .ds-lanes { position: relative; display: flex; flex-direction: column; gap: 6px; padding: 4px 0; } .ds-rule { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--rule, #c9d3d0); } .ds-future { position: absolute; top: 0; bottom: 0; right: 0; background: color-mix(in srgb, var(--muted, #e9eeec) 60%, transparent); } .ds-block { font-family: var(--font-public-sans), 'Public Sans', ui-sans-serif, system-ui, sans-serif; position: relative; display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 8px; border-radius: 3px; border: 1px solid transparent; font-size: 14px; white-space: nowrap; overflow: hidden; cursor: pointer; transform-origin: left; animation: ds-extend 640ms cubic-bezier(0.16, 1, 0.3, 1) backwards; transition: box-shadow 200ms, transform 200ms; } .ds-block b { font-family: var(--font-barlow-condensed), 'Barlow Condensed', 'Public Sans', sans-serif; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: .025em; } .ds-confirmed { background: var(--verdict-false, #c43d32); color: var(--verdict-false-on, #ffffff); } .ds-suggested { background: var(--verdict-misleading-soft, #f8ecd2); color: var(--verdict-misleading-ink, #7d5300); border: 1px dashed currentColor; } .ds-unchecked { background: var(--card, #ffffff); color: var(--foreground, #14201d); border-color: color-mix(in srgb, var(--foreground, #14201d) 60%, transparent); } .ds-block:hover, .ds-block:focus-visible { outline: none; z-index: 2; transform: translateY(-1px); box-shadow: 0 0 0 2px var(--signal, #f2c230), 0 6px 16px -6px rgb(15 59 54 / 0.45); } .ds-lanes:has(.ds-block:hover) .ds-block:not(:hover) { opacity: .4; } .ds-now { position: absolute; top: -48px; bottom: 0; width: 2px; background: var(--signal, #f2c230); z-index: 3; } .ds-now span { font-family: var(--font-barlow-condensed), 'Barlow Condensed', 'Public Sans', sans-serif; font-variant-numeric: tabular-nums; position: absolute; top: 0; left: 50%; transform: translateX(-50%); padding: 2px 6px; border-radius: 3px; background: var(--signal, #f2c230); color: #14201d; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; } @keyframes ds-extend { from { transform: scaleX(0.02); } to { transform: scaleX(1); } } @media (prefers-reduced-motion: reduce) { .ds-block { animation: none; } }"
-    },
-    {
-      "name": "Now Tag",
+      "name": "Verdict Chips",
       "kind": "chip",
-      "refersTo": "now-tag",
-      "description": "The maintenant time tag on signal yellow; the only filled use of the signal.",
-      "html": "<span class=\"ds-nowtag\">Maintenant 18:43</span>",
-      "css": ".ds-nowtag { font-family: var(--font-barlow-condensed), 'Barlow Condensed', 'Public Sans', sans-serif; font-variant-numeric: tabular-nums; display: inline-block; padding: 2px 6px; border-radius: 3px; background: var(--signal, #f2c230); color: #14201d; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }"
+      "refersTo": "verdict-chip-false",
+      "description": "Confirmed verdict = soft fill; AI suggestion = dashed outline. Always icon + word.",
+      "html": "<div class=\"ds-chips\"><span class=\"ds-chip ds-false\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m15 9-6 6\"/><path d=\"m9 9 6 6\"/></svg> Faux</span><span class=\"ds-chip ds-sugg\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> Trompeur <span class=\"ds-sugg-note\">· suggéré</span></span></div>",
+      "css": ".ds-chips { display:flex; gap:12px; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-chip { display:inline-flex; align-items:center; gap:6px; padding:2px 8px; border-radius:2px; font-size:14px; font-weight:700; white-space:nowrap; } .ds-false { background: var(--verdict-false-soft, #f4dfda); color: var(--verdict-false-ink, #872e25); } .ds-sugg { border:1px dashed currentColor; background:transparent; color: var(--verdict-misleading-ink, #6f4600); font-weight:500; } .ds-sugg-note { font-weight:400; }"
+    },
+    {
+      "name": "Verdict Block",
+      "kind": "card",
+      "refersTo": "verdict-block-misleading",
+      "description": "The conclusion stated: 2px border, solid once confirmed, dashed while suggested.",
+      "html": "<div class=\"ds-vblock\"><p class=\"ds-vword\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"34\" height=\"34\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.4\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/></svg> Trompeur</p><p class=\"ds-vnote\">Suggéré par FANILO</p></div>",
+      "css": ".ds-vblock { max-width:520px; padding:20px; border:2px dashed currentColor; border-radius:3px; background: var(--verdict-misleading-soft, #f8ebcf); color: var(--verdict-misleading-ink, #6f4600); animation: ds-land .5s cubic-bezier(.16,1,.3,1) both; } .ds-vblock:hover { border-style:solid; } .ds-vword { margin:0; display:flex; align-items:center; gap:10px; font-family: var(--font-archivo, Archivo), sans-serif; font-size:36px; font-weight:800; letter-spacing:-0.025em; line-height:1; } .ds-vnote { margin:6px 0 0; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:14px; font-weight:700; } @keyframes ds-land { from { opacity:0; transform:scale(1.04); } }"
+    },
+    {
+      "name": "Numbered Line",
+      "kind": "custom",
+      "refersTo": "step-disc-active",
+      "description": "Signature: 01 L'affirmation, 02 Les éléments, 03 La conclusion; done ink disc, active citron disc that breathes, waiting outlined.",
+      "html": "<ol class=\"ds-line\"><li><span class=\"ds-disc ds-done\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></span><div><b>L'affirmation</b><p>2 affirmations, 3 signes d'alerte</p></div></li><li><span class=\"ds-disc ds-active\">02</span><div><b>Les éléments</b> <small>en cours</small><p>Fact-checkeurs, web, sources de la rédaction</p></div></li><li><span class=\"ds-disc ds-wait\">03</span><div><b class=\"ds-dim\">La conclusion</b><p>Un verdict expliqué, toujours confirmé par la rédaction.</p></div></li></ol>",
+      "css": ".ds-line { list-style:none; margin:0; padding:0; font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-line li { position:relative; display:flex; gap:16px; padding-bottom:24px; } .ds-line li:last-child { padding-bottom:0; } .ds-line li:not(:last-child)::after { content:\"\"; position:absolute; top:40px; bottom:0; left:20px; width:1px; background: var(--foreground, #171a18); } .ds-line li:nth-child(2)::after { background: var(--border, #d3d6cc); } .ds-disc { position:relative; z-index:1; display:grid; place-items:center; flex:none; width:40px; height:40px; border-radius:50%; font-family: var(--font-archivo, Archivo), sans-serif; font-weight:700; font-size:15px; font-variant-numeric:tabular-nums; } .ds-done { background: var(--foreground, #171a18); color: var(--action, #d7f45b); } .ds-active { background: var(--action, #d7f45b); color: var(--action-foreground, #171a18); animation: ds-breathe 1.6s ease-in-out infinite; } .ds-wait { border:1px solid var(--input, #8a9086); background: var(--card, #fff); color: var(--muted-foreground, #565c55); } .ds-line b { font-family: var(--font-archivo, Archivo), sans-serif; font-size:17px; } .ds-line small { font-size:14px; color: var(--muted-foreground, #565c55); } .ds-line p { margin:2px 0 0; font-size:14px; color: var(--muted-foreground, #565c55); } .ds-line .ds-dim { color: var(--muted-foreground, #565c55); } @keyframes ds-breathe { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--action, #d7f45b) 35%, transparent); } }"
+    },
+    {
+      "name": "Live Panel",
+      "kind": "card",
+      "refersTo": "live-panel",
+      "description": "Ink panel where FANILO's work shows live (« Le travail de FANILO »).",
+      "html": "<section class=\"ds-live\"><h2>Le travail de FANILO <span><i></i> En cours</span></h2><ol><li><time>15:55:27</time> Lecture du message…</li><li><time>15:55:29</time> Recherche chez les fact-checkeurs</li></ol></section>",
+      "css": ".ds-live { max-width:420px; padding:16px; border-radius:3px; background: var(--live, #171a18); color: var(--live-foreground, #f1f2ec); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; } .ds-live h2 { margin:0; display:flex; justify-content:space-between; font-family: var(--font-archivo, Archivo), sans-serif; font-size:14px; font-weight:700; } .ds-live h2 span { display:inline-flex; align-items:center; gap:6px; } .ds-live i { width:8px; height:8px; border-radius:50%; background: var(--action, #d7f45b); animation: ds-pulse 1s ease-in-out infinite; } .ds-live ol { list-style:none; margin:12px 0 0; padding:0; display:grid; gap:8px; font-size:14px; } .ds-live li { display:flex; gap:12px; animation: ds-arrive .45s cubic-bezier(.16,1,.3,1) both; } .ds-live time { font-size:12px; color: var(--live-muted, #b2b8ad); font-variant-numeric:tabular-nums; } @keyframes ds-pulse { 50% { opacity:.4; } } @keyframes ds-arrive { from { opacity:0; transform:translateY(6px); } }"
+    },
+    {
+      "name": "Highlighter",
+      "kind": "custom",
+      "refersTo": "citron",
+      "description": ".signal-mark: citron sweep behind phrases FANILO flagged.",
+      "html": "<p class=\"ds-msg\">URGENT : la JIRAMA annonce <mark class=\"ds-mark\">12 h de délestage par jour</mark> à Toamasina dès lundi. <mark class=\"ds-mark\" style=\"--i:1\">Partagez avant que ce soit supprimé</mark> !</p>",
+      "css": ".ds-msg { max-width:520px; padding:16px; border-radius:3px; background: var(--muted, #e8eae3); color: var(--foreground, #171a18); font-family: var(--font-atkinson, \"Atkinson Hyperlegible Next\"), system-ui, sans-serif; font-size:18px; line-height:1.625; } .ds-mark { color:inherit; padding:0 .12em; border-radius:2px; -webkit-box-decoration-break:clone; box-decoration-break:clone; background: linear-gradient(var(--action, #d7f45b), var(--action, #d7f45b)) no-repeat 0 0 / 100% 100%; animation: ds-mark .9s cubic-bezier(.16,1,.3,1) both; animation-delay: calc(var(--i, 0) * 220ms + 150ms); } @keyframes ds-mark { from { background-size: 0% 100%; } }"
     }
   ],
   "narrative": {
-    "northStar": "Grille d'antenne",
-    "overview": "The day's claims are set like a Malagasy radio station's programme grid. Every claim has airtime: a block drawn to scale from the moment it was first seen to \"maintenant\", on hairline hour rules from 06h to 22h. Time is the organising material; the station's deep antenna green frames the desk, and a single signal yellow marks the present moment.\n\nThe density is that of a broadcast schedule: tight 32px lanes, 6px between them, hairline rules rather than boxes, condensed numerals that line up in columns. Colour is reserved for meaning. Verdicts own four hues, status owns none, and the yellow belongs to \"now\". Surfaces are flat; depth appears only when the journalist focuses a block, which lifts while the rest of the grid dims.\n\nThe world explicitly refuses the default dashboard: a grey table with coloured pills and nothing about time. The table still exists, but as the programme listing under the grid, carrying the same rows.",
+    "northStar": "Le signal clair",
+    "overview": "FANILO reads like civic signage for rumours: a chalk ground, green-black ink, square-ish edges, heavy Archivo words and one citron that says \"here\". The same world serves the newsroom desk (`/w/…`) and the public site (`/`, `/verifies`, `/signaler`, `/suivi`, sign-in and sign-up); there is no second identity. A screen is a notice board you can act on: a big field to paste a message, a numbered line that shows how far a dossier has come, and verdicts stated as words with icons, never as colour alone.\n\nThe organising device is the **numbered line**: 01 L'affirmation, 02 Les éléments, 03 La conclusion. It explains the method on the home page, runs live on Vérifier, sits mini on each dossier row and runs down the gutter of a claim's page. FANILO's own work shows in an **ink panel** (the live log « Le travail de FANILO », the public answer, the newsroom band), so machine activity is always visually separate from the journalist's page. The AI only suggests: suggestion is drawn dashed, a journalist's confirmation is drawn solid.\n\nDensity is calm and legible rather than packed: Atkinson Hyperlegible Next for every word a person reads (a cracked phone in full sun is the reference reader), generous 18px leads, 44–48px touch targets for the main controls. Motion is short and once: highlights sweep in, sources arrive, the verdict lands, the active step breathes; all of it collapses under `prefers-reduced-motion`.",
     "keyCharacteristics": [
-      "Time drawn to scale: block length is exact circulation time.",
-      "Antenna-green rail, cool white ground, green-black ink, hairline hour rules.",
-      "One signal yellow, for the present moment and the keyboard's position.",
-      "Verdicts always icon plus label; status in ink only.",
-      "Condensed grotesk for every hour, time and FAN reference; a workhorse sans for words.",
-      "Flat at rest; focus lifts."
+      "One world for desk and public site; light and dark themes from the same tokens.",
+      "Citron (`#d7f45b`) only for the one action of a screen, the active step and highlights.",
+      "Verdicts always icon + word on their own four-token family; status always ink icons.",
+      "AI suggestion dashed, confirmed solid.",
+      "The numbered line 01/02/03 as the reused signature.",
+      "Ink panels for FANILO's live work; square-ish corners (2–4px); flat, no ambient shadows."
     ],
     "rules": [
       {
-        "name": "The One Signal Rule",
-        "body": "Signal yellow means \"now\" or \"you are here\": the maintenant line, focus, selection. It never decorates, never fills a button, never marks a verdict or status.",
+        "name": "The One Citron Rule",
+        "body": "Citron marks the one action of a screen, the active step, the active nav item and highlighted phrases. Never a verdict, a status, a decoration or a second competing button.",
         "section": "colors"
       },
       {
-        "name": "The Four-Token Verdict Rule",
-        "body": "Every verdict colour ships as fill / on / soft / ink, and text on a fill always uses its own \"on\" token, so every pairing holds at least 4.5:1 in both themes. A new verdict surface picks from these four; it does not invent a fifth tint.",
+        "name": "The Word-and-Icon Rule",
+        "body": "A verdict is always its lucide icon plus its word in the verdict's ink. Colour alone never carries a verdict.",
         "section": "colors"
       },
       {
-        "name": "The Status Is Not Truth Rule",
-        "body": "Workflow status (À vérifier, En cours, Vérifié, Publié) is drawn with ink icons only (CircleDashed muted, Timer, ShieldCheck, Radio in foreground). Status never borrows a verdict colour.",
+        "name": "The Status-Is-Not-Truth Rule",
+        "body": "Workflow status (À vérifier CircleDashed, En cours Timer, Vérifié ShieldCheck, Publié Radio) uses ink icons, muted only for « À vérifier »; never a verdict colour.",
         "section": "colors"
       },
       {
-        "name": "The Airtime Face Rule",
-        "body": "Hours, times, durations, counts in the grid and FAN references are set in Barlow Condensed with tabular numerals; so are the wordmark, the grid title and avatar initials. Everything else, including headings, is Public Sans.",
+        "name": "The 4.5 Rule",
+        "body": "Every text pair is ≥ 4.5:1 in both themes, measured against its real ground. No opacity on text; placeholders use `muted-foreground`; disabled controls sit at 60 %.",
+        "section": "colors"
+      },
+      {
+        "name": "The Sentence-Case Rule",
+        "body": "Labels and headings are sentence case. No uppercase tracked eyebrow or kicker above a heading; meta sits under the title.",
         "section": "typography"
       },
       {
-        "name": "The Tabular Rule",
-        "body": "Every `time` element and every number that sits in a column uses tabular figures so values align down the listing.",
+        "name": "The Two-Voices Rule",
+        "body": "Archivo speaks (titles, numbers, verdicts); Atkinson is read. Do not set paragraphs in Archivo or verdict words in Atkinson.",
         "section": "typography"
       },
       {
-        "name": "The Spotlight Rule",
-        "body": "Focusing a block (hover, keyboard, or a hovered table row) lifts it and dims every other lane to 40% opacity; Escape or leaving releases it. Nothing else in the system casts a shadow at rest.",
+        "name": "The Flat-Ground Rule",
+        "body": "Cards and panels sit flat on a hairline or a tonal change. A shadow means \"this is moving or live\", never \"this is important\".",
         "section": "elevation"
       }
     ],
     "dos": [
-      "**Do** pair every verdict with its icon and French label, in badges, blocks, tooltips and filter menus.",
-      "**Do** put text on a verdict fill only in that verdict's \"on\" token, and on light grounds only in its \"ink\" token.",
-      "**Do** set hours, times, durations and FAN references in Barlow Condensed with tabular figures.",
-      "**Do** draw an AI suggestion as a dashed outline on soft ground, and an unchecked claim as a plain outline on card white.",
-      "**Do** keep every UI string in `lib/i18n/fr.ts` and the product name and logo in `lib/brand.ts` / the brand component.",
-      "**Do** keep corners at 5px or tighter (3px for blocks and badges)."
+      "**Do** build every new screen from these tokens and components: `.page-title` H1 with meta under it, the check field, `StepLine`/`StepDisc` for progress, `VerdictChip`/`VerdictBadge`/the verdict block for verdicts, the live panel for anything FANILO is doing.",
+      "**Do** give each screen exactly one `variant=\"action\"` button; everything else is primary, outline or ghost.",
+      "**Do** draw an AI suggestion dashed and a journalist's confirmation solid, and leave the final verdict to a journalist's explicit click.",
+      "**Do** pair every verdict with its icon and word, and every status with its ink lucide icon.",
+      "**Do** measure every new text pair in light and dark against its real ground (≥ 4.5:1); use `*-ink` tokens for coloured text on light grounds.",
+      "**Do** keep corners at 2–4px and edges as 1px hairlines; reserve full rounds for discs, avatars and pills.",
+      "**Do** pad the page when the assistant opens on desktop (`lg:pr-[25rem]`) and use the bottom sheet on phone.",
+      "**Do** keep motion single-shot (`.arrive`, `.verdict-land`, `.signal-mark`) except the active step and recording indicators, and respect `prefers-reduced-motion`.",
+      "**Do** use the shared neutral quote rule (1px hairline on the left of a quoted passage) for verbatim quotes; it is a quotation mark, not an accent."
     ],
     "donts": [
-      "**Don't** use signal yellow for anything but now, focus and selection.",
-      "**Don't** colour a status with a verdict hue; status is ink icons only.",
-      "**Don't** show a verdict by colour alone on a functional surface.",
-      "**Don't** add shadows to surfaces at rest; depth is for the focused block and its tooltip.",
-      "**Don't** fall back to a time-blind grey table with coloured pills as the main view of claims."
+      "**Don't** use citron for a verdict, a status, an icon bullet, a badge that is not the active step or a second action on the same screen.",
+      "**Don't** carry a verdict by colour alone, or colour a status with a verdict family.",
+      "**Don't** put an uppercase tracked eyebrow or kicker above a heading.",
+      "**Don't** add coloured border-left accents to cards, callouts or rows.",
+      "**Don't** let the assistant float over the page on desktop.",
+      "**Don't** set text in opacity or in the `input` stroke colour.",
+      "**Don't** add ambient shadows to cards; depth is tone and hairline.",
+      "**Don't** bring back the retired worlds (« Grille d'antenne » green rail and signal yellow, « Le dossier » manila, Anton, Special Elite, halftoned photographs) in the app. The pitch kit (`docs/pitch/`, `scripts/pitch_video.py`) still uses Anton, Special Elite and the photographs in `public/site/`; they belong to the pitch kit only and are not part of the app's system."
     ]
   }
 }

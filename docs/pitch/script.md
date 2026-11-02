@@ -39,7 +39,7 @@ Le jury doit comprendre le besoin, la solution et son fonctionnement, l'intérê
 **0:40–0:55** · Le parti pris
 
 - On aurait pu faire {{une IA qui dit vrai ou faux}}. Non : une machine ne signe pas un verdict.
-- Alors chaque rumeur devient un dossier. On y verse les preuves, l'IA les lit et propose, citation par citation.
+- Alors chaque rumeur devient un dossier. On y verse les preuves ; l'IA les lit et propose, en citant mot pour mot. Une citation introuvable dans sa source est écartée ; sans preuve, elle répond « invérifiable ».
 - Et c'est un journaliste qui signe. Jamais la machine.
 
 ## 4 · {{Titre de la démo, en une ligne}}

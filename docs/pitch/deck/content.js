@@ -95,7 +95,7 @@ const slides = [
     ],
     notes: [
       "On aurait pu faire {{une IA qui dit vrai ou faux}}. Non : une machine ne signe pas un verdict.",
-      "Alors chaque rumeur devient un dossier. On y verse les preuves, l'IA les lit et propose, citation par citation.",
+      "Alors chaque rumeur devient un dossier. On y verse les preuves ; l'IA les lit et propose, en citant mot pour mot. Une citation introuvable dans sa source est écartée ; sans preuve, elle répond « invérifiable ».",
       "Et c'est un journaliste qui signe. Jamais la machine.",
     ],
   },

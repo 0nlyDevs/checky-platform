@@ -244,8 +244,9 @@ Five features answer the journalist's main tasks. Each one is a thin layer over 
 - Show any signals as hints, never as proof: the app does not claim to detect AI-generated images with certainty.
 - Traces of AI generators found in the file (EXIF, PNG text, XMP/IPTC « trainedAlgorithmicMedia », Midjourney, Stable Diffusion, DALL·E, Firefly…) and Content Credentials (C2PA) when present; none found proves nothing.
 
-### F6. Analyser un lien
+### F6. Vérifier un message ou un lien
 
+- This is the desk's home, « Vérifier »: a pasted or dictated message works as well as a link, and FANILO's work shows live on the numbered line (the phrases that should worry lit one after another, a log of what it reads and searches, the sources arriving, then the suggested conclusion).
 - Paste a post, article or image link (or the post's text when the link needs an account, as on Facebook and TikTok) and get in one pass: what it claims, the warning signs in how it is written (each with its quote), what fact-checkers, the web and Wikipedia already say, and a suggested verdict resting only on those results, each quote checked.
 - Nothing is written until the journalist follows it in the desk, with the sources they tick; the journalist still confirms the verdict on the claim.
 - No detector of AI-written text is reliable, so text only gets hints, never an "AI probability".
@@ -258,34 +259,30 @@ Five features answer the journalist's main tasks. Each one is a thin layer over 
 
 ## UI and design
 
-The UI looks like a calm, trustworthy newsroom tool set as a Malagasy radio programme grid ("Grille d'antenne"): one design system, so every screen looks finished. The full rules live in `apps/web/DESIGN.md`.
+The UI looks like civic signage for rumours, « Le signal clair »: calm, clear and simple enough for someone who has never used a fact-checking tool, with one design system for the desk and the public site. The full rules live in `apps/web/DESIGN.md`.
 
 **Design system**
 
-- Tokens as CSS variables in the Tailwind theme, light and dark: deep antenna green rail `#0f3b36` on cool white `#f4f6f5`, green-black ink, hairline rules, 5 px corners.
-- One signal yellow `#f2c230`, only for "maintenant", keyboard focus and selection; never buttons, verdicts or status.
-- Four verdict colours used everywhere the same way (`true` green, `misleading` amber, `false` red, `unverifiable` grey), each with fill / on / soft / ink tokens at 4.5:1 contrast, always with an icon and a label, never colour alone. Workflow status uses ink icons only.
-- Typography: Public Sans for words; Barlow Condensed with tabular figures for hours, times, durations and FAN references.
-- Icons: one set only (lucide, which ships with shadcn/ui). shadcn/ui components themed once with the tokens; no one-off styles in pages.
-- Signature: the day grid, where each claim is a block from first seen to now, drawn to scale.
+- Tokens as CSS variables in the Tailwind theme, light and dark: chalk ground `#f1f2ec`, white cards, ink `#171a18`, 1 px rules, square-ish corners.
+- One citron `#d7f45b`, only for the one action of a screen, the active step and highlights (the phrases of a message that should worry); never a verdict, a status or decoration.
+- Four verdict colours used everywhere the same way (`true` green, `misleading` ochre, `false` rust, `unverifiable` grey), each with fill / on / soft / ink tokens at 4.5:1 contrast, always with an icon and a word, never colour alone. An AI suggestion is a dashed outline; a confirmed verdict is solid. Workflow status uses ink icons only.
+- Typography: Archivo for titles, numbers, refs and verdict words; Atkinson Hyperlegible Next for everything read.
+- Icons: one set only (lucide, which ships with shadcn/ui). shadcn/ui components themed once with the tokens.
+- Signature: the numbered line every rumour travels, 01 L'affirmation, 02 Les éléments, 03 La conclusion. It runs live while FANILO checks a message, sits on every dossier, runs down a dossier's page, and explains a published verdict and a tip's follow-up.
+- The assistant never covers the page: on a computer it is docked on the right and the page makes room; on a phone it is a sheet over the lower part. It opens from the navigation, not from a floating button.
 
-**Public pages**
+**Navigation**
 
-The landing and the sign-in and sign-up pages have their own world, "Le dossier": every rumour gets a case file. Its contract lives in `apps/web/.impeccable/surfaces/app-site-accueil-page-tsx.md`.
-
-- Landing at `/accueil`, served at `/` to signed-out visitors. The first screen is one screen: four halftoned surveillance frames of the night (WhatsApp 23:47, Facebook 00:31, voice note 04:50, weather bulletin), a reticle that follows them while their captions type in, the stamp « Faux », the case card filling in beside « Chaque rumeur a son dossier. » and one action. On a phone it becomes a viewfinder: piece 1 recording, three thumbnails, the title and the action.
-- Then the affair in four pieces with the desk's notes, the method as a redacted report whose black bars lift as it is read (it reads plainly without script), what leaves at 7 behind folder tabs (the app's real verdict card, post and quotes), and an opening card (« Fiche d'ouverture ») whose choice pre-fills the onboarding after sign-up.
-- Palette: manila, ink, one alarm red for stamps. Type: Anton for headlines, Special Elite only for the file's labels, Public Sans for reading. Every rumour shown is fictional and labelled; no organiser logos; the footer credits the photographs (Wikimedia Commons, CC BY-SA and CC0).
-- No 3D and no heavy script: the page is HTML and CSS with three small client components.
-- Sign-in and sign-up use the same case card for the app's form, with the pieces beside it on desktop. The app shell shares the world lightly (ink rail, Anton page titles, folder logo) and keeps its verdict colours and day grid.
+- Desk: Vérifier (the home: paste or dictate a message or a link and watch FANILO work, with the open dossiers beside it), Dossiers (tabs À traiter, À confirmer, Vérifiés, Tous; a board view), Sources; Équipe and Paramètres.
+- Public: Vérifier (the home: « Est-ce déjà vérifié ? », the latest verdicts, a fictional rumour worked through, how a rumour is verified, a band for newsrooms), Les verdicts, Signaler; « Espace rédaction » leads to sign-in.
 
 **Public features**
 
-Ordinary people can use FANILO without an account, in the same case-file world:
+Ordinary people can use FANILO without an account, in the same world as the desk:
 - « Est-ce déjà vérifié ? » (`/verifies`): a public AI assistant. Ask a question or paste a message received on WhatsApp or Facebook, in French or Malagasy; it answers only from verdicts published by newsrooms, citing them [n] with links to each file. With nothing published on the subject it makes no AI call and invites a tip. It never makes up a verdict.
-- The archive of published verdicts, searchable, each with its reason, sources and a shareable page.
+- The archive of published verdicts, searchable, each with its reason, sources and a shareable page that can be listened to and shared on WhatsApp.
 - « Signaler une rumeur » (`/signaler`): send a message or link to a newsroom; it lands in its « à vérifier » list, tagged « signalement », live. No personal data is asked; a follow-up link (`/suivi/…`) shows the steps and the verdict once published.
-- The assistant is a floating chat button on every page and is an agent for the site itself, not only for checking facts. For visitors it answers from published verdicts, explains FANILO, prepares a tip (shown as an editable draft, sent only when the visitor presses Envoyer), says where their own tips stand and opens the right page. Inside a workspace it is the desk's copilot: what has circulated longest, the night in brief, claims without sources, answers from the sources, and proposed changes (new claim, attach a link, run the analysis, move a status, open a claim) that run only after the journalist confirms, with their own rights. It never confirms a verdict and never publishes. Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
+- The assistant sits on every page (docked beside it on a computer) and is an agent for the site itself, not only for checking facts. For visitors it answers from published verdicts, explains FANILO, prepares a tip (shown as an editable draft, sent only when the visitor presses Envoyer), says where their own tips stand and opens the right page. Inside a workspace it is the desk's copilot: what has circulated longest, the night in brief, claims without sources, answers from the sources, and proposed changes (new claim, attach a link, run the analysis, move a status, open a claim) that run only after the journalist confirms, with their own rights. It never confirms a verdict and never publishes. Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
 - Each newsroom opts in (admin setting « Publier nos verdicts »); the demo newsroom is public after a demo reset.
 
 **Component inventory**

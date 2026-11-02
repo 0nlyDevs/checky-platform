@@ -78,7 +78,10 @@ CURSOR_JS = """
   Object.assign(c.style, { position: 'fixed', left: '-100px', top: '-100px', width: '26px', height: '26px', border: '3px solid #141210',
     borderRadius: '50%', background: 'rgba(239,228,200,.75)', pointerEvents: 'none', zIndex: '2147483647',
     transform: 'translate(-50%,-50%)', transition: 'width .1s, height .1s, background-color .1s', boxShadow: '0 2px 8px rgba(20,18,16,.35)' });
-  const add = () => document.documentElement.appendChild(c);
+  // The dev server's "N" badge and its "Rendering" toasts live in <nextjs-portal>: keep them off camera.
+  const hide = document.createElement('style');
+  hide.textContent = 'nextjs-portal { display: none !important; }';
+  const add = () => { document.documentElement.appendChild(c); document.head.appendChild(hide); };
   document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', add) : add();
   window.addEventListener('mousemove', (e) => { c.style.left = e.clientX + 'px'; c.style.top = e.clientY + 'px'; }, true);
   window.addEventListener('mousedown', () => { c.style.width = '40px'; c.style.height = '40px'; c.style.background = 'rgba(196,42,32,.45)'; }, true);

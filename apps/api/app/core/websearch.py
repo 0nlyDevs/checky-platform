@@ -77,22 +77,52 @@ def _ddg_url(href: str) -> str | None:
     return href if parsed.scheme in ("http", "https") else None
 
 
+# DuckDuckGo's HTML page, then its "lite" page: after a burst of queries the first one answers
+# 202 (a "slow down" page) for a few minutes while the lite one usually still answers.
+DDG_HTML = (
+    r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>'
+    r'(?:.*?class="result__snippet"[^>]*>(.*?)</a>)?'
+)
+DDG_LITE = (
+    r"<a[^>]+href=\"([^\"]+)\"[^>]*class='result-link'[^>]*>(.*?)</a>"
+    r"(?:.*?class='result-snippet'[^>]*>(.*?)</td>)?"
+)
+DDG_PAGES = (
+    ("https://html.duckduckgo.com/html/", DDG_HTML),
+    ("https://lite.duckduckgo.com/lite/", DDG_LITE),
+)
+
+
 async def _duckduckgo(query: str, k: int) -> list[dict[str, Any]]:
+    status = 0
     async with _client({"User-Agent": BROWSER_UA, "Accept-Language": "fr-FR,fr;q=0.9"}) as http:
-        r = await http.post("https://html.duckduckgo.com/html/", data={"q": query, "kl": "fr-fr"})
-    if r.status_code != 200:
-        raise SearchUnavailable(f"DuckDuckGo HTTP {r.status_code}")
-    out = []
-    pattern = (
-        r'<a[^>]+class="result__a"[^>]+href="([^"]+)"[^>]*>(.*?)</a>'
-        r'(?:.*?class="result__snippet"[^>]*>(.*?)</a>)?'
-    )
-    for href, title, snippet in re.findall(pattern, r.text, re.DOTALL):
+        for url, pattern in DDG_PAGES:
+            r = await http.post(url, data={"q": query, "kl": "fr-fr"})
+            if r.status_code == 200:
+                return _ddg_results(r.text, pattern, k)
+            status = r.status_code
+    raise SearchUnavailable(f"DuckDuckGo HTTP {status}")
+
+
+def _ddg_results(page: str, pattern: str, k: int) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for href, title, snippet in re.findall(pattern, page, re.DOTALL):
         if (url := _ddg_url(href)) and url not in {o["url"] for o in out}:
             out.append({"title": _text(title), "url": url, "snippet": _text(snippet or "")})
         if len(out) >= k:
             break
     return out
+
+
+LOCAL = ("madagascar", "madagasikara", "malagasy", "gasy")
+
+
+def localised(query: str) -> str:
+    """The query with "Madagascar" when it names no country: the rumours checked here are mostly
+    Malagasy, and a French-language search otherwise answers about France (measured on « pont
+    Mangasoavina fermé »: 2 results of 6 about Madagascar without it, 6 of 6 with it)."""
+    q = query.strip()
+    return q if any(w in q.lower() for w in LOCAL) else f"{q} Madagascar"
 
 
 async def web(query: str, k: int = 6) -> list[dict[str, Any]]:

@@ -1,47 +1,24 @@
-import Image from "next/image";
-import Link from "next/link";
-import { anton, specialElite } from "@/app/fonts/site";
-import { AssistantWidget } from "@/components/assistant/assistant-widget";
-import { brand } from "@/lib/brand";
+import { AssistantProvider } from "@/components/assistant/assistant-context";
+import { StepLine } from "@/components/flow/step-line";
+import { SiteHeader } from "@/components/site/site-chrome";
 import { t } from "@/lib/i18n/fr";
 
-// The doors into the app share the case file: the form on an index card, the night's pieces beside it
-// (desktop only). The form itself is the app's, in the app's own colours.
+// The doors into the desk: the form on its card, and beside it what the newsroom does there.
 export default function AuthLayout({ children }: LayoutProps<"/">) {
-  const frames = t.site.hero.frames;
+  const a = t.site.auth;
   return (
-    <div className={`site ${anton.variable} ${specialElite.variable}`}>
-      <div className="dossier-auth">
-        <main className="flex flex-col">
-          <div className="flex items-center justify-between gap-4">
-            <Link href="/" className="disp text-2xl tracking-[0.06em]">
-              {brand.name}
-            </Link>
-            <span className="typed text-[15px] text-ink-soft">{t.site.status.open}</span>
-          </div>
-          <div className="flex w-full max-w-md flex-1 flex-col justify-center py-12">
-            <div className="dossier-fiche" style={{ transform: "none" }}>
-              <div data-ui className="rounded-md border border-border bg-card p-6 text-foreground sm:p-8">
-                {children}
-              </div>
-            </div>
-          </div>
-          <p className="disp text-[clamp(28px,3vw,44px)] leading-none">{t.site.auth.tagline}</p>
-        </main>
-        <section className="side" aria-label={t.site.affaire.title}>
-          {frames.map((f, i) => (
-            <figure key={f.time} className="dossier-frame">
-              <span className="tc tabular">{f.time}</span>
-              <Image src={`/site/dossier/piece-${i + 1}.jpg`} alt={f.alt} width={900} height={600} sizes="28vw" priority={i === 0} />
-              <figcaption>
-                <span>{f.label}</span>
-              </figcaption>
-            </figure>
-          ))}
-          <span className="stamp" data-on="true" aria-hidden data-label={t.site.hero.stamp} />
+    <AssistantProvider scope="public">
+      <SiteHeader />
+      <main className="mx-auto grid max-w-[88rem] gap-12 px-4 pt-10 pb-20 lg:grid-cols-[minmax(0,28rem)_minmax(0,1fr)] lg:gap-20 lg:px-10 lg:pt-16">
+        <div className="rounded-md border border-border bg-card p-6 sm:p-8">{children}</div>
+        <section className="lg:pt-6" aria-labelledby="auth-side">
+          <h2 id="auth-side" className="font-display text-[clamp(2rem,1.4rem+2vw,3.2rem)] leading-[1] font-extrabold tracking-[-0.02em]">
+            {a.title}
+          </h2>
+          <p className="mt-4 max-w-[48ch] text-lg text-pretty text-muted-foreground">{a.lead}</p>
+          <StepLine className="mt-10 max-w-md" states={{ claim: "done", evidence: "active", conclusion: "suggested" }} explain />
         </section>
-      </div>
-      <AssistantWidget />
-    </div>
+      </main>
+    </AssistantProvider>
   );
 }

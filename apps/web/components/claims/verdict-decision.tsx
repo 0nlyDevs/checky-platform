@@ -58,16 +58,15 @@ export function VerdictDecision({
 
   return (
     <div className="space-y-4">
-      {suggestion && (
-        <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-3 rounded-md border border-dashed border-current p-3.5", VERDICT_META[suggestion].soft, VERDICT_META[suggestion].ink)}>
-          <Sparkles className="size-4 shrink-0" aria-hidden />
-          <p className="min-w-0 flex-1 font-medium">{t.detail.suggestion(VERDICT_META[suggestion].label)}</p>
-          {canEdit && !pending && (
-            <Button size="sm" onClick={() => setPending(suggestion)}>
+      {/* The conclusion as a block: dashed while it is the AI's suggestion, solid once a journalist confirmed it. */}
+      {(claim.verdict ?? suggestion) && (
+        <VerdictBlock verdict={(claim.verdict ?? suggestion)!} suggested={!claim.verdict}>
+          {suggestion && canEdit && !pending && (
+            <Button variant="action" size="lg" className="mt-4 h-11 px-4" onClick={() => setPending(suggestion)}>
               {t.detail.decision.review(VERDICT_META[suggestion].label)}
             </Button>
           )}
-        </div>
+        </VerdictBlock>
       )}
 
       <div role="radiogroup" aria-label={t.detail.verdictTitle} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -92,7 +91,7 @@ export function VerdictDecision({
               onClick={() => setPending(active ? null : v)}
               className={cn(
                 "flex h-11 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
-                active ? cn(m.fill, m.on, "border-transparent") : cn("border-border bg-card hover:bg-accent", m.ink),
+                active ? cn(m.soft, m.ink, "border-2 border-current font-bold") : cn("border-border bg-card hover:bg-accent", m.ink),
                 chosen && !active && "border-current ring-2 ring-current/25",
               )}
             >
@@ -140,6 +139,25 @@ export function VerdictDecision({
         </button>
       )}
       {!canEdit && <p className="text-sm text-muted-foreground">{t.detail.readOnly}</p>}
+    </div>
+  );
+}
+
+/** A verdict as the dossier states it: icon and word in Archivo, on its soft ground. */
+function VerdictBlock({ verdict, suggested, children }: { verdict: Verdict; suggested: boolean; children?: React.ReactNode }) {
+  const m = VERDICT_META[verdict];
+  const Icon = m.icon;
+  return (
+    <div className={cn("verdict-land rounded-md border-2 border-current p-4 md:p-5", suggested && "border-dashed", m.soft, m.ink)}>
+      <p className="flex items-center gap-2.5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
+        <Icon className="size-8 shrink-0" strokeWidth={2.4} aria-hidden />
+        {m.label}
+      </p>
+      <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold">
+        {suggested && <Sparkles className="size-3.5" aria-hidden />}
+        {suggested ? t.verify.suggestedBy : t.site.pub.file.confirmed}
+      </p>
+      {children}
     </div>
   );
 }

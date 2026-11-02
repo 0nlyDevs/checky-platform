@@ -98,3 +98,35 @@ def test_generator_traces_in_images():
     # an ordinary word in the file's bytes is not a generator ("imagen" is Spanish for image)
     assert ai_signals(b"... imagen de la plaza ...", [])["ai_markers"] == []
     assert ai_signals(b"", ["Software: Imagen 4"])["ai_markers"] == ["Google Imagen"]
+
+
+def test_a_query_without_a_country_is_searched_in_madagascar():
+    assert websearch.localised("pont Mangasoavina fermé") == "pont Mangasoavina fermé Madagascar"
+    assert websearch.localised("Madagascar quitte l'OMS") == "Madagascar quitte l'OMS"
+    assert websearch.localised("vary gasy lafo") == "vary gasy lafo"
+
+
+DDG_LITE = """<tr><td><a rel="nofollow" href="https://www.genzmada.org/jirama" class='result-link'>Jirama délestage</a></td></tr>
+<tr><td class='result-snippet'>La crise de la <b>Jirama</b> s&#x27;aggrave.</td></tr>"""
+
+
+def test_a_throttled_search_falls_back_to_the_lite_page(monkeypatch):
+    websearch._cache.clear()
+    asked = []
+
+    def handler(request):
+        asked.append(request.url.host)
+        if request.url.host == "html.duckduckgo.com":
+            return httpx.Response(202, text="slow down")
+        return httpx.Response(200, text=DDG_LITE)
+
+    monkeypatch.setattr(websearch, "_transport", httpx.MockTransport(handler))
+    found = asyncio.run(websearch.web("Jirama Toamasina"))
+    assert asked == ["html.duckduckgo.com", "lite.duckduckgo.com"]
+    assert found == [
+        {
+            "title": "Jirama délestage",
+            "url": "https://www.genzmada.org/jirama",
+            "snippet": "La crise de la Jirama s'aggrave.",
+        }
+    ]

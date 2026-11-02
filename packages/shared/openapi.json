@@ -3673,6 +3673,11 @@
             "maxItems": 20,
             "title": "Tips",
             "default": []
+          },
+          "voice": {
+            "type": "boolean",
+            "title": "Voice",
+            "default": false
           }
         },
         "type": "object",

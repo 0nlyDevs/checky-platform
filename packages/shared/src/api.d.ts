@@ -992,6 +992,11 @@ export interface components {
              * @default []
              */
             tips: string[];
+            /**
+             * Voice
+             * @default false
+             */
+            voice: boolean;
         };
         /** HTTPValidationError */
         HTTPValidationError: {

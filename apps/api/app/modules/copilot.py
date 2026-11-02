@@ -26,12 +26,14 @@ from app.core.db import SessionLocal
 from app.core.errors import ApiError
 from app.core.models import Item
 from app.modules.agent import (
+    QUERY,
     WEB_TOOLS,
     AgentContext,
     Tools,
     desk_guard,
     fetch_url,
     find_claims,
+    search_outside,
     search_sources,
     tool_loop,
 )
@@ -40,7 +42,7 @@ from app.modules.guide import STATUS_FR, VERDICT_FR, GuideIn, conversation
 
 router = APIRouter(tags=["agent"])
 
-COPILOT_STEPS = 5  # room for search → read → propose
+COPILOT_STEPS = 6  # room for search → read → propose → answer
 OPEN = ("to_check", "in_progress")
 MOVABLE = ("to_check", "in_progress", "verified")  # never "published": a journalist publishes
 
@@ -50,11 +52,24 @@ journalistes à travailler : lire l'état du desk, chercher dans les sources, pr
 
 - Pour l'état du desk (ce qui circule depuis le plus longtemps, résumé de la nuit, affirmations sans \
 source, signalements du public) : desk_overview.
+- Chercher ne modifie rien : desk_overview, find_claims, search_sources et les recherches web se font \
+tout de suite, sans demander la permission. Seules les actions propose_* attendent « Confirmer ».
+- Quand le journaliste regarde une affirmation (indiqué à la fin de ces consignes) et ne dit pas \
+laquelle, c'est de celle-là qu'il parle : ne lui demande pas laquelle.
 - Pour une affirmation précise : find_claims. Pour un fait dans les sources : search_sources, et cite [n].
+- « Cherche des sources et joins-les » : search_outside avec les mots-clés de l'affirmation et le lieu, lis les résultats prometteurs avec fetch_url, puis propose_attach_link pour \
+chacun qui traite du même sujet au même endroit, qu'il confirme, contredise ou nuance l'affirmation \
+(trois au plus) : une source qui contredit vaut autant qu'une qui confirme. Si rien ne traite du \
+sujet, dis-le, sans proposer de résultat hors sujet. N'annonce jamais une recherche : fais-la.
+- Appelle ensemble les outils qui ne dépendent pas l'un de l'autre, par exemple plusieurs fetch_url \
+dans le même tour.
 - Pour un lien à analyser (« c'est vrai ce post ? », « regarde ce lien ») : open_link_check.
-- Pour trouver des sources hors du desk : search_fact_checks, search_wikipedia, search_web, puis lis la \
-page avec fetch_url. Propose de joindre les bonnes avec propose_attach_link (le journaliste confirme). \
+- Pour trouver des sources hors du desk : search_outside (fact-checkeurs et web en une fois) ou \
+search_wikipedia, puis lis la page avec fetch_url. Propose de joindre les bonnes avec propose_attach_link (le journaliste confirme). \
 Préfère les sources primaires et la presse reconnue aux publications de réseaux sociaux.
+- Pour aller sur une page du desk (Vérifier, qui est l'accueil ; les dossiers ; le tableau ; \
+interroger nos sources ; les sources ; les membres ; les paramètres) : open_page. Pour une affirmation : \
+open_claim. N'ouvre pas la page où le journaliste se trouve déjà.
 - Pour agir (créer une affirmation, joindre un lien, lancer l'analyse, changer le statut, ouvrir une \
 affirmation) utilise les outils propose_* et open_claim. Rien n'est fait tant que le journaliste n'a \
 pas appuyé sur « Confirmer » : dis-le simplement, ne prétends jamais que c'est fait.
@@ -75,6 +90,20 @@ référence (FAN-0139), sans crochets.
 @dataclass
 class DeskContext(AgentContext):
     page_claim: uuid.UUID | None = None
+    page: str = ""  # the page the journalist asks from
+
+
+# The desk's pages the copilot can open (key → path under /w/{ws}/, label).
+DESK_PAGES = {
+    "affirmations": ("affirmations", "Les dossiers"),
+    "tableau": ("affirmations?vue=tableau", "Le tableau de vérification"),
+    "verifier": ("verifier", "Vérifier"),
+    "sources_ask": ("verifier?mode=sources", "Interroger nos sources"),
+    "sources": ("sources", "Les sources"),
+    "enregistrements": ("sources?vue=enregistrements", "Les enregistrements"),
+    "membres": ("membres", "L'équipe"),
+    "parametres": ("parametres", "Paramètres"),
+}
 
 
 def _hours(item: Item) -> float:
@@ -209,15 +238,31 @@ async def propose_status(
 async def open_link_check(ctx: DeskContext, url: str) -> tuple[str, str]:
     if not re.match(r"https?://", url or ""):
         return "lien invalide", "The link must start with http:// or https://."
-    href = f"/w/{ctx.workspace_id}/analyser?lien={quote(url, safe='')}"
+    href = f"/w/{ctx.workspace_id}/verifier?lien={quote(url, safe='')}"
     ctx.propose("navigate", href=href, label="Analyser ce lien")
     return "analyse du lien ouverte", "The link analysis page opens and runs on this link."
+
+
+async def open_page(ctx: DeskContext, page: str) -> tuple[str, str]:
+    if page not in DESK_PAGES:
+        return "page inconnue", f"Unknown page. Pages: {', '.join(DESK_PAGES)}."
+    path, label = DESK_PAGES[page]
+    href = f"/w/{ctx.workspace_id}/{path}"
+    if ctx.page == href:
+        return f"déjà sur « {label} »", "The journalist is already on this page."
+    ctx.propose("navigate", href=href, label=label)
+    return f"ouvre « {label} »", f"The page {href} opens."
 
 
 async def open_claim(ctx: DeskContext, claim: str) -> tuple[str, str]:
     item = await _claim(ctx, claim)
     if item is None:
         return "affirmation introuvable", "No such claim."
+    if item.id == ctx.page_claim:
+        return (
+            f"{_target(item)['ref']} déjà ouverte",
+            "The journalist is already on this claim's page: do not open it again.",
+        )
     href = f"/w/{ctx.workspace_id}/affirmations/{item.id}"
     ctx.propose("navigate", href=href, label=f"{_target(item)['ref']} · {item.title}")
     return f"ouvre {_target(item)['ref']}", f"The claim opens ({href})."
@@ -243,7 +288,17 @@ COPILOT_TOOLS: Tools = {
         "Search the workspace's sources and return numbered passages to cite.",
         {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]},
     ),
-    **WEB_TOOLS,
+    # fact-checkers and the web in one call: one model turn less on every search
+    "search_outside": (
+        search_outside,
+        (
+            "Search outside the desk in one go: articles by fact-checkers (AFP Factuel, Africa "
+            "Check…) and the web (news, official pages). Returns numbered results with links; read "
+            "one with fetch_url before relying on it."
+        ),
+        QUERY,
+    ),
+    "search_wikipedia": WEB_TOOLS["search_wikipedia"],
     "fetch_url": (
         fetch_url,
         "Read a public web page (article, post) and return its main text, numbered for citation.",
@@ -309,12 +364,26 @@ COPILOT_TOOLS: Tools = {
         "Open a claim's page for the journalist.",
         {"type": "object", "properties": {"claim": CLAIM}, "required": ["claim"]},
     ),
+    "open_page": (
+        open_page,
+        (
+            "Open a page of the desk: affirmations (the dossiers, as a list), tableau "
+            "(the board), verifier (check a message or a link: the home of the desk), sources_ask "
+            "(ask every source of the newsroom), sources, "
+            "enregistrements (audio sources), membres, parametres."
+        ),
+        {
+            "type": "object",
+            "properties": {"page": {"type": "string", "enum": list(DESK_PAGES)}},
+            "required": ["page"],
+        },
+    ),
 }
 
 
 @router.post("/workspaces/{ws}/copilot", response_class=EventSourceResponse)
 async def copilot(body: GuideIn, member: AnyMember) -> AsyncIterable[ServerSentEvent]:
-    ctx = DeskContext(member.workspace_id)
+    ctx = DeskContext(member.workspace_id, page=body.page)
     context = ""
     if m := re.search(r"/affirmations/([0-9a-f-]{36})", body.page):
         ctx.page_claim = uuid.UUID(m[1])
@@ -326,7 +395,7 @@ async def copilot(body: GuideIn, member: AnyMember) -> AsyncIterable[ServerSentE
         COPILOT_TOOLS,
         COPILOT_STEPS,
         guard=desk_guard(),
-        max_tokens=600,
+        max_tokens=1500,  # gpt-oss reasons inside this budget: 600 sometimes left no answer
     ):
         yield event
 

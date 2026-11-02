@@ -3,12 +3,18 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ArrowRight, Check, LoaderCircle } from "lucide-react";
+import { StepLine } from "@/components/flow/step-line";
+import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { type Newsroom, myTips, publicApi, rememberTip } from "@/lib/public-api";
+import { cn } from "@/lib/utils";
 
 const r = t.site.pub.report;
 const ORIGINS = ["whatsapp", "facebook", "tiktok", "radio", "press", "other"] as const;
+const field =
+  "mt-1.5 w-full rounded-md border border-input bg-card px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15";
 
 /** The public tip form: a message heard or received goes to a newsroom's "to check" list. */
 export function ReportView() {
@@ -50,79 +56,121 @@ export function ReportView() {
   const done = typeof state === "object" && "token" in state ? state : null;
 
   return (
-    <section className="frame-x pt-[clamp(32px,6vw,72px)] pb-[clamp(72px,9vw,130px)]" aria-labelledby="report-title">
-      <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,32rem)]">
-        <div>
-          <h1 id="report-title" className="disp text-[clamp(52px,8vw,128px)] leading-[0.88]">
-            {r.title}
-          </h1>
-          <p className="mt-6 max-w-[44ch] text-xl leading-relaxed">{r.lead}</p>
-          {mine.length > 0 && (
-            <div className="mt-10">
-              <h2 className="typed text-[15px] text-ink-soft">{r.mine}</h2>
-              <ul className="mt-2 space-y-2">
-                {mine.map((m) => (
-                  <li key={m.token}>
-                    <Link href={`/suivi/${m.token}`} className="ulink text-lg">
-                      <span className="tabular font-semibold">{m.ref}</span> · {m.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-
-        {done ? (
-          <div className="dossier-card" role="status">
-            <p className="t">{r.doneTitle}</p>
-            <p className="text-lg leading-relaxed">{r.done(done.ref)}</p>
-            <Link href={`/suivi/${done.token}`} className="tab-btn">
-              {r.follow} <span className="arr" aria-hidden>→</span>
-            </Link>
-            <button type="button" className="ulink mt-6 block text-base" onClick={() => { setText(""); setUrl(""); setState("idle"); }}>
-              {r.another}
-            </button>
-            <span className="stamp" data-on="true" aria-hidden data-label={r.stamp} />
-          </div>
-        ) : (
-          <form onSubmit={send} className="dossier-card" aria-labelledby="report-title">
-            {rooms && !rooms.length ? (
-              <p className="text-lg">{r.noNewsroom}</p>
-            ) : (
-              <>
-                <label htmlFor="tip-room" className="!mt-0">{r.newsroom}</label>
-                <select id="tip-room" className="pub-input" value={room} onChange={(e) => setRoom(e.target.value)} required>
-                  {rooms?.map((n) => (
-                    <option key={n.slug} value={n.slug}>{n.name}</option>
-                  ))}
-                </select>
-                <label htmlFor="tip-text">{r.text}</label>
-                <textarea id="tip-text" className="pub-input" rows={5} value={text} onChange={(e) => setText(e.target.value)} required minLength={5} maxLength={4000} />
-                <label htmlFor="tip-url">{r.url}</label>
-                <input id="tip-url" type="url" className="pub-input" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" aria-describedby="tip-url-hint" />
-                <p id="tip-url-hint" className="mt-1 text-[14px] text-ink-soft">{r.urlHint}</p>
-                <fieldset>
-                  <legend>{r.origin}</legend>
-                  <div className="choice">
-                    {ORIGINS.map((o) => (
-                      <label key={o}>
-                        <input type="radio" name="origin" checked={origin === o} onChange={() => setOrigin(o)} /> {t.origins[o]}
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-                {typeof state === "object" && "error" in state && (
-                  <p className="mt-4 font-medium text-alarm-ink" role="alert">{state.error}</p>
-                )}
-                <button type="submit" className="tab-btn" disabled={state === "sending" || !room}>
-                  {state === "sending" ? r.sending : r.submit} <span className="arr" aria-hidden>→</span>
-                </button>
-              </>
-            )}
-          </form>
+    <div className="mx-auto grid max-w-[88rem] gap-12 px-4 pt-10 pb-20 lg:grid-cols-[minmax(0,1fr)_minmax(0,34rem)] lg:px-10 lg:pt-14">
+      <div>
+        <h1 id="report-title" className="page-title">
+          {r.title}
+        </h1>
+        <p className="mt-4 max-w-[52ch] text-lg leading-relaxed text-pretty text-muted-foreground">{r.lead}</p>
+        <StepLine className="mt-10 max-w-md" states={{ claim: done ? "done" : "active", evidence: "waiting", conclusion: "waiting" }} explain />
+        {mine.length > 0 && (
+          <section className="mt-12">
+            <h2 className="font-display text-lg font-bold">{r.mine}</h2>
+            <ul className="mt-2 border-t border-foreground">
+              {mine.map((m) => (
+                <li key={m.token}>
+                  <Link href={`/suivi/${m.token}`} className="group flex items-baseline gap-3 border-b border-border py-3">
+                    <span className="font-display font-bold tabular">{m.ref}</span>
+                    <span className="min-w-0 truncate group-hover:underline">{m.title}</span>
+                    <ArrowRight className="ml-auto size-4 shrink-0 self-center text-muted-foreground" aria-hidden />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
-    </section>
+
+      {done ? (
+        <div className="verdict-land self-start rounded-md border-2 border-foreground bg-card p-6 md:p-8" role="status">
+          <p className="flex items-center gap-3 font-display text-3xl font-extrabold">
+            <span className="grid size-10 place-items-center rounded-full bg-foreground text-action dark:text-background">
+              <Check className="size-5" strokeWidth={3} aria-hidden />
+            </span>
+            {r.doneTitle}
+          </p>
+          <p className="mt-4 text-lg leading-relaxed text-pretty">{r.done(done.ref)}</p>
+          <Button asChild variant="action" size="xl" className="mt-6">
+            <Link href={`/suivi/${done.token}`}>
+              {r.follow} <ArrowRight aria-hidden />
+            </Link>
+          </Button>
+          <button
+            type="button"
+            className="mt-5 block font-bold underline underline-offset-4"
+            onClick={() => {
+              setText("");
+              setUrl("");
+              setState("idle");
+            }}
+          >
+            {r.another}
+          </button>
+        </div>
+      ) : (
+        <form onSubmit={send} className="self-start rounded-md border border-border bg-card p-5 md:p-7" aria-labelledby="report-title">
+          {rooms && !rooms.length ? (
+            <p className="text-lg">{r.noNewsroom}</p>
+          ) : (
+            <div className="space-y-5">
+              <div>
+                <label htmlFor="tip-text" className="font-bold">
+                  {r.text}
+                </label>
+                <textarea id="tip-text" className={cn(field, "resize-y py-2.5 leading-relaxed")} rows={5} value={text} onChange={(e) => setText(e.target.value)} required minLength={5} maxLength={4000} />
+              </div>
+              <div>
+                <label htmlFor="tip-url" className="font-bold">
+                  {r.url}
+                </label>
+                <input id="tip-url" type="url" className={cn(field, "h-11")} value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://" aria-describedby="tip-url-hint" />
+                <p id="tip-url-hint" className="mt-1 text-sm text-muted-foreground">
+                  {r.urlHint}
+                </p>
+              </div>
+              <fieldset>
+                <legend className="font-bold">{r.origin}</legend>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {ORIGINS.map((o) => (
+                    <label
+                      key={o}
+                      className={cn(
+                        "inline-flex h-10 cursor-pointer items-center rounded-md border px-3.5 has-focus-visible:ring-2 has-focus-visible:ring-ring",
+                        origin === o ? "border-foreground bg-foreground font-bold text-background" : "border-input bg-card hover:bg-accent",
+                      )}
+                    >
+                      <input type="radio" name="origin" className="sr-only" checked={origin === o} onChange={() => setOrigin(o)} />
+                      {t.origins[o]}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <div>
+                <label htmlFor="tip-room" className="font-bold">
+                  {r.newsroom}
+                </label>
+                <select id="tip-room" className={cn(field, "h-11")} value={room} onChange={(e) => setRoom(e.target.value)} required>
+                  {rooms?.map((n) => (
+                    <option key={n.slug} value={n.slug}>
+                      {n.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {typeof state === "object" && "error" in state && (
+                <p className="font-bold text-destructive" role="alert">
+                  {state.error}
+                </p>
+              )}
+              <Button type="submit" variant="action" size="xl" className="w-full sm:w-auto" disabled={state === "sending" || !room}>
+                {state === "sending" ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
+                {state === "sending" ? r.sending : r.submit}
+                {state !== "sending" && <ArrowRight aria-hidden />}
+              </Button>
+            </div>
+          )}
+        </form>
+      )}
+    </div>
   );
 }

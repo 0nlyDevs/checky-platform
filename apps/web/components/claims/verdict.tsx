@@ -84,6 +84,18 @@ export function toClaim(item: Item): ClaimView {
   };
 }
 
+/** A confirmed verdict as a small badge: icon plus word, on its soft ground. */
+export function VerdictChip({ verdict, className }: { verdict: Verdict; className?: string }) {
+  const m = VERDICT_META[verdict];
+  const Icon = m.icon;
+  return (
+    <span className={cn("inline-flex flex-none items-center gap-1.5 rounded-sm px-2 py-0.5 text-sm font-bold whitespace-nowrap", m.soft, m.ink, className)}>
+      <Icon className="size-3.5" aria-hidden />
+      {m.label}
+    </span>
+  );
+}
+
 /** The confirmed verdict, or the AI suggestion marked as such. Never colour alone. */
 /** `compact` drops the visible "suggéré" (the dashed outline already says it) but keeps it for screen readers. */
 export function VerdictBadge({ claim, className, compact = false }: { claim: ClaimView; className?: string; compact?: boolean }) {

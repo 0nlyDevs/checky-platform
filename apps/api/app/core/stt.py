@@ -10,7 +10,7 @@ from typing import Any
 
 import httpx
 
-from app.core import ai, keys
+from app.core import ai, http, keys
 from app.core.config import get_settings
 
 URL = "https://api.groq.com/openai/v1/audio/transcriptions"
@@ -41,13 +41,12 @@ async def transcribe(
         for attempt in range(max(1, s.ai_attempts)):
             started = time.monotonic()
             try:
-                async with httpx.AsyncClient(transport=_transport, timeout=s.stt_timeout) as http:
-                    resp = await http.post(
-                        URL,
-                        headers={"Authorization": f"Bearer {key}"},
-                        data=data,
-                        files={"file": (filename, raw, mime)},
-                    )
+                resp = await http.shared("stt", _transport, s.stt_timeout).post(
+                    URL,
+                    headers={"Authorization": f"Bearer {key}"},
+                    data=data,
+                    files={"file": (filename, raw, mime)},
+                )
                 if resp.status_code in (401, 403, 429):
                     errors.append(f"HTTP {resp.status_code}")
                     await _log(s.stt_model, started, errors[-1])

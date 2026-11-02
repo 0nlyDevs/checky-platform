@@ -7,6 +7,7 @@ Add a tool: write an async function `(ctx, **args) -> (summary, result_text)` an
 in TOOLS with its JSON schema. The model sees the schema; the user sees the summary.
 """
 
+import asyncio
 import json
 import uuid
 from collections.abc import AsyncIterable, Awaitable, Callable
@@ -23,7 +24,15 @@ from app.core.access import AnyMember
 from app.core.db import SessionLocal
 from app.core.models import Item
 from app.modules import guard
-from app.modules.guard import Guard
+from app.modules.guard import (
+    ANSWER_NOW,
+    DO_IT,
+    EMPTY,
+    PROPOSE_IT,
+    Guard,
+    claims_proposal,
+    promises,
+)
 from app.modules.rag import search
 from app.workers import ingest
 
@@ -128,7 +137,7 @@ async def _found(ctx: AgentContext, results: list[dict[str, Any]], what: str) ->
 
 async def search_web(ctx: AgentContext, query: str) -> tuple[str, str]:
     try:
-        return await _found(ctx, await websearch.web(query), "web")
+        return await _found(ctx, await websearch.web(websearch.localised(query)), "web")
     except websearch.SearchUnavailable as e:
         return "recherche web indisponible", f"Web search is unavailable right now ({e})."
 
@@ -147,6 +156,13 @@ async def search_fact_checks(ctx: AgentContext, query: str) -> tuple[str, str]:
         return await _found(ctx, await websearch.fact_checks(query), "fact-checkeurs")
     except websearch.SearchUnavailable as e:
         return "recherche indisponible", f"Search is unavailable right now ({e})."
+
+
+async def search_outside(ctx: AgentContext, query: str) -> tuple[str, str]:
+    """Fact-checkers and the web searched at once: one model turn instead of two (the copilot asks
+    both for nearly every claim, and models rarely call two tools in the same turn)."""
+    checks, web = await asyncio.gather(search_fact_checks(ctx, query), search_web(ctx, query))
+    return f"{checks[0]} · {web[0]}", f"Fact-checkers :\n{checks[1]}\n\nWeb :\n{web[1]}"
 
 
 QUERY = {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
@@ -264,6 +280,7 @@ async def tool_loop(
     actions}), `done`, or `error`. The last turn has no tools, so the model must answer.
     With a `guard`, the answer is checked against what the tools returned (see guard.py)."""
     step = 0
+    nudged = False
     # what the answer may rest on: the instructions, the question, every tool result
     context = [str(m.get("content") or "") for m in messages if m.get("role") in ("system", "user")]
     try:
@@ -278,7 +295,26 @@ async def tool_loop(
             )
             if not reply.tool_calls:
                 text = reply.content or ""
-                if guard:
+                nudge = None
+                if guard and not text.strip():
+                    # a reasoning model can spend its whole budget thinking and write nothing
+                    if last or nudged:
+                        text = EMPTY
+                    else:
+                        nudge = ANSWER_NOW
+                if guard and text and not nudge and not last and not nudged:
+                    if promises(text, step):
+                        nudge = DO_IT
+                    elif any(n.startswith("propose_") for n in tools) and claims_proposal(
+                        text, ctx.actions
+                    ):
+                        nudge = PROPOSE_IT
+                if nudge:
+                    nudged = True  # once: the next turn still has the tools
+                    messages.append(reply.message)
+                    messages.append({"role": "user", "content": nudge})
+                    continue
+                if guard and text != EMPTY:
                     text, reply = await _checked(ctx, messages, reply, step, guard, context, params)
                 yield ServerSentEvent(
                     data={"text": text, "citations": ctx.cited, "actions": ctx.actions},
@@ -290,21 +326,25 @@ async def tool_loop(
                 )
                 return
             messages.append(reply.message)
+            calls = []
             for call in reply.tool_calls:
                 fn = call.get("function") or {}
-                name = fn.get("name", "")
                 try:
                     args = json.loads(fn.get("arguments") or "{}")
                 except json.JSONDecodeError:
                     args = {}
+                calls.append((call, fn.get("name", ""), args))
+            # A turn's searches and page reads run together; the tools that prepare an action run
+            # after, one by one, so the proposals come in the order they were asked.
+            results: list[tuple[str, str] | None] = [None] * len(calls)
+            reads = [i for i, (_, name, _) in enumerate(calls) if not name.startswith(PREPARES)]
+            done = await asyncio.gather(*(_run(ctx, tools, *calls[i][1:]) for i in reads))
+            for i, result in zip(reads, done, strict=True):
+                results[i] = result
+            for i, (_, name, args) in enumerate(calls):
+                results[i] = results[i] or await _run(ctx, tools, name, args)
+            for (call, name, args), (summary, result) in zip(calls, results, strict=True):
                 step += 1
-                if name in tools:
-                    try:
-                        summary, result = await tools[name][0](ctx, **args)
-                    except TypeError:
-                        summary, result = "arguments invalides", "Invalid arguments for this tool."
-                else:
-                    summary, result = "outil inconnu", f"Unknown tool {name}."
                 yield ServerSentEvent(
                     data={"n": step, "tool": name, "input": args, "summary": summary}, event="step"
                 )
@@ -327,6 +367,18 @@ async def tool_loop(
         yield ServerSentEvent(
             data={"code": "agent_failed", "message": type(e).__name__}, event="error"
         )
+
+
+PREPARES = ("propose_", "open_", "draft_")  # tools that add an action for the person to confirm
+
+
+async def _run(ctx: AgentContext, tools: Tools, name: str, args: dict[str, Any]) -> tuple[str, str]:
+    if name not in tools:
+        return "outil inconnu", f"Unknown tool {name}."
+    try:
+        return await tools[name][0](ctx, **args)
+    except TypeError:
+        return "arguments invalides", "Invalid arguments for this tool."
 
 
 async def _checked(ctx, messages, reply, steps, g: Guard, context, params):

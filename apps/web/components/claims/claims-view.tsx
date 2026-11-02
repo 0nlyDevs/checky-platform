@@ -1,57 +1,35 @@
 "use client";
 
-import type { Item, ItemPage, Status, Verdict } from "@fanilo/shared";
-import { STATUSES, VERDICTS } from "@fanilo/shared";
-import {
-  useParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from "next/navigation";
+import type { Item, ItemPage, Status } from "@fanilo/shared";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import {
-  Columns3,
-  ListChecks,
-  Rows3,
-  Search,
-  SlidersHorizontal,
-  WifiOff,
-} from "lucide-react";
+import { ArrowRight, Columns3, FolderOpen, Rows3, Search, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { Board } from "@/components/claims/board";
-import { ClaimsTable } from "@/components/claims/claims-table";
-import { DayGrid } from "@/components/claims/day-grid";
+import { DossierList } from "@/components/claims/dossier-list";
 import { NewClaimSheet } from "@/components/claims/new-claim-sheet";
-import {
-  type ClaimView,
-  toClaim,
-  VERDICT_META,
-} from "@/components/claims/verdict";
-import { cn } from "@/lib/utils";
+import { type ClaimView, toClaim } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
+import { cn } from "@/lib/utils";
 
 const ALL = "all";
-const dayFmt = new Intl.DateTimeFormat("fr-FR", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
-});
+const dayFmt = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
 
-/** Ticks every 30 s so blocks keep growing toward "maintenant". */
+// The tabs follow the numbered line: still being worked on, an AI suggestion waiting, a confirmed verdict.
+const TABS = ["all", "todo", "confirm", "done"] as const;
+type Tab = (typeof TABS)[number];
+const inTab = (c: ClaimView, tab: Tab) =>
+  tab === "all" || (tab === "done" ? !!c.verdict : tab === "confirm" ? !c.verdict && !!c.suggested : !c.verdict && !c.suggested);
+
+/** Ticks every 30 s so "il y a…" keeps up. */
 function useNow() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -62,32 +40,16 @@ function useNow() {
 }
 
 function nextRef(claims: ClaimView[]) {
-  const max = claims.reduce(
-    (n, c) => Math.max(n, Number(/^FAN-(\d+)$/.exec(c.ref)?.[1] ?? 0)),
-    136,
-  );
+  const max = claims.reduce((n, c) => Math.max(n, Number(/^FAN-(\d+)$/.exec(c.ref)?.[1] ?? 0)), 136);
   return `FAN-${String(max + 1).padStart(4, "0")}`;
 }
 
-function Empty({
-  title,
-  lead,
-  action,
-}: {
-  title: string;
-  lead: string;
-  action?: React.ReactNode;
-}) {
+function Empty({ title, lead, action }: { title: string; lead: string; action?: React.ReactNode }) {
   return (
-    <div className="mx-4 rounded-lg border border-dashed border-border px-6 py-14 text-center lg:mx-0">
-      <ListChecks
-        className="mx-auto size-6 text-muted-foreground"
-        aria-hidden
-      />
-      <h2 className="mt-3 font-semibold">{title}</h2>
-      <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-        {lead}
-      </p>
+    <div className="mx-4 rounded-md border border-dashed border-border px-6 py-14 text-center lg:mx-0">
+      <FolderOpen className="mx-auto size-6 text-muted-foreground" aria-hidden />
+      <h2 className="mt-3 font-display text-lg font-bold">{title}</h2>
+      <p className="mx-auto mt-1 max-w-sm text-muted-foreground">{lead}</p>
       {action && <div className="mt-5">{action}</div>}
     </div>
   );
@@ -99,40 +61,39 @@ export function ClaimsView() {
   const { data, error, isLoading, mutate } = useSWR<ItemPage>(key, fetcher);
   const now = useNow();
   const [q, setQ] = useState("");
-  const [status, setStatus] = useState<string>(ALL);
-  const [verdict, setVerdict] = useState<string>(ALL);
   const [assignee, setAssignee] = useState<string>(ALL);
-  const [filtersOpen, setFiltersOpen] = useState(false);
   const { me, role, members, names } = useWorkspace(ws);
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const view = params.get("vue") === "tableau" ? "board" : "grid";
-  const setView = (v: "grid" | "board") =>
-    router.replace(v === "board" ? `${pathname}?vue=tableau` : pathname, {
-      scroll: false,
-    });
-  const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const view = params.get("vue") === "tableau" ? "board" : "list";
+  const tab: Tab = (TABS as readonly string[]).includes(params.get("onglet") ?? "") ? (params.get("onglet") as Tab) : "all";
+  const go = (next: { vue?: "board" | "list"; onglet?: Tab }) => {
+    const qs = new URLSearchParams();
+    if ((next.vue ?? view) === "board") qs.set("vue", "tableau");
+    const o = next.onglet ?? tab;
+    if (o !== "all") qs.set("onglet", o);
+    router.replace(qs.size ? `${pathname}?${qs}` : pathname, { scroll: false });
+  };
 
-  const all = useMemo(() => (data?.items ?? []).map(toClaim), [data]);
-  const claims = useMemo(() => {
+  const all = useMemo(
+    () =>
+      (data?.items ?? [])
+        .map(toClaim)
+        .sort((a, b) => (b.firstSeen ?? new Date(b.item.created_at)).getTime() - (a.firstSeen ?? new Date(a.item.created_at)).getTime()),
+    [data],
+  );
+  const matching = useMemo(() => {
     const needle = q.trim().toLowerCase();
     return all.filter(
       (c) =>
-        // The board's columns are the statuses, so the status filter only applies to the grid.
-        (view === "board" || status === ALL || c.status === status) &&
-        (verdict === ALL || (c.verdict ?? c.suggested) === verdict) &&
-        (assignee === ALL ||
-          (assignee === "me" && c.assigneeId === me?.id) ||
-          (assignee === "none" && !c.assigneeId) ||
-          c.assigneeId === assignee) &&
-        (!needle ||
-          `${c.ref} ${c.item.title} ${c.item.tags.join(" ")}`
-            .toLowerCase()
-            .includes(needle)),
+        (assignee === ALL || (assignee === "me" && c.assigneeId === me?.id) || (assignee === "none" && !c.assigneeId) || c.assigneeId === assignee) &&
+        (!needle || `${c.ref} ${c.item.title} ${c.item.tags.join(" ")}`.toLowerCase().includes(needle)),
     );
-  }, [all, q, status, verdict, assignee, view, me?.id]);
+  }, [all, q, assignee, me?.id]);
+  // The board's columns are the statuses, so the tabs only sort the list.
+  const claims = useMemo(() => (view === "board" ? matching : matching.filter((c) => inTab(c, tab))), [matching, tab, view]);
+  const counts = useMemo(() => Object.fromEntries(TABS.map((k) => [k, matching.filter((c) => inTab(c, k)).length])) as Record<Tab, number>, [matching]);
   const hasDemo = all.some((c) => (c.item.data as { demo?: boolean }).demo);
 
   const upsert = useCallback(
@@ -142,10 +103,7 @@ export function ClaimsView() {
           if (!page) return page;
           const rest = page.items.filter((i) => i.id !== item.id);
           const isNew = rest.length === page.items.length;
-          return {
-            items: [item, ...rest],
-            total: page.total + (isNew ? 1 : 0),
-          };
+          return { items: [item, ...rest], total: page.total + (isNew ? 1 : 0) };
         },
         { revalidate: false },
       ),
@@ -156,31 +114,17 @@ export function ClaimsView() {
     "item.created": (item: Item) => {
       const known = data?.items.some((i) => i.id === item.id);
       upsert(item);
-      if (!known)
-        toast(t.claims.liveNew(toClaim(item).ref), { description: item.title });
+      if (!known) toast(t.claims.liveNew(toClaim(item).ref), { description: item.title });
     },
     "item.updated": (item: Item) => upsert(item),
     "item.deleted": ({ id }: { id: string }) =>
-      mutate(
-        (page) =>
-          page && {
-            items: page.items.filter((i) => i.id !== id),
-            total: page.total - 1,
-          },
-        {
-          revalidate: false,
-        },
-      ),
+      mutate((page) => page && { items: page.items.filter((i) => i.id !== id), total: page.total - 1 }, { revalidate: false }),
     "demo.reset": () => mutate(),
     reconnected: () => mutate(),
   });
 
   const canMove = useCallback(
-    (c: ClaimView) =>
-      Boolean(
-        me &&
-        (c.item.author_id === me.id || role === "editor" || role === "admin"),
-      ),
+    (c: ClaimView) => Boolean(me && (c.item.author_id === me.id || role === "editor" || role === "admin")),
     [me, role],
   );
 
@@ -190,57 +134,31 @@ export function ClaimsView() {
       const previous = c.item;
       upsert({ ...previous, status: to });
       try {
-        upsert(
-          await api<Item>(`/workspaces/${ws}/items/${previous.id}`, {
-            method: "PATCH",
-            body: JSON.stringify({ status: to }),
-          }),
-        );
+        upsert(await api<Item>(`/workspaces/${ws}/items/${previous.id}`, { method: "PATCH", body: JSON.stringify({ status: to }) }));
       } catch (e) {
         upsert(previous);
-        toast.error(
-          e instanceof ApiError && e.status === 403
-            ? t.claims.board.cannotMove
-            : t.detail.saveFailed,
-        );
+        toast.error(e instanceof ApiError && e.status === 403 ? t.claims.board.cannotMove : t.detail.saveFailed);
       }
     },
     [upsert, ws],
   );
 
-  const select = useCallback(
-    (id: string) => {
-      setSelectedId(id);
-      router.push(`/w/${ws}/affirmations/${id}`);
-    },
-    [router, ws],
-  );
-
-  const activeFilters = [status, verdict, assignee].filter(
-    (v) => v !== ALL,
-  ).length;
-
   const clear = () => {
     setQ("");
-    setStatus(ALL);
-    setVerdict(ALL);
     setAssignee(ALL);
+    go({ onglet: "all" });
   };
 
   return (
-    <div className="mx-auto max-w-[90rem] pb-10 lg:px-8">
-      <header className="flex flex-wrap items-end justify-between gap-4 px-4 pt-6 pb-5 lg:px-0 lg:pt-8">
+    <div className="@container mx-auto max-w-[90rem] pb-10 lg:px-8">
+      <header className="flex items-start justify-between gap-4 px-4 pt-6 pb-5 sm:items-end lg:px-0 lg:pt-8">
         <div>
-          <h1 className="page-title">
-            {t.claims.title}
-          </h1>
-          <p className="mt-1 text-muted-foreground first-letter:uppercase">
+          <h1 className="page-title">{t.claims.title}</h1>
+          <p className="mt-1.5 text-muted-foreground first-letter:uppercase">
             {dayFmt.format(now)}
-            {data && <span className="tabular"> · {data.total} au total</span>}
+            {data && <span className="tabular"> · {t.claims.total(data.total)}</span>}
             {hasDemo && (
-              <span className="ml-2 inline-block rounded-sm border border-border px-1.5 py-px align-[0.1em] text-xs whitespace-nowrap">
-                {t.common.demoData}
-              </span>
+              <span className="ml-2 inline-block rounded-sm border border-border px-1.5 py-px align-[0.1em] text-xs whitespace-nowrap">{t.common.demoData}</span>
             )}
           </p>
         </div>
@@ -248,120 +166,74 @@ export function ClaimsView() {
       </header>
 
       {!online && (
-        <p
-          role="status"
-          className="mx-4 mb-4 flex items-center gap-2 rounded-md bg-verdict-misleading-soft px-3 py-2 text-sm text-verdict-misleading-ink lg:mx-0"
-        >
+        <p role="status" className="mx-4 mb-4 flex items-center gap-2 rounded-md bg-verdict-misleading-soft px-3 py-2 text-sm text-verdict-misleading-ink lg:mx-0">
           <WifiOff className="size-4" aria-hidden />
           {t.claims.offline}
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2 px-4 pb-4 lg:px-0">
-        <div className="relative min-w-0 flex-1 basis-full sm:basis-64">
-          <Search
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t.claims.search}
-            aria-label={t.claims.search}
-            className="h-10 bg-card pl-9"
-          />
+      {view === "list" && tab !== "confirm" && counts.confirm > 0 && (
+        <div className="mx-4 mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border-2 border-dashed border-foreground bg-card px-4 py-3 lg:mx-0">
+          <p className="font-bold">{t.claims.waiting(counts.confirm)}</p>
+          <button type="button" onClick={() => go({ onglet: "confirm" })} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
+            {t.claims.waitingAction} <ArrowRight className="size-4" aria-hidden />
+          </button>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          className="h-10 bg-card lg:hidden"
-          aria-expanded={filtersOpen}
-          aria-controls="claim-filters"
-          onClick={() => setFiltersOpen((v) => !v)}
-        >
-          <SlidersHorizontal aria-hidden />
-          {activeFilters
-            ? t.claims.filtersCount(activeFilters)
-            : t.claims.filters}
-        </Button>
-        <div
-          id="claim-filters"
-          className={cn(
-            "w-full flex-wrap gap-2 lg:flex lg:w-auto",
-            filtersOpen ? "flex" : "hidden",
-          )}
-        >
-          {view === "grid" && (
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger
-                aria-label={t.claims.columns.status}
-                className="h-10 flex-1 bg-card sm:w-44 sm:flex-none"
+      )}
+
+      <div className="flex flex-wrap items-center gap-2 px-4 pb-4 lg:px-0">
+        {view === "list" && (
+          <div role="tablist" aria-label={t.claims.tabs.label} className="-mx-4 flex basis-[calc(100%+2rem)] gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:px-0 @3xl:basis-auto">
+            {TABS.map((k) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={tab === k}
+                onClick={() => go({ onglet: k })}
+                className={cn(
+                  "inline-flex h-11 shrink-0 items-center gap-2 rounded-md px-3 outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  tab === k ? "bg-foreground font-bold text-background" : "hover:bg-card",
+                )}
               >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>{t.claims.allStatuses}</SelectItem>
-                {STATUSES.map((s: Status) => (
-                  <SelectItem key={s} value={s}>
-                    {t.status[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Select value={verdict} onValueChange={setVerdict}>
-            <SelectTrigger
-              aria-label={t.claims.columns.verdict}
-              className="h-10 flex-1 bg-card sm:w-44 sm:flex-none"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.claims.allVerdicts}</SelectItem>
-              {VERDICTS.map((v: Verdict) => {
-                const Icon = VERDICT_META[v].icon;
-                return (
-                  <SelectItem key={v} value={v}>
-                    <Icon
-                      className={`size-4 ${VERDICT_META[v].ink}`}
-                      aria-hidden
-                    />
-                    {VERDICT_META[v].label}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-          <Select value={assignee} onValueChange={setAssignee}>
-            <SelectTrigger
-              aria-label={t.detail.assignee}
-              className="h-10 flex-1 bg-card sm:w-48 sm:flex-none"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>{t.claims.allAssignees}</SelectItem>
-              <SelectItem value="me">{t.claims.mine}</SelectItem>
-              <SelectItem value="none">{t.claims.unassigned}</SelectItem>
-              {members
-                ?.filter((m) => m.user_id !== me?.id)
-                .map((m) => (
-                  <SelectItem key={m.user_id} value={m.user_id}>
-                    {m.name ?? m.email ?? m.user_id}
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
+                {t.claims.tabs[k]}
+                <span
+                  className={cn(
+                    "rounded-sm px-1.5 text-sm font-bold tabular",
+                    k === "confirm" && counts.confirm > 0 ? "bg-action text-action-foreground" : tab === k ? "bg-background/15" : "bg-muted",
+                  )}
+                >
+                  {counts[k]}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="relative min-w-0 flex-1 basis-56">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.claims.search} aria-label={t.claims.search} className="h-10 bg-card pl-9" />
         </div>
-        <div
-          role="radiogroup"
-          aria-label={t.claims.views.label}
-          className="flex h-10 shrink-0 rounded-md border border-input bg-card p-0.5 sm:ml-auto"
-        >
+        <Select value={assignee} onValueChange={setAssignee}>
+          <SelectTrigger aria-label={t.detail.assignee} className="h-10 w-auto min-w-40 bg-card">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL}>{t.claims.allAssignees}</SelectItem>
+            <SelectItem value="me">{t.claims.mine}</SelectItem>
+            <SelectItem value="none">{t.claims.unassigned}</SelectItem>
+            {members
+              ?.filter((m) => m.user_id !== me?.id)
+              .map((m) => (
+                <SelectItem key={m.user_id} value={m.user_id}>
+                  {m.name ?? m.email ?? m.user_id}
+                </SelectItem>
+              ))}
+          </SelectContent>
+        </Select>
+        <div role="radiogroup" aria-label={t.claims.views.label} className="flex h-10 shrink-0 rounded-md border border-input bg-card p-0.5">
           {(
             [
-              ["grid", t.claims.views.grid, Rows3],
+              ["list", t.claims.views.grid, Rows3],
               ["board", t.claims.views.board, Columns3],
             ] as const
           ).map(([v, label, Icon]) => (
@@ -370,16 +242,14 @@ export function ClaimsView() {
               type="button"
               role="radio"
               aria-checked={view === v}
-              onClick={() => setView(v)}
+              onClick={() => go({ vue: v })}
               className={cn(
-                "flex items-center gap-1.5 rounded-[3px] px-3 text-sm font-medium outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring",
-                view === v
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
+                "flex items-center gap-1.5 rounded-[3px] px-3 text-sm font-bold outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring",
+                view === v ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
               )}
             >
               <Icon className="size-4" aria-hidden />
-              {label}
+              <span className="sr-only sm:not-sr-only">{label}</span>
             </button>
           ))}
         </div>
@@ -396,13 +266,10 @@ export function ClaimsView() {
           }
         />
       ) : isLoading || !data ? (
-        <div
-          className="space-y-4 px-4 lg:px-0"
-          aria-busy
-          aria-label={t.common.loading}
-        >
-          <Skeleton className="h-60 w-full" />
-          <Skeleton className="h-80 w-full" />
+        <div className="space-y-3 px-4 lg:px-0" aria-busy aria-label={t.common.loading}>
+          {Array.from({ length: 5 }, (_, i) => (
+            <Skeleton key={i} className="h-20 w-full" />
+          ))}
         </div>
       ) : all.length === 0 ? (
         <Empty title={t.claims.emptyTitle} lead={t.claims.emptyLead} />
@@ -417,32 +284,9 @@ export function ClaimsView() {
           }
         />
       ) : view === "board" ? (
-        <Board
-          ws={ws}
-          claims={claims}
-          now={now}
-          names={names}
-          canMove={canMove}
-          onMove={move}
-        />
+        <Board ws={ws} claims={claims} now={now} names={names} canMove={canMove} onMove={move} />
       ) : (
-        <div className="space-y-5">
-          <DayGrid
-            claims={claims}
-            now={now}
-            focusedId={focusedId}
-            onFocusChange={setFocusedId}
-            onSelect={select}
-          />
-          <ClaimsTable
-            ws={ws}
-            claims={claims}
-            now={now}
-            focusedId={focusedId}
-            selectedId={selectedId}
-            onFocusChange={setFocusedId}
-          />
-        </div>
+        <DossierList ws={ws} claims={claims} now={now} names={names} />
       )}
     </div>
   );

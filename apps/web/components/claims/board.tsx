@@ -18,8 +18,9 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import { EllipsisVertical } from "lucide-react";
-import { dayRange, formatDuration } from "@/components/claims/day-grid";
-import { Avatar, type ClaimView, STATUS_ICON, VERDICT_META, VerdictBadge } from "@/components/claims/verdict";
+import { formatDuration } from "@/lib/time";
+import { Avatar, type ClaimView, STATUS_ICON, VerdictBadge } from "@/components/claims/verdict";
+import { claimSteps, StepLine } from "@/components/flow/step-line";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,38 +43,19 @@ type Props = {
   onMove: (claim: ClaimView, status: Status) => void;
 };
 
-/** The card's airtime as a hairline lane on the same day scale as the grid. */
-function AirtimeLine({ claim, now }: { claim: ClaimView; now: Date }) {
-  if (!claim.firstSeen) return null;
-  const { start, end } = dayRange(now);
-  const pct = (ms: number) => ((Math.min(Math.max(ms, start), end) - start) / (end - start)) * 100;
-  const left = pct(claim.firstSeen.getTime());
-  const nowPct = pct(now.getTime());
-  const v = claim.verdict ?? claim.suggested;
-  return (
-    <div className="relative mt-3 h-1 rounded-full bg-muted" aria-hidden>
-      <div
-        className={cn("absolute inset-y-0 rounded-full", v ? VERDICT_META[v].fill : "bg-foreground/40", !claim.verdict && v && "opacity-60")}
-        style={{ left: `${left}%`, width: `${Math.max(nowPct - left, 1)}%` }}
-      />
-      <div className="absolute -inset-y-0.5 w-0.5 bg-signal" style={{ left: `${nowPct}%` }} />
-    </div>
-  );
-}
-
 function CardBody({ claim, now, names }: { claim: ClaimView; now: Date; names: Map<string, string> }) {
   const assignee = claim.assigneeId ? names.get(claim.assigneeId) : null;
   return (
     <>
       <div className="flex items-baseline justify-between gap-2 pr-7 text-sm">
-        <span className="font-display text-base font-semibold tracking-wide tabular">{claim.ref}</span>
+        <span className="font-display text-sm font-bold tabular">{claim.ref}</span>
         {claim.firstSeen && (
           <span className="font-display tracking-wide text-muted-foreground tabular">
             {formatDuration(now.getTime() - claim.firstSeen.getTime())}
           </span>
         )}
       </div>
-      <p className="mt-1 line-clamp-3 font-medium text-pretty">{claim.item.title}</p>
+      <p className="mt-1 line-clamp-3 font-bold text-pretty">{claim.item.title}</p>
       <div className="mt-3 flex items-center justify-between gap-2">
         <VerdictBadge claim={claim} compact className="min-w-0 truncate" />
         <span className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground tabular">
@@ -81,7 +63,7 @@ function CardBody({ claim, now, names }: { claim: ClaimView; now: Date; names: M
           {assignee && <Avatar name={assignee} />}
         </span>
       </div>
-      <AirtimeLine claim={claim} now={now} />
+      <StepLine variant="mini" states={claimSteps(claim)} className="mt-3" />
     </>
   );
 }
@@ -112,8 +94,8 @@ function Card({
       aria-describedby={movable ? "board-hint" : undefined}
       title={movable ? undefined : t.claims.board.cannotMove}
       className={cn(
-        "group/card relative rounded-md border border-border bg-card p-3 shadow-[0_1px_0_0_rgb(15_59_54/0.04)] outline-none",
-        "transition-[opacity,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-signal",
+        "group/card relative rounded-md border border-border bg-card p-3 outline-none",
+        "transition-[opacity,box-shadow] duration-150 focus-visible:ring-2 focus-visible:ring-ring",
         movable && "cursor-grab touch-none active:cursor-grabbing",
         isDragging && "opacity-35",
       )}
@@ -253,7 +235,7 @@ export function Board({ ws, claims, now, names, canMove, onMove }: Props) {
       </div>
       <DragOverlay dropAnimation={{ duration: 180, easing: "cubic-bezier(0.16, 1, 0.3, 1)" }}>
         {active && (
-          <div className="w-[min(19rem,82vw)] rotate-[1.5deg] cursor-grabbing rounded-md border border-border bg-card p-3 shadow-[0_14px_32px_-12px_rgb(15_59_54/0.45)] lg:w-72">
+          <div className="w-[min(19rem,82vw)] rotate-[1.5deg] cursor-grabbing rounded-md border border-border bg-card p-3 shadow-[0_14px_32px_-12px_rgb(23_26_24/0.45)] lg:w-72">
             <CardBody claim={active} now={now} names={names} />
           </div>
         )}

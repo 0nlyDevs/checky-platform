@@ -54,7 +54,7 @@ def test_guide_finds_verdicts_and_prepares_a_tip_without_sending_it(as_user, scr
         "id": 2,
         "kind": "navigate",
         "href": "/verifies",
-        "label": "Les verdicts publiés",
+        "label": "Les verdicts",
     }
     assert "malagasy" in seen[0]["messages"][0]["content"]
     # nothing was written: the desk still has only the published claim
@@ -98,7 +98,8 @@ def test_copilot_reads_the_desk_and_only_proposes(as_user, scripted):
             _turn(
                 _call("propose_status", {"status": "in_progress", "claim": "FAN-0001"}, "b"),
                 _call("propose_status", {"status": "published", "claim": "FAN-0001"}, "c"),
-                _call("open_claim", {"claim": "bac"}, "d"),
+                _call("open_claim", {"claim": "bac"}, "d"),  # already open: nothing to do
+                _call("open_page", {"page": "sources"}, "e"),
             ),
             _turn(
                 content="FAN-0001 circule depuis le plus longtemps. Confirmez pour le passer en cours."
@@ -116,7 +117,13 @@ def test_copilot_reads_the_desk_and_only_proposes(as_user, scripted):
     actions = next(d for e, d in events if e == "answer")["actions"]
     assert [a["kind"] for a in actions] == ["set_status", "navigate"]  # "published" was refused
     assert actions[0]["item_id"] == claim
-    assert actions[1]["href"] == f"/w/{ws}/affirmations/{claim}"
+    assert "FAN-0001 déjà ouverte" in [d["summary"] for e, d in events if e == "step"]
+    assert actions[1] == {
+        "id": 2,
+        "kind": "navigate",
+        "href": f"/w/{ws}/sources",
+        "label": "Les sources",
+    }
     assert alice.get(f"/api/v1/workspaces/{ws}/items/{claim}").json()["status"] == "to_check"
 
 
@@ -137,3 +144,13 @@ def test_confirmed_actions_run_with_the_journalists_rights(as_user):
     assert publish.status_code == 422
     assert alice.post(act, json={"kind": "analyze", "item_id": item}).status_code == 200
     assert bob.post(act, json={"kind": "analyze", "item_id": item}).status_code == 404
+
+
+def test_voice_mode_asks_for_a_short_spoken_answer(as_user, scripted):
+    turns, seen = scripted
+    turns.extend([_turn(content="Bonjour."), _turn(content="Bonjour.")])
+    anon = TestClient(app)
+    _ask(anon, "/api/v1/public/agent", "Bonjour", voice=True)
+    _ask(anon, "/api/v1/public/agent", "Bonjour")
+    assert "Mode voix" in seen[0]["messages"][0]["content"]
+    assert "Mode voix" not in seen[1]["messages"][0]["content"]

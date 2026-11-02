@@ -158,7 +158,8 @@ function AttachToClaim({ ws, x }: { ws: string; x: Exchange }) {
   );
 }
 
-export function AskView() {
+/** Ask every source of the newsroom; `embedded` drops the page frame (it lives in Vérifier). */
+export function AskView({ embedded = false }: { embedded?: boolean }) {
   const { ws } = useParams<{ ws: string }>();
   const [question, setQuestion] = useState("");
   const [exchanges, setExchanges] = useState<Exchange[]>([]);
@@ -208,11 +209,15 @@ export function AskView() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
-      <header className="pb-6">
-        <h1 className="page-title">{t.ask.title}</h1>
-        <p className="mt-1 max-w-prose text-muted-foreground">{t.ask.lead}</p>
-      </header>
+    <div className={embedded ? undefined : "mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8"}>
+      {embedded ? (
+        <p className="mb-4 max-w-prose text-muted-foreground">{t.ask.lead}</p>
+      ) : (
+        <header className="pb-6">
+          <h1 className="page-title">{t.ask.title}</h1>
+          <p className="mt-1 max-w-prose text-muted-foreground">{t.ask.lead}</p>
+        </header>
+      )}
 
       <form onSubmit={ask} className="relative">
         <Label htmlFor="ask-question" className="sr-only">

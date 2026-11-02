@@ -46,8 +46,8 @@ STATUS_FR = {
     "published": "verdict publié",
 }
 PAGES = {
-    "accueil": ("/accueil", "Accueil"),
-    "verifies": ("/verifies", "Les verdicts publiés"),
+    "accueil": ("/accueil", "Vérifier un message (accueil)"),
+    "verifies": ("/verifies", "Les verdicts"),
     "signaler": ("/signaler", "Signaler une rumeur"),
     "connexion": ("/connexion", "Se connecter"),
     "inscription": ("/inscription", "Créer l'espace d'une rédaction"),
@@ -272,13 +272,21 @@ class GuideIn(BaseModel):
     lang: Literal["fr", "mg"] = "fr"
     page: str = Field(default="/", max_length=300)
     tips: list[str] = Field(default=[], max_length=20)
+    # Voice mode: the answer is read aloud, so it is kept short and plain.
+    voice: bool = False
+
+
+VOICE = (
+    " Mode voix : ta réponse sera lue à voix haute. Réponds en deux ou trois phrases courtes, "
+    "sans liste, sans titre, sans gras ni lien écrit ; les citations [n] restent."
+)
 
 
 def conversation(system: str, body: GuideIn, context: str = "") -> list[dict[str, Any]]:
     lang = "malagasy" if body.lang == "mg" else "français"
     head = (
         f"{system}\n\n{dates.today_line()} Langue de réponse : {lang}. "
-        f"Page actuelle : {body.page}.{context}"
+        f"Page actuelle : {body.page}.{VOICE if body.voice else ''}{context}"
     )
     return [{"role": "system", "content": head}, *(t.model_dump() for t in body.messages[-8:])]
 
@@ -303,6 +311,6 @@ async def guide(body: GuideIn) -> AsyncIterable[ServerSentEvent]:
             verdict_needs_cites=True,
             no_verdict=GUIDE_NO_VERDICT[body.lang],
         ),
-        max_tokens=500,
+        max_tokens=1500,  # gpt-oss reasons inside this budget
     ):
         yield event
