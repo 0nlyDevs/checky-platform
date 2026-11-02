@@ -193,3 +193,63 @@ def test_the_desk_sees_how_a_rating_is_read_before_signing(as_user):
     }
     assert alice.get(url, params={"rating": "Satire"}).json()["verdict"] is None
     assert as_user("bob").get(url, params={"rating": "Faux"}).status_code == 404
+
+
+def test_carnet_lists_the_diligence_and_the_attestation_verifies(as_user, client, monkeypatch):
+    from app.core.config import get_settings
+
+    alice = as_user("alice")
+    ws = _workspace(alice, "Rédaction démo")
+    alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    item = _claim(alice, ws, ref="FAN-0145")
+    base = f"/api/v1/workspaces/{ws}/items/{item}"
+    alice.post(
+        f"/api/v1/workspaces/{ws}/sources",
+        json={
+            "text": "Le communiqué dit 4 heures.",
+            "title": "Communiqué N° 2026-118",
+            "item_id": item,
+        },
+    )
+    contact = alice.post(
+        f"/api/v1/workspaces/{ws}/contacts", json={"name": "JIRAMA (démo)", "institution": "JIRAMA"}
+    ).json()
+    alice.post(
+        base + "/questions", json={"contact_id": contact["id"], "question": "Confirmez-vous ?"}
+    )
+    assert alice.get(base + "/attestation").json()["error"]["code"] == "not_signed"
+    alice.post(
+        base + "/sign",
+        json={
+            "verdict": "false",
+            "reason": "Le communiqué original dit 4 heures.",
+            "publish": True,
+        },
+    )
+    book = alice.get(base + "/carnet").json()
+    texts = [e["text"] for e in book["entries"]]
+    assert texts[0] == "Dossier ouvert"
+    assert "Source ajoutée : Communiqué N° 2026-118" in texts
+    assert "Question envoyée à JIRAMA (démo) (WhatsApp)" in texts
+    assert "Verdict signé : Faux et publié" in texts
+    assert book["sources"][0]["added_by"] == "Alice Rabe"
+    assert book["questions"][0]["answered_at"] is None and book["routes"]["truth"] == 1
+
+    monkeypatch.setattr(get_settings(), "seal_secret", "")
+    assert alice.get(base + "/attestation").json()["error"]["code"] == "attestation_unavailable"
+    monkeypatch.setattr(get_settings(), "seal_secret", "a long random test secret")
+    att = alice.get(base + "/attestation").json()
+    assert att["summary"].startswith("Rédaction démo atteste avoir vérifié")
+    assert "1 source au dossier, 1 question envoyée et 0 réponse reçue" in att["summary"]
+    assert att["summary"].endswith("par Alice Rabe : Faux.")
+    ok = client.post(
+        "/api/v1/public/attestations/verify",
+        json={"payload": att["payload"], "signature": att["signature"]},
+    ).json()
+    assert ok["valid"] is True and ok["sha256"] == att["sha256"] and ok["key_id"] == att["key_id"]
+    forged = client.post(
+        "/api/v1/public/attestations/verify",
+        json={"payload": {**att["payload"], "verdict": "true"}, "signature": att["signature"]},
+    ).json()
+    assert forged["valid"] is False and forged["summary"] is None
+    assert as_user("bob").get(base + "/carnet").status_code == 404

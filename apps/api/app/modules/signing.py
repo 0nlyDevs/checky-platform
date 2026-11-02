@@ -467,3 +467,318 @@ async def adopt(item_id: uuid.UUID, body: AdoptIn, member: AnyMember, db: Db) ->
     await queue_embedding(db, member.workspace_id, member.user.id, source.id)
     await db.refresh(item)
     return ItemOut.model_validate(item)
+
+
+# --- « Carnet de diligence » and the attestation ------------------------------------------
+
+VERDICT_WORDS = {
+    "true": "Vrai",
+    "misleading": "Trompeur",
+    "false": "Faux",
+    "unverifiable": "Invérifiable",
+}
+STANCE_WORDS = {"confirms": "confirme", "denies": "dément", "unknown": "ne peut pas trancher"}
+CHANNEL_WORDS = {"whatsapp": "WhatsApp", "sms": "SMS", "email": "e-mail", "call": "appel"}
+
+
+class CarnetEntry(BaseModel):
+    at: datetime
+    kind: str
+    actor: str
+    text: str
+
+
+class CarnetSource(BaseModel):
+    id: uuid.UUID
+    title: str
+    kind: str
+    url: str | None
+    published_at: str | None
+    added_at: datetime
+    added_by: str
+
+
+class CarnetQuestion(BaseModel):
+    contact: str | None
+    institution: str | None
+    channel: str
+    sent_at: datetime | None
+    answered_at: datetime | None
+    stance: str | None
+
+
+class CarnetOut(BaseModel):
+    newsroom: str
+    item_id: uuid.UUID
+    ref: str | None
+    title: str
+    status: str
+    first_seen_at: str | None
+    verdict: str | None
+    verdict_suggested: str | None
+    reason: str | None
+    byline: dict | None
+    generated_at: datetime
+    entries: list[CarnetEntry]
+    sources: list[CarnetSource]
+    questions: list[CarnetQuestion]
+    checks: int
+    routes: dict[str, int]
+
+
+def _actor(user_id: str, known: dict[str, str]) -> str:
+    if user_id == "public":
+        return "Public"
+    if user_id == "system":
+        return "Checky"
+    if user_id.startswith("radio:"):
+        return "Radio partenaire"
+    return known.get(user_id) or "Membre de la rédaction"
+
+
+def _entry_text(action: str, diff: dict, titles: dict[str, str], contacts: dict[str, str]) -> str:
+    word = VERDICT_WORDS.get(str(diff.get("verdict") or diff.get("verdict_suggested") or ""), "—")
+    if action == "create":
+        return "Dossier ouvert"
+    if action == "source":
+        return f"Source ajoutée : {titles.get(str(diff.get('source_id')), 'source retirée')}"
+    if action == "analysis":
+        return f"Lecture de Checky : « {word} » suggéré"
+    if action == "sign":
+        published = diff.get("status") == "published"
+        adopted = " (verdict d'un fact-checker repris)" if diff.get("adopted") else ""
+        return f"Verdict signé : {word}{' et publié' if published else ''}{adopted}"
+    if action == "publish":
+        return "Version signée publiée"
+    if action == "question":
+        who = contacts.get(str(diff.get("contact_id")), "un contact")
+        return f"Question envoyée à {who} ({CHANNEL_WORDS.get(diff.get('channel'), 'message')})"
+    if action == "answer":
+        return f"Réponse reçue : {STANCE_WORDS.get(diff.get('stance'), 'réponse')}"
+    if action == "route":
+        side = "Rumeur vue" if diff.get("side") == "rumour" else "Correction envoyée"
+        return f"{side} : {diff.get('channel')} · {diff.get('place') or '—'}"
+    if action == "diffuse":
+        n = len(diff.get("routes") or [])
+        return f"Diffusé sur {n} route{'s' if n > 1 else ''}"
+    if action == "broadcast":
+        return f"Diffusé à l'antenne : {diff.get('station')}"
+    if action == "comment":
+        return "Commentaire dans le fil"
+    if action == "update" and "status" in diff:
+        return "Statut modifié"
+    return "Dossier modifié"
+
+
+async def carnet_of(db: AsyncSession, item: Item) -> CarnetOut:
+    from app.core.models import Activity, Contact, ContactRequest, Route
+
+    ws = await db.get(Workspace, item.workspace_id)
+    activity = list(
+        await db.scalars(
+            select(Activity)
+            .where(Activity.workspace_id == item.workspace_id, Activity.entity_id == item.id)
+            .order_by(Activity.created_at)
+        )
+    )
+    sources = list(
+        await db.scalars(
+            select(Source).where(Source.item_id == item.id).order_by(Source.created_at)
+        )
+    )
+    asked = (
+        await db.execute(
+            select(ContactRequest, Contact)
+            .outerjoin(Contact, Contact.id == ContactRequest.contact_id)
+            .where(ContactRequest.item_id == item.id)
+            .order_by(ContactRequest.created_at)
+        )
+    ).all()
+    routes = list(await db.scalars(select(Route).where(Route.item_id == item.id)))
+    known = await names(db, [a.actor_id for a in activity] + [s.created_by for s in sources])
+    titles = {str(s.id): s.title for s in sources}
+    contacts = {str(c.id): c.name for _, c in asked if c is not None}
+    data = item.data or {}
+    return CarnetOut(
+        newsroom=ws.name,
+        item_id=item.id,
+        ref=data.get("ref"),
+        title=item.title,
+        status=item.status,
+        first_seen_at=data.get("first_seen_at"),
+        verdict=data.get("verdict"),
+        verdict_suggested=data.get("verdict_suggested"),
+        reason=data.get("reason"),
+        byline=data.get("byline") if isinstance(data.get("byline"), dict) else None,
+        generated_at=datetime.now(UTC),
+        entries=[
+            CarnetEntry(
+                at=a.created_at,
+                kind=a.action,
+                actor=_actor(a.actor_id, known),
+                text=_entry_text(a.action, a.diff or {}, titles, contacts),
+            )
+            for a in activity
+        ],
+        sources=[
+            CarnetSource(
+                id=s.id,
+                title=s.title,
+                kind=s.kind,
+                url=s.url,
+                published_at=s.published_at,
+                added_at=s.created_at,
+                added_by=_actor(s.created_by, known),
+            )
+            for s in sources
+        ],
+        questions=[
+            CarnetQuestion(
+                contact=c.name if c else None,
+                institution=c.institution if c else None,
+                channel=r.channel,
+                sent_at=r.sent_at,
+                answered_at=r.answered_at,
+                stance=(r.answer or {}).get("stance"),
+            )
+            for r, c in asked
+        ],
+        checks=sum(1 for a in activity if a.action == "analysis"),
+        routes={
+            "rumour": sum(1 for r in routes if r.side == "rumour"),
+            "truth": sum(1 for r in routes if r.side == "truth"),
+        },
+    )
+
+
+@router.get("/workspaces/{ws}/items/{item_id}/carnet")
+async def carnet(item_id: uuid.UUID, member: AnyMember, db: Db) -> CarnetOut:
+    """Everything done on the dossier, dated: checks, sources, questions and answers, routes,
+    signatures. Printed as « Exporter le carnet »."""
+    from app.modules.items import _get_item
+
+    return await carnet_of(db, await _get_item(db, member, item_id))
+
+
+class AttestationOut(BaseModel):
+    summary: str
+    payload: dict
+    sha256: str
+    signature: str
+    key_id: str
+    public_key: str
+    issued_at: str
+
+
+def _summary(p: dict) -> str:
+    n, q = len(p["sources"]), p["questions"]
+    text = (
+        f"{p['newsroom']} atteste avoir vérifié « {p['title']} »"
+        + (f" ({p['ref']})" if p.get("ref") else "")
+        + f" : {n} source{'s' if n > 1 else ''} au dossier, {q['sent']} question"
+        + f"{'s' if q['sent'] > 1 else ''} envoyée{'s' if q['sent'] > 1 else ''} et "
+        + f"{q['answered']} réponse{'s' if q['answered'] > 1 else ''} reçue"
+        + f"{'s' if q['answered'] > 1 else ''}, {p['checks']} lecture"
+        + f"{'s' if p['checks'] > 1 else ''} de Checky."
+    )
+    day = dates.parse(p.get("signed_at"))
+    who = p.get("signed_by")
+    return (
+        f"{text} Verdict signé"
+        + (f" le {dates.fr(day)}" if day else "")
+        + (f" par {who}" if who else "")
+        + f" : {p['verdict_word']}."
+    )
+
+
+@router.get("/workspaces/{ws}/items/{item_id}/attestation")
+async def attestation(item_id: uuid.UUID, member: AnyMember, db: Db) -> AttestationOut:
+    """« Attestation de vérification »: the carnet's summary signed with the server's key, so a
+    partner, a court or a reader can check that this newsroom did this work on this version."""
+    from app.core import attest
+    from app.modules.items import _get_item
+
+    item = await _get_item(db, member, item_id)
+    data = item.data or {}
+    if not data.get("signed_by") or data.get("verdict") not in VERDICTS:
+        raise ApiError(409, "not_signed", "Sign the verdict before issuing an attestation")
+    book = await carnet_of(db, item)
+    byline = book.byline or {}
+    payload = {
+        "v": 1,
+        "kind": "checky.attestation",
+        "newsroom": book.newsroom,
+        "item_id": str(item.id),
+        "ref": book.ref,
+        "title": item.title,
+        "first_seen_at": book.first_seen_at,
+        "verdict": data["verdict"],
+        "verdict_word": VERDICT_WORDS[data["verdict"]],
+        "reason": data.get("reason"),
+        "signed_at": data.get("signed_at"),
+        "signed_by": byline.get("journalist"),
+        "published_at": data.get("published_at"),
+        "signed_digest": data.get("signed_digest"),
+        "sources": [
+            {"title": s.title, "published_at": s.published_at, "url": s.url}
+            for s in book.sources[:30]
+        ],
+        "questions": {
+            "sent": len(book.questions),
+            "answered": sum(1 for q in book.questions if q.answered_at),
+        },
+        "checks": book.checks,
+        "routes": book.routes,
+        "issued_at": datetime.now(UTC).isoformat(),
+    }
+    try:
+        signed = attest.sign(payload)
+    except attest.AttestationUnavailable as e:
+        raise ApiError(
+            503, "attestation_unavailable", "No server key: set SEAL_SECRET to sign attestations"
+        ) from e
+    return AttestationOut(
+        summary=_summary(payload),
+        payload=payload,
+        sha256=signed["sha256"],
+        signature=signed["signature"],
+        key_id=signed["key_id"],
+        public_key=signed["public_key"],
+        issued_at=payload["issued_at"],
+    )
+
+
+class VerifyIn(BaseModel):
+    payload: dict
+    signature: str = Field(min_length=1, max_length=200)
+
+
+class VerifyOut(BaseModel):
+    valid: bool
+    key_id: str
+    sha256: str
+    summary: str | None
+
+
+@router.post("/public/attestations/verify")
+async def verify_attestation(body: VerifyIn) -> VerifyOut:
+    """Anyone can check an attestation against the server's key (no account)."""
+    from app.core import attest
+
+    try:
+        key = attest.public_key()
+    except attest.AttestationUnavailable as e:
+        raise ApiError(503, "attestation_unavailable", "No server key to verify with") from e
+    valid = attest.verify(body.payload, body.signature)
+    summary = None
+    if valid:
+        try:
+            summary = _summary(body.payload)
+        except (KeyError, TypeError):
+            summary = None
+    return VerifyOut(
+        valid=valid,
+        key_id=key["key_id"],
+        sha256=hashlib.sha256(attest.canonical(body.payload)).hexdigest(),
+        summary=summary,
+    )
