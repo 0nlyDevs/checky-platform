@@ -177,6 +177,7 @@ def test_figures_refresh_pulls_world_bank_values_into_shared_figures(as_user):
             {"country": {"id": "MG"}, "date": "2025", "value": 32800000},
             {"country": {"id": "KM"}, "date": "2024", "value": 900000},
             {"country": {"id": "MU"}, "date": "2025", "value": None},
+            {"country": {"id": "SN"}, "date": "2025", "value": 18900000},
         ]
         return httpx.Response(200, json=[{"page": 1}, rows])
 
@@ -185,6 +186,8 @@ def test_figures_refresh_pulls_world_bank_values_into_shared_figures(as_user):
     from tests.test_newsroom_resources import invite
 
     invite(alice, ws, bob)
+    # A newsroom in Senegal: its country's figures come too.
+    alice.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"country": "Sénégal"}})
     original = figures_refresh._transport
     figures_refresh._transport = httpx.MockTransport(answer)
     try:
@@ -196,11 +199,12 @@ def test_figures_refresh_pulls_world_bank_values_into_shared_figures(as_user):
     done = alice.get(f"/api/v1/workspaces/{ws}/jobs/{job.json()['job_id']}").json()
     assert done["status"] == "done" and done["result"]["failed"] == ["FP.CPI.TOTL.ZG"]
     assert "mrnev=1" in calls[0]
-    assert "MG;KM;MU;SC;FR" in calls[0] or "MG%3BKM%3BMU%3BSC%3BFR" in calls[0]
+    assert "MG;KM;MU;SC;FR;SN" in calls[0] or "MG%3BKM%3BMU%3BSC%3BFR%3BSN" in calls[0]
     listed = alice.get(f"/api/v1/workspaces/{ws}/figures", params={"q": "Population totale"}).json()
     mg = next(f for f in listed if f["country"] == "Madagascar")
     assert mg["value"] == "32 800 000" and mg["as_of"] == "2025" and mg["shared"]
     assert mg["source_url"] == "https://data.worldbank.org/indicator/SP.POP.TOTL?locations=MG"
+    assert any(f["country"] == "Sénégal" for f in listed)
     assert any(f["country"] == "Comores" and f["value"] == "900 000" for f in listed)
     # The seeded inflation value stays when the API fails.
     inflation = alice.get(f"/api/v1/workspaces/{ws}/figures", params={"q": "Inflation"}).json()

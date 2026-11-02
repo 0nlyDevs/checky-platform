@@ -403,10 +403,20 @@ async def seed_shared(db: AsyncSession) -> None:
 
 @router.post("/workspaces/{ws}/figures/refresh", status_code=202)
 async def refresh(member: AnyMember, db: Db) -> dict[str, Any]:
-    """Seed the shared figures if they are missing, then fetch the World Bank's latest values."""
+    """Seed the shared figures if they are missing, then fetch the World Bank's latest values for
+    the default countries and the newsroom's own (any country the World Bank knows)."""
+    from app.core import countries
+    from app.modules.workspaces import newsroom_settings
+
     await seed_shared(db)
     await db.commit()
-    job = await enqueue(db, member.workspace_id, member.user.id, "figures_refresh", {})
+    home = countries.code_for(
+        newsroom_settings(await db.get(Workspace, member.workspace_id)).country
+    )
+    wanted = list(dict.fromkeys([*figures_refresh.COUNTRIES, *([home] if home else [])]))
+    job = await enqueue(
+        db, member.workspace_id, member.user.id, "figures_refresh", {"countries": wanted}
+    )
     return {"job_id": str(job.id)}
 
 

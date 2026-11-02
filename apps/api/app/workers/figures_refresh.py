@@ -155,5 +155,7 @@ async def refresh(countries: dict[str, str] | None = None) -> dict[str, Any]:
 @handler("figures_refresh")
 async def figures_refresh(ctx: JobContext) -> dict[str, Any]:
     wanted = ctx.input.get("countries")
-    countries = {c: COUNTRIES.get(c, c) for c in wanted} if wanted else None
+    from app.core import countries as names
+
+    countries = {c: COUNTRIES.get(c) or names.name(c) or c for c in wanted} if wanted else None
     return await refresh(countries)
