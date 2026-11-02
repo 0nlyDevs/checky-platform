@@ -91,7 +91,7 @@ function Bar({ pathname }: { pathname: string }) {
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitch />
           <AssistantLauncher variant="header" />
-          <Link href="/connexion" className="hidden h-10 items-center rounded-md bg-foreground px-3.5 text-sm font-bold text-background outline-none hover:bg-foreground/85 hover:text-background focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex">
+          <Link href="/connexion" className="hidden h-10 items-center rounded-md bg-primary px-3.5 text-sm font-bold text-primary-foreground outline-none hover:bg-primary-hover hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex">
             {s.nav.newsroom}
           </Link>
         </div>

@@ -11,6 +11,7 @@ export type TokenName =
   | "muted-foreground"
   | "primary"
   | "primary-foreground"
+  | "primary-hover"
   | "nav"
   | "nav-foreground"
   | "nav-hover"
@@ -46,6 +47,7 @@ export const light: Record<TokenName, string> = {
   "muted-foreground": "#55544e",
   primary: "#0a0a0b",
   "primary-foreground": "#f3f2ee",
+  "primary-hover": "#1f1f22",
   nav: "#0a0a0b",
   "nav-foreground": "#b9b8b2",
   "nav-hover": "#1f1f22",
@@ -82,6 +84,8 @@ export const dark: Record<TokenName, string> = {
   "muted-foreground": "#a6a5a0",
   primary: "#f3f2ee",
   "primary-foreground": "#0a0a0b",
+  // The primary is a paper fill in dark: its hover is a slightly darker paper, the label stays ink.
+  "primary-hover": "#e2e1da",
   nav: "#1c1c1f",
   "nav-foreground": "#b4b3ad",
   "nav-hover": "#2a2a2e",
@@ -122,6 +126,7 @@ export const PAIRS: ReadonlyArray<[fg: TokenName, bg: TokenName]> = [
   ["muted-foreground", "raised"],
   ["muted-foreground", "active"],
   ["primary-foreground", "primary"],
+  ["primary-foreground", "primary-hover"],
   ["nav-foreground", "nav"],
   ["nav-foreground", "nav-hover"],
   ["nav-active-foreground", "nav-active"],
