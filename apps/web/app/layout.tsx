@@ -5,7 +5,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider";
 import { RippleListener } from "@/components/shell/ripple";
 import { Toaster } from "@/components/ui/sonner";
 import { brand } from "@/lib/brand";
-import { PREFS_SCRIPT } from "@/lib/prefs";
+import { PREFS_SCRIPT } from "@/lib/prefs-script";
 import "./globals.css";
 
 // Everything: titles at 700-800 with tight tracking, text at 400-500, tabular figures in tables.
