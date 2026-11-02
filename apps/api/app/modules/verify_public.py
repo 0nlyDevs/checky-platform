@@ -276,7 +276,8 @@ async def _fallback_facts(db: Db, text: str, newsrooms: list[uuid.UUID | None]) 
         from app.modules.registry import match_text
 
         for ws_id in newsrooms:
-            found = await match_text(db, ws_id, text)
+            # the public never needs the desk's Annuaire contacts: not even loaded
+            found = await match_text(db, ws_id, text, with_contacts=False)
             if isinstance(found, dict) and found.get("status") not in (None, "none"):
                 out["registry"] = found
                 break

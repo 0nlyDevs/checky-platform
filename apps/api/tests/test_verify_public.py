@@ -127,7 +127,8 @@ def test_a_fact_checkers_review_is_relayed_as_theirs(as_user, monkeypatch):
 def test_facts_alone_from_the_registry(as_user, no_reviews, monkeypatch):
     from app.modules import registry
 
-    async def match_text(db, workspace_id, text):
+    async def match_text(db, workspace_id, text, **kw):
+        assert kw == {"with_contacts": False}
         assert workspace_id is not None
         return {
             "status": "modified",
@@ -297,7 +298,8 @@ def test_questions_are_grouped_and_stay_with_their_newsroom(as_user, secret):
 def test_a_desk_agents_private_fields_never_leave_the_newsroom(as_user, no_reviews, monkeypatch):
     from app.modules import registry
 
-    async def match_text(db, workspace_id, text):
+    async def match_text(db, workspace_id, text, **kw):
+        assert kw == {"with_contacts": False}
         return {
             "status": "not_found",
             "issuer": "JIRAMA",
