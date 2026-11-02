@@ -912,6 +912,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/sources/{source_id}/reveal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal
+         * @description The picture as it was received. Logged, since a face may be someone who never agreed to be
+         *     shown: the carnet keeps who looked and when.
+         */
+        post: operations["reveal_api_v1_workspaces__ws__sources__source_id__reveal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/check": {
         parameters: {
             query?: never;
@@ -5205,6 +5226,18 @@ export interface components {
             /** Press Card */
             press_card: string | null;
         };
+        /** RevealIn */
+        RevealIn: {
+            /** Frame */
+            frame?: number | null;
+        };
+        /** RevealOut */
+        RevealOut: {
+            /** Url */
+            url: string;
+            /** Faces */
+            faces: number | null;
+        };
         /** Review */
         Review: {
             /** Publisher */
@@ -8113,6 +8146,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reveal_api_v1_workspaces__ws__sources__source_id__reveal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RevealIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevealOut"];
                 };
             };
             /** @description Validation Error */

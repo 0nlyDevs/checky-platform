@@ -471,6 +471,33 @@ def test_an_image_whose_faces_could_not_be_checked_never_leaves_the_desk(as_user
     assert "image_url" not in page
 
 
+def test_revealing_an_original_picture_is_logged_on_the_dossier(as_user, whisper, monkeypatch):
+    async def fake_video(raw, mime):
+        return {"duration_s": 4.0}, b"", "", ""
+
+    async def frames(raw, duration, ffmpeg):
+        return [{"at_s": 0.0, "jpeg": b"\xff\xd8face", "dhash": "0f0f0f0f0f0f0f0f", "flat": False}]
+
+    monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)
+    monkeypatch.setattr(ingest.media, "sample_frames", frames)
+    monkeypatch.setattr(ingest.media, "blur_faces", lambda raw: (b"blurred", 1))
+    monkeypatch.setattr(ingest.shutil, "which", lambda name: "/usr/bin/ffmpeg")
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    item = _claim(alice, ws)
+    made = _upload(alice, ws, "clip.mp4", "video/mp4", b"fake-video", item).json()
+    asyncio.run(queue.run_once())
+    path = f"/api/v1/workspaces/{ws}/sources/{made['id']}/reveal"
+    r = alice.post(path, json={"frame": 0})
+    assert r.status_code == 200, r.text
+    assert r.json()["url"].endswith("frames/0.jpg?get") and r.json()["faces"] == 1
+    assert alice.post(path, json={"frame": 3}).status_code == 404
+    assert alice.post(path, json={}).status_code == 422  # a video needs its frame
+    assert bob.post(path, json={"frame": 0}).status_code == 404
+    log = alice.get(f"/api/v1/workspaces/{ws}/activity", params={"entity_id": item}).json()
+    assert [a["action"] for a in log].count("face_revealed") == 1
+
+
 def test_a_silent_video_is_ready_without_a_transcript(as_user, whisper, monkeypatch):
     calls, _ = whisper
 

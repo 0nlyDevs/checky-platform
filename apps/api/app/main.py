@@ -28,6 +28,7 @@ from app.modules import (
     jobs,
     linkcheck,
     me,
+    media_api,
     official,
     public,
     quotes,
@@ -90,6 +91,7 @@ api.include_router(guide.router, prefix="/api/v1")
 api.include_router(copilot.router, prefix="/api/v1")
 api.include_router(linkcheck.router, prefix="/api/v1")
 api.include_router(imagecheck.router, prefix="/api/v1")
+api.include_router(media_api.router, prefix="/api/v1")
 api.include_router(extension_public.router, prefix="/api/v1")
 api.include_router(crew.router, prefix="/api/v1")
 api.include_router(directory.router, prefix="/api/v1")

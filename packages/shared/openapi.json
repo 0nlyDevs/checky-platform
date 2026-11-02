@@ -3482,6 +3482,75 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/sources/{source_id}/reveal": {
+      "post": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Reveal",
+        "description": "The picture as it was received. Logged, since a face may be someone who never agreed to be\nshown: the carnet keeps who looked and when.",
+        "operationId": "reveal_api_v1_workspaces__ws__sources__source_id__reveal_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevealIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/public/check": {
       "post": {
         "tags": [
@@ -17264,6 +17333,50 @@
           "press_card"
         ],
         "title": "RequestOut"
+      },
+      "RevealIn": {
+        "properties": {
+          "frame": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 20.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frame"
+          }
+        },
+        "type": "object",
+        "title": "RevealIn"
+      },
+      "RevealOut": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "faces": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Faces"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "faces"
+        ],
+        "title": "RevealOut"
       },
       "Review": {
         "properties": {
