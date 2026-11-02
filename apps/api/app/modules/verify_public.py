@@ -12,7 +12,9 @@ Never a model verdict, never a percentage, never a dossier: the crew's fact agen
 figures, the tone lexicon and the fact-checkers itself, all without a model.
 
 `POST /public/notify` lets a visitor leave a phone number or an e-mail to hear about the verdict
-(stored as an HMAC and a masked form, see `app/core/contact.py`); the desk reads what people ask,
+(stored as an HMAC and a masked form, see `app/core/contact.py`; numbers and addresses typed in
+the question itself are masked before it is stored). Every question belongs to one newsroom (the
+claim's, else the one of its region, else the first public one); that desk alone reads them,
 grouped, at `GET /workspaces/{ws}/questions`. `PublicQuestion` has no column for the asker's
 language or the sealed contact: both ride in its `location` JSONB (`lang`, `reach`, `kind`).
 """
@@ -29,7 +31,7 @@ from urllib.parse import urlparse
 import httpx
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
-from sqlalchemy import or_, select
+from sqlalchemy import select
 
 from app.core import contact, dates, places, websearch
 from app.core.access import AnyMember, Db
@@ -155,6 +157,20 @@ async def followed(db: Db, text: str) -> tuple[Item, Workspace] | None:
         if score >= MATCH and score > best_score:
             best, best_score = (item, ws), score
     return best
+
+
+async def newsroom_for(db: Db, where: dict[str, Any] | None) -> Workspace | None:
+    """Where a question or an SMS with no claim yet goes: the public newsroom whose home region
+    (`settings.region`) is the message's, else the first public newsroom."""
+    rooms = await public.public_newsrooms(db)
+    region = places.region_of(where)
+    if region:
+        wanted = places.fold(region)
+        for ws in rooms:
+            home = (ws.settings or {}).get("region")
+            if isinstance(home, str) and places.fold(home) == wanted:
+                return ws
+    return rooms[0] if rooms else None
 
 
 def since_hour(moment: datetime) -> datetime:
@@ -486,6 +502,7 @@ async def notify(body: NotifyIn, request: Request, db: Db) -> NotifyOut:
         kind, value = contact.normalise(body.contact)
     except ValueError as exc:
         raise ApiError(422, "invalid_contact", "Give a phone number or an e-mail address") from exc
+    digest = contact.digest(kind, value)  # 503 before anything else when contacts cannot be kept
     item = None
     if body.item_id:
         item = await db.scalar(
@@ -497,19 +514,25 @@ async def notify(body: NotifyIn, request: Request, db: Db) -> NotifyOut:
             raise ApiError(404, "not_found", "Claim not found")
     elif tracked := await followed(db, body.text):
         item = tracked[0]
-    digest = contact.digest(kind, value)
-    same = select(PublicQuestion).where(PublicQuestion.contact_hash == digest)
+    where = place_in(body.text)
+    # Every question belongs to one newsroom: the claim's, else the one of its region, else the first.
+    ws = await db.get(Workspace, item.workspace_id) if item else await newsroom_for(db, where)
+    if ws is None:
+        raise ApiError(409, "no_newsroom", "No newsroom takes questions from the public yet")
+    text = contact.redact(body.text)
+    same = select(PublicQuestion).where(
+        PublicQuestion.contact_hash == digest, PublicQuestion.workspace_id == ws.id
+    )
     same = (
         same.where(PublicQuestion.item_id == item.id)
         if item
-        else same.where(PublicQuestion.item_id.is_(None), PublicQuestion.text == body.text.strip())
+        else same.where(PublicQuestion.item_id.is_(None), PublicQuestion.text == text)
     )
     if (await db.scalars(same.limit(1))).first() is None:
-        where = place_in(body.text)
         question = PublicQuestion(
-            workspace_id=item.workspace_id if item else None,
+            workspace_id=ws.id,
             item_id=item.id if item else None,
-            text=body.text.strip(),
+            text=text,
             channel="web",
             location={**where, "lang": body.lang, "kind": kind, "reach": contact.seal(value)},
             contact_hash=digest,
@@ -517,12 +540,11 @@ async def notify(body: NotifyIn, request: Request, db: Db) -> NotifyOut:
         )
         db.add(question)
         await db.commit()
-        if item:
-            await broadcast(
-                item.workspace_id,
-                "question.created",
-                {"id": str(question.id), "item_id": str(item.id), "channel": "web"},
-            )
+        await broadcast(
+            ws.id,
+            "question.created",
+            {"id": str(question.id), "item_id": str(item.id) if item else None, "channel": "web"},
+        )
     return NotifyOut(
         masked=contact.mask(kind, value),
         channel="sms" if kind == "phone" else "email",
@@ -551,13 +573,13 @@ async def questions(
     days: int = Query(default=7, ge=1, le=90),
 ) -> list[QuestionGroup]:
     ws = await db.get(Workspace, member.workspace_id)
-    mine = PublicQuestion.workspace_id == ws.id
-    # Questions sent to no newsroom in particular belong to every newsroom that answers the public.
-    scope = or_(mine, PublicQuestion.workspace_id.is_(None)) if ws.is_public else mine
     rows = (
         await db.scalars(
             select(PublicQuestion)
-            .where(scope, PublicQuestion.created_at >= datetime.now(UTC) - timedelta(days=days))
+            .where(
+                PublicQuestion.workspace_id == ws.id,
+                PublicQuestion.created_at >= datetime.now(UTC) - timedelta(days=days),
+            )
             .order_by(PublicQuestion.created_at.desc())
             .limit(2000)
         )

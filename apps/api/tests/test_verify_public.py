@@ -74,7 +74,8 @@ def test_signed_verdict_comes_first_with_its_confidence_in_words(as_user, monkey
     assert out["signed"]["id"] == item and out["signed"]["verdict"] == "false"
     assert out["signed"]["confidence"] == "eleve"
     # the percentage behind the level never leaves the newsroom
-    assert "84" not in json.dumps(out) and "score" not in json.dumps(out)
+    raw = json.dumps(out)
+    assert "score" not in raw and ": 84" not in raw and "84 %" not in raw and "%" not in raw
 
 
 def test_no_confidence_when_the_journalist_signed_another_verdict(as_user, no_reviews):
@@ -230,6 +231,8 @@ def test_notify_needs_the_secret_and_keeps_contacts_masked(as_user, monkeypatch)
     body = {"text": CLAIM + " ?", "contact": "034 00 000 12"}
     assert anon.post("/api/v1/public/notify", json=body).status_code == 503
     monkeypatch.setattr(get_settings(), "seal_secret", "test-seal-secret-for-contacts")
+    # no newsroom answers the public yet: nothing is stored anywhere
+    assert anon.post("/api/v1/public/notify", json=body).status_code == 409
     alice = as_user("alice")
     ws = _newsroom(alice)
     item = _claim(alice, ws, CLAIM, status="to_check", verdict=None)
@@ -237,8 +240,16 @@ def test_notify_needs_the_secret_and_keeps_contacts_masked(as_user, monkeypatch)
     assert r.status_code == 201
     assert r.json() == {"masked": "+261 34 •• ••• 12", "channel": "sms", "followed": True}
     assert anon.post("/api/v1/public/notify", json=body).status_code == 201  # not stored twice
-    email = {"text": RUMOUR, "contact": "C.Rabe@example.org", "item_id": item}
+    email = {
+        "text": "Appelez le 034 00 000 99 ou c.rabe@example.org : 72 heures à Antananarivo ?",
+        "contact": "C.Rabe@example.org",
+        "item_id": item,
+    }
     assert anon.post("/api/v1/public/notify", json=email).json()["masked"] == "c•••@example.org"
+    assert anon.post("/api/v1/public/notify", json=body).status_code == 429  # 5 per 10 minutes
+    from app.modules import verify_public
+
+    verify_public._NOTIFY.clear()
     bad = {"text": RUMOUR, "contact": "pas un numéro"}
     assert anon.post("/api/v1/public/notify", json=bad).status_code == 422
     groups = alice.get(f"/api/v1/workspaces/{ws}/questions").json()
@@ -246,13 +257,15 @@ def test_notify_needs_the_secret_and_keeps_contacts_masked(as_user, monkeypatch)
     g = groups[0]
     assert g["count"] == 2 and g["waiting"] == 2 and g["item_ref"] == "FAN-0145"
     assert g["regions"] == {"Analamanga": 2} and g["channels"] == {"web": 2}
-    # nothing in clear for the desk
-    assert "000 12" not in json.dumps(groups) and "Rabe" not in json.dumps(groups)
+    # nothing in clear for the desk, not even inside the question's own words
+    raw = json.dumps(groups)
+    assert "000 12" not in raw and "000 99" not in raw and "rabe" not in raw.lower()
 
 
-def test_questions_are_grouped_by_what_they_ask(as_user, secret):
-    alice = as_user("alice")
+def test_questions_are_grouped_and_stay_with_their_newsroom(as_user, secret):
+    alice, bob = as_user("alice"), as_user("bob")
     ws = _newsroom(alice)
+    other = _newsroom(bob)  # a second public newsroom, created later
     anon = TestClient(app)
     for text, phone in [
         ("Est-ce vrai, 72 heures de délestage à Antananarivo ?", "0340000001"),
@@ -265,6 +278,15 @@ def test_questions_are_grouped_by_what_they_ask(as_user, secret):
     assert sorted(g["count"] for g in groups) == [1, 2]
     toliara = alice.get(f"/api/v1/workspaces/{ws}/questions?region=atsimo-andrefana").json()
     assert [g["count"] for g in toliara] == [1]
-    # a private newsroom only sees the questions sent to it
+    # every question went to one newsroom: the other public newsroom sees none of them
+    assert bob.get(f"/api/v1/workspaces/{other}/questions").json() == []
+    # until it declares Toliara's region as its home: questions from there now reach it
+    bob.patch(f"/api/v1/workspaces/{other}", json={"settings": {"region": "Atsimo-Andrefana"}})
+    r = anon.post(
+        "/api/v1/public/notify",
+        json={"text": "Le bac est reporté à Toliara ?", "contact": "0340000004"},
+    )
+    assert r.status_code == 201
+    assert [g["count"] for g in bob.get(f"/api/v1/workspaces/{other}/questions").json()] == [1]
     private = _newsroom(alice, public=False)
     assert alice.get(f"/api/v1/workspaces/{private}/questions").json() == []

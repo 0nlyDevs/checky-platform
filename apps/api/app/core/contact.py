@@ -84,6 +84,17 @@ def unseal(token: str | None) -> str | None:
         return None
 
 
+# A number or an address typed inside a question's free text (the contact itself is kept apart).
+_IN_TEXT = (re.compile(r"\+?\d[\d\s]{7,}\d"), re.compile(r"\S+@\S+"))
+
+
+def redact(text: str) -> str:
+    text = (text or "").strip()
+    for pattern in _IN_TEXT:
+        text = pattern.sub("[contact masqué]", text)
+    return text
+
+
 def protect(contact: str) -> tuple[Kind, str, str, str]:
     """(kind, hash, masked, sealed) for a contact typed by the public; ValueError if unreadable."""
     kind, value = normalise(contact)
