@@ -1,5 +1,8 @@
 """Chiffres: numbers read from a text by code and set against dated, sourced official figures."""
 
+from datetime import timedelta
+
+from app.core import dates
 from app.core.numbers import extract_numbers, parse_figure, same
 
 RUMOUR = (
@@ -64,7 +67,7 @@ DELESTAGE = {
     "label": "Délestage programmé à Antananarivo",
     "value": "4",
     "unit": "h/jour",
-    "as_of": "2026-11-01",
+    "as_of": (dates.today() - timedelta(days=1)).isoformat(),  # yesterday, whatever the run date
     "country": "Madagascar",
     "place": "Antananarivo",
     "source_name": "JIRAMA, communiqué N° 2026-118 (démo)",
