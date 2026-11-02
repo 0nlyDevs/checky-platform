@@ -345,31 +345,561 @@
   animation: verdict-land 0.5s var(--ease-out-expo) both;
 }
 
-/* The assistant: docked beside the page on a computer (the page makes room), a sheet on a phone.
-   It never floats over what the journalist is reading. */
-.assistant-panel {
+/* The desk shell's frame. The bar's 24 px inset is the corners' inset: the wordmark sits over the
+   preference dock, the avatar over the Checky button. Below 900 px the inset is 16 px. */
+:root {
+  --inset: 24px;
+  --corner-x: max(var(--inset), env(safe-area-inset-right));
+  --corner-y: max(var(--inset), env(safe-area-inset-bottom));
+}
+@media (max-width: 900px) {
+  :root {
+    --inset: 16px;
+  }
+}
+/* On a phone the desk's ink bar takes the bottom edge: the Checky button sits above it. */
+@media (max-width: 640px) {
+  [data-scope="desk"] {
+    --corner-y: calc(66px + 14px + env(safe-area-inset-bottom));
+  }
+}
+
+/* The desk's top bar: wordmark and workspace left, the ink tab island centred, the avatar right. */
+.desk-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 20px;
+  padding: 14px var(--inset);
+  background: var(--background);
+}
+.bar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.bar-word {
+  border-radius: 10px;
+  flex: none;
+}
+.bar-word:focus-visible,
+.bar-scope:focus-visible,
+.bar-avatar:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+.bar-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 16rem;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px 0 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.bar-scope:hover,
+.bar-scope[aria-expanded="true"] {
+  background: var(--raised);
+  color: var(--foreground);
+}
+.bar-right {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+}
+.bar-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 13px;
+  font-weight: 700;
+}
+.bar-avatar:hover,
+.bar-avatar[aria-expanded="true"] {
+  background: var(--primary-hover);
+  color: var(--primary-foreground);
+}
+
+/* The ink island and its paper pill (0.5 s, --ease-out). The pill's label is the fixed ink. */
+.tab-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  /* the hidden measuring row must not make the page scroll sideways */
+  overflow-x: clip;
+}
+.tab-island {
+  position: relative;
+  width: max-content;
+  max-width: 100%;
+  padding: 5px;
+  border-radius: 999px;
+  background: var(--nav);
+  /* before the first measure every tab is drawn: they stay on the ink, never spill onto the paper */
+  overflow: hidden;
+}
+.tab-list {
+  position: relative;
+  display: flex;
+  gap: 2px;
+}
+.tab-pill {
+  position: absolute;
+  z-index: 0;
+  top: 5px;
+  left: 0;
+  width: 0;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--nav-active);
+  opacity: 0;
+  transition:
+    transform 0.5s var(--ease-out),
+    width 0.5s var(--ease-out);
+}
+.tab {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  color: var(--nav-foreground);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: color 0.35s var(--ease-out);
+}
+.tab:hover,
+.tab[aria-expanded="true"] {
+  background: var(--nav-hover);
+  color: var(--nav-active);
+}
+.tab[data-current]:hover {
+  background: transparent;
+}
+.tab[data-current] {
+  color: var(--nav-active-foreground);
+  font-weight: 600;
+}
+/* Before the pill is measured (first paint, no script), the current tab paints its own paper. */
+.tab-island:not([data-pill]) .tab[data-current] {
+  background: var(--nav-active);
+}
+.tab:focus-visible {
+  outline: 2px solid var(--nav-active);
+  outline-offset: -4px;
+}
+.tab[data-current]:focus-visible {
+  outline-color: var(--nav-active-foreground);
+}
+.tab-icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.tab-caret {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  transition: transform 0.3s var(--ease-out);
+}
+.tab[aria-expanded="true"] .tab-caret {
+  transform: rotate(180deg);
+}
+.tab-ghost > .tab {
+  flex: none;
+}
+.tab-ghost {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: nowrap;
+}
+/* « Plus » lists the folded places; the current one keeps the ink pill. */
+.tab-menu {
+  min-width: 220px;
+  padding: 6px;
+  border-radius: 18px;
+  box-shadow: var(--shadow-float);
+}
+.tab-menu [role="menuitem"] {
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.tab-menu [role="menuitem"] svg {
+  width: 18px;
+  height: 18px;
+}
+.tab-menu [role="menuitem"][aria-current="page"],
+.tab-menu [role="menuitem"][aria-current="page"]:focus {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* The canvas: gutters of inset + 84 px from 901 px up, so the corners never cover the content
+   (the page's own side padding is folded into it). Below, the corners overlay and the page gets
+   room at the bottom. */
+.desk-main {
+  min-width: 0;
+  padding-bottom: 112px;
+}
+@media (min-width: 901px) {
+  .desk-main {
+    padding-inline: calc(var(--inset) + 84px);
+    padding-bottom: 24px;
+  }
+  .desk-main > * {
+    padding-inline: 0;
+  }
+}
+@media (max-width: 900px) {
+  .desk-bar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 10px;
+  }
+  .desk-bar .tab-wrap {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-content: flex-start;
+  }
+  .bar-scope {
+    max-width: 12rem;
+  }
+  .dock .dock-opt,
+  .dock .dock-sep {
+    display: none;
+  }
+}
+
+/* Bottom-left: the preference dock, one floating object; labels flag out on hover and focus. */
+.dock {
   position: fixed;
-  z-index: 50;
+  z-index: 40;
+  left: max(var(--inset), env(safe-area-inset-left));
+  bottom: var(--corner-y);
   display: flex;
   flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 30px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-float);
+}
+.dock-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.dock-btn:hover,
+.dock-btn:focus-visible {
+  background: var(--raised);
+  color: var(--foreground);
+}
+.dock-btn:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+.dock-icon {
+  grid-area: 1 / 1;
+  width: 22px;
+  height: 22px;
+}
+.dock-flag {
+  position: absolute;
+  left: calc(100% + 14px);
+  top: 50%;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-8px, -50%) scale(0.96);
+  transform-origin: left center;
+  transition:
+    transform 0.35s var(--ease-out),
+    opacity 0.2s;
+}
+.dock-btn:hover .dock-flag,
+.dock-btn:focus-visible .dock-flag {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+.dock-sep {
+  height: 1px;
+  margin: 2px 10px;
+  background: var(--rule);
+}
+
+/* Under 640 px: the tabs become the ink bar at the thumb, the dock leaves (theme is in the avatar
+   menu), and Checky floats above the bar. */
+.tab-bar {
+  display: none;
+}
+@media (max-width: 640px) {
+  .desk-bar {
+    padding-bottom: 10px;
+  }
+  .desk-bar .tab-wrap,
+  .dock {
+    display: none;
+  }
+  .desk-main {
+    padding-bottom: 170px;
+  }
+  .tab-bar {
+    display: block;
+    position: fixed;
+    z-index: 35;
+    inset: auto 0 0 0;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    background: var(--nav);
+  }
+  .tab-bar ul {
+    display: grid;
+    gap: 2px;
+  }
+  .tab-bar-item {
+    position: relative;
+    display: grid;
+    place-items: center;
+    align-content: center;
+    gap: 3px;
+    width: 100%;
+    height: 54px;
+    overflow: hidden;
+    border-radius: 16px;
+    color: var(--nav-foreground);
+    font-size: 11.5px;
+    font-weight: 500;
+    transition:
+      background-color 0.3s var(--ease-out),
+      color 0.3s;
+  }
+  .tab-bar-item span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tab-bar-item:hover {
+    background: var(--nav-hover);
+    color: var(--nav-active);
+  }
+  .tab-bar-item[aria-current="page"],
+  .tab-bar-item[data-current] {
+    background: var(--nav-active);
+    color: var(--nav-active-foreground);
+    font-weight: 600;
+  }
+  .tab-bar-item:focus-visible {
+    outline: 2px solid var(--nav-active);
+    outline-offset: -3px;
+  }
+  .tab-bar-item[aria-current="page"]:focus-visible,
+  .tab-bar-item[data-current]:focus-visible {
+    outline-color: var(--nav-active-foreground);
+  }
+}
+
+/* The public header's theme button: a quiet round icon button. */
+.site-theme {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--foreground);
+}
+.site-theme:hover {
+  background: var(--raised);
+  color: var(--foreground);
+}
+.site-theme:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+
+/* Bottom-right: the Checky button, 60 px, its label slides out to the left on hover and focus. */
+.checky-fab {
+  position: fixed;
+  z-index: 40;
+  right: var(--corner-x);
+  bottom: var(--corner-y);
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-float);
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--ease-out),
+    background-color 0.2s;
+}
+.checky-fab:hover {
+  background: var(--primary-hover);
+  color: var(--primary-foreground);
+}
+.checky-fab:active {
+  transform: scale(0.96);
+}
+.checky-fab:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+.checky-fab-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 60px;
+  height: 60px;
+}
+.checky-fab-icon svg {
+  grid-area: 1 / 1;
+  width: 26px;
+  height: 26px;
+  transition:
+    transform 0.4s var(--ease-out),
+    opacity 0.25s;
+}
+.checky-fab-close {
+  opacity: 0;
+  transform: rotate(-90deg) scale(0.6);
+}
+.checky-fab[aria-expanded="true"] .checky-fab-open {
+  opacity: 0;
+  transform: rotate(90deg) scale(0.6);
+}
+.checky-fab[aria-expanded="true"] .checky-fab-close {
+  opacity: 1;
+  transform: none;
+}
+.checky-fab-label {
+  display: grid;
+  grid-template-columns: 0fr;
+  transition: grid-template-columns 0.4s var(--ease-out);
+}
+.checky-fab-label > span {
+  min-width: 0;
+  overflow: hidden;
+}
+.checky-fab-label b {
+  display: block;
+  padding-left: 22px;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.checky-fab:hover .checky-fab-label,
+.checky-fab:focus-visible .checky-fab-label {
+  grid-template-columns: 1fr;
+}
+.checky-fab:hover .checky-fab-label b,
+.checky-fab:focus-visible .checky-fab-label b {
+  opacity: 1;
+  transition-delay: 0.1s;
+}
+.checky-fab[aria-expanded="true"] .checky-fab-label {
+  grid-template-columns: 0fr;
+}
+.checky-fab[aria-expanded="true"] .checky-fab-label b {
+  opacity: 0;
+}
+@media (max-width: 640px) {
+  .checky-fab {
+    height: 56px;
+  }
+  .checky-fab-icon {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* The assistant: a panel growing out of the Checky button's corner, above it. */
+.assistant-panel {
+  position: fixed;
+  z-index: 39;
+  right: var(--corner-x);
+  bottom: calc(var(--corner-y) + 72px);
+  display: flex;
+  flex-direction: column;
+  width: min(400px, calc(100vw - 2 * var(--inset)));
+  height: min(620px, calc(100dvh - var(--corner-y) - 72px - 84px));
+  overflow: hidden;
   background: var(--card);
   color: var(--card-foreground);
-  inset: auto 0 0 0;
-  height: min(64dvh, 36rem);
-  border-top: 1px solid var(--border);
-  border-radius: 20px 20px 0 0;
+  border: 1px solid var(--border);
+  border-radius: 24px;
   box-shadow: var(--shadow-float);
-  padding-bottom: env(safe-area-inset-bottom);
+  transform-origin: bottom right;
+  transform: scale(0.6) translateY(20px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    transform 0.45s var(--ease-out),
+    opacity 0.25s,
+    visibility 0s 0.45s;
 }
-@media (min-width: 1024px) {
+.assistant-panel[data-open] {
+  transform: none;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.45s var(--ease-out),
+    opacity 0.25s,
+    visibility 0s;
+}
+@media (max-width: 640px) {
   .assistant-panel {
-    inset: 0 0 0 auto;
-    width: 25rem;
-    height: auto;
-    border-top: 0;
-    border-left: 1px solid var(--border);
-    border-radius: 0;
-    box-shadow: none;
+    right: 16px;
+    width: calc(100vw - 32px);
+    bottom: calc(var(--corner-y) + 68px);
+    height: min(620px, calc(100dvh - var(--corner-y) - 68px - 72px));
   }
 }
 .assistant-head {

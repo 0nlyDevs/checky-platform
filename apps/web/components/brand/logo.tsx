@@ -14,10 +14,10 @@ export function LogoMark({ className }: { className?: string }) {
   );
 }
 
-export function Wordmark({ className }: { className?: string }) {
+export function Wordmark({ className, mark = true }: { className?: string; mark?: boolean }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
-      <LogoMark />
+      {mark && <LogoMark />}
       <span className="font-display text-xl font-extrabold tracking-[-0.04em]">
         {brand.name}
         <em className="quote font-medium" aria-hidden>

@@ -23,6 +23,7 @@ import {
   Columns,
   Compass,
   Copy,
+  DotsThree,
   DotsThreeVertical,
   DownloadSimple,
   FileText,
@@ -102,6 +103,7 @@ export const IconCircleDashed = duo(CircleDashed);
 export const IconCircleNotch = duo(CircleNotch);
 export const IconColumns = duo(Columns);
 export const IconCopy = duo(Copy);
+export const IconDotsThree = duo(DotsThree);
 export const IconDotsThreeVertical = duo(DotsThreeVertical);
 export const IconDownloadSimple = duo(DownloadSimple);
 export const IconFileText = duo(FileText);

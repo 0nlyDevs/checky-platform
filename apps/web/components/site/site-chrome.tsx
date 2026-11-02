@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
-import { AssistantLauncher } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
+import { ThemeFace, useThemeFlip } from "@/components/shell/preference-dock";
 import { brand } from "@/lib/brand";
 import { LANGS, setLang, useDocumentLang, useLang, useT, type Messages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -90,7 +90,7 @@ function Bar({ pathname }: { pathname: string }) {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <LanguageSwitch />
-          <AssistantLauncher variant="header" />
+          <ThemeButton />
           <Link href="/connexion" className="hidden h-10 items-center rounded-md bg-primary px-3.5 text-sm font-bold text-primary-foreground outline-none hover:bg-primary-hover hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring sm:inline-flex">
             {s.nav.newsroom}
           </Link>
@@ -119,6 +119,16 @@ function Bar({ pathname }: { pathname: string }) {
         </ul>
       </nav>
     </header>
+  );
+}
+
+/** Light or dark for a visitor, with the same diagonal reveal as the desk (Checky is in the corner). */
+function ThemeButton() {
+  const flip = useThemeFlip();
+  return (
+    <button type="button" onClick={flip} className="site-theme" data-ripple>
+      <ThemeFace flag={false} />
+    </button>
   );
 }
 
