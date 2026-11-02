@@ -118,6 +118,10 @@ def test_without_ai_the_facts_still_show(as_user, monkeypatch, research):
     assert {"Fiabilité", "Ton", "Éléments", "Confiance"} <= agents
     verdict_step = [d for e, d in events if e == "step" and d["key"] == "verdict"][-1]
     assert verdict_step == {"key": "verdict", "status": "waiting", "summary": "no_ai"}
+    # the elements are counted once collected: fact-checkers' reviews and archives included
+    search = [d for e, d in events if e == "step" and d["key"] == "search"]
+    assert [d["status"] for d in search] == ["running", "done"]
+    assert search[-1]["summary"] == f"{len(result['numbered'])} éléments trouvés"
     assert bob.post(f"/api/v1/workspaces/{ws}/crew", json={"text": "hello"}).status_code == 404
 
 

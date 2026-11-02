@@ -72,7 +72,10 @@ ARCHIVE_MIN_SCORE = 0.75
 # Without embeddings: distinctive words shared with the message (two matched a rice-price note
 # against a power-cut rumour on « Antananarivo » and « hausse »).
 ARCHIVE_MIN_WORDS = 3
+# The numbered line's steps: each starts with the first agent of a stage and ends with a stage
+# (the elements are counted once collected, not when the last search lands).
 STEP_OF = {"read": "claims", "facts": "search", "synthesis": "verdict"}
+STEP_DONE = {"read": "claims", "collect": "search", "synthesis": "verdict"}
 # Fact kinds that live outside the newsroom (shown on the sources wall, attachable as links).
 OUTSIDE = ("web", "fact-check", "wikipedia", "recheck")
 # What the model is told each numbered element is.
@@ -677,11 +680,8 @@ def step_summary(key: str, state: dict[str, Any]) -> dict[str, Any]:
     if key == "claims":
         claims = len((state.get("plan") or {}).get("claims") or [])
         level = RISK_FR[(state.get("risk") or {}).get("level", "low")]
-        return {
-            "key": key,
-            "status": "done",
-            "summary": f"{claims} affirmation(s) · risque {level}",
-        }
+        read = f"{claims} affirmation(s)" if claims else "Message lu"
+        return {"key": key, "status": "done", "summary": f"{read} · risque {level}"}
     if key == "search":
         n = len(state.get("numbered") or state.get("results") or [])
         return {"key": key, "status": "done", "summary": f"{n} éléments trouvés"}
@@ -1050,7 +1050,9 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
         )
         update: dict[str, Any] = {
             "confidence": score,
-            "_summary": f"{score['score']} % · {LEVEL_FR[score['level']]}",
+            "_summary": f"{score['score']} % · {LEVEL_FR[score['level']]}"
+            if score["direction"] != "none"
+            else "Aucun élément ne tranche",
         }
         if analysis:
             update["analysis"] = {**analysis, "confidence": score}
@@ -1100,7 +1102,7 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
         ran = {entry["stage"] for entry in state["trace"][cursor:]}
         cursor = len(state["trace"])
         for stage in sorted(ran):
-            key = STEP_OF.get(stage)
+            key = STEP_DONE.get(stage)
             if key and steps.get(key) != "done":
                 steps[key] = "done"
                 await emit("step", step_summary(key, state))
