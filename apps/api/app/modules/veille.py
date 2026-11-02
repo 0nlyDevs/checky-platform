@@ -1153,6 +1153,92 @@ async def refresh(member: AnyMember, db: Db) -> dict[str, list[str]]:
     return {"queued": await _maybe_poll(db, member, force=True)}
 
 
+class RegionCount(BaseModel):
+    region: str
+    lat: float | None
+    lng: float | None
+    last_24h: int
+    last_7d: int
+    high_risk: int
+    kinds: dict[str, int]
+
+
+class MapOut(BaseModel):
+    regions: list[RegionCount]
+    unplaced: int
+    total: int
+
+
+@router.get("/workspaces/{ws}/veille/map")
+async def veille_map(member: AnyMember, db: Db) -> MapOut:
+    """Where rumours circulate: per region, the claims, clips, press items and questions of the
+    last 24 hours and 7 days, and how many dossiers were judged high-risk."""
+    since = datetime.now(UTC) - timedelta(days=7)
+    day_ago = datetime.now(UTC) - timedelta(hours=24)
+    counts: dict[str, dict[str, Any]] = {}
+    tally = {"unplaced": 0, "total": 0}
+
+    def add(loc: dict[str, Any] | None, at: datetime, kind: str, high: bool = False) -> None:
+        tally["total"] += 1
+        region = canonical_region((loc or {}).get("region"))
+        if not region:
+            tally["unplaced"] += 1
+            return
+        row = counts.setdefault(
+            region,
+            {"last_24h": 0, "last_7d": 0, "high_risk": 0, "kinds": defaultdict(int), "loc": loc},
+        )
+        row["last_7d"] += 1
+        row["last_24h"] += int(at >= day_ago)
+        row["high_risk"] += int(high)
+        row["kinds"][kind] += 1
+
+    for item in await db.scalars(
+        select(Item).where(
+            Item.workspace_id == member.workspace_id,
+            Item.type.in_(["claim", "press"]),
+            Item.created_at >= since,
+        )
+    ):
+        d = item.data or {}
+        at = dates.parse_moment(d.get("first_seen_at")) or item.created_at
+        if at < since:
+            continue  # entered this week, but first seen long ago: not circulating now
+        kind = "press" if item.type == "press" else "tip" if d.get("public_tip") else "claim"
+        add(item_location(item), at, kind, _risk(d) == "high")
+    for clip in await recent_clips(db, member.workspace_id):
+        add(clip_location(clip), clip.recorded_at, "clip")
+    for q in await db.scalars(
+        select(PublicQuestion).where(
+            PublicQuestion.workspace_id == member.workspace_id,
+            PublicQuestion.created_at >= since,
+        )
+    ):
+        loc = q.location if (q.location or {}).get("region") else region_of_text(q.text)
+        add(loc, q.created_at, "sms" if q.channel == "sms" else "question")
+
+    regions = []
+    for region, row in counts.items():
+        lat = lng = None
+        if region in MG_REGIONS:
+            _, lat, lng = MG_REGIONS[region]
+        elif (loc := row["loc"] or {}).get("lat") is not None:
+            lat, lng = loc.get("lat"), loc.get("lng")
+        regions.append(
+            RegionCount(
+                region=region,
+                lat=lat,
+                lng=lng,
+                last_24h=row["last_24h"],
+                last_7d=row["last_7d"],
+                high_risk=row["high_risk"],
+                kinds=dict(row["kinds"]),
+            )
+        )
+    regions.sort(key=lambda r: (-r.last_24h, -r.last_7d, r.region))
+    return MapOut(regions=regions, unplaced=tally["unplaced"], total=tally["total"])
+
+
 # ----------------------------------------------------------------------- Météo des rumeurs
 
 

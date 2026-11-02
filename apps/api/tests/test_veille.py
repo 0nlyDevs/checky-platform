@@ -355,6 +355,26 @@ def test_the_feed_merges_tips_sms_clips_and_press_and_says_what_was_checked(as_u
     assert eve.get(base + "/veille").status_code == 403
 
 
+def test_the_map_counts_what_circulates_per_region(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    alice.post(
+        base + "/items",
+        json={"title": "Délestage à Toamasina", "data": {"risk": {"level": "high"}}},
+    )
+    alice.post(base + "/items", json={"title": "Coupure d'eau annoncée à Tamatave"})
+    alice.post(base + "/items", json={"title": "Une rumeur sans lieu"})
+    _clip(alice, ws, "Un auditeur parle d'un délestage à Mahajanga ce soir.", station="Radio Boeny")
+    _claim(alice, ws, "Vieille rumeur republiée", first_seen_at=_ago(days=400))
+    out = alice.get(base + "/veille/map").json()
+    by = {r["region"]: r for r in out["regions"]}
+    assert by["Atsinanana"]["last_24h"] == 2 and by["Atsinanana"]["high_risk"] == 1
+    assert by["Atsinanana"]["lat"] == pytest.approx(-18.15)
+    assert by["Boeny"]["kinds"] == {"clip": 1}
+    assert out["unplaced"] == 1 and out["total"] == 4
+
+
 # --- Météo des rumeurs
 
 
