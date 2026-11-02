@@ -394,8 +394,8 @@ def word_diff(original: str, submitted: str) -> list[dict[str, str]]:
 
 def changed_numbers(original: str, submitted: str) -> list[dict[str, Any]]:
     """The numbers the copy states that the original does not: each paired with the original's
-    number of the same kind it replaces (« 4 heures par jour » → « 72 heures »), or alone when it was
-    added (« 40 % »)."""
+    number of the same kind it replaces (« 4 heures par jour » → « 72 heures »), or alone when it
+    was added (« 40 % »)."""
     theirs = numbers.extract_numbers(original)
     ours = numbers.extract_numbers(submitted)
     spare = list(theirs)
@@ -470,8 +470,275 @@ def compare(original: Communique, submitted: str) -> dict[str, Any]:
         "status": "modified",
         "diff": ops,
         "changed_numbers": moved,
-        "summary": f"{ref[0].upper()}{ref[1:]} est au registre, mais ce texte en diffère : {detail}.",
+        "summary": f"{ref[0].upper()}{ref[1:]} est au registre, mais ce texte en diffère : "
+        f"{detail}.",
     }
+
+
+# --- match_text: which original a circulating text quotes, and how it differs ------------------
+
+# Institutions people quote; the newsroom's Annuaire and the registry itself add the rest. Generic
+# words (« ministère », « préfecture »…) take the capitalised words after them as the name.
+INSTITUTIONS = (
+    "JIRAMA",
+    "CENI",
+    "BNGRC",
+    "INSTAT",
+    "ORE",
+    "ARTEC",
+    "CNaPS",
+    "OMNIS",
+    "APMF",
+    "ACM",
+    "CUA",
+    "HCC",
+    "Banky Foiben'i Madagasikara",
+    "Banque centrale de Madagascar",
+    "Présidence de la République",
+    "Primature",
+    "Assemblée nationale",
+    "Sénat",
+    "Gendarmerie nationale",
+    "Police nationale",
+    "Météo Madagascar",
+    "Institut Pasteur de Madagascar",
+    "Commune urbaine d'Antananarivo",
+)
+_GENERIC = re.compile(
+    r"\b(minist[eè]re|pr[ée]fecture|commune|r[ée]gion|district|mairie|direction|gendarmerie|police)"
+    r"\s+(?:de\s+la\s+|de\s+l['’]|des\s+|du\s+|de\s+|d['’])?"
+    r"((?:[A-ZÀ-Ý][\w'’-]+)(?:\s+(?:et\s+de\s+la\s+|et\s+|de\s+la\s+|de\s+l['’]|des\s+|du\s+|de\s+)?[A-ZÀ-Ý][\w'’-]+){0,3})",
+    re.IGNORECASE,
+)
+_NUMBER = re.compile(
+    r"\b(?:n\s?[°ºo]|no\.?|num[ée]ro|laharana)\s*[:.]?\s*(\d[\w/.-]*[0-9A-Za-z]|\d)", re.IGNORECASE
+)
+# Words every communiqué shares, which say nothing about which one is quoted.
+_GENERIC_WORDS = {"communique", "urgent", "officiel", "officielle", "annonce", "informe", "selon"}
+Status = Literal["authentic", "modified", "not_found", "inconsistent", "none"]
+
+
+def quoted_numbers(text: str) -> list[str]:
+    """Communiqué numbers the text cites (« N° 2026-118 », « n°118/2026/MEN »)."""
+    seen: list[str] = []
+    for m in _NUMBER.finditer(text or ""):
+        n = m[1].strip(".-/")
+        if n and n not in seen:
+            seen.append(n)
+    return seen
+
+
+def _num_key(n: str | None) -> str:
+    return re.sub(r"[^0-9a-z]", "", places.fold(n or ""))
+
+
+def _aliases(name: str) -> set[str]:
+    """How an issuer may be written: its full name, the part before a bracket or a dash, and its
+    acronyms (« JIRAMA (Jiro sy Rano Malagasy) » → jirama, jiro sy rano malagasy)."""
+    found = {name, re.split(r"\s[(–—-]\s?|\(", name)[0]}
+    found |= set(re.findall(r"\b[A-Z][A-Za-z]*[A-Z]{2,}\b|\b[A-Z]{3,}\b", name))
+    inner = re.search(r"\(([^)]+)\)", name)
+    if inner:
+        found.add(inner[1])
+    out = set()
+    for alias in found:
+        alias = re.sub(r"\(\s*d[ée]mo\s*\)", "", alias, flags=re.IGNORECASE)
+        folded = " ".join(re.findall(r"[a-z0-9']+", places.fold(alias)))
+        if len(folded) >= 3:
+            out.add(folded)
+    return out
+
+
+def _mentions(folded_text: str, name: str) -> bool:
+    return any(
+        re.search(rf"(?<![a-z0-9]){re.escape(a)}(?![a-z0-9])", folded_text) for a in _aliases(name)
+    )
+
+
+async def institution_names(db: AsyncSession, workspace_id: uuid.UUID) -> list[str]:
+    """Institutions of the newsroom's Annuaire (slice « dossier » may expose its own list)."""
+    try:
+        from app.modules.directory import institutions  # type: ignore[attr-defined]
+
+        return list(await institutions(db, workspace_id))
+    except (ImportError, AttributeError, TypeError):
+        pass
+    from app.core.models import Contact
+
+    rows = (
+        await db.execute(
+            select(Contact.kind, Contact.name, Contact.institution)
+            .where(or_(Contact.workspace_id == workspace_id, Contact.shared.is_(True)))
+            .limit(500)
+        )
+    ).all()
+    names = set()
+    for kind, name, institution in rows:
+        if institution:
+            names.add(institution)
+        if kind == "institution" and name:
+            names.add(name)
+    return [re.sub(r"\s*\(d[ée]mo\)\s*", "", n, flags=re.IGNORECASE).strip() for n in names if n]
+
+
+def quoted_issuers(text: str, known: list[str]) -> list[str]:
+    """Institutions the text names, longest names first: known ones (registry, Annuaire, the list
+    above), then « ministère de la Santé »-like names read from the text itself."""
+    folded = places.fold(text or "")
+    found = [name for name in sorted(set(known), key=len, reverse=True) if _mentions(folded, name)]
+    for m in _GENERIC.finditer(text or ""):
+        phrase = re.sub(r"\s+", " ", m.group(0)).strip()
+        if not any(
+            _mentions(places.fold(phrase), f) or _mentions(places.fold(f), phrase) for f in found
+        ):
+            found.append(phrase[0].upper() + phrase[1:])
+    return found
+
+
+def _shape(n: str) -> str:
+    """A number's format: digit runs as 9, letters as A, separators kept (2026-118 → 9-9)."""
+    return re.sub(r"[a-z]+", "A", re.sub(r"\d+", "9", places.fold(n)))
+
+
+def _out_of_sequence(number: str, registered: list[str]) -> str | None:
+    """Why a cited number cannot belong to the issuer's series, or None when it could."""
+    years = [int(y) for y in re.findall(r"(?<!\d)(19\d\d|20\d\d)(?!\d)", number)]
+    if any(y > dates.today().year for y in years):
+        return "future_year"
+    shapes = {_shape(n) for n in registered if n}
+    if len(registered) >= 2 and len(shapes) == 1 and _shape(number) not in shapes:
+        return "format"
+    return None
+
+
+def _brief(c: Communique, ws: Workspace, viewer: uuid.UUID) -> dict[str, Any]:
+    entry = out(c, ws, viewer).model_dump(mode="json")
+    keep = ("id", "issuer", "number", "issued_on", "title", "url", "is_demo", "own", "newsroom")
+    brief = {k: entry[k] for k in keep}
+    brief["text"] = c.text
+    brief["confirmed"] = entry["confirmed"]
+    brief["sealed"] = bool(entry["sealed"])
+    brief["seal_url"] = entry["sealed"]["url"] if entry["sealed"] else None
+    return brief
+
+
+def _result(status: Status, issuer, number, communique=None, found=None, summary="") -> dict:
+    found = found or {}
+    return {
+        "status": status,
+        "issuer": issuer,
+        "number": number,
+        "communique": communique,
+        "diff": found.get("diff", []),
+        "changed_numbers": found.get("changed_numbers", []),
+        "summary": found.get("summary") or summary,
+    }
+
+
+async def match_text(db: AsyncSession, workspace_id: uuid.UUID, text: str) -> dict[str, Any]:
+    """Which registered original a circulating text quotes, from this newsroom's registry and every
+    public newsroom's, and how it differs: `authentic` (same words), `modified` (the number exists,
+    the words differ: `diff` and `changed_numbers`), `not_found` (an institution or a number is
+    cited, nothing registered matches: « Introuvable », never « Faux »), `inconsistent` (the number
+    cannot belong to the issuer's series) or `none` (no institution or communiqué is cited)."""
+    text = (text or "").strip()
+    rows = (
+        await db.execute(
+            _visible(workspace_id)
+            .where(Communique.status == "original")
+            .order_by(Communique.created_at.desc())
+            .limit(500)
+        )
+    ).all()
+    # This newsroom's own entries first, then sealed ones, then the newest.
+    rows.sort(key=lambda r: (r[0].workspace_id != workspace_id, not r[0].sealed))
+    folded = places.fold(text)
+    cited = quoted_numbers(text)
+    registered_issuers = sorted({c.issuer for c, _ in rows})
+    annuaire = await institution_names(db, workspace_id)
+    issuers = quoted_issuers(text, [*registered_issuers, *annuaire, *INSTITUTIONS])
+
+    # 1. The number cited, from the issuer cited (or any issuer when none is named).
+    for number in cited:
+        hits = [(c, w) for c, w in rows if c.number and _num_key(c.number) == _num_key(number)]
+        named = [(c, w) for c, w in hits if _mentions(folded, c.issuer)]
+        if named or (hits and not issuers):
+            c, w = (named or hits)[0]
+            return _result(
+                "authentic" if compare(c, text)["status"] == "authentic" else "modified",
+                c.issuer,
+                c.number,
+                _brief(c, w, workspace_id),
+                compare(c, text),
+            )
+
+    # 2. The words: the original that holds most of what circulates (35 % at least, 4 words).
+    asked = words(text) - _GENERIC_WORDS - {w for w in words(text) if w.isdigit()}
+    for name in issuers:
+        asked -= words(name)
+    best, best_score = None, 0.0
+    for c, w in rows:
+        if issuers and not _mentions(folded, c.issuer):
+            continue
+        shared = asked & words(f"{c.title} {c.text}")
+        score = len(shared) / max(1, len(asked))
+        if len(shared) >= 4 and score > best_score:
+            best, best_score = (c, w), score
+    if best and best_score >= 0.35:
+        c, w = best
+        found = compare(c, text)
+        return _result(found["status"], c.issuer, c.number, _brief(c, w, workspace_id), found)
+
+    # 3. Nothing registered matches.
+    issuer = issuers[0] if issuers else None
+    number = cited[0] if cited else None
+    if not issuer and not number:
+        return _result("none", None, None, summary="Ce texte ne cite ni institution ni communiqué.")
+    who = f" de {issuer}" if issuer else ""
+    if issuer and number:
+        series = [
+            c.number for c, _ in rows if c.number and _mentions(places.fold(issuer), c.issuer)
+        ]
+        why = _out_of_sequence(number, series)
+        if why:
+            example = next((n for n in series if n), None)
+            reason = (
+                "porte une année à venir"
+                if why == "future_year"
+                else "ne suit pas la numérotation de ses communiqués enregistrés "
+                f"(par exemple N° {example})"
+            )
+            return _result(
+                "inconsistent",
+                issuer,
+                number,
+                summary=(
+                    f"Le numéro N° {number} cité pour {issuer} {reason}. Seul l'émetteur peut "
+                    "confirmer qu'un communiqué existe."
+                ),
+            )
+    cited_as = f"Aucun communiqué N° {number}{who}" if number else f"Aucun communiqué{who}"
+    return _result(
+        "not_found",
+        issuer,
+        number,
+        summary=(
+            f"{cited_as} ne correspond à ce texte dans le registre. Introuvable ne veut pas dire "
+            f"faux : le registre n'est jamais complet, seul l'émetteur peut confirmer."
+        ),
+    )
+
+
+class MatchIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    text: str = Field(min_length=3, max_length=30000)
+
+
+@router.post("/workspaces/{ws}/registry/match")
+async def match(body: MatchIn, member: Anyone, db: Db) -> dict:
+    """Compare a circulating text with the registered originals (no model involved)."""
+    _ensure_reader(member)
+    return await match_text(db, member.workspace_id, body.text)
 
 
 # Kept for the first crew graph, which reads the older shape; new callers use `match_text`.

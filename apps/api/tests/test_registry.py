@@ -82,6 +82,84 @@ def test_a_journalist_cannot_register_but_records_a_fake_with_its_diff(as_user):
     ]
 
 
+def test_the_pitch_rumour_is_matched_to_the_original_and_shows_what_changed(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws, other = _workspace(alice), _workspace(bob, "Radio desk")
+    cid = alice.post(f"/api/v1/workspaces/{ws}/registry", json=ORIGINAL).json()["id"]
+    _public(alice, ws)
+    # Another newsroom pastes the rumour: the public newsroom's original is found by its number.
+    found = bob.post(f"/api/v1/workspaces/{other}/registry/match", json={"text": RUMOUR}).json()
+    assert found["status"] == "modified"
+    assert found["issuer"] == "JIRAMA" and found["number"] == "2026-118"
+    assert found["communique"]["id"] == cid and found["communique"]["newsroom"]["name"] == "Desk"
+    assert {"kind": "duration", "original": "4 heures par jour", "submitted": "72 heures"} in found[
+        "changed_numbers"
+    ]
+    assert {"kind": "percent", "original": None, "submitted": "40 %"} in found["changed_numbers"]
+    replaced = [op for op in found["diff"] if op["op"] == "replace"]
+    assert any(op["a"] == "4" and op["b"] == "72" for op in replaced)
+    assert {"op", "a", "b"} == set(found["diff"][0])
+    assert "4 heures par jour" in found["summary"] and "1er novembre 2026" in found["summary"]
+
+
+def test_match_statuses(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}/registry"
+    alice.post(base, json=ORIGINAL)
+    alice.post(
+        base,
+        json={
+            **ORIGINAL,
+            "number": "2026-090",
+            "title": "Travaux sur le réseau d'eau",
+            "text": "La JIRAMA annonce une coupure d'eau à Ivandry le mardi de 8 heures à midi.",
+        },
+    )
+
+    def match(text):
+        return alice.post(f"{base}/match", json={"text": text}).json()
+
+    forwarded = match(f"Transféré plusieurs fois\n{ORIGINAL_TEXT}")
+    assert forwarded["status"] == "authentic" and "mot pour mot" in forwarded["summary"]
+    # Found by its words even when the number is left out.
+    reworded = match(
+        ORIGINAL_TEXT.replace("COMMUNIQUÉ N° 2026-118. ", "").replace("4 heures", "8 heures")
+    )
+    assert reworded["status"] == "modified" and reworded["number"] == "2026-118"
+
+    unknown = match("Selon la CENI, communiqué N° 45/2026 : le scrutin est reporté.")
+    assert unknown["status"] == "not_found" and unknown["issuer"] == "CENI"
+    assert (
+        unknown["number"] == "45/2026" and "Introuvable ne veut pas dire faux" in unknown["summary"]
+    )
+    assert "faux" not in unknown["summary"].replace("pas dire faux", "")
+    odd = match("JIRAMA, communiqué n° 118/2026/DG : nouvelle grille tarifaire.")
+    assert odd["status"] == "inconsistent" and "2026-" in odd["summary"]
+    future = match("JIRAMA, communiqué N° 2031-001 : nouvelle grille tarifaire.")
+    assert future["status"] == "inconsistent" and "année à venir" in future["summary"]
+    ministry = match("Le Ministère de la Santé publique annonce la fermeture des écoles.")
+    assert ministry["status"] == "not_found" and ministry["issuer"].startswith(
+        "Ministère de la Santé"
+    )
+    assert match("Il pleut fort sur Toamasina ce matin, restez prudents.")["status"] == "none"
+
+
+def test_annuaire_institutions_count_as_issuers_and_veilleurs_cannot_match(as_user):
+    alice, eve = as_user("alice"), as_user("eve")
+    ws = _workspace(alice)
+    invite(alice, ws, eve, "veilleur")
+    contact = {"name": "Service de presse", "institution": "Office des ports (démo)"}
+    assert alice.post(f"/api/v1/workspaces/{ws}/contacts", json=contact).status_code == 201
+    found = alice.post(
+        f"/api/v1/workspaces/{ws}/registry/match",
+        json={"text": "L'Office des ports annonce la fermeture du quai."},
+    ).json()
+    assert found["status"] == "not_found" and found["issuer"] == "Office des ports"
+    blocked = eve.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": "N° 12 de la CENI"})
+    assert blocked.status_code == 403
+
+
 def test_a_private_newsrooms_fakes_are_never_counted_or_listed_elsewhere(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws, other = _workspace(alice), _workspace(bob, "Private desk")
