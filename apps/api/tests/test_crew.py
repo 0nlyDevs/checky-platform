@@ -380,3 +380,16 @@ def test_a_failed_recheck_keeps_the_first_search(as_user, monkeypatch, research,
     assert [d["status"] for d in web] == ["running", "done", "running", "skipped"]
     assert web[-1]["summary"] == "Recherche ciblée indisponible"
     assert result["results"][0]["read_status"] == "read" and "recheck" not in result
+
+
+def test_archives_share_a_name_with_the_message(as_user, monkeypatch, research):
+    _forbid_models(monkeypatch)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    for title, text in [
+        ("Calendrier", "Les épreuves commencent à partir du 24 novembre 2026, sur tout le pays."),
+        ("Toamasina", "La JIRAMA annonce un délestage de 4 heures à Toamasina."),
+    ]:
+        alice.post(f"/api/v1/workspaces/{ws}/sources", json={"title": title, "text": text})
+    _, result = _run(alice, ws, text=DEMO_RUMOUR_TEXT, ai_enabled=False)
+    assert [a["title"] for a in result["archives"]] == ["Toamasina"]

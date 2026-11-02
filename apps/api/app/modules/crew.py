@@ -457,9 +457,16 @@ async def _archives(ws: uuid.UUID, text: str, use_embeddings: bool) -> list[dict
                 .limit(200)
             )
         ).all()
+    # A name the message gives (JIRAMA, Antananarivo…) must be among the shared words: « à partir
+    # du », « novembre 2026 » and « tout » alone matched an exam calendar to a power-cut rumour.
+    names = words(" ".join(re.findall(r"\b[A-ZÀ-Ý][\w'-]*", text)))
     scored = sorted(
-        ((len(asked & words(s.title + " " + (s.text or ""))), s) for s in rows),
-        key=lambda pair: pair[0],
+        (
+            (len(asked & found), bool(names & found), s)
+            for s in rows
+            for found in [words(s.title + " " + (s.text or ""))]
+        ),
+        key=lambda row: (row[1], row[0]),
         reverse=True,
     )
     return [
@@ -472,8 +479,8 @@ async def _archives(ws: uuid.UUID, text: str, use_embeddings: bool) -> list[dict
             "published_at": s.published_at,
             "kind": s.kind,
         }
-        for score, s in scored[:4]
-        if score >= ARCHIVE_MIN_WORDS
+        for score, named, s in scored[:4]
+        if named and score >= ARCHIVE_MIN_WORDS
     ]
 
 
