@@ -16,6 +16,7 @@ import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { uploadFile, type Source } from "@/lib/upload";
 import { cn } from "@/lib/utils";
+import { ImageTrace } from "@/components/sources/image-trace";
 
 const KIND_ICON: Record<string, Icon> = { url: IconLink, pdf: IconFileText, image: IconImage, audio: IconWaveform, video: IconVideoCamera, text: IconTextT };
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,application/pdf,audio/*,video/mp4,video/webm,video/quicktime,video/3gpp";
@@ -71,12 +72,7 @@ function ImageFacts({ source }: { source: Source }) {
           )}
         </ul>
       )}
-      {!!meta.ai_markers?.length && (
-        <p className="flex items-start gap-1.5 font-medium text-verdict-misleading-ink">
-          <IconSparkle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          {t.sources.aiMarkers(meta.ai_markers.join(", "))}
-        </p>
-      )}
+      {!!meta.ai_markers?.length && <ImageTrace state="detected">{t.sources.aiMarkers(meta.ai_markers.join(", "))}</ImageTrace>}
       {meta.content_credentials && (
         <p className="flex items-start gap-1.5">
           <IconSealCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -245,10 +241,9 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
           <audio ref={(el) => { audio.current = el; }} controls preload="none" src={source.file.download_url} className="h-9 w-full max-w-md" />
         ))}
       {!!meta.ai_markers?.length && (
-        <p className="flex items-start gap-1.5 text-sm font-medium text-verdict-misleading-ink">
-          <IconSparkle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+        <ImageTrace state="detected" className="text-sm">
           {t.sources.aiMarkers(meta.ai_markers.join(", "))}
-        </p>
+        </ImageTrace>
       )}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
         <button
