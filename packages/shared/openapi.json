@@ -475,6 +475,213 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/permissions": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Permissions",
+        "operationId": "permissions_api_v1_workspaces__ws__permissions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/radios": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Radios",
+        "operationId": "radios_api_v1_workspaces__ws__radios_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RadioOut"
+                  },
+                  "title": "Response Radios Api V1 Workspaces  Ws  Radios Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Create Radio",
+        "operationId": "create_radio_api_v1_workspaces__ws__radios_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RadioIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadioOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/radios/{radio_id}": {
+      "delete": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Delete Radio",
+        "operationId": "delete_radio_api_v1_workspaces__ws__radios__radio_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "radio_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Radio Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/items": {
       "get": {
         "tags": [
@@ -2702,6 +2909,140 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TipStatusOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/flashs": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Flashs",
+        "operationId": "flashs_api_v1_public_flashs_get",
+        "parameters": [
+          {
+            "name": "newsroom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Newsroom"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FlashsOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/v/{ref}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Short Verdict",
+        "description": "`/v/145` → the newest public verdict whose reference ends with that number (FAN-0145).",
+        "operationId": "short_verdict_api_v1_public_v__ref__get",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Ref"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/radios/{token}": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Radio",
+        "operationId": "radio_api_v1_public_radios__token__get",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RadioPublicOut"
                 }
               }
             }
@@ -7484,6 +7825,418 @@
           }
         }
       }
+    },
+    "/api/v1/public/verify": {
+      "post": {
+        "tags": [
+          "public-verify"
+        ],
+        "summary": "Verify",
+        "operationId": "verify_api_v1_public_verify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__verify_public__VerifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__verify_public__VerifyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/notify": {
+      "post": {
+        "tags": [
+          "public-verify"
+        ],
+        "summary": "Notify",
+        "operationId": "notify_api_v1_public_notify_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotifyIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotifyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/questions": {
+      "get": {
+        "tags": [
+          "public-verify"
+        ],
+        "summary": "Questions",
+        "operationId": "questions_api_v1_workspaces__ws__questions_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 7,
+              "title": "Days"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionGroup"
+                  },
+                  "title": "Response Questions Api V1 Workspaces  Ws  Questions Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/sms/inbound": {
+      "post": {
+        "tags": [
+          "sms"
+        ],
+        "summary": "Inbound",
+        "operationId": "inbound_api_v1_public_sms_inbound_post",
+        "parameters": [
+          {
+            "name": "x-gateway-secret",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gateway-Secret"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InboundIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboundOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/sms/outbox": {
+      "get": {
+        "tags": [
+          "sms"
+        ],
+        "summary": "Outbox",
+        "description": "The replies to send, oldest first; handing them over marks them sent.",
+        "operationId": "outbox_api_v1_public_sms_outbox_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "x-gateway-secret",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Gateway-Secret"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SmsOut"
+                  },
+                  "title": "Response Outbox Api V1 Public Sms Outbox Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/sms/simulate": {
+      "post": {
+        "tags": [
+          "sms"
+        ],
+        "summary": "Simulate",
+        "description": "The phone-shaped form in Paramètres: the gateway's own handling, with the secret kept on the\nserver, from the fictional block only, so its replies are shown and never sent.",
+        "operationId": "simulate_api_v1_workspaces__ws__sms_simulate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/sms/messages": {
+      "get": {
+        "tags": [
+          "sms"
+        ],
+        "summary": "Messages",
+        "description": "The newsroom's latest SMS in and out (numbers masked), simulated ones included.",
+        "operationId": "messages_api_v1_workspaces__ws__sms_messages_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SmsOut"
+                  },
+                  "title": "Response Messages Api V1 Workspaces  Ws  Sms Messages Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8220,6 +8973,44 @@
           "skipped"
         ],
         "title": "BatchOut"
+      },
+      "Capability": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "roles": {
+            "additionalProperties": {
+              "type": "boolean"
+            },
+            "type": "object",
+            "title": "Roles"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string",
+                "const": "own"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "route": {
+            "type": "string",
+            "title": "Route"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "roles",
+          "route"
+        ],
+        "title": "Capability"
       },
       "CarnetEntry": {
         "properties": {
@@ -10314,6 +11105,31 @@
         ],
         "title": "DocumentOut"
       },
+      "EvidenceOut": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "date"
+        ],
+        "title": "EvidenceOut"
+      },
       "Fact": {
         "properties": {
           "n": {
@@ -10356,6 +11172,72 @@
           "label"
         ],
         "title": "Fact"
+      },
+      "FactOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "registry",
+              "figure",
+              "provenance",
+              "tone",
+              "credibility"
+            ],
+            "title": "Kind"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "diff": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Diff"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "text"
+        ],
+        "title": "FactOut"
       },
       "FakeIn": {
         "properties": {
@@ -10958,6 +11840,99 @@
         ],
         "title": "FileOut"
       },
+      "FlashLine": {
+        "properties": {
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "newsroom": {
+            "type": "string",
+            "title": "Newsroom"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          },
+          "fr": {
+            "type": "string",
+            "title": "Fr"
+          },
+          "mg": {
+            "type": "string",
+            "title": "Mg"
+          }
+        },
+        "type": "object",
+        "required": [
+          "n",
+          "id",
+          "ref",
+          "verdict",
+          "title",
+          "newsroom",
+          "link",
+          "fr",
+          "mg"
+        ],
+        "title": "FlashLine"
+      },
+      "FlashsOut": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "newsroom": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/NewsroomOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/FlashLine"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "newsroom",
+          "items"
+        ],
+        "title": "FlashsOut"
+      },
       "FollowIn": {
         "properties": {
           "item_id": {
@@ -11386,6 +12361,96 @@
           "limitations"
         ],
         "title": "ImageOut"
+      },
+      "InboundIn": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 3,
+            "title": "From"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 1600,
+            "title": "Text",
+            "default": ""
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "from"
+        ],
+        "title": "InboundIn"
+      },
+      "InboundOut": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "verdict",
+              "received",
+              "followed",
+              "subscribed",
+              "stopped",
+              "help"
+            ],
+            "title": "Action"
+          },
+          "reply": {
+            "type": "string",
+            "title": "Reply"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg"
+            ],
+            "title": "Language"
+          },
+          "phone_hash": {
+            "type": "string",
+            "title": "Phone Hash"
+          },
+          "masked": {
+            "type": "string",
+            "title": "Masked"
+          },
+          "verdict_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action",
+          "reply",
+          "language",
+          "phone_hash",
+          "masked"
+        ],
+        "title": "InboundOut"
       },
       "InvitationIn": {
         "properties": {
@@ -11952,10 +13017,114 @@
             "type": "boolean",
             "title": "Ai Enabled",
             "default": true
+          },
+          "beats": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 40,
+            "title": "Beats"
+          },
+          "timezone": {
+            "type": "string",
+            "title": "Timezone",
+            "default": "Indian/Antananarivo"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 2,
+            "title": "Country",
+            "default": "Madagascar"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
           }
         },
         "type": "object",
-        "title": "NewsroomSettings"
+        "title": "NewsroomSettings",
+        "description": "A newsroom's own rules, kept in `workspace.settings` (JSONB): a field left out of a PATCH\nkeeps its value, and a newsroom that never set one reads the default."
+      },
+      "NotifyIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 3,
+            "title": "Text"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "contact": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 5,
+            "title": "Contact"
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg",
+              "en"
+            ],
+            "title": "Lang",
+            "default": "fr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "contact"
+        ],
+        "title": "NotifyIn"
+      },
+      "NotifyOut": {
+        "properties": {
+          "masked": {
+            "type": "string",
+            "title": "Masked"
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "sms",
+              "email"
+            ],
+            "title": "Channel"
+          },
+          "followed": {
+            "type": "boolean",
+            "title": "Followed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "masked",
+          "channel",
+          "followed"
+        ],
+        "title": "NotifyOut"
       },
       "OfficialOut": {
         "properties": {
@@ -12390,6 +13559,35 @@
           "score"
         ],
         "title": "Passage"
+      },
+      "PermissionsOut": {
+        "properties": {
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Roles"
+          },
+          "double_signature": {
+            "type": "boolean",
+            "title": "Double Signature"
+          },
+          "capabilities": {
+            "items": {
+              "$ref": "#/components/schemas/Capability"
+            },
+            "type": "array",
+            "title": "Capabilities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "roles",
+          "double_signature",
+          "capabilities"
+        ],
+        "title": "PermissionsOut"
       },
       "PostIn": {
         "properties": {
@@ -13092,6 +14290,88 @@
         ],
         "title": "PublicTrajetOut"
       },
+      "QuestionGroup": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "regions": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Regions"
+          },
+          "channels": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Channels"
+          },
+          "waiting": {
+            "type": "integer",
+            "title": "Waiting"
+          },
+          "last_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last At"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "item_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Ref"
+          },
+          "item_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "count",
+          "regions",
+          "channels",
+          "waiting",
+          "last_at",
+          "item_id",
+          "item_ref",
+          "item_status"
+        ],
+        "title": "QuestionGroup"
+      },
       "QuestionIn": {
         "properties": {
           "contact_id": {
@@ -13292,6 +14572,282 @@
           "at"
         ],
         "title": "RadioDiffuseOut"
+      },
+      "RadioIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "frequency": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "languages": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "fr",
+                "mg",
+                "en"
+              ]
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "contact_role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Role"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "sms": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms"
+          },
+          "format_pref": {
+            "type": "string",
+            "enum": [
+              "script",
+              "audio"
+            ],
+            "title": "Format Pref",
+            "default": "script"
+          },
+          "hours": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "RadioIn"
+      },
+      "RadioOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency"
+          },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "contact_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Role"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "sms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms"
+          },
+          "format_pref": {
+            "type": "string",
+            "title": "Format Pref"
+          },
+          "hours": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          },
+          "approved": {
+            "type": "boolean",
+            "title": "Approved"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "link": {
+            "type": "string",
+            "title": "Link"
+          },
+          "broadcasts": {
+            "type": "integer",
+            "title": "Broadcasts"
+          },
+          "last_broadcast_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Broadcast At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "frequency",
+          "location",
+          "languages",
+          "contact_role",
+          "whatsapp",
+          "sms",
+          "format_pref",
+          "hours",
+          "approved",
+          "is_demo",
+          "link",
+          "broadcasts",
+          "last_broadcast_at"
+        ],
+        "title": "RadioOut"
+      },
+      "RadioPublicOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "frequency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Frequency"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "newsroom": {
+            "$ref": "#/components/schemas/NewsroomOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "frequency",
+          "languages",
+          "newsroom"
+        ],
+        "title": "RadioPublicOut"
       },
       "RatingOut": {
         "properties": {
@@ -13554,6 +15110,53 @@
           "rating"
         ],
         "title": "Review"
+      },
+      "ReviewOut": {
+        "properties": {
+          "publisher": {
+            "type": "string",
+            "title": "Publisher"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "rating": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rating"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "publisher",
+          "url",
+          "rating",
+          "date",
+          "title"
+        ],
+        "title": "ReviewOut"
       },
       "RevokedKeyOut": {
         "properties": {
@@ -14216,6 +15819,47 @@
         ],
         "title": "SimilarOut"
       },
+      "SimulateIn": {
+        "properties": {
+          "from": {
+            "type": "string",
+            "maxLength": 40,
+            "title": "From",
+            "default": "+261 34 00 000 09"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 480,
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "SimulateIn"
+      },
+      "SimulateOut": {
+        "properties": {
+          "inbound": {
+            "$ref": "#/components/schemas/InboundOut"
+          },
+          "replies": {
+            "items": {
+              "$ref": "#/components/schemas/SmsOut"
+            },
+            "type": "array",
+            "title": "Replies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "inbound",
+          "replies"
+        ],
+        "title": "SimulateOut"
+      },
       "Skipped": {
         "properties": {
           "id": {
@@ -14234,6 +15878,62 @@
           "code"
         ],
         "title": "Skipped"
+      },
+      "SmsOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "phone_hash": {
+            "type": "string",
+            "title": "Phone Hash"
+          },
+          "masked": {
+            "type": "string",
+            "title": "Masked"
+          },
+          "to": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "direction",
+          "phone_hash",
+          "masked",
+          "text",
+          "status",
+          "created_at"
+        ],
+        "title": "SmsOut"
       },
       "SourceIn": {
         "properties": {
@@ -14961,6 +16661,40 @@
           },
           "newsroom": {
             "$ref": "#/components/schemas/NewsroomOut"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "eleve",
+                  "moyen",
+                  "faible"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceOut"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
           }
         },
         "type": "object",
@@ -15418,6 +17152,118 @@
           "key_id",
           "sha256",
           "summary"
+        ],
+        "title": "VerifyOut"
+      },
+      "app__modules__verify_public__VerifyIn": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 6000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VerifyIn"
+      },
+      "app__modules__verify_public__VerifyOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "signed",
+              "external",
+              "facts",
+              "none"
+            ],
+            "title": "Status"
+          },
+          "signed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "external": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewOut"
+            },
+            "type": "array",
+            "title": "External"
+          },
+          "facts": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Facts"
+          },
+          "known": {
+            "items": {
+              "$ref": "#/components/schemas/FactOut"
+            },
+            "type": "array",
+            "title": "Known"
+          },
+          "followed_since": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followed Since"
+          },
+          "followed_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Followed By"
+          },
+          "search_status": {
+            "type": "string",
+            "enum": [
+              "done",
+              "unavailable",
+              "skipped"
+            ],
+            "title": "Search Status",
+            "default": "skipped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
         ],
         "title": "VerifyOut"
       }

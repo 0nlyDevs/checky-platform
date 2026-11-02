@@ -148,6 +148,58 @@ export interface paths {
         patch: operations["change_role_api_v1_workspaces__ws__members__user_id__patch"];
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Permissions */
+        get: operations["permissions_api_v1_workspaces__ws__permissions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/radios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Radios */
+        get: operations["radios_api_v1_workspaces__ws__radios_get"];
+        put?: never;
+        /** Create Radio */
+        post: operations["create_radio_api_v1_workspaces__ws__radios_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/radios/{radio_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Radio */
+        delete: operations["delete_radio_api_v1_workspaces__ws__radios__radio_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/items": {
         parameters: {
             query?: never;
@@ -654,6 +706,60 @@ export interface paths {
         };
         /** Tip Status */
         get: operations["tip_status_api_v1_public_tips__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/flashs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Flashs */
+        get: operations["flashs_api_v1_public_flashs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/v/{ref}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Short Verdict
+         * @description `/v/145` → the newest public verdict whose reference ends with that number (FAN-0145).
+         */
+        get: operations["short_verdict_api_v1_public_v__ref__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/radios/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Radio */
+        get: operations["radio_api_v1_public_radios__token__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1976,6 +2082,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify */
+        post: operations["verify_api_v1_public_verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/notify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Notify */
+        post: operations["notify_api_v1_public_notify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Questions */
+        get: operations["questions_api_v1_workspaces__ws__questions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/sms/inbound": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Inbound */
+        post: operations["inbound_api_v1_public_sms_inbound_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/sms/outbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Outbox
+         * @description The replies to send, oldest first; handing them over marks them sent.
+         */
+        get: operations["outbox_api_v1_public_sms_outbox_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/sms/simulate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Simulate
+         * @description The phone-shaped form in Paramètres: the gateway's own handling, with the secret kept on the
+         *     server, from the fictional block only, so its replies are shown and never sent.
+         */
+        post: operations["simulate_api_v1_workspaces__ws__sms_simulate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/sms/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Messages
+         * @description The newsroom's latest SMS in and out (numbers masked), simulated ones included.
+         */
+        get: operations["messages_api_v1_workspaces__ws__sms_messages_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2226,6 +2461,19 @@ export interface components {
             signed: components["schemas"]["ItemOut"][];
             /** Skipped */
             skipped: components["schemas"]["Skipped"][];
+        };
+        /** Capability */
+        Capability: {
+            /** Key */
+            key: string;
+            /** Roles */
+            roles: {
+                [key: string]: boolean;
+            };
+            /** Scope */
+            scope?: "own" | null;
+            /** Route */
+            route: string;
         };
         /** CarnetEntry */
         CarnetEntry: {
@@ -2918,6 +3166,13 @@ export interface components {
             /** Demo */
             demo: boolean;
         };
+        /** EvidenceOut */
+        EvidenceOut: {
+            /** Title */
+            title: string;
+            /** Date */
+            date: string | null;
+        };
         /** Fact */
         Fact: {
             /** N */
@@ -2931,6 +3186,26 @@ export interface components {
             label: string;
             /** Item Id */
             item_id?: string | null;
+        };
+        /** FactOut */
+        FactOut: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "registry" | "figure" | "provenance" | "tone" | "credibility";
+            /** Text */
+            text: string;
+            /** Source */
+            source?: string | null;
+            /** Date */
+            date?: string | null;
+            /** Url */
+            url?: string | null;
+            /** Diff */
+            diff?: {
+                [key: string]: unknown;
+            }[];
         };
         /** FakeIn */
         FakeIn: {
@@ -3123,6 +3398,38 @@ export interface components {
             /** Download Url */
             download_url: string | null;
         };
+        /** FlashLine */
+        FlashLine: {
+            /** N */
+            n: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref */
+            ref: string | null;
+            /** Verdict */
+            verdict: string;
+            /** Title */
+            title: string;
+            /** Newsroom */
+            newsroom: string;
+            /** Link */
+            link: string;
+            /** Fr */
+            fr: string;
+            /** Mg */
+            mg: string;
+        };
+        /** FlashsOut */
+        FlashsOut: {
+            /** Date */
+            date: string;
+            newsroom: components["schemas"]["NewsroomOut"] | null;
+            /** Items */
+            items: components["schemas"]["FlashLine"][];
+        };
         /** FollowIn */
         FollowIn: {
             /** Item Id */
@@ -3287,6 +3594,39 @@ export interface components {
             reverse_search: components["schemas"]["SearchLink"][];
             /** Limitations */
             limitations: string[];
+        };
+        /** InboundIn */
+        InboundIn: {
+            /** From */
+            from: string;
+            /**
+             * Text
+             * @default
+             */
+            text: string;
+            /** Received At */
+            received_at?: string | null;
+        };
+        /** InboundOut */
+        InboundOut: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "verdict" | "received" | "followed" | "subscribed" | "stopped" | "help";
+            /** Reply */
+            reply: string;
+            /**
+             * Language
+             * @enum {string}
+             */
+            language: "fr" | "mg";
+            /** Phone Hash */
+            phone_hash: string;
+            /** Masked */
+            masked: string;
+            /** Verdict Id */
+            verdict_id?: string | null;
         };
         /** InvitationIn */
         InvitationIn: {
@@ -3502,7 +3842,11 @@ export interface components {
             /** Name */
             name: string;
         };
-        /** NewsroomSettings */
+        /**
+         * NewsroomSettings
+         * @description A newsroom's own rules, kept in `workspace.settings` (JSONB): a field left out of a PATCH
+         *     keeps its value, and a newsroom that never set one reads the default.
+         */
         NewsroomSettings: {
             /**
              * Double Signature
@@ -3514,6 +3858,47 @@ export interface components {
              * @default true
              */
             ai_enabled: boolean;
+            /** Beats */
+            beats?: string[];
+            /**
+             * Timezone
+             * @default Indian/Antananarivo
+             */
+            timezone: string;
+            /**
+             * Country
+             * @default Madagascar
+             */
+            country: string;
+            /** Region */
+            region?: string | null;
+        };
+        /** NotifyIn */
+        NotifyIn: {
+            /** Text */
+            text: string;
+            /** Item Id */
+            item_id?: string | null;
+            /** Contact */
+            contact: string;
+            /**
+             * Lang
+             * @default fr
+             * @enum {string}
+             */
+            lang: "fr" | "mg" | "en";
+        };
+        /** NotifyOut */
+        NotifyOut: {
+            /** Masked */
+            masked: string;
+            /**
+             * Channel
+             * @enum {string}
+             */
+            channel: "sms" | "email";
+            /** Followed */
+            followed: boolean;
         };
         /** OfficialOut */
         OfficialOut: {
@@ -3662,6 +4047,15 @@ export interface components {
             end_s: number | null;
             /** Score */
             score: number;
+        };
+        /** PermissionsOut */
+        PermissionsOut: {
+            /** Roles */
+            roles: string[];
+            /** Double Signature */
+            double_signature: boolean;
+            /** Capabilities */
+            capabilities: components["schemas"]["Capability"][];
         };
         /** PostIn */
         PostIn: {
@@ -3920,6 +4314,34 @@ export interface components {
             /** Summary */
             summary: string;
         };
+        /** QuestionGroup */
+        QuestionGroup: {
+            /** Text */
+            text: string;
+            /** Count */
+            count: number;
+            /** Regions */
+            regions: {
+                [key: string]: number;
+            };
+            /** Channels */
+            channels: {
+                [key: string]: number;
+            };
+            /** Waiting */
+            waiting: number;
+            /**
+             * Last At
+             * Format: date-time
+             */
+            last_at: string;
+            /** Item Id */
+            item_id: string | null;
+            /** Item Ref */
+            item_ref: string | null;
+            /** Item Status */
+            item_status: string | null;
+        };
         /** QuestionIn */
         QuestionIn: {
             /**
@@ -3991,6 +4413,79 @@ export interface components {
              * Format: date-time
              */
             at: string;
+        };
+        /** RadioIn */
+        RadioIn: {
+            /** Name */
+            name: string;
+            /** Frequency */
+            frequency?: string | null;
+            /** Region */
+            region?: string | null;
+            /** Languages */
+            languages?: ("fr" | "mg" | "en")[];
+            /** Contact Role */
+            contact_role?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
+            /** Sms */
+            sms?: string | null;
+            /**
+             * Format Pref
+             * @default script
+             * @enum {string}
+             */
+            format_pref: "script" | "audio";
+            /** Hours */
+            hours?: string | null;
+        };
+        /** RadioOut */
+        RadioOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Frequency */
+            frequency: string | null;
+            /** Location */
+            location: {
+                [key: string]: unknown;
+            };
+            /** Languages */
+            languages: string[];
+            /** Contact Role */
+            contact_role: string | null;
+            /** Whatsapp */
+            whatsapp: string | null;
+            /** Sms */
+            sms: string | null;
+            /** Format Pref */
+            format_pref: string;
+            /** Hours */
+            hours: string | null;
+            /** Approved */
+            approved: boolean;
+            /** Is Demo */
+            is_demo: boolean;
+            /** Link */
+            link: string;
+            /** Broadcasts */
+            broadcasts: number;
+            /** Last Broadcast At */
+            last_broadcast_at: string | null;
+        };
+        /** RadioPublicOut */
+        RadioPublicOut: {
+            /** Name */
+            name: string;
+            /** Frequency */
+            frequency: string | null;
+            /** Languages */
+            languages: string[];
+            newsroom: components["schemas"]["NewsroomOut"];
         };
         /** RatingOut */
         RatingOut: {
@@ -4068,6 +4563,19 @@ export interface components {
              * Title
              * @default
              */
+            title: string;
+        };
+        /** ReviewOut */
+        ReviewOut: {
+            /** Publisher */
+            publisher: string;
+            /** Url */
+            url: string;
+            /** Rating */
+            rating: string | null;
+            /** Date */
+            date: string | null;
+            /** Title */
             title: string;
         };
         /** RevokedKeyOut */
@@ -4342,6 +4850,22 @@ export interface components {
             score: number;
             item: components["schemas"]["ItemOut"];
         };
+        /** SimulateIn */
+        SimulateIn: {
+            /**
+             * From
+             * @default +261 34 00 000 09
+             */
+            from: string;
+            /** Text */
+            text: string;
+        };
+        /** SimulateOut */
+        SimulateOut: {
+            inbound: components["schemas"]["InboundOut"];
+            /** Replies */
+            replies: components["schemas"]["SmsOut"][];
+        };
         /** Skipped */
         Skipped: {
             /**
@@ -4351,6 +4875,31 @@ export interface components {
             id: string;
             /** Code */
             code: string;
+        };
+        /** SmsOut */
+        SmsOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Direction */
+            direction: string;
+            /** Phone Hash */
+            phone_hash: string;
+            /** Masked */
+            masked: string;
+            /** To */
+            to?: string | null;
+            /** Text */
+            text: string;
+            /** Status */
+            status: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
         /** SourceIn */
         SourceIn: {
@@ -4590,6 +5139,12 @@ export interface components {
              */
             published_at: string;
             newsroom: components["schemas"]["NewsroomOut"];
+            /** Confidence */
+            confidence?: ("eleve" | "moyen" | "faible") | null;
+            /** Evidence */
+            evidence?: components["schemas"]["EvidenceOut"][];
+            /** Signed At */
+            signed_at?: string | null;
         };
         /** VerdictPage */
         VerdictPage: {
@@ -4737,6 +5292,40 @@ export interface components {
             sha256: string;
             /** Summary */
             summary: string | null;
+        };
+        /** VerifyIn */
+        app__modules__verify_public__VerifyIn: {
+            /** Text */
+            text?: string | null;
+            /** Url */
+            url?: string | null;
+        };
+        /** VerifyOut */
+        app__modules__verify_public__VerifyOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "signed" | "external" | "facts" | "none";
+            signed?: components["schemas"]["VerdictOut"] | null;
+            /** External */
+            external?: components["schemas"]["ReviewOut"][];
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
+            /** Known */
+            known?: components["schemas"]["FactOut"][];
+            /** Followed Since */
+            followed_since?: string | null;
+            /** Followed By */
+            followed_by?: string | null;
+            /**
+             * Search Status
+             * @default skipped
+             * @enum {string}
+             */
+            search_status: "done" | "unavailable" | "skipped";
         };
     };
     responses: never;
@@ -5037,6 +5626,133 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MemberOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permissions_api_v1_workspaces__ws__permissions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    radios_api_v1_workspaces__ws__radios_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadioOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_radio_api_v1_workspaces__ws__radios_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RadioIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadioOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_radio_api_v1_workspaces__ws__radios__radio_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                radio_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -6244,6 +6960,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TipStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    flashs_api_v1_public_flashs_get: {
+        parameters: {
+            query?: {
+                newsroom?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FlashsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    short_verdict_api_v1_public_v__ref__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ref: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    radio_api_v1_public_radios__token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RadioPublicOut"];
                 };
             };
             /** @description Validation Error */
@@ -8881,6 +9690,242 @@ export interface operations {
                     "application/json": {
                         [key: string]: unknown;
                     };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_api_v1_public_verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__modules__verify_public__VerifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__verify_public__VerifyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    notify_api_v1_public_notify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotifyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotifyOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    questions_api_v1_workspaces__ws__questions_get: {
+        parameters: {
+            query?: {
+                region?: string | null;
+                days?: number;
+            };
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionGroup"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    inbound_api_v1_public_sms_inbound_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-gateway-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InboundIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboundOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    outbox_api_v1_public_sms_outbox_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "x-gateway-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    simulate_api_v1_workspaces__ws__sms_simulate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SimulateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SimulateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    messages_api_v1_workspaces__ws__sms_messages_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmsOut"][];
                 };
             };
             /** @description Validation Error */
