@@ -6697,7 +6697,7 @@
           "trajet"
         ],
         "summary": "Diffusion",
-        "description": "Every format of the signed verdict, written once by the model (one call, kept in memory\nuntil the verdict or its explanation change) or by templates when AI is off or busy.",
+        "description": "Every format of the signed verdict (see `render`), the poster, the seal and the reread.",
         "operationId": "diffusion_api_v1_workspaces__ws__items__item_id__diffusion_get",
         "security": [
           {
@@ -6750,13 +6750,351 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/items/{item_id}/seal": {
+      "get": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Item Seal",
+        "description": "The QR of the card and the story: the newsroom's signature over the published verdict.",
+        "operationId": "item_seal_api_v1_workspaces__ws__items__item_id__seal_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerdictSealOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/sceau/v/{item_id}": {
+      "get": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Public Verdict Seal",
+        "description": "The seal of a published verdict as it reads now, to compare with a card's QR. Only a public\nnewsroom's published verdict; nothing of the dossier beyond what its public page shows.",
+        "operationId": "public_verdict_seal_api_v1_public_sceau_v__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicVerdictSealOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/sceau/v/{item_id}/verify": {
+      "post": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Verify Verdict Seal",
+        "description": "The server-side check, for browsers without Ed25519 in WebCrypto: the QR's message and\nsignature against the key it names, and whether that version is still the published one.",
+        "operationId": "verify_verdict_seal_api_v1_public_sceau_v__item_id__verify_post",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SealCheckIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SealCheckOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/relu-mg": {
+      "get": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Relu State",
+        "operationId": "relu_state_api_v1_workspaces__ws__items__item_id__relu_mg_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReluState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Mark Relu",
+        "description": "« Relu en malgache »: the journalist read the Malagasy formats (lines, SMS, post, card) and\nvouches for these exact strings (`mg_hash`). Until then they cannot be copied or sent, and any\nchange to them afterwards locks them again.",
+        "operationId": "mark_relu_api_v1_workspaces__ws__items__item_id__relu_mg_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReluIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReluState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "trajet"
+        ],
+        "summary": "Clear Relu",
+        "operationId": "clear_relu_api_v1_workspaces__ws__items__item_id__relu_mg_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReluState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/items/{item_id}/diffuse": {
       "post": {
         "tags": [
           "trajet"
         ],
         "summary": "Diffuse",
-        "description": "The journalist sent the formats down these routes (from their own phone, radio or print\nshop): each becomes a truth stop `sent`. Malagasy formats go only once a speaker reread them.",
+        "description": "The journalist sent the formats down these routes (from their own phone, radio or print\nshop): each becomes a truth stop `sent`. Malagasy formats go only as a speaker reread them:\nrendered again here, they must match the attested strings exactly, or they stay locked.",
         "operationId": "diffuse_api_v1_workspaces__ws__items__item_id__diffuse_post",
         "security": [
           {
@@ -12254,6 +12592,18 @@
             "type": "boolean",
             "title": "Relu Mg",
             "default": false
+          },
+          "mg_hash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mg Hash"
           }
         },
         "type": "object",
@@ -12280,6 +12630,24 @@
             },
             "type": "array",
             "title": "Dropped"
+          },
+          "mg": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Mg"
+          },
+          "mg_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mg Hash"
           }
         },
         "type": "object",
@@ -13423,6 +13791,59 @@
             },
             "type": "array",
             "title": "Gaps"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "check_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check Label"
+          },
+          "seal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerdictSealOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mg_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mg Hash"
+          },
+          "relu_mg": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReluOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "radio": {
             "type": "string",
@@ -14921,6 +15342,33 @@
               }
             ],
             "title": "Short Link"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "check_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check Label"
+          },
+          "sealed": {
+            "type": "boolean",
+            "title": "Sealed",
+            "default": false
           }
         },
         "type": "object",
@@ -15251,6 +15699,15 @@
             "type": "string",
             "title": "Issuer"
           },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "communique",
+              "verdict"
+            ],
+            "title": "Kind",
+            "default": "communique"
+          },
           "alg": {
             "type": "string",
             "title": "Alg"
@@ -15526,6 +15983,115 @@
           "summary"
         ],
         "title": "PublicTrajetOut"
+      },
+      "PublicVerdictSealOut": {
+        "properties": {
+          "alg": {
+            "type": "string",
+            "title": "Alg"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "item_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "verdict": {
+            "type": "string",
+            "title": "Verdict"
+          },
+          "check_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check Label"
+          },
+          "newsroom": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Newsroom"
+          },
+          "published_url": {
+            "type": "string",
+            "title": "Published Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alg",
+          "key_id",
+          "public_key",
+          "payload",
+          "message",
+          "signature",
+          "url",
+          "number",
+          "item_id",
+          "ref",
+          "title",
+          "verdict",
+          "check_label",
+          "newsroom",
+          "published_url"
+        ],
+        "title": "PublicVerdictSealOut"
       },
       "QuestionGroup": {
         "properties": {
@@ -16197,6 +16763,81 @@
         ],
         "title": "RegionCount"
       },
+      "ReluIn": {
+        "properties": {
+          "mg_hash": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "title": "Mg Hash"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "mg_hash"
+        ],
+        "title": "ReluIn"
+      },
+      "ReluOut": {
+        "properties": {
+          "by": {
+            "type": "string",
+            "title": "By"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "mg_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mg Hash"
+          },
+          "current": {
+            "type": "boolean",
+            "title": "Current"
+          }
+        },
+        "type": "object",
+        "required": [
+          "by",
+          "name",
+          "at",
+          "current"
+        ],
+        "title": "ReluOut"
+      },
+      "ReluState": {
+        "properties": {
+          "relu_mg": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReluOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "relu_mg"
+        ],
+        "title": "ReluState"
+      },
       "ReponseIn": {
         "properties": {
           "stance": {
@@ -16611,6 +17252,15 @@
             "type": "string",
             "title": "Issuer"
           },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "communique",
+              "verdict"
+            ],
+            "title": "Kind",
+            "default": "communique"
+          },
           "revoked_at": {
             "type": "string",
             "format": "date-time",
@@ -16898,6 +17548,74 @@
           "antenne"
         ],
         "title": "RubriqueOut"
+      },
+      "SealCheckIn": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 10,
+            "title": "Message"
+          },
+          "signature": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 10,
+            "title": "Signature"
+          },
+          "key_id": {
+            "type": "string",
+            "maxLength": 40,
+            "minLength": 3,
+            "title": "Key Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "message",
+          "signature",
+          "key_id"
+        ],
+        "title": "SealCheckIn"
+      },
+      "SealCheckOut": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "revoked": {
+            "type": "boolean",
+            "title": "Revoked"
+          },
+          "current": {
+            "type": "boolean",
+            "title": "Current"
+          },
+          "newsroom": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Newsroom"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "revoked",
+          "current",
+          "newsroom"
+        ],
+        "title": "SealCheckOut"
       },
       "SealKeysOut": {
         "properties": {
@@ -18245,6 +18963,63 @@
           "total"
         ],
         "title": "VerdictPage"
+      },
+      "VerdictSealOut": {
+        "properties": {
+          "alg": {
+            "type": "string",
+            "title": "Alg"
+          },
+          "key_id": {
+            "type": "string",
+            "title": "Key Id"
+          },
+          "public_key": {
+            "type": "string",
+            "title": "Public Key"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alg",
+          "key_id",
+          "public_key",
+          "payload",
+          "message",
+          "signature",
+          "url",
+          "number"
+        ],
+        "title": "VerdictSealOut",
+        "description": "The newsroom's signature on the published verdict, as the card's QR carries it."
       },
       "VerificationOut": {
         "properties": {

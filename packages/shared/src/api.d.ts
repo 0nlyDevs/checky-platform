@@ -1785,13 +1785,98 @@ export interface paths {
         };
         /**
          * Diffusion
-         * @description Every format of the signed verdict, written once by the model (one call, kept in memory
-         *     until the verdict or its explanation change) or by templates when AI is off or busy.
+         * @description Every format of the signed verdict (see `render`), the poster, the seal and the reread.
          */
         get: operations["diffusion_api_v1_workspaces__ws__items__item_id__diffusion_get"];
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/seal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Item Seal
+         * @description The QR of the card and the story: the newsroom's signature over the published verdict.
+         */
+        get: operations["item_seal_api_v1_workspaces__ws__items__item_id__seal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/sceau/v/{item_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public Verdict Seal
+         * @description The seal of a published verdict as it reads now, to compare with a card's QR. Only a public
+         *     newsroom's published verdict; nothing of the dossier beyond what its public page shows.
+         */
+        get: operations["public_verdict_seal_api_v1_public_sceau_v__item_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/sceau/v/{item_id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Verdict Seal
+         * @description The server-side check, for browsers without Ed25519 in WebCrypto: the QR's message and
+         *     signature against the key it names, and whether that version is still the published one.
+         */
+        post: operations["verify_verdict_seal_api_v1_public_sceau_v__item_id__verify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/relu-mg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Relu State */
+        get: operations["relu_state_api_v1_workspaces__ws__items__item_id__relu_mg_get"];
+        put?: never;
+        /**
+         * Mark Relu
+         * @description « Relu en malgache »: the journalist read the Malagasy formats (lines, SMS, post, card) and
+         *     vouches for these exact strings (`mg_hash`). Until then they cannot be copied or sent, and any
+         *     change to them afterwards locks them again.
+         */
+        post: operations["mark_relu_api_v1_workspaces__ws__items__item_id__relu_mg_post"];
+        /** Clear Relu */
+        delete: operations["clear_relu_api_v1_workspaces__ws__items__item_id__relu_mg_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1809,7 +1894,8 @@ export interface paths {
         /**
          * Diffuse
          * @description The journalist sent the formats down these routes (from their own phone, radio or print
-         *     shop): each becomes a truth stop `sent`. Malagasy formats go only once a speaker reread them.
+         *     shop): each becomes a truth stop `sent`. Malagasy formats go only as a speaker reread them:
+         *     rendered again here, they must match the attested strings exactly, or they stay locked.
          */
         post: operations["diffuse_api_v1_workspaces__ws__items__item_id__diffuse_post"];
         delete?: never;
@@ -3529,6 +3615,8 @@ export interface components {
              * @default false
              */
             relu_mg: boolean;
+            /** Mg Hash */
+            mg_hash?: string | null;
         };
         /** DiffuseOut */
         DiffuseOut: {
@@ -3537,6 +3625,12 @@ export interface components {
             formats: string[];
             /** Dropped */
             dropped: string[];
+            /** Mg */
+            mg?: {
+                [key: string]: string;
+            };
+            /** Mg Hash */
+            mg_hash?: string | null;
         };
         /** DiffuseRoute */
         DiffuseRoute: {
@@ -3903,6 +3997,14 @@ export interface components {
             written_by: "ai" | "template";
             /** Gaps */
             gaps: components["schemas"]["GapOut"][];
+            /** Number */
+            number?: number | null;
+            /** Check Label */
+            check_label?: string | null;
+            seal?: components["schemas"]["VerdictSealOut"] | null;
+            /** Mg Hash */
+            mg_hash?: string | null;
+            relu_mg?: components["schemas"]["ReluOut"] | null;
             /** Radio */
             radio: string;
             /** Social */
@@ -4479,6 +4581,15 @@ export interface components {
             qr_url: string;
             /** Short Link */
             short_link: string | null;
+            /** Number */
+            number?: number | null;
+            /** Check Label */
+            check_label?: string | null;
+            /**
+             * Sealed
+             * @default false
+             */
+            sealed: boolean;
         };
         /** PrefsIn */
         PrefsIn: {
@@ -4585,6 +4696,12 @@ export interface components {
             key_id: string;
             /** Issuer */
             issuer: string;
+            /**
+             * Kind
+             * @default communique
+             * @enum {string}
+             */
+            kind: "communique" | "verdict";
             /** Alg */
             alg: string;
             /** Public Key */
@@ -4697,6 +4814,46 @@ export interface components {
             covered: number;
             /** Summary */
             summary: string;
+        };
+        /** PublicVerdictSealOut */
+        PublicVerdictSealOut: {
+            /** Alg */
+            alg: string;
+            /** Key Id */
+            key_id: string;
+            /** Public Key */
+            public_key: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Message */
+            message: string;
+            /** Signature */
+            signature: string;
+            /** Url */
+            url: string;
+            /** Number */
+            number: number | null;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /** Verdict */
+            verdict: string;
+            /** Check Label */
+            check_label: string | null;
+            /** Newsroom */
+            newsroom: {
+                [key: string]: string;
+            };
+            /** Published Url */
+            published_url: string;
         };
         /** QuestionGroup */
         QuestionGroup: {
@@ -4904,6 +5061,31 @@ export interface components {
                 [key: string]: number;
             };
         };
+        /** ReluIn */
+        ReluIn: {
+            /** Mg Hash */
+            mg_hash: string;
+        };
+        /** ReluOut */
+        ReluOut: {
+            /** By */
+            by: string;
+            /** Name */
+            name: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Mg Hash */
+            mg_hash?: string | null;
+            /** Current */
+            current: boolean;
+        };
+        /** ReluState */
+        ReluState: {
+            relu_mg: components["schemas"]["ReluOut"] | null;
+        };
         /** ReponseIn */
         ReponseIn: {
             /**
@@ -5031,6 +5213,12 @@ export interface components {
             /** Issuer */
             issuer: string;
             /**
+             * Kind
+             * @default communique
+             * @enum {string}
+             */
+            kind: "communique" | "verdict";
+            /**
              * Revoked At
              * Format: date-time
              */
@@ -5143,6 +5331,28 @@ export interface components {
             antenne: {
                 [key: string]: unknown;
             }[];
+        };
+        /** SealCheckIn */
+        SealCheckIn: {
+            /** Message */
+            message: string;
+            /** Signature */
+            signature: string;
+            /** Key Id */
+            key_id: string;
+        };
+        /** SealCheckOut */
+        SealCheckOut: {
+            /** Valid */
+            valid: boolean;
+            /** Revoked */
+            revoked: boolean;
+            /** Current */
+            current: boolean;
+            /** Newsroom */
+            newsroom: {
+                [key: string]: string;
+            } | null;
         };
         /** SealKeysOut */
         SealKeysOut: {
@@ -5615,6 +5825,30 @@ export interface components {
             items: components["schemas"]["VerdictOut"][];
             /** Total */
             total: number;
+        };
+        /**
+         * VerdictSealOut
+         * @description The newsroom's signature on the published verdict, as the card's QR carries it.
+         */
+        VerdictSealOut: {
+            /** Alg */
+            alg: string;
+            /** Key Id */
+            key_id: string;
+            /** Public Key */
+            public_key: string;
+            /** Payload */
+            payload: {
+                [key: string]: unknown;
+            };
+            /** Message */
+            message: string;
+            /** Signature */
+            signature: string;
+            /** Url */
+            url: string;
+            /** Number */
+            number: number | null;
         };
         /** VerificationOut */
         VerificationOut: {
@@ -9643,6 +9877,204 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FormatsOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    item_seal_api_v1_workspaces__ws__items__item_id__seal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerdictSealOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    public_verdict_seal_api_v1_public_sceau_v__item_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicVerdictSealOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_verdict_seal_api_v1_public_sceau_v__item_id__verify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SealCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SealCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    relu_state_api_v1_workspaces__ws__items__item_id__relu_mg_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReluState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_relu_api_v1_workspaces__ws__items__item_id__relu_mg_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReluIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReluState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    clear_relu_api_v1_workspaces__ws__items__item_id__relu_mg_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReluState"];
                 };
             };
             /** @description Validation Error */
