@@ -150,7 +150,10 @@ function RiskBadge({ item }: { item: Item }) {
         {t.dossier.risk.level[risk.level]}
       </span>
       {kinds.length > 0 && <span>{kinds.join(" · ")}</span>}
-      <span className="text-muted-foreground">· {t.dossier.risk.lead}</span>
+      <span className="w-full text-muted-foreground sm:w-auto">
+        <span className="hidden sm:inline">· </span>
+        {t.dossier.risk.lead}
+      </span>
     </p>
   );
 }

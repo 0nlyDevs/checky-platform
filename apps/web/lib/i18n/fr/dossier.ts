@@ -290,6 +290,7 @@ export const dossier = {
     confirm: (n: number) => (n > 1 ? `Confirmer et signer les ${n}` : "Confirmer et signer"),
     cancel: "Annuler",
     noReason: "sans explication : à signer depuis le dossier",
+    noneReady: "Aucun n'a encore d'explication publique : ouvrez chaque dossier pour l'écrire et signer.",
     signing: "Signature…",
     done: (n: number) => (n > 1 ? `${n} dossiers signés` : "1 dossier signé"),
     skipped: (n: number) => (n > 1 ? `${n} dossiers restent à signer depuis leur page` : "1 dossier reste à signer depuis sa page"),

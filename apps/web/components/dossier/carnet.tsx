@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { IconCopy, IconDownloadSimple, IconFileText, IconSealCheck, IconX } from "@/lib/icons";
-import { type Attestation, type Carnet, fmtWhen } from "./types";
+import { type Attestation, type Carnet, fmtDay, fmtWhen } from "./types";
 
 const c = t.dossier.carnet;
 
@@ -103,7 +103,7 @@ function CarnetSheet({ ws, item, onClose }: { ws: string; item: Item; onClose: (
                     <span className="font-medium">{s.title}</span>
                     {s.url && <span className="block break-all text-muted-foreground">{s.url}</span>}
                     <span className="block text-muted-foreground">
-                      {s.published_at ? c.published(fmtWhen(s.published_at) ?? s.published_at) : t.dossier.carnet.added(fmtWhen(s.added_at) ?? "")} · {s.added_by}
+                      {s.published_at ? c.published(fmtDay(s.published_at) ?? s.published_at) : t.dossier.carnet.added(fmtWhen(s.added_at) ?? "")} · {s.added_by}
                     </span>
                   </li>
                 ))}

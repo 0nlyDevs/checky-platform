@@ -69,7 +69,7 @@ function BatchSign({ ws, claims }: { ws: string; claims: ClaimView[] }) {
           <h2 id="batch-sign" className="font-bold">
             {b.bar(waiting.length)}
           </h2>
-          <p className="text-sm text-muted-foreground">{b.lead}</p>
+          <p className="text-sm text-muted-foreground">{ready.length ? b.lead : b.noneReady}</p>
         </div>
         {!open && ready.length > 0 && (
           <Button onClick={() => setOpen(true)}>
