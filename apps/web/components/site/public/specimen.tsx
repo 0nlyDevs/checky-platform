@@ -44,7 +44,7 @@ export function Specimen() {
       </div>
       <div className={`verdict-land mt-5 rounded-md border-2 border-current p-4 ${m.soft} ${m.ink}`} style={{ animationDelay: "1.5s" }}>
         <p className="flex items-center gap-2.5 font-display text-4xl font-extrabold tracking-tight">
-          <Icon className="size-9 shrink-0" strokeWidth={2.4} aria-hidden />
+          <Icon className="size-9 shrink-0" aria-hidden />
           {m.label}
         </p>
         <p className="mt-2 text-pretty text-foreground">{s.reason}</p>

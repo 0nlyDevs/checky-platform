@@ -4,7 +4,7 @@ import type { Me, Workspace } from "@fanilo/shared";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import useSWR, { mutate as globalMutate } from "swr";
-import { LoaderCircle } from "lucide-react";
+import { IconCircleNotch } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,7 +86,7 @@ function Onboarding() {
           </p>
         )}
         <Button type="submit" size="lg" className="h-11" disabled={pending}>
-          {pending && <LoaderCircle className="animate-spin" aria-hidden />}
+          {pending && <IconCircleNotch className="animate-spin" aria-hidden />}
           {t.onboarding.create}
         </Button>
       </form>

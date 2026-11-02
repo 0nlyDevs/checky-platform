@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
-import { ArrowRight, BadgeCheck, CalendarClock, ExternalLink, LoaderCircle, Mic, RotateCcw, Sparkles, Square } from "lucide-react";
+import { IconArrowCounterClockwise, IconArrowRight, IconArrowSquareOut, IconCalendarDots, IconCircleNotch, IconMicrophone, IconSealCheck, IconSparkle, IconStop } from "@/lib/icons";
 import { AgentTrace, ResearchDetails, type AgentEvent, type ResearchExtras } from "@/components/verify/research-details";
 import { research } from "@/lib/i18n/fr/research";
 import { AskView } from "@/components/ask/ask-view";
@@ -335,15 +335,15 @@ export function VerifyView() {
                   <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-2.5">
                     {dictation.can && (
                       <Button type="button" variant="ghost" onClick={dictation.toggle} disabled={dictation.state === "transcribing"} className={cn("h-10", dictation.state === "recording" && "bg-verdict-false-soft text-verdict-false-ink")}>
-                        {dictation.state === "recording" ? <Square aria-hidden /> : dictation.state === "transcribing" ? <LoaderCircle className="animate-spin" aria-hidden /> : <Mic aria-hidden />}
+                        {dictation.state === "recording" ? <IconStop aria-hidden /> : dictation.state === "transcribing" ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconMicrophone aria-hidden />}
                         {dictation.state === "recording" ? v.stopDictate : dictation.state === "transcribing" ? v.transcribing : v.dictate}
                       </Button>
                     )}
                     {dictation.error && <span className="text-sm text-verdict-false-ink">{dictation.error}</span>}
                     <Button type="submit" variant={result ? "outline" : "action"} size="xl" className="ml-auto" disabled={running}>
-                      {running ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
+                      {running ? <IconCircleNotch className="animate-spin" aria-hidden /> : null}
                       {running ? v.running : v.submit}
-                      {!running && <ArrowRight aria-hidden />}
+                      {!running && <IconArrowRight aria-hidden />}
                     </Button>
                   </div>
                 </div>
@@ -456,7 +456,7 @@ function Board({
           )}
           {result?.days_old != null && result.days_old > STALE_DAYS && (
             <p role="note" className="mt-4 flex gap-2 rounded-md bg-muted p-3 text-sm font-bold text-pretty">
-              <CalendarClock className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <IconCalendarDots className="mt-0.5 size-4 shrink-0" aria-hidden />
               {c.old(result.days_old)}
             </p>
           )}
@@ -476,7 +476,7 @@ function Board({
           )}
           {sent?.url && (
             <a href={sent.url} target="_blank" rel="noreferrer" className="mt-4 inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4">
-              {c.openOriginal} <ExternalLink className="size-3.5" aria-hidden />
+              {c.openOriginal} <IconArrowSquareOut className="size-3.5" aria-hidden />
             </a>
           )}
         </section>
@@ -520,7 +520,7 @@ function Board({
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border bg-card px-4 py-3">
           <span>{c.tracked(result.tracked.ref ?? "")}</span>
           <Link href={`/w/${ws}/affirmations/${result.tracked.item_id}` as never} className="font-bold underline underline-offset-4">
-            {c.open} <ArrowRight className="inline size-4" aria-hidden />
+            {c.open} <IconArrowRight className="inline size-4" aria-hidden />
           </Link>
         </p>
       )}
@@ -552,12 +552,12 @@ function Board({
 
           <div className="sticky bottom-[calc(76px+env(safe-area-inset-bottom))] z-10 -mx-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border bg-background px-4 py-3 lg:bottom-0 lg:mx-0 lg:px-0">
             <Button variant="action" size="xl" onClick={onTrack} disabled={tracking}>
-              {tracking && <LoaderCircle className="animate-spin" aria-hidden />}
+              {tracking && <IconCircleNotch className="animate-spin" aria-hidden />}
               {tracking ? c.tracking : c.track}
             </Button>
             <span className="text-sm text-muted-foreground">{c.trackHint(picked.size)}</span>
             <Button variant="ghost" className="ml-auto h-10" onClick={onReset}>
-              <RotateCcw aria-hidden />
+              <IconArrowCounterClockwise aria-hidden />
               {v.again}
             </Button>
           </div>
@@ -579,7 +579,7 @@ function Conclusion({ r }: { r: Result }) {
       <h2 className="sr-only">{v.conclusion}</h2>
       <div className={cn("rounded-md border-2 border-dashed p-5 md:p-6", m.soft, m.ink, "border-current")}>
         <p className="flex items-center gap-3 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          <Icon className="size-9 shrink-0 md:size-11" strokeWidth={2.4} aria-hidden />
+          <Icon className="size-9 shrink-0 md:size-11" aria-hidden />
           {m.label}
         </p>
         <p className="mt-1 text-sm font-bold">{v.suggestedBy}</p>
@@ -603,7 +603,7 @@ function Conclusion({ r }: { r: Result }) {
                     {src ? (
                       <a href={src.url} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 font-bold hover:underline">
                         <span className="truncate">{src.title}</span>
-                        <ExternalLink className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+                        <IconArrowSquareOut className="size-3 shrink-0 text-muted-foreground" aria-hidden />
                       </a>
                     ) : (
                       <span>{c.result(e.result)}</span>
@@ -667,7 +667,7 @@ function ImageFacts({ r }: { r: Result }) {
         {img &&
           (img.ai_markers?.length ? (
             <p className="flex items-start gap-1.5 font-bold text-verdict-misleading-ink">
-              <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <IconSparkle className="mt-0.5 size-4 shrink-0" aria-hidden />
               {c.imageMarkers(img.ai_markers.join(", "))}
             </p>
           ) : (
@@ -675,7 +675,7 @@ function ImageFacts({ r }: { r: Result }) {
           ))}
         {img?.content_credentials && (
           <p className="flex items-start gap-1.5">
-            <BadgeCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <IconSealCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
             {c.imageCredentials}
           </p>
         )}
@@ -685,7 +685,7 @@ function ImageFacts({ r }: { r: Result }) {
             <span className="text-muted-foreground">{c.reverse} :</span>
             {r.reverse_search.map((x) => (
               <a key={x.name} href={x.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-bold underline underline-offset-4">
-                {x.name} <ExternalLink className="size-3" aria-hidden />
+                {x.name} <IconArrowSquareOut className="size-3" aria-hidden />
               </a>
             ))}
           </p>

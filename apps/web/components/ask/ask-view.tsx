@@ -3,7 +3,7 @@
 import type { components } from "@fanilo/shared";
 import { useParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
-import { ArrowUp, AudioLines, Bot, Paperclip, ExternalLink, FileText, ImageIcon, Link2, LoaderCircle, Type, type LucideIcon } from "lucide-react";
+import { IconArrowSquareOut, IconArrowUp, IconCircleNotch, IconFileText, IconImage, IconLink, IconPaperclip, IconRobot, IconTextT, IconWaveform, type Icon } from "@/lib/icons";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ type Passage = Pick<components["schemas"]["Passage"], "n" | "title" | "url" | "t
 type Step = { n: number; tool: string; input: Record<string, unknown>; summary: string };
 type Exchange = { id: number; question: string; answer: string; passages: Passage[]; steps: Step[]; deep: boolean; state: "searching" | "answering" | "done" | "error"; error?: string; model?: string };
 
-const KIND_ICON: Record<string, LucideIcon> = { url: Link2, pdf: FileText, image: ImageIcon, audio: AudioLines, text: Type };
+const KIND_ICON: Record<string, Icon> = { url: IconLink, pdf: IconFileText, image: IconImage, audio: IconWaveform, text: IconTextT };
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 /** Splits "… stable [1][2]." into text and citation chips; models also write 【1】. */
@@ -49,7 +49,7 @@ function Answer({ text, onCite }: { text: string; onCite: (n: number) => void })
 }
 
 function PassageCard({ p, id, highlighted }: { p: Passage; id: string; highlighted: boolean }) {
-  const Icon = (p.kind && KIND_ICON[p.kind]) || FileText;
+  const Icon = (p.kind && KIND_ICON[p.kind]) || IconFileText;
   return (
     <li id={id} className={cn("scroll-mt-24 rounded-md border bg-card p-3.5 transition-colors duration-200", highlighted ? "border-ring ring-2 ring-ring/30" : "border-border")}>
       <p className="flex items-center gap-2 text-sm">
@@ -58,7 +58,7 @@ function PassageCard({ p, id, highlighted }: { p: Passage; id: string; highlight
         {p.url ? (
           <a href={p.url} target="_blank" rel="noreferrer" className="inline-flex min-w-0 items-center gap-1 font-medium hover:underline">
             <span className="truncate">{p.title}</span>
-            <ExternalLink className="size-3 shrink-0 text-muted-foreground" aria-hidden />
+            <IconArrowSquareOut className="size-3 shrink-0 text-muted-foreground" aria-hidden />
           </a>
         ) : (
           <span className="truncate font-medium">{p.title}</span>
@@ -127,7 +127,7 @@ function AttachToClaim({ ws, x }: { ws: string; x: Exchange }) {
   if (!open)
     return (
       <Button variant="outline" size="sm" onClick={() => setOpen(true)}>
-        <Paperclip aria-hidden />
+        <IconPaperclip aria-hidden />
         {t.ask.attach}
       </Button>
     );
@@ -251,7 +251,7 @@ export function AskView({ embedded = false, initialQuestion = "" }: { embedded?:
           </label>
         </div>
         <Button type="submit" size="icon" className="absolute top-[0.9rem] right-2.5 size-9" disabled={busy || question.trim().length < 2} aria-label={t.ask.submit}>
-          {busy ? <LoaderCircle className="animate-spin" aria-hidden /> : <ArrowUp aria-hidden />}
+          {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconArrowUp aria-hidden />}
         </Button>
       </form>
 
@@ -261,7 +261,7 @@ export function AskView({ embedded = false, initialQuestion = "" }: { embedded?:
             <h2 className="font-semibold text-pretty">{x.question}</h2>
             {x.state === "searching" && (
               <p className="flex items-center gap-2 text-muted-foreground" role="status">
-                <LoaderCircle className="size-4 animate-spin" aria-hidden />
+                <IconCircleNotch className="size-4 animate-spin" aria-hidden />
                 {t.ask.thinking}
               </p>
             )}
@@ -271,7 +271,7 @@ export function AskView({ embedded = false, initialQuestion = "" }: { embedded?:
                 <ol className="mt-1.5 space-y-1 border-l border-border pl-4 text-sm">
                   {x.steps.map((st) => (
                     <li key={st.n} className="flex flex-wrap items-baseline gap-x-2">
-                      <Bot className="size-3.5 shrink-0 self-center text-muted-foreground" aria-hidden />
+                      <IconRobot className="size-3.5 shrink-0 self-center text-muted-foreground" aria-hidden />
                       <span className="font-medium">{t.ask.stepTools[st.tool] ?? st.tool}</span>
                       <span className="min-w-0 truncate text-muted-foreground">
                         {String(Object.values(st.input)[0] ?? "")} → {st.summary}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LoaderCircle, Mic, RotateCcw, Send, Square, X } from "lucide-react";
+import { IconArrowCounterClockwise, IconCircleNotch, IconMicrophone, IconPaperPlaneTilt, IconStop, IconX } from "@/lib/icons";
 import { useAssistant } from "@/components/assistant/assistant-context";
 import { VerdictChip } from "@/components/claims/verdict";
 import { API_URL, ApiError, api } from "@/lib/api";
@@ -361,7 +361,7 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
             <h2 id="assistant-title">{a.title}</h2>
             {!!turns.length && (
               <button type="button" className="assistant-icon ml-auto" onClick={() => { stopSpeaking(); pending.current = null; setTurns([]); }} title={a.clear}>
-                <RotateCcw className="size-4" aria-hidden />
+                <IconArrowCounterClockwise className="size-4" aria-hidden />
                 <span className="sr-only">{a.clear}</span>
               </button>
             )}
@@ -373,13 +373,13 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
                 aria-pressed={voice}
                 title={voice ? a.voiceTurnOff : a.voiceTurnOn}
               >
-                {voice ? <span className="assistant-dot" data-live={phase === "listening" || undefined} aria-hidden /> : <Mic className="size-4" aria-hidden />}
+                {voice ? <span className="assistant-dot" data-live={phase === "listening" || undefined} aria-hidden /> : <IconMicrophone className="size-4" aria-hidden />}
                 {a.voiceShort}
                 <span className="sr-only"> · {a.voiceMode}</span>
               </button>
             )}
             <button type="button" className="assistant-icon" onClick={() => setOpen(false)}>
-              <X className="size-5" aria-hidden />
+              <IconX className="size-5" aria-hidden />
               <span className="sr-only">{a.close}</span>
             </button>
           </header>
@@ -452,11 +452,11 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
                   disabled={phase === "transcribing" || phase === "thinking"}
                 >
                   {phase === "transcribing" || phase === "thinking" ? (
-                    <LoaderCircle className="size-6 animate-spin" aria-hidden />
+                    <IconCircleNotch className="size-6 animate-spin" aria-hidden />
                   ) : phase === "listening" || phase === "speaking" ? (
-                    <Square className="size-5" aria-hidden />
+                    <IconStop className="size-5" aria-hidden />
                   ) : (
-                    <Mic className="size-6" aria-hidden />
+                    <IconMicrophone className="size-6" aria-hidden />
                   )}
                   <span className="sr-only">
                     {phase === "listening" ? a.stageStop : phase === "speaking" ? a.stageCut : phase === "idle" ? a.stageListen : a.stageWait}
@@ -509,12 +509,12 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
               />
               {canRecord && (
                 <button type="button" className={cn("assistant-mic", rec === "listening" && "is-on")} onClick={toggleDictation} aria-pressed={rec === "listening"} disabled={rec === "transcribing"}>
-                  {rec === "listening" ? <Square className="size-5" aria-hidden /> : <Mic className="size-5" aria-hidden />}
+                  {rec === "listening" ? <IconStop className="size-5" aria-hidden /> : <IconMicrophone className="size-5" aria-hidden />}
                   <span className="sr-only">{rec === "listening" ? a.stopDictate : a.dictate}</span>
                 </button>
               )}
               <button type="submit" className="assistant-send" disabled={text.trim().length < 3}>
-                <Send className="size-5" aria-hidden />
+                <IconPaperPlaneTilt className="size-5" aria-hidden />
                 <span className="sr-only">{a.send}</span>
               </button>
             </div>

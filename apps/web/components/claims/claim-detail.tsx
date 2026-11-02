@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
-import { ArrowLeft, ImageIcon, LoaderCircle, Pencil } from "lucide-react";
+import { IconArrowLeft, IconCircleNotch, IconImage, IconPencilSimple } from "@/lib/icons";
 import { toast } from "sonner";
 import { RoutePanel } from "@/components/claims/route-panel";
 import { PublicationPanel } from "@/components/claims/publication-panel";
@@ -317,7 +317,7 @@ export function ClaimDetail() {
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" disabled={saving}>
-                      {saving && <LoaderCircle className="animate-spin" aria-hidden />}
+                      {saving && <IconCircleNotch className="animate-spin" aria-hidden />}
                       {t.detail.save}
                     </Button>
                     <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
@@ -354,7 +354,7 @@ export function ClaimDetail() {
                     </Select>
                     {canEdit && (
                       <Button variant="outline" className="h-10 shrink-0" onClick={() => setEditing(true)}>
-                        <Pencil aria-hidden />
+                        <IconPencilSimple aria-hidden />
                         {t.detail.edit}
                       </Button>
                     )}
@@ -395,7 +395,7 @@ export function ClaimDetail() {
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
                   <p className="min-w-0 flex-1 text-muted-foreground">{t.detail.cardReady}</p>
                   <Button variant="outline" onClick={() => setCardOpen(true)}>
-                    <ImageIcon aria-hidden />
+                    <IconImage aria-hidden />
                     {t.detail.makeCard}
                   </Button>
                 </div>
@@ -464,7 +464,7 @@ export function ClaimDetail() {
               {comment.trim() && (
                 <div className="flex justify-end">
                   <Button type="submit" size="sm" disabled={posting}>
-                    {posting && <LoaderCircle className="animate-spin" aria-hidden />}
+                    {posting && <IconCircleNotch className="animate-spin" aria-hidden />}
                     {t.detail.post}
                   </Button>
                 </div>
@@ -510,7 +510,7 @@ function BackLink({ ws }: { ws: string }) {
       href={`/w/${ws}/affirmations`}
       className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <ArrowLeft className="size-4" aria-hidden />
+      <IconArrowLeft className="size-4" aria-hidden />
       {t.detail.back}
     </Link>
   );

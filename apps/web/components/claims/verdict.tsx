@@ -1,25 +1,15 @@
 import type { Item, Status, Verdict } from "@fanilo/shared";
-import {
-  CircleCheck,
-  CircleDashed,
-  CircleHelp,
-  CircleX,
-  Radio,
-  ShieldCheck,
-  Timer,
-  TriangleAlert,
-  type LucideIcon,
-} from "lucide-react";
+import { IconBroadcast, IconCheckCircle, IconCircleDashed, IconQuestion, IconShieldCheck, IconTimer, IconWarning, IconXCircle, type Icon } from "@/lib/icons";
 import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
 
 export const VERDICT_META: Record<
   Verdict,
-  { label: string; icon: LucideIcon; fill: string; on: string; soft: string; ink: string }
+  { label: string; icon: Icon; fill: string; on: string; soft: string; ink: string }
 > = {
   true: {
     label: t.verdict.true,
-    icon: CircleCheck,
+    icon: IconCheckCircle,
     fill: "bg-verdict-true",
     on: "text-verdict-true-on",
     soft: "bg-verdict-true-soft",
@@ -27,7 +17,7 @@ export const VERDICT_META: Record<
   },
   misleading: {
     label: t.verdict.misleading,
-    icon: TriangleAlert,
+    icon: IconWarning,
     fill: "bg-verdict-misleading",
     on: "text-verdict-misleading-on",
     soft: "bg-verdict-misleading-soft",
@@ -35,7 +25,7 @@ export const VERDICT_META: Record<
   },
   false: {
     label: t.verdict.false,
-    icon: CircleX,
+    icon: IconXCircle,
     fill: "bg-verdict-false",
     on: "text-verdict-false-on",
     soft: "bg-verdict-false-soft",
@@ -43,7 +33,7 @@ export const VERDICT_META: Record<
   },
   unverifiable: {
     label: t.verdict.unverifiable,
-    icon: CircleHelp,
+    icon: IconQuestion,
     fill: "bg-verdict-unverifiable",
     on: "text-verdict-unverifiable-on",
     soft: "bg-verdict-unverifiable-soft",
@@ -148,15 +138,15 @@ export function Avatar({ name, className }: { name: string; className?: string }
 }
 
 // Status is workflow, not truth: ink icons only, so it never reads as a verdict colour.
-export const STATUS_ICON: Record<Status, LucideIcon> = {
-  to_check: CircleDashed,
-  in_progress: Timer,
-  verified: ShieldCheck,
-  published: Radio,
+export const STATUS_ICON: Record<Status, Icon> = {
+  to_check: IconCircleDashed,
+  in_progress: IconTimer,
+  verified: IconShieldCheck,
+  published: IconBroadcast,
 };
 
 export function StatusLabel({ status }: { status: Status }) {
-  const Icon = STATUS_ICON[status] ?? CircleDashed;
+  const Icon = STATUS_ICON[status] ?? IconCircleDashed;
   return (
     <span className="inline-flex items-center gap-2 text-sm whitespace-nowrap">
       <Icon

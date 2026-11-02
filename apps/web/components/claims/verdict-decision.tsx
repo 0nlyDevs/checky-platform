@@ -3,7 +3,7 @@
 import type { Status, Verdict } from "@fanilo/shared";
 import { VERDICTS } from "@fanilo/shared";
 import { useRef, useState } from "react";
-import { Sparkles, TriangleAlert } from "lucide-react";
+import { IconSparkle, IconWarning } from "@/lib/icons";
 import { type ClaimView, VERDICT_META } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { t } from "@/lib/i18n/fr";
@@ -114,7 +114,7 @@ export function VerdictDecision({
           </ul>
           {claim.suggested && claim.suggested !== pending && (
             <p className="mt-3 flex items-start gap-2 rounded-md bg-verdict-misleading-soft px-3 py-2 text-sm text-verdict-misleading-ink">
-              <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+              <IconWarning className="mt-0.5 size-4 shrink-0" aria-hidden />
               {t.detail.decision.againstAi(VERDICT_META[claim.suggested].label)}
             </p>
           )}
@@ -150,11 +150,11 @@ function VerdictBlock({ verdict, suggested, children }: { verdict: Verdict; sugg
   return (
     <div className={cn("verdict-land rounded-md border-2 border-current p-4 md:p-5", suggested && "border-dashed", m.soft, m.ink)}>
       <p className="flex items-center gap-2.5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
-        <Icon className="size-8 shrink-0" strokeWidth={2.4} aria-hidden />
+        <Icon className="size-8 shrink-0" aria-hidden />
         {m.label}
       </p>
       <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold">
-        {suggested && <Sparkles className="size-3.5" aria-hidden />}
+        {suggested && <IconSparkle className="size-3.5" aria-hidden />}
         {suggested ? t.verify.suggestedBy : t.site.pub.file.confirmed}
       </p>
       {children}

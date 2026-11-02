@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { IconArrowRight } from "@/lib/icons";
 import { type Step, type StepState, StepLine } from "@/components/flow/step-line";
 import { VerdictCard } from "@/components/site/public/verdict-page";
 import { t } from "@/lib/i18n/fr";
@@ -71,7 +71,7 @@ export function FollowView() {
               <>
                 <VerdictCard v={tip.verdict} />
                 <Link href={`/verifies/${tip.verdict.id}`} className="mt-4 inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
-                  {t.site.pub.file.open} <ArrowRight className="size-4" aria-hidden />
+                  {t.site.pub.file.open} <IconArrowRight className="size-4" aria-hidden />
                 </Link>
               </>
             ) : (

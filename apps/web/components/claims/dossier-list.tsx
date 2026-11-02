@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { IconCaretRight } from "@/lib/icons";
 import { claimSteps, StepLine } from "@/components/flow/step-line";
 import { Avatar, type ClaimView, StatusLabel, VerdictBadge } from "@/components/claims/verdict";
 import { t } from "@/lib/i18n/fr";
@@ -51,7 +51,7 @@ export function DossierList({ ws, claims, now, names }: { ws: string; claims: Cl
                 {who && <Avatar name={who} className="@4xl:hidden" />}
               </div>
               <span className="hidden items-center justify-end @4xl:flex">
-                {who ? <Avatar name={who} /> : <ChevronRight className="size-4 text-muted-foreground" aria-hidden />}
+                {who ? <Avatar name={who} /> : <IconCaretRight className="size-4 text-muted-foreground" aria-hidden />}
               </span>
             </div>
           </li>

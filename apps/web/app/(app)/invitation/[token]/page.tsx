@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { mutate } from "swr";
-import { LoaderCircle } from "lucide-react";
+import { IconCircleNotch } from "@/lib/icons";
 import { api } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 
@@ -39,7 +39,7 @@ export default function InvitationPage() {
         </>
       ) : (
         <p className="mt-3 flex items-center gap-2 text-muted-foreground" role="status">
-          <LoaderCircle className="size-4 animate-spin" aria-hidden />
+          <IconCircleNotch className="size-4 animate-spin" aria-hidden />
           {t.invitation.joining}
         </p>
       )}

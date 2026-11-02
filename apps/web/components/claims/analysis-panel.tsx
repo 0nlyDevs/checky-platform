@@ -3,7 +3,7 @@
 import type { Item } from "@fanilo/shared";
 import Link from "next/link";
 import { useState } from "react";
-import { CalendarClock, Info, LoaderCircle, Minus, Plus, Sparkles, type LucideIcon } from "lucide-react";
+import { IconCalendarDots, IconCircleNotch, IconInfo, IconMinus, IconPlus, IconSparkle, type Icon } from "@/lib/icons";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
@@ -41,7 +41,7 @@ type Analysis = {
 };
 
 // Stance is not a verdict: ink icons only, never verdict colours.
-const STANCE_ICON: Record<string, LucideIcon> = { supports: Plus, contradicts: Minus, context: Info };
+const STANCE_ICON: Record<string, Icon> = { supports: IconPlus, contradicts: IconMinus, context: IconInfo };
 
 const whenFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 // Source dates are calendar days (YYYY-MM-DD): read and shown in UTC so no time zone shifts them.
@@ -82,7 +82,7 @@ export function AnalysisPanel({ ws, item, sourceCount }: { ws: string; item: Ite
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="outline" className="h-10" onClick={run} disabled={Boolean(jobId)}>
-          {jobId ? <LoaderCircle className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
+          {jobId ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconSparkle aria-hidden />}
           {analysis ? t.analysis.rerun : t.analysis.run}
         </Button>
         {jobId && (
@@ -112,7 +112,7 @@ export function AnalysisPanel({ ws, item, sourceCount }: { ws: string; item: Ite
             <h3 className="text-sm font-medium text-muted-foreground">{t.analysis.evidence}</h3>
             {analysis.date_check && (
               <p role="note" className="mt-2 flex gap-2 rounded-md border border-border bg-muted p-3 text-sm text-pretty">
-                <CalendarClock className="mt-0.5 size-4 shrink-0" aria-hidden />
+                <IconCalendarDots className="mt-0.5 size-4 shrink-0" aria-hidden />
                 {analysis.date_check === "downgraded" ? t.analysis.downgraded : t.analysis.oldEvidence}
               </p>
             )}
@@ -121,7 +121,7 @@ export function AnalysisPanel({ ws, item, sourceCount }: { ws: string; item: Ite
             ) : (
               <ul className="mt-2 space-y-3">
                 {analysis.evidence.map((e, i) => {
-                  const Icon = STANCE_ICON[e.stance] ?? Info;
+                  const Icon = STANCE_ICON[e.stance] ?? IconInfo;
                   return (
                     <li key={i} className="rounded-md border border-border bg-card p-3.5">
                       <p className="flex items-center gap-1.5 text-sm font-medium">
@@ -151,7 +151,7 @@ export function AnalysisPanel({ ws, item, sourceCount }: { ws: string; item: Ite
                             (e.days_before ?? 0) > STALE_DAYS ? "font-medium text-foreground" : "text-muted-foreground",
                           )}
                         >
-                          <CalendarClock className="size-4 shrink-0" aria-hidden />
+                          <IconCalendarDots className="size-4 shrink-0" aria-hidden />
                           {dateLabel(e)}
                         </p>
                       )}

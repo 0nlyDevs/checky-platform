@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ArrowRight, Check, LoaderCircle } from "lucide-react";
+import { IconArrowRight, IconCheck, IconCircleNotch } from "@/lib/icons";
 import { StepLine } from "@/components/flow/step-line";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
@@ -72,7 +72,7 @@ export function ReportView() {
                   <Link href={`/suivi/${m.token}`} className="group flex items-baseline gap-3 border-b border-border py-3">
                     <span className="font-display font-bold tabular">{m.ref}</span>
                     <span className="min-w-0 truncate group-hover:underline">{m.title}</span>
-                    <ArrowRight className="ml-auto size-4 shrink-0 self-center text-muted-foreground" aria-hidden />
+                    <IconArrowRight className="ml-auto size-4 shrink-0 self-center text-muted-foreground" aria-hidden />
                   </Link>
                 </li>
               ))}
@@ -85,14 +85,14 @@ export function ReportView() {
         <div className="verdict-land self-start rounded-md border-2 border-foreground bg-card p-6 md:p-8" role="status">
           <p className="flex items-center gap-3 font-display text-3xl font-extrabold">
             <span className="grid size-10 place-items-center rounded-full bg-foreground text-action dark:text-background">
-              <Check className="size-5" strokeWidth={3} aria-hidden />
+              <IconCheck className="size-5" aria-hidden />
             </span>
             {r.doneTitle}
           </p>
           <p className="mt-4 text-lg leading-relaxed text-pretty">{r.done(done.ref)}</p>
           <Button asChild variant="action" size="xl" className="mt-6">
             <Link href={`/suivi/${done.token}`}>
-              {r.follow} <ArrowRight aria-hidden />
+              {r.follow} <IconArrowRight aria-hidden />
             </Link>
           </Button>
           <button
@@ -163,9 +163,9 @@ export function ReportView() {
                 </p>
               )}
               <Button type="submit" variant="action" size="xl" className="w-full sm:w-auto" disabled={state === "sending" || !room}>
-                {state === "sending" ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
+                {state === "sending" ? <IconCircleNotch className="animate-spin" aria-hidden /> : null}
                 {state === "sending" ? r.sending : r.submit}
-                {state !== "sending" && <ArrowRight aria-hidden />}
+                {state !== "sending" && <IconArrowRight aria-hidden />}
               </Button>
             </div>
           )}
