@@ -200,3 +200,55 @@ def test_the_official_feed_shows_public_originals_and_fakes_only(as_user):
     only = anyone.get("/api/v1/public/registry", params={"kind": "original", "q": "délestage"})
     assert [i["id"] for i in only.json()["items"]] == [cid]
     assert anyone.get("/api/v1/public/registry", params={"newsroom": "nope"}).json()["total"] == 0
+
+
+def test_the_demo_reset_seeds_the_sealed_original_its_fake_and_the_pitch_figures(
+    as_user, monkeypatch
+):
+    from app.core.config import get_settings
+    from app.modules.demo import DEMO_RUMOUR_TEXT
+
+    monkeypatch.setattr(get_settings(), "seal_secret", "demo-seal-secret")
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    for _ in range(2):  # idempotent
+        assert alice.post(f"{base}/demo/reset").status_code == 200
+    entries = alice.get(f"{base}/registry").json()
+    assert sorted(e["status"] for e in entries) == ["fake_caught", "original", "original"]
+    jirama = next(e for e in entries if e["number"] == "2026-118")
+    assert jirama["is_demo"] and jirama["sealed"] and jirama["issued_on"] == "2026-11-01"
+    assert "(démo)" in jirama["title"]
+    exam = next(e for e in entries if e["number"] == "2026-311" and e["status"] == "original")
+    assert exam["fakes"] == 1 and exam["sealed"] is None
+
+    found = alice.post(f"{base}/registry/match", json={"text": DEMO_RUMOUR_TEXT}).json()
+    assert found["status"] == "modified" and found["communique"]["id"] == jirama["id"]
+    assert {"kind": "duration", "original": "4 heures par jour", "submitted": "72 heures"} in found[
+        "changed_numbers"
+    ]
+    numbers = alice.post(f"{base}/figures/check", json={"text": DEMO_RUMOUR_TEXT}).json()
+    assert [(n["claimed"], n["verdict"], n["figure"]["value"]) for n in numbers] == [
+        ("72 heures", "differs", "4"),
+        ("40 %", "differs", "+12"),
+    ]
+    figures = alice.get(f"{base}/figures", params={"q": "Délestage"}).json()
+    assert len(figures) == 1 and figures[0]["is_demo"]
+    assert figures[0]["communique_id"] == jirama["id"]
+    assert figures[0]["source_url"] == jirama["sealed"]["url"]
+    # The public can check the demo seal: the demo newsroom publishes.
+    public = alice.get(f"/api/v1/public/sceau/{jirama['id']}").json()
+    assert public["is_demo"] and public["payload"]["number"] == "2026-118"
+    feed = alice.get("/api/v1/public/registry").json()
+    assert feed["total"] == 3 and any(i["kind"] == "fake_caught" for i in feed["items"])
+
+
+def test_the_demo_still_seeds_without_a_seal_secret(as_user, monkeypatch):
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "seal_secret", "")
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    alice.post(f"/api/v1/workspaces/{ws}/demo/reset")
+    jirama = alice.get(f"/api/v1/workspaces/{ws}/registry", params={"q": "2026-118"}).json()
+    assert len(jirama) == 1 and jirama[0]["sealed"] is None

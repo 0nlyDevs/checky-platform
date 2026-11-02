@@ -15,13 +15,13 @@ from typing import Any
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
-from sqlalchemy import or_, select
+from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import dates, numbers, places
 from app.core.access import Admin, AnyMember, Db
 from app.core.activity import record
-from app.core.models import Figure, Workspace
+from app.core.models import Communique, Figure, Item, Workspace
 from app.core.words import words
 from app.workers import figures_refresh  # registers the `figures_refresh` job
 from app.workers.queue import enqueue
@@ -407,3 +407,63 @@ async def refresh(member: Admin, db: Db) -> dict[str, Any]:
     await db.commit()
     job = await enqueue(db, member.workspace_id, member.user.id, "figures_refresh", {})
     return {"job_id": str(job.id)}
+
+
+# --- demo --------------------------------------------------------------------------------------
+
+
+async def seed_demo(db: AsyncSession, workspace_id, user_id, items: dict[str, Item]) -> None:
+    """The shared seeds, and the two fictional figures of the pitch (flagged démo): the délestage
+    the JIRAMA original N° 2026-118 announces (4 h a day) and the tariff rise (+12 %)."""
+    await seed_shared(db)
+    await db.execute(
+        delete(Figure).where(Figure.workspace_id == workspace_id, Figure.is_demo.is_(True))
+    )
+    original = await db.scalar(
+        select(Communique).where(
+            Communique.workspace_id == workspace_id,
+            Communique.is_demo.is_(True),
+            Communique.status == "original",
+            Communique.number == "2026-118",
+        )
+    )
+    signature = ((original.sealed or {}).get("signature") if original else None) or None
+    from app.core.seal import seal_url
+
+    tana = places.gazetteer("Antananarivo") or {}
+    db.add_all(
+        [
+            Figure(
+                workspace_id=workspace_id,
+                added_by=user_id,
+                topic="énergie",
+                label="Délestage programmé à Antananarivo",
+                value="4",
+                unit="h/jour",
+                as_of="2026-11-01",
+                country="Madagascar",
+                location=tana,
+                source_name="JIRAMA, communiqué N° 2026-118 (démo)",
+                source_url=seal_url(original.id, signature) if signature else None,
+                communique_id=original.id if original else None,
+                keywords=["délestage", "coupure", "électricité", "jirama", "antananarivo"],
+                is_demo=True,
+            ),
+            Figure(
+                workspace_id=workspace_id,
+                added_by=user_id,
+                topic="énergie",
+                label="Hausse du tarif de l'électricité",
+                value="+12",
+                unit="%",
+                as_of="2026-10",
+                country="Madagascar",
+                location={},
+                source_name="ORE, décision tarifaire d'octobre 2026 (démo)",
+                source_url=None,
+                keywords=["tarif", "électricité", "hausse", "jirama", "ore", "prix", "kwh"],
+                is_demo=True,
+            ),
+        ]
+    )
+    await db.flush()

@@ -1228,3 +1228,110 @@ async def compare_text(ws: uuid.UUID, text: str) -> dict:
         "authenticity": "not_established",
         "match_method": "candidate_text_similarity",
     }
+
+
+# --- demo --------------------------------------------------------------------------------------
+
+# Fictional originals (flagged démo): the JIRAMA communiqué the pitch rumour doctors (4 hours a day,
+# not 72), and an exam calendar with a fake caught that imitates it (FAN-0140's rumour).
+DEMO_ORIGINALS = [
+    {
+        "key": "jirama-2026-118",
+        "issuer": "JIRAMA",
+        "number": "2026-118",
+        "issued_on": "2026-11-01",
+        "title": "Programme de délestage à Antananarivo du 3 au 9 novembre 2026 (démo)",
+        "text": (
+            "COMMUNIQUÉ N° 2026-118. La JIRAMA informe ses abonnés d'Antananarivo qu'en raison de "
+            "travaux de maintenance sur la centrale hydroélectrique d'Andekaleka, un délestage de 4 "
+            "heures par jour et par quartier sera appliqué du 3 au 9 novembre 2026, selon un "
+            "programme tournant publié chaque matin sur ses pages officielles. Les hôpitaux et les "
+            "stations de pompage d'eau ne sont pas concernés. La JIRAMA présente ses excuses pour "
+            "la gêne occasionnée."
+        ),
+        "place": "Antananarivo",
+        "seal": True,
+    },
+    {
+        "key": "men-2026-311",
+        "issuer": "Ministère de l'Éducation nationale",
+        "number": "2026-311",
+        "issued_on": "2026-10-20",
+        "title": "Calendrier des épreuves écrites du baccalauréat 2026 (démo)",
+        "text": (
+            "Le ministère de l'Éducation nationale rappelle que les épreuves écrites du "
+            "baccalauréat 2026 débuteront le 24 novembre 2026 sur l'ensemble du territoire, "
+            "conformément au calendrier publié en août. Aucun report n'est prévu à ce jour."
+        ),
+        "place": "Madagascar",
+        "seal": False,
+        "fake": (
+            "Le ministère de l'Éducation nationale annonce que les épreuves écrites du "
+            "baccalauréat 2026 sont reportées au 15 décembre 2026 sur l'ensemble du territoire. "
+            "Partagez !"
+        ),
+    },
+]
+
+
+def demo_id(workspace_id: uuid.UUID, key: str) -> uuid.UUID:
+    """The same id after every demo reset, so a printed demo QR keeps working."""
+    return uuid.uuid5(uuid.NAMESPACE_URL, f"checky:demo:{workspace_id}:{key}")
+
+
+async def seed_demo(db: AsyncSession, workspace_id, user_id, items) -> None:
+    """The fictional originals of the demo, the JIRAMA one sealed when SEAL_SECRET is set, and one
+    fake caught. Idempotent: the newsroom's demo entries are replaced."""
+    await db.execute(
+        Communique.__table__.delete().where(
+            Communique.workspace_id == workspace_id, Communique.is_demo.is_(True)
+        )
+    )
+    for spec in DEMO_ORIGINALS:
+        c = Communique(
+            id=demo_id(workspace_id, spec["key"]),
+            workspace_id=workspace_id,
+            added_by=user_id,
+            issuer=spec["issuer"],
+            number=spec["number"],
+            issued_on=spec["issued_on"],
+            title=spec["title"],
+            text=spec["text"],
+            fingerprint=fingerprint(spec["text"]),
+            status="original",
+            confirmed_by=[],
+            location=places.gazetteer(spec["place"]) or {},
+            is_demo=True,
+        )
+        db.add(c)
+        await db.flush()
+        if spec["seal"] and seal.available():
+            # The demo plays the institution's own account.
+            await seal.seal(db, c, user_id, "issuer")
+        if spec.get("fake"):
+            found = compare(c, spec["fake"])
+            db.add(
+                Communique(
+                    id=demo_id(workspace_id, spec["key"] + ":fake"),
+                    workspace_id=workspace_id,
+                    added_by=user_id,
+                    issuer=c.issuer,
+                    number=c.number,
+                    issued_on=c.issued_on,
+                    title=c.title,
+                    text=spec["fake"],
+                    fingerprint=fingerprint(spec["fake"]),
+                    status="fake_caught",
+                    confirmed_by=[],
+                    is_demo=True,
+                    location={
+                        **(c.location or {}),
+                        "original_id": str(c.id),
+                        "diff": found["diff"],
+                        "changed_numbers": found["changed_numbers"],
+                        "summary": found["summary"],
+                        "caught_at": datetime.now(UTC).isoformat(),
+                    },
+                )
+            )
+    await db.flush()
