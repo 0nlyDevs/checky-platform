@@ -18,7 +18,12 @@ export function Wordmark({ className }: { className?: string }) {
   return (
     <span className={cn("flex items-center gap-2.5", className)}>
       <LogoMark />
-      <span className="font-display text-xl font-extrabold tracking-tight">{brand.name}</span>
+      <span className="font-display text-xl font-extrabold tracking-[-0.04em]">
+        {brand.name}
+        <em className="font-[family-name:var(--font-quote,Georgia,serif)] font-medium italic" aria-hidden>
+          .
+        </em>
+      </span>
     </span>
   );
 }
