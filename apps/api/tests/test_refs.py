@@ -105,3 +105,26 @@ def test_existing_oversized_reference_does_not_break_allocation(as_user):
 
     asyncio.run(seed())
     assert _allocate(ws, 1) == ["FAN-0001"]
+
+
+def test_alert_refs_have_their_own_counter_seeded_from_existing_alerts(as_user):
+    ws = uuid.UUID(_workspace(as_user("alice")))
+
+    async def go():
+        async with SessionLocal() as db:
+            db.add(
+                Item(
+                    workspace_id=ws,
+                    author_id="checky",
+                    type="alert",
+                    title="old alert",
+                    data={"ref": "ALR-0003"},
+                )
+            )
+            await db.commit()
+            alert = await next_ref(db, ws, "ALR")
+            claim = await next_ref(db, ws)
+            await db.commit()
+            return alert, claim
+
+    assert asyncio.run(go()) == ("ALR-0004", "FAN-0001")

@@ -34,7 +34,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import dates, embed, tone
+from app.core import dates, embed, refs, tone
 from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
@@ -379,13 +379,7 @@ def _first_sentence(text: str) -> str:
 
 
 async def _new_ref(db: AsyncSession, workspace_id: uuid.UUID) -> str:
-    refs = await db.scalars(
-        select(Item.data["ref"].astext).where(
-            Item.workspace_id == workspace_id, Item.type == "alert"
-        )
-    )
-    numbers = [int(m[1]) for r in refs if r and (m := re.search(r"(\d+)$", r))]
-    return f"ALR-{max(numbers, default=0) + 1:04d}"
+    return await refs.next_ref(db, workspace_id, "ALR")
 
 
 def _refresh(alert: Item, members: list[dict[str, Any]], reasons: list[dict] | None) -> None:
