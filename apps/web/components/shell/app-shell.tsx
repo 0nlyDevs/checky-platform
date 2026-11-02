@@ -51,7 +51,7 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
         <DropdownMenuLabel>{t.nav.workspace}</DropdownMenuLabel>
         {me?.memberships.map((m) => (
           <DropdownMenuItem key={m.workspace_id} asChild>
-            <Link href={`/w/${m.workspace_id}/${m.role === "issuer" ? "registre" : m.role === "veilleur" ? "veille" : "rubrique"}`}>
+            <Link href={`/w/${m.workspace_id}/rubrique`}>
               <span className="flex-1 truncate">{m.name}</span>
               {m.workspace_id === current && <IconCheck className="size-4" aria-hidden />}
             </Link>
@@ -137,10 +137,8 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
   const { ws } = useParams<{ ws?: string }>();
   const { data: me } = useSWR<Me>("/me", fetcher);
 
-  const role = me?.memberships.find((m) => m.workspace_id === ws)?.role;
-  const restricted = role === "issuer" || role === "veilleur";
   // Le carnet's shelves follow the daily places; priority+ folds whatever does not fit.
-  const items = restricted ? NAV.filter((n) => n.path === (role === "issuer" ? "registre" : "veille")) : [...NAV, ...CARNET_NAV];
+  const items = [...NAV, ...CARNET_NAV];
   return (
     <AssistantProvider scope="desk">
       <div data-app-shell className="min-h-dvh bg-background">
@@ -162,7 +160,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
             <button type="button" className="bar-icon" data-ripple onClick={openPalette} aria-label={t.nav.search} aria-keyshortcuts="Control+K">
               <IconMagnifyingGlass className="size-5" aria-hidden />
             </button>
-            <UserMenu user={user} ws={ws} team={!restricted} />
+            <UserMenu user={user} ws={ws} team />
           </div>
         </header>
 
@@ -170,7 +168,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
           {children}
         </main>
 
-        <PreferenceDock settingsHref={ws && !restricted ? `/w/${ws}/parametres` : undefined} />
+        <PreferenceDock settingsHref={ws ? `/w/${ws}/parametres` : undefined} />
         <TabBar ws={ws} items={items} />
       </div>
     </AssistantProvider>

@@ -61,7 +61,7 @@ def test_beats_are_found_by_their_usual_words():
 def test_preferences_are_mine_and_places_are_understood(as_user):
     alice, eve = as_user("alice"), as_user("eve")
     ws = _workspace(alice)
-    _join(alice, eve, ws, "veilleur")
+    _join(alice, eve, ws)
     base = f"/api/v1/workspaces/{ws}/me/prefs"
     empty = alice.get(base).json()
     assert empty["beats"] == [] and "énergie" in empty["beats_offered"]

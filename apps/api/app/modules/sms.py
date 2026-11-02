@@ -30,7 +30,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import delete, func, select
 
 from app.core import contact, places
-from app.core.access import Admin, Db
+from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
@@ -493,7 +493,7 @@ class SimulateOut(BaseModel):
 
 
 @router.post("/workspaces/{ws}/sms/simulate")
-async def simulate(body: SimulateIn, admin: Admin, db: Db) -> SimulateOut:
+async def simulate(body: SimulateIn, member: AnyMember, db: Db) -> SimulateOut:
     """The phone-shaped form in Paramètres: the gateway's own handling, with the secret kept on the
     server, from the fictional block only, so its replies are shown and never sent."""
     gateway(get_settings().sms_gateway_secret)
@@ -521,12 +521,12 @@ async def simulate(body: SimulateIn, admin: Admin, db: Db) -> SimulateOut:
 
 @router.get("/workspaces/{ws}/sms/messages")
 async def messages(
-    admin: Admin, db: Db, limit: int = Query(default=30, ge=1, le=200)
+    member: AnyMember, db: Db, limit: int = Query(default=30, ge=1, le=200)
 ) -> list[SmsOut]:
     """The newsroom's latest SMS in and out (numbers masked), simulated ones included."""
     rows = await db.scalars(
         select(SmsMessage)
-        .where(SmsMessage.workspace_id == admin.workspace_id)
+        .where(SmsMessage.workspace_id == member.workspace_id)
         .order_by(SmsMessage.created_at.desc())
         .limit(limit)
     )

@@ -34,12 +34,11 @@ function batchReason(c: ClaimView): string {
  * Nothing is signed before the list is shown, each with the verdict and the explanation it will carry.
  */
 function BatchSign({ ws, claims }: { ws: string; claims: ClaimView[] }) {
-  const { me, role } = useWorkspace(ws);
+  const { me } = useWorkspace(ws);
   const { mutate } = useSWRConfig();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-  const editor = role === "editor" || role === "admin";
-  const waiting = claims.filter((c) => c.suggested && !c.verdict && me && (editor || c.item.author_id === me.id || c.assigneeId === me.id));
+  const waiting = claims.filter((c) => c.suggested && !c.verdict && me);
   const ready = waiting.filter((c) => batchReason(c));
   if (!waiting.length) return null;
 

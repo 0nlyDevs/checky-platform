@@ -1,17 +1,13 @@
 "use client";
 
-import type { components, Role } from "@fanilo/shared";
-import { ROLES } from "@fanilo/shared";
+import type { components } from "@fanilo/shared";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import { IconCheck, IconCircleNotch, IconCopy, IconLink } from "@/lib/icons";
 import { toast } from "sonner";
 import { Avatar } from "@/components/claims/verdict";
-import { PermissionsMatrix, RolesGuide } from "@/components/members/permissions-matrix";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
@@ -23,28 +19,10 @@ type Invitation = components["schemas"]["InvitationOut"];
 const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
 function errorText(e: unknown) {
-  return e instanceof ApiError && e.code === "last_admin" ? t.members.lastAdmin : t.detail.saveFailed;
-}
-
-function RoleSelect({ value, onChange, id, disabled }: { value: Role; onChange: (r: Role) => void; id?: string; disabled?: boolean }) {
-  return (
-    <Select value={value} onValueChange={(v) => onChange(v as Role)} disabled={disabled}>
-      <SelectTrigger id={id} className="h-9 w-44 bg-card">
-        <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-        {ROLES.map((r) => (
-          <SelectItem key={r} value={r}>
-            {t.members.roles[r]}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
+  return e instanceof ApiError && e.code === "last_member" ? t.members.lastMember : t.detail.saveFailed;
 }
 
 function Invite({ ws }: { ws: string }) {
-  const [role, setRole] = useState<Role>("journalist");
   const [pending, setPending] = useState(false);
   const [invite, setInvite] = useState<Invitation | null>(null);
   const [copied, setCopied] = useState(false);
@@ -53,7 +31,7 @@ function Invite({ ws }: { ws: string }) {
   async function create() {
     setPending(true);
     try {
-      setInvite(await api<Invitation>(`/workspaces/${ws}/invitations`, { method: "POST", body: JSON.stringify({ role }) }));
+      setInvite(await api<Invitation>(`/workspaces/${ws}/invitations`, { method: "POST" }));
       setCopied(false);
     } catch (e) {
       toast.error(errorText(e));
@@ -74,9 +52,6 @@ function Invite({ ws }: { ws: string }) {
         {t.members.inviteTitle}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t.members.inviteLead}</p>
-      <div className="mt-4">
-        <RolesGuide value={role} onChange={setRole} name="invite-role" />
-      </div>
       <Button onClick={create} disabled={pending} className="mt-4 h-9">
         {pending ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconLink aria-hidden />}
         {t.members.createLink}
@@ -101,23 +76,9 @@ export function MembersView() {
   const { ws } = useParams<{ ws: string }>();
   const key = `/workspaces/${ws}/members`;
   const { data: members, error, mutate } = useSWR<Member[]>(key, fetcher);
-  const { me, role } = useWorkspace(ws);
+  const { me } = useWorkspace(ws);
   const [confirming, setConfirming] = useState<string | null>(null);
-  const isAdmin = role === "admin";
   const label = (m: Member) => m.name ?? m.email ?? m.user_id;
-
-  async function changeRole(m: Member, next: Role) {
-    const previous = members;
-    mutate(members?.map((x) => (x.user_id === m.user_id ? { ...x, role: next } : x)), { revalidate: false });
-    try {
-      await api(`${key}/${encodeURIComponent(m.user_id)}`, { method: "PATCH", body: JSON.stringify({ role: next }) });
-      toast.success(t.members.roleChanged(label(m)));
-      mutate();
-    } catch (e) {
-      mutate(previous, { revalidate: false });
-      toast.error(errorText(e));
-    }
-  }
 
   async function remove(m: Member) {
     setConfirming(null);
@@ -140,7 +101,7 @@ export function MembersView() {
         </p>
       </header>
 
-      {isAdmin ? <Invite ws={ws} /> : role && <p className="text-sm text-muted-foreground">{t.members.adminOnly}</p>}
+      <Invite ws={ws} />
 
       {error ? (
         <div className="mt-6">
@@ -165,40 +126,22 @@ export function MembersView() {
                   </p>
                   {m.email && m.name && <p className="truncate text-sm text-muted-foreground">{m.email}</p>}
                 </div>
-                {isAdmin ? (
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor={`role-${m.user_id}`} className="sr-only">
-                      {t.members.role} — {label(m)}
-                    </Label>
-                    <RoleSelect id={`role-${m.user_id}`} value={m.role} onChange={(r) => changeRole(m, r)} />
-                    {confirming === m.user_id ? (
-                      <Button variant="destructive" size="sm" className="h-9" onClick={() => remove(m)} onBlur={() => setConfirming(null)} autoFocus>
-                        {t.members.removeConfirm(self ? t.members.you : label(m))}
-                      </Button>
-                    ) : (
-                      <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={() => setConfirming(m.user_id)}>
-                        {t.members.remove}
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">{t.members.roles[m.role]}</span>
-                )}
+                {members.length > 1 &&
+                  (confirming === m.user_id ? (
+                    <Button variant="destructive" size="sm" className="h-9" onClick={() => remove(m)} onBlur={() => setConfirming(null)} autoFocus>
+                      {t.members.removeConfirm(self ? t.members.you : label(m))}
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="sm" className="h-9 text-muted-foreground" onClick={() => setConfirming(m.user_id)}>
+                      {self ? t.members.leave : t.members.remove}
+                    </Button>
+                  ))}
               </li>
             );
           })}
         </ul>
       )}
 
-      {/* Who may do what, read from the API's own rules; non-admins also get the roles in words. */}
-      <div className="mt-8 space-y-8">
-        {role && !isAdmin && (
-          <section className="rounded-lg border border-border bg-card p-5">
-            <RolesGuide />
-          </section>
-        )}
-        {role && <PermissionsMatrix ws={ws} />}
-      </div>
     </div>
   );
 }

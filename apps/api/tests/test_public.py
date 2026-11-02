@@ -117,14 +117,12 @@ def test_tips_only_reach_public_newsrooms_and_are_limited(as_user):
     assert codes.count(201) <= 5 and 429 in codes
 
 
-def test_only_admins_open_the_newsroom(as_user):
+def test_any_member_opens_the_newsroom(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws, _ = _newsroom(alice, public=False)
-    token = alice.post(f"/api/v1/workspaces/{ws}/invitations", json={"role": "editor"}).json()[
-        "token"
-    ]
+    token = alice.post(f"/api/v1/workspaces/{ws}/invitations").json()["token"]
     bob.post(f"/api/v1/invitations/{token}/accept")
-    assert bob.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True}).status_code == 403
+    assert bob.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True}).json()["is_public"]
 
 
 def test_ask_answers_only_from_published_files(as_user, monkeypatch):

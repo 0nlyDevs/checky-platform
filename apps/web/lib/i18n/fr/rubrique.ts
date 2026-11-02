@@ -63,7 +63,7 @@ export const rubrique = {
 
   antenne: {
     title: "À l'antenne",
-    lead: "Ce que les veilleurs ont entendu à la radio, regroupé par affirmation.",
+    lead: "Ce que les journalistes ont entendu à la radio, regroupé par rumeur.",
     empty: "Aucun passage radio signalé cette semaine.",
     reports: (n: number) => plural(n, "signalement", "signalements"),
     status: { new: "Nouveau", followed: "Suivi", checked: "Vérifié" },
@@ -76,10 +76,10 @@ export const rubrique = {
     open: "Ouvrir",
     all: "Tout À l'antenne",
     record: "Enregistrer un passage",
-    fromVeilleur: "Texte du veilleur",
+    fromVeilleur: "Phrase du journaliste",
     fromTranscript: "Transcription automatique",
     pending: "Transcription en cours…",
-    mgNote: "En malagasy, le texte est celui du veilleur, jamais une transcription automatique.",
+    mgNote: "En malagasy, le texte est celui du journaliste, jamais une transcription automatique.",
   },
 
   mineList: { title: "Mes dossiers", empty: "Aucun dossier ne vous est attribué." },

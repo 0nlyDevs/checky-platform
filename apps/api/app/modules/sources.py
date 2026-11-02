@@ -382,8 +382,6 @@ async def update_source(
     """Set a source's publication date by hand (a pasted text, a page that does not say it), or
     attach it to a claim (the phone app attaches the file it analysed to the claim it follows)."""
     s = await _get_source(db, member, source_id)
-    if s.created_by != member.user.id and not member.at_least("editor"):
-        raise ApiError(403, "forbidden", "Only who added it or an editor can change this source")
     set_date = "published_at" in body.model_fields_set
     if set_date and body.published_at and body.published_at > dates.today():
         raise ApiError(422, "future_date", "A publication date cannot be in the future")
@@ -427,8 +425,6 @@ async def update_source(
 @router.delete("/workspaces/{ws}/sources/{source_id}", status_code=204)
 async def delete_source(source_id: uuid.UUID, member: AnyMember, db: Db) -> None:
     s = await _get_source(db, member, source_id)
-    if s.created_by != member.user.id and not member.at_least("editor"):
-        raise ApiError(403, "forbidden", "Only who added it or an editor can remove this source")
     item_id, file_id = s.item_id, s.file_id
     await db.delete(s)
     await record(db, member.workspace_id, member.user.id, "source", source_id, "delete")

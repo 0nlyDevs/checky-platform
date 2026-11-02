@@ -287,9 +287,7 @@ export function VerdictDecision({
             {tooShort && choice && <span className="text-sm text-muted-foreground">{s.reasonShort}</span>}
           </div>
         </>
-      ) : (
-        <p className="text-sm text-muted-foreground">{s.cannot}</p>
-      )}
+      ) : null}
       {confirmDialog}
     </div>
   );

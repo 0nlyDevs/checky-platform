@@ -84,8 +84,8 @@ def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
 
     alice, bob, carol, outsider = as_user("alice"), as_user("bob"), as_user("carol"), as_user("x")
     ws = _workspace(alice)
-    invite(alice, ws, bob, "journalist")
-    invite(alice, ws, carol, "issuer")
+    invite(alice, ws, bob)
+    invite(alice, ws, carol)
     base = f"/api/v1/workspaces/{ws}/registry"
     cid = carol.post(base, json=ORIGINAL).json()["id"]
 
@@ -93,7 +93,6 @@ def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
     refused = alice.post(f"{base}/{cid}/seal")
     assert refused.status_code == 503 and refused.json()["error"]["code"] == "seal_unavailable"
     monkeypatch.setattr(get_settings(), "seal_secret", SECRET)
-    assert bob.post(f"{base}/{cid}/seal").status_code == 403
     assert outsider.post(f"{base}/{cid}/seal").status_code == 404
 
     sealed = carol.post(f"{base}/{cid}/seal").json()
@@ -112,7 +111,7 @@ def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
     assert anyone.get("/api/v1/public/seal-keys").json() == {"keys": [], "revoked": []}
     alice.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
     public = anyone.get(f"/api/v1/public/sceau/{cid}").json()
-    assert public["alg"] == "Ed25519" and public["sealed_by"] == "issuer"
+    assert public["alg"] == "Ed25519" and public["sealed_by"] == "newsroom"
     assert public["message"] == seal.canonical(public["payload"]) and public["revoked_at"] is None
     assert seal.verify(public["public_key"], public["payload"], public["signature"])
     check = f"/api/v1/public/sceau/{cid}/verify"
@@ -126,8 +125,7 @@ def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
     keys = carol.get(f"{base}/keys").json()
     assert len(keys) == 1 and keys[0]["seals"] == 1
     key_id = keys[0]["key_id"]
-    assert bob.post(f"{base}/keys/{key_id}/revoke").status_code == 403
-    revoked = carol.post(f"{base}/keys/{key_id}/revoke").json()
+    revoked = bob.post(f"{base}/keys/{key_id}/revoke").json()
     assert revoked["revoked_at"]
     assert anyone.get(f"/api/v1/public/sceau/{cid}").json()["revoked_at"]
     assert anyone.post(check, json={}).json()["revoked"] is True
@@ -141,20 +139,3 @@ def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
         "matches_record": True,
         "key_id": fresh["sealed"]["key_id"],
     }
-
-
-def test_an_issuer_account_only_handles_its_own_keys(as_user, secret):
-    from tests.test_newsroom_resources import invite
-    from tests.test_registry import ORIGINAL
-
-    alice, carol = as_user("alice"), as_user("carol")
-    ws = _workspace(alice)
-    invite(alice, ws, carol, "issuer")
-    base = f"/api/v1/workspaces/{ws}/registry"
-    cid = alice.post(base, json={**ORIGINAL, "issuer": "CENI"}).json()["id"]
-    key_id = alice.post(f"{base}/{cid}/seal").json()["sealed"]["key_id"]
-    assert alice.get(f"/api/v1/public/sceau/{cid}").status_code == 404
-    assert carol.post(f"{base}/{cid}/seal").status_code == 404
-    assert carol.get(f"{base}/keys").json() == []
-    assert carol.post(f"{base}/keys/{key_id}/revoke").status_code == 404
-    assert alice.get(f"{base}/keys").json()[0]["key_id"] == key_id

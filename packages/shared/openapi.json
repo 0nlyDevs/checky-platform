@@ -261,6 +261,7 @@
           "workspaces"
         ],
         "summary": "Create Invitation",
+        "description": "A single-use link, valid 7 days: whoever opens it joins as a journalist of the newsroom.",
         "operationId": "create_invitation_api_v1_workspaces__ws__invitations_post",
         "security": [
           {
@@ -279,16 +280,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/InvitationIn"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Successful Response",
@@ -361,76 +352,12 @@
       }
     },
     "/api/v1/workspaces/{ws}/members/{user_id}": {
-      "patch": {
-        "tags": [
-          "workspaces"
-        ],
-        "summary": "Change Role",
-        "operationId": "change_role_api_v1_workspaces__ws__members__user_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "user_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "User Id"
-            }
-          },
-          {
-            "name": "ws",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Ws"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/RoleIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/MemberOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
       "delete": {
         "tags": [
           "workspaces"
         ],
         "summary": "Remove Member",
+        "description": "Any journalist may remove a colleague or leave; a newsroom never loses its last member.",
         "operationId": "remove_member_api_v1_workspaces__ws__members__user_id__delete",
         "security": [
           {
@@ -461,54 +388,6 @@
         "responses": {
           "204": {
             "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{ws}/permissions": {
-      "get": {
-        "tags": [
-          "workspaces"
-        ],
-        "summary": "Permissions",
-        "operationId": "permissions_api_v1_workspaces__ws__permissions_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "ws",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Ws"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PermissionsOut"
-                }
-              }
-            }
           },
           "422": {
             "description": "Validation Error",
@@ -4113,7 +3992,7 @@
           "directory"
         ],
         "summary": "Verify Contact",
-        "description": "An editor checked the channels and the official pages (called the switchboard, matched the\npage to the institution): the pages now count as official in « Fiabilité de la source ».",
+        "description": "A journalist checked the channels and the official pages (called the switchboard, matched the\npage to the institution): the pages now count as official in « Fiabilité de la source ».",
         "operationId": "verify_contact_api_v1_workspaces__ws__contacts__contact_id__verify_post",
         "security": [
           {
@@ -4707,7 +4586,7 @@
           "registry"
         ],
         "summary": "Originals",
-        "description": "`mine`: this newsroom's registry (an issuer sees only what it registered). `network`: the\noriginals of the other public newsrooms, to confirm them.",
+        "description": "`mine`: this newsroom's registry. `network`: the originals of the other public newsrooms,\nto confirm them.",
         "operationId": "originals_api_v1_workspaces__ws__registry_get",
         "security": [
           {
@@ -8974,44 +8853,6 @@
         ],
         "title": "BatchOut"
       },
-      "Capability": {
-        "properties": {
-          "key": {
-            "type": "string",
-            "title": "Key"
-          },
-          "roles": {
-            "additionalProperties": {
-              "type": "boolean"
-            },
-            "type": "object",
-            "title": "Roles"
-          },
-          "scope": {
-            "anyOf": [
-              {
-                "type": "string",
-                "const": "own"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Scope"
-          },
-          "route": {
-            "type": "string",
-            "title": "Route"
-          }
-        },
-        "type": "object",
-        "required": [
-          "key",
-          "roles",
-          "route"
-        ],
-        "title": "Capability"
-      },
       "CarnetEntry": {
         "properties": {
           "at": {
@@ -12452,40 +12293,11 @@
         ],
         "title": "InboundOut"
       },
-      "InvitationIn": {
-        "properties": {
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "editor",
-              "journalist",
-              "veilleur",
-              "issuer"
-            ],
-            "title": "Role",
-            "default": "journalist"
-          }
-        },
-        "type": "object",
-        "title": "InvitationIn"
-      },
       "InvitationOut": {
         "properties": {
           "token": {
             "type": "string",
             "title": "Token"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "editor",
-              "journalist",
-              "veilleur",
-              "issuer"
-            ],
-            "title": "Role"
           },
           "expires_at": {
             "type": "string",
@@ -12496,7 +12308,6 @@
         "type": "object",
         "required": [
           "token",
-          "role",
           "expires_at"
         ],
         "title": "InvitationOut"
@@ -12911,17 +12722,6 @@
             "type": "string",
             "title": "User Id"
           },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "editor",
-              "journalist",
-              "veilleur",
-              "issuer"
-            ],
-            "title": "Role"
-          },
           "name": {
             "anyOf": [
               {
@@ -12947,8 +12747,7 @@
         },
         "type": "object",
         "required": [
-          "user_id",
-          "role"
+          "user_id"
         ],
         "title": "MemberOut"
       },
@@ -12966,25 +12765,13 @@
           "slug": {
             "type": "string",
             "title": "Slug"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "editor",
-              "journalist",
-              "veilleur",
-              "issuer"
-            ],
-            "title": "Role"
           }
         },
         "type": "object",
         "required": [
           "workspace_id",
           "name",
-          "slug",
-          "role"
+          "slug"
         ],
         "title": "MembershipOut"
       },
@@ -13554,30 +13341,6 @@
           "score"
         ],
         "title": "Passage"
-      },
-      "PermissionsOut": {
-        "properties": {
-          "roles": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Roles"
-          },
-          "capabilities": {
-            "items": {
-              "$ref": "#/components/schemas/Capability"
-            },
-            "type": "array",
-            "title": "Capabilities"
-          }
-        },
-        "type": "object",
-        "required": [
-          "roles",
-          "capabilities"
-        ],
-        "title": "PermissionsOut"
       },
       "PostIn": {
         "properties": {
@@ -15175,26 +14938,6 @@
           "newsroom"
         ],
         "title": "RevokedKeyOut"
-      },
-      "RoleIn": {
-        "properties": {
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "editor",
-              "journalist",
-              "veilleur",
-              "issuer"
-            ],
-            "title": "Role"
-          }
-        },
-        "type": "object",
-        "required": [
-          "role"
-        ],
-        "title": "RoleIn"
       },
       "RouteIn": {
         "properties": {
@@ -16868,25 +16611,13 @@
           "slug": {
             "type": "string",
             "title": "Slug"
-          },
-          "role": {
-            "type": "string",
-            "enum": [
-              "admin",
-              "editor",
-              "journalist",
-              "veilleur",
-              "issuer"
-            ],
-            "title": "Role"
           }
         },
         "type": "object",
         "required": [
           "id",
           "name",
-          "slug",
-          "role"
+          "slug"
         ],
         "title": "WorkspaceOut"
       },

@@ -206,10 +206,7 @@ function DemoSection({ ws }: { ws: string }) {
 
 export function SettingsView() {
   const { ws } = useParams<{ ws: string }>();
-  const { role } = useWorkspace(ws);
-  const admin = role === "admin";
-  // Veilleurs and institutions do not read the desk's questions or partners (journalist and up).
-  const desk = admin || role === "editor" || role === "journalist";
+  const { joined } = useWorkspace(ws);
 
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
@@ -217,29 +214,19 @@ export function SettingsView() {
         <h1 className="page-title">{t.settings.title}</h1>
         <p className="mt-1 text-muted-foreground">{t.team.settings.lead}</p>
       </header>
-      {role && (
+      {joined && (
         <div className="space-y-8">
           {/* The newsroom's own rules first; then what the public asks and where verdicts go back out;
-              service health and the demo last. Journalists see the questions and the radios. */}
-          {admin && (
-            <>
-              <NewsroomRules ws={ws} />
-              <BeatsSection ws={ws} />
-              <PlaceSection ws={ws} />
-              <PublicSection ws={ws} />
-            </>
-          )}
-          {desk && <PeopleAsk ws={ws} />}
-          {admin && <SmsSimulator ws={ws} />}
-          {desk && <RadiosSection ws={ws} canEdit={admin || role === "editor"} />}
-          {admin ? (
-            <>
-              <HealthSection />
-              <DemoSection ws={ws} />
-            </>
-          ) : (
-            <p className="max-w-prose text-muted-foreground">{t.team.settings.adminOnly}</p>
-          )}
+              service health and the demo last. Every journalist of the newsroom sets them. */}
+          <NewsroomRules ws={ws} />
+          <BeatsSection ws={ws} />
+          <PlaceSection ws={ws} />
+          <PublicSection ws={ws} />
+          <PeopleAsk ws={ws} />
+          <SmsSimulator ws={ws} />
+          <RadiosSection ws={ws} canEdit />
+          <HealthSection />
+          <DemoSection ws={ws} />
         </div>
       )}
     </div>

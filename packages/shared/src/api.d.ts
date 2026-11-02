@@ -105,7 +105,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Create Invitation */
+        /**
+         * Create Invitation
+         * @description A single-use link, valid 7 days: whoever opens it joins as a journalist of the newsroom.
+         */
         post: operations["create_invitation_api_v1_workspaces__ws__invitations_post"];
         delete?: never;
         options?: never;
@@ -140,26 +143,11 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Remove Member */
+        /**
+         * Remove Member
+         * @description Any journalist may remove a colleague or leave; a newsroom never loses its last member.
+         */
         delete: operations["remove_member_api_v1_workspaces__ws__members__user_id__delete"];
-        options?: never;
-        head?: never;
-        /** Change Role */
-        patch: operations["change_role_api_v1_workspaces__ws__members__user_id__patch"];
-        trace?: never;
-    };
-    "/api/v1/workspaces/{ws}/permissions": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Permissions */
-        get: operations["permissions_api_v1_workspaces__ws__permissions_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1059,7 +1047,7 @@ export interface paths {
         put?: never;
         /**
          * Verify Contact
-         * @description An editor checked the channels and the official pages (called the switchboard, matched the
+         * @description A journalist checked the channels and the official pages (called the switchboard, matched the
          *     page to the institution): the pages now count as official in « Fiabilité de la source ».
          */
         post: operations["verify_contact_api_v1_workspaces__ws__contacts__contact_id__verify_post"];
@@ -1193,8 +1181,8 @@ export interface paths {
         };
         /**
          * Originals
-         * @description `mine`: this newsroom's registry (an issuer sees only what it registered). `network`: the
-         *     originals of the other public newsrooms, to confirm them.
+         * @description `mine`: this newsroom's registry. `network`: the originals of the other public newsrooms,
+         *     to confirm them.
          */
         get: operations["originals_api_v1_workspaces__ws__registry_get"];
         put?: never;
@@ -2462,19 +2450,6 @@ export interface components {
             /** Skipped */
             skipped: components["schemas"]["Skipped"][];
         };
-        /** Capability */
-        Capability: {
-            /** Key */
-            key: string;
-            /** Roles */
-            roles: {
-                [key: string]: boolean;
-            };
-            /** Scope */
-            scope?: "own" | null;
-            /** Route */
-            route: string;
-        };
         /** CarnetEntry */
         CarnetEntry: {
             /**
@@ -3628,24 +3603,10 @@ export interface components {
             /** Verdict Id */
             verdict_id?: string | null;
         };
-        /** InvitationIn */
-        InvitationIn: {
-            /**
-             * Role
-             * @default journalist
-             * @enum {string}
-             */
-            role: "admin" | "editor" | "journalist" | "veilleur" | "issuer";
-        };
         /** InvitationOut */
         InvitationOut: {
             /** Token */
             token: string;
-            /**
-             * Role
-             * @enum {string}
-             */
-            role: "admin" | "editor" | "journalist" | "veilleur" | "issuer";
             /**
              * Expires At
              * Format: date-time
@@ -3808,11 +3769,6 @@ export interface components {
         MemberOut: {
             /** User Id */
             user_id: string;
-            /**
-             * Role
-             * @enum {string}
-             */
-            role: "admin" | "editor" | "journalist" | "veilleur" | "issuer";
             /** Name */
             name?: string | null;
             /** Email */
@@ -3829,11 +3785,6 @@ export interface components {
             name: string;
             /** Slug */
             slug: string;
-            /**
-             * Role
-             * @enum {string}
-             */
-            role: "admin" | "editor" | "journalist" | "veilleur" | "issuer";
         };
         /** NewsroomOut */
         NewsroomOut: {
@@ -4042,13 +3993,6 @@ export interface components {
             end_s: number | null;
             /** Score */
             score: number;
-        };
-        /** PermissionsOut */
-        PermissionsOut: {
-            /** Roles */
-            roles: string[];
-            /** Capabilities */
-            capabilities: components["schemas"]["Capability"][];
         };
         /** PostIn */
         PostIn: {
@@ -4583,14 +4527,6 @@ export interface components {
              */
             revoked_at: string;
             newsroom: components["schemas"]["NewsroomOut"];
-        };
-        /** RoleIn */
-        RoleIn: {
-            /**
-             * Role
-             * @enum {string}
-             */
-            role: "admin" | "editor" | "journalist" | "veilleur" | "issuer";
         };
         /** RouteIn */
         RouteIn: {
@@ -5194,11 +5130,6 @@ export interface components {
             name: string;
             /** Slug */
             slug: string;
-            /**
-             * Role
-             * @enum {string}
-             */
-            role: "admin" | "editor" | "journalist" | "veilleur" | "issuer";
         };
         /** WorkspacePatch */
         WorkspacePatch: {
@@ -5508,11 +5439,7 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["InvitationIn"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             201: {
@@ -5583,73 +5510,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    change_role_api_v1_workspaces__ws__members__user_id__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                user_id: string;
-                ws: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RoleIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["MemberOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    permissions_api_v1_workspaces__ws__permissions_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ws: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PermissionsOut"];
-                };
             };
             /** @description Validation Error */
             422: {

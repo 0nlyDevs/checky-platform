@@ -34,8 +34,6 @@ const TABS = [
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
-const WRITERS = ["issuer", "admin", "editor"];
-const DESK = ["journalist", "editor", "admin"];
 
 function failure(e: unknown) {
   if (e instanceof ApiError && e.code === "seal_unavailable") return r.seal.unavailable;
@@ -505,10 +503,10 @@ function ComparePanel({ ws, onRecorded }: { ws: string; onRecorded: () => void }
 export function RegistryView() {
   const { ws } = useParams<{ ws: string }>();
   const params = useSearchParams();
-  const { role } = useWorkspace(ws);
-  const canWrite = !!role && WRITERS.includes(role);
-  const isDesk = !!role && DESK.includes(role);
-  const tabs = TABS.filter((tab) => (!("desk" in tab) || isDesk) && (!("writer" in tab) || canWrite));
+  const { joined } = useWorkspace(ws);
+  const canWrite = joined;
+  const isDesk = joined;
+  const tabs = TABS;
   const wanted = (params.get("onglet") ?? "originaux") as Tab;
   const tab: Tab = tabs.some((x) => x.key === wanted) ? wanted : "originaux";
   const [adding, setAdding] = useState(false);

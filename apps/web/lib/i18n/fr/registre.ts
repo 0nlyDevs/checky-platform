@@ -44,7 +44,7 @@ export const registre = {
     emptyNetwork: "Aucune autre rédaction ne publie encore son registre.",
     loadFailed: "Impossible de charger le registre.",
     retry: "Réessayer",
-    denied: "Votre rôle ne permet pas cette action.",
+    denied: "Cette action n'est pas possible ici.",
     failed: "L'action n'a pas abouti. Réessayez.",
   },
   compare: {

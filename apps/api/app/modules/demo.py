@@ -7,7 +7,7 @@ from fastapi import APIRouter
 from sqlalchemy import delete, select
 
 from app.core import dates
-from app.core.access import Admin, Db
+from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.models import Item, Source, Workspace
 
@@ -230,14 +230,14 @@ async def seed_extras(db, workspace_id, user_id, items: dict[str, Item]) -> None
 
 
 @router.post("/workspaces/{ws}/demo/reset")
-async def reset_demo(admin: Admin, db: Db) -> dict:
+async def reset_demo(member: AnyMember, db: Db) -> dict:
     # The demo newsroom shows its published verdicts and takes public tips, for the pitch.
-    ws = await db.get(Workspace, admin.workspace_id)
+    ws = await db.get(Workspace, member.workspace_id)
     ws.is_public = True
     # Sources outlive their claim (SET NULL), so the demo's own go first; their passages cascade.
-    items = select(Item.id).where(Item.workspace_id == admin.workspace_id)
+    items = select(Item.id).where(Item.workspace_id == member.workspace_id)
     await db.execute(delete(Source).where(Source.item_id.in_(items)))
-    await db.execute(delete(Item).where(Item.workspace_id == admin.workspace_id))
+    await db.execute(delete(Item).where(Item.workspace_id == member.workspace_id))
     created_sources = []
     by_ref: dict[str, Item] = {}
     now = datetime.now(UTC)
@@ -245,8 +245,8 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
         DEMO_CLAIMS
     ):
         item = Item(
-            workspace_id=admin.workspace_id,
-            author_id=admin.user.id,
+            workspace_id=member.workspace_id,
+            author_id=member.user.id,
             type="claim",
             title=title,
             status=status,
@@ -258,7 +258,7 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
                 "verdict": verdict,
                 "verdict_suggested": suggested,
                 "source_count": 1 if i in DEMO_SOURCES else 0,
-                "assignee_id": admin.user.id if status == "in_progress" else None,
+                "assignee_id": member.user.id if status == "in_progress" else None,
                 "demo": True,
                 **({"reason": DEMO_REASONS[i]} if i in DEMO_REASONS else {}),
             },
@@ -266,13 +266,13 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
         db.add(item)
         await db.flush()
         by_ref[item.data["ref"]] = item
-        await record(db, admin.workspace_id, admin.user.id, "item", item.id, "create")
+        await record(db, member.workspace_id, member.user.id, "item", item.id, "create")
         if i in DEMO_SOURCES:
             title, text = DEMO_SOURCES[i]
             source = Source(
-                workspace_id=admin.workspace_id,
+                workspace_id=member.workspace_id,
                 item_id=item.id,
-                created_by=admin.user.id,
+                created_by=member.user.id,
                 kind="text",
                 status="ready",
                 title=title,
@@ -287,10 +287,10 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
             await db.flush()
             created_sources.append(source.id)
     await db.commit()
-    await seed_extras(db, admin.workspace_id, admin.user.id, by_ref)
+    await seed_extras(db, member.workspace_id, member.user.id, by_ref)
     from app.modules.rag import queue_embedding
 
     for source_id in created_sources:
-        await queue_embedding(db, admin.workspace_id, admin.user.id, source_id)
-    await broadcast(admin.workspace_id, "demo.reset", {})
+        await queue_embedding(db, member.workspace_id, member.user.id, source_id)
+    await broadcast(member.workspace_id, "demo.reset", {})
     return {"items": len(DEMO_CLAIMS)}

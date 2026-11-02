@@ -30,7 +30,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import dates
-from app.core.access import AnyMember, Db, Editor, Member
+from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
@@ -97,12 +97,8 @@ def permalink(item: Item) -> str:
 
 
 def may_sign(member: Member, item: Item) -> bool:
-    # The author, the journalist the dossier is assigned to (tips have no desk author), or an editor.
-    return (
-        item.author_id == member.user.id
-        or (item.data or {}).get("assignee_id") == member.user.id
-        or member.at_least("editor")
-    )
+    # Every journalist of the newsroom may sign its dossiers (the byline names who did).
+    return item.workspace_id == member.workspace_id
 
 
 def signed_current(item: Item) -> bool:
@@ -136,7 +132,7 @@ async def _apply(
 ) -> bool:
     """Write the signature on the item (not committed). Returns True when it is now published."""
     if not may_sign(member, item):
-        raise ApiError(403, "forbidden", "Only the author or an editor can sign this dossier")
+        raise ApiError(403, "forbidden", "This dossier belongs to another newsroom")
     at = datetime.now(UTC).isoformat()
     signer = (await names(db, [member.user.id])).get(member.user.id) or member.user.email
     data = {
@@ -227,7 +223,7 @@ async def sign(item_id: uuid.UUID, body: SignIn, member: AnyMember, db: Db) -> I
 
 
 @router.post("/workspaces/{ws}/items/{item_id}/release")
-async def release(item_id: uuid.UUID, member: Editor, db: Db) -> ItemOut:
+async def release(item_id: uuid.UUID, member: AnyMember, db: Db) -> ItemOut:
     """« Publier la version signée »: publishes what was signed, as long as nothing changed since
     (same digest)."""
     item = await _locked(db, member, item_id)
@@ -405,7 +401,7 @@ async def adopt(item_id: uuid.UUID, body: AdoptIn, member: AnyMember, db: Db) ->
         raise ApiError(422, "unknown_rating", "Choose the verdict by hand for this rating")
     item = await _locked(db, member, item_id)
     if not may_sign(member, item):
-        raise ApiError(403, "forbidden", "Only the author or an editor can sign this dossier")
+        raise ApiError(403, "forbidden", "This dossier belongs to another newsroom")
     ws = await db.get(Workspace, member.workspace_id)
     day = dates.parse(review.date)
     when = f" le {dates.fr(day)}" if day else ""

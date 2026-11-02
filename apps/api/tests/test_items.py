@@ -41,17 +41,16 @@ def test_workspace_isolation(as_user):
     assert mallory.get(f"/api/v1/workspaces/{ws_a}/items").status_code == 404
 
 
-def test_edit_and_delete_permissions(as_user):
+def test_every_member_edits_and_deletes(as_user):
     alice, bob, carol = as_user("alice"), as_user("bob"), as_user("carol")
     ws = _workspace(alice)
-    _join(alice, bob, ws, "journalist")
-    _join(alice, carol, ws, "journalist")
+    _join(alice, bob, ws)
+    _join(alice, carol, ws)
     item = _item(bob, ws)
     url = f"/api/v1/workspaces/{ws}/items/{item['id']}"
-    assert carol.patch(url, json={"title": "x"}).status_code == 403
+    assert carol.patch(url, json={"title": "x"}).status_code == 200
     assert bob.patch(url, json={"title": "Edited"}).json()["title"] == "Edited"
-    assert bob.delete(url).status_code == 403
-    assert alice.delete(url).status_code == 204
+    assert carol.delete(url).status_code == 204
 
 
 def test_comments_and_activity_log(as_user):
@@ -76,13 +75,12 @@ def test_comments_and_activity_log(as_user):
     assert other["id"] not in {a["entity_id"] for a in scoped}
 
 
-def test_demo_reset_is_admin_only_and_replaces_items(as_user):
+def test_any_member_resets_the_demo_and_replaces_items(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
     _join(alice, bob, ws)
     _item(alice, ws, title="Will be replaced")
-    assert bob.post(f"/api/v1/workspaces/{ws}/demo/reset").status_code == 403
-    n = alice.post(f"/api/v1/workspaces/{ws}/demo/reset").json()["items"]
+    n = bob.post(f"/api/v1/workspaces/{ws}/demo/reset").json()["items"]
     items = alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"]
     assert len(items) == n
     assert all(i["data"]["demo"] and i["data"]["first_seen_at"] for i in items)

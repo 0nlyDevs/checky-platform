@@ -153,7 +153,7 @@ export function RadiosSection({ ws, canEdit }: { ws: string; canEdit: boolean })
           </Button>
         </form>
       ) : (
-        <p className="mt-4 text-sm text-muted-foreground">{r.editorOnly}</p>
+        null
       )}
     </section>
   );

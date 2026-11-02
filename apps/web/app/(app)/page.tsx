@@ -108,7 +108,7 @@ function Home() {
   const first = me?.memberships[0];
 
   useEffect(() => {
-    if (first && !wantsNew) router.replace(`/w/${first.workspace_id}/${first.role === "issuer" ? "registre" : first.role === "veilleur" ? "veille" : "rubrique"}`);
+    if (first && !wantsNew) router.replace(`/w/${first.workspace_id}/rubrique`);
   }, [first, wantsNew, router]);
 
   if (error) {

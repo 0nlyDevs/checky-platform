@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_, select
 
-from app.core.access import AnyMember, Db, Editor, Member
+from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
 from app.core.models import Activity, Comment, Item
@@ -179,8 +179,6 @@ async def get_item(item_id: uuid.UUID, member: AnyMember, db: Db) -> ItemOut:
 @router.patch("/workspaces/{ws}/items/{item_id}")
 async def update_item(item_id: uuid.UUID, body: ItemPatch, member: AnyMember, db: Db) -> ItemOut:
     item = await _get_item(db, member, item_id)
-    if item.author_id != member.user.id and not member.at_least("editor"):
-        raise ApiError(403, "forbidden", "Only the author or an editor can edit this item")
     from app.modules.signing import SIGNATURE_FIELDS, publication_guard
 
     if body.data is not None and SIGNATURE_FIELDS & body.data.keys():
@@ -214,7 +212,7 @@ async def update_item(item_id: uuid.UUID, body: ItemPatch, member: AnyMember, db
 
 
 @router.delete("/workspaces/{ws}/items/{item_id}", status_code=204)
-async def delete_item(item_id: uuid.UUID, member: Editor, db: Db) -> None:
+async def delete_item(item_id: uuid.UUID, member: AnyMember, db: Db) -> None:
     item = await _get_item(db, member, item_id)
     await db.delete(item)
     await record(db, member.workspace_id, member.user.id, "item", item_id, "delete")

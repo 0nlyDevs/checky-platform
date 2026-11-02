@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { IconAddressBook, IconArrowSquareOut, IconCircleNotch, IconMagnifyingGlass, IconPhone, IconPlus, IconSealCheck, IconX } from "@/lib/icons";
@@ -245,8 +244,7 @@ export function AnnuaireView() {
   const { ws } = useParams<{ ws: string }>();
   const key = `/workspaces/${ws}/contacts`;
   const { data, error, mutate } = useSWR<Contact[]>(key, fetcher);
-  const { role } = useWorkspace(ws);
-  const editor = role === "editor" || role === "admin";
+  const editor = true; // every journalist checks and removes the newsroom's own contacts
   const [q, setQ] = useState("");
   const [topic, setTopic] = useState(ALL);
   const [region, setRegion] = useState(ALL);

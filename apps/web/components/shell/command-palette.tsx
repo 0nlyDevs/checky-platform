@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item, ItemPage, Me } from "@fanilo/shared";
+import type { Item, ItemPage } from "@fanilo/shared";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Dialog } from "radix-ui";
@@ -65,7 +65,6 @@ export function CommandPalette() {
     return () => clearTimeout(id);
   }, [query]);
 
-  const { data: me } = useSWR<Me>(open ? "/me" : null, fetcher);
   const key = open && ws ? `/workspaces/${ws}/items?limit=5${debounced ? `&q=${encodeURIComponent(debounced)}` : ""}` : null;
   const { data: found, isLoading, isValidating } = useSWR<ItemPage>(key, fetcher, { keepPreviousData: true });
 
@@ -80,9 +79,7 @@ export function CommandPalette() {
     const list: Entry[] = [];
     const go = (path: string) => () => router.push(path as never);
     if (ws) {
-      const role = me?.memberships.find((m) => m.workspace_id === ws)?.role;
-      const restricted = role === "issuer" || role === "veilleur";
-      const spaces = restricted ? NAV.filter((n) => n.path === (role === "issuer" ? "registre" : "veille")) : [...NAV, ...WORKSPACE_NAV];
+      const spaces = [...NAV, ...WORKSPACE_NAV];
       for (const n of spaces) list.push({ id: `space-${n.path}`, group: "spaces", icon: n.icon, label: n.label, run: go(`/w/${ws}/${n.path}`) });
       // a stale answer (for the previous letters) is not offered while the next one is on its way
       for (const item of query.trim() === debounced && !isValidating ? (found?.items ?? []) : []) {
@@ -97,7 +94,7 @@ export function CommandPalette() {
       { id: "act-keys", group: "actions", icon: IconQuestion, label: p.actions.shortcuts, keys: ["?"], run: () => window.dispatchEvent(new Event(SHORTCUTS_EVENT)) },
     );
     return list;
-  }, [ws, me, found, query, debounced, isValidating, router, openAssistant, setTheme, resolvedTheme]);
+  }, [ws, found, query, debounced, isValidating, router, openAssistant, setTheme, resolvedTheme]);
 
   const shown = useMemo(() => {
     const q = fold(query.trim());

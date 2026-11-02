@@ -2,31 +2,19 @@ import re
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
-from typing import Literal, get_args
+from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from fastapi import APIRouter, Request
-from fastapi.routing import APIRoute
+from fastapi import APIRouter
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, or_, select
 
 from app.core import places
-from app.core.access import (
-    RANK,
-    Admin,
-    AnyMember,
-    Anyone,
-    Db,
-    Editor,
-    Issuer,
-    Veilleur,
-    get_membership,
-)
+from app.core.access import AnyMember, Db, get_membership
 from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.models import (
     DEFAULT_BEATS,
-    ROLES,
     Invitation,
     Membership,
     RadioPartner,
@@ -38,8 +26,6 @@ from app.core.security import User
 
 router = APIRouter(tags=["workspaces"])
 
-Role = Literal["admin", "editor", "journalist", "veilleur", "issuer"]
-
 
 class WorkspaceIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
@@ -49,23 +35,16 @@ class WorkspaceOut(BaseModel):
     id: uuid.UUID
     name: str
     slug: str
-    role: Role
 
 
 class MemberOut(BaseModel):
     user_id: str
-    role: Role
     name: str | None = None
     email: str | None = None
 
 
-class InvitationIn(BaseModel):
-    role: Role = "journalist"
-
-
 class InvitationOut(BaseModel):
     token: str
-    role: Role
     expires_at: datetime
 
 
@@ -135,10 +114,6 @@ class WorkspacePatch(BaseModel):
     settings: NewsroomSettings | None = None
 
 
-class RoleIn(BaseModel):
-    role: Role
-
-
 def _slugify(name: str) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or "workspace"
     return f"{base[:120]}-{secrets.token_hex(3)}"
@@ -149,13 +124,13 @@ async def create_workspace(body: WorkspaceIn, user: User, db: Db) -> WorkspaceOu
     ws = Workspace(name=body.name, slug=_slugify(body.name))
     db.add(ws)
     await db.flush()
-    db.add(Membership(workspace_id=ws.id, user_id=user.id, role="admin"))
+    db.add(Membership(workspace_id=ws.id, user_id=user.id))
     await db.commit()
-    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug, role="admin")
+    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug)
 
 
 @router.get("/workspaces/{ws}")
-async def get_workspace(member: Anyone, db: Db) -> WorkspaceSettingsOut:
+async def get_workspace(member: AnyMember, db: Db) -> WorkspaceSettingsOut:
     ws = await db.get(Workspace, member.workspace_id)
     return WorkspaceSettingsOut(
         id=ws.id,
@@ -167,8 +142,8 @@ async def get_workspace(member: Anyone, db: Db) -> WorkspaceSettingsOut:
 
 
 @router.patch("/workspaces/{ws}")
-async def update_workspace(body: WorkspacePatch, admin: Admin, db: Db) -> WorkspaceSettingsOut:
-    ws = await db.get(Workspace, admin.workspace_id)
+async def update_workspace(body: WorkspacePatch, member: AnyMember, db: Db) -> WorkspaceSettingsOut:
+    ws = await db.get(Workspace, member.workspace_id)
     if body.name is not None:
         ws.name = body.name
     if body.is_public is not None:
@@ -193,22 +168,20 @@ async def list_members(member: AnyMember, db: Db) -> list[MemberOut]:
         .where(Membership.workspace_id == member.workspace_id)
         .order_by(Membership.created_at)
     )
-    return [
-        MemberOut(user_id=m.user_id, role=m.role, name=name, email=email) for m, name, email in rows
-    ]
+    return [MemberOut(user_id=m.user_id, name=name, email=email) for m, name, email in rows]
 
 
 @router.post("/workspaces/{ws}/invitations", status_code=201)
-async def create_invitation(body: InvitationIn, admin: Admin, db: Db) -> InvitationOut:
+async def create_invitation(member: AnyMember, db: Db) -> InvitationOut:
+    """A single-use link, valid 7 days: whoever opens it joins as a journalist of the newsroom."""
     inv = Invitation(
-        workspace_id=admin.workspace_id,
+        workspace_id=member.workspace_id,
         token=secrets.token_urlsafe(24),
-        role=body.role,
         expires_at=datetime.now(UTC) + timedelta(days=7),
     )
     db.add(inv)
     await db.commit()
-    return InvitationOut(token=inv.token, role=inv.role, expires_at=inv.expires_at)
+    return InvitationOut(token=inv.token, expires_at=inv.expires_at)
 
 
 @router.post("/invitations/{token}/accept")
@@ -217,138 +190,28 @@ async def accept_invitation(token: str, user: User, db: Db) -> WorkspaceOut:
     if inv is None or inv.used_at is not None or inv.expires_at < datetime.now(UTC):
         raise ApiError(404, "invalid_invitation", "Invitation is invalid or expired")
     ws = await db.get(Workspace, inv.workspace_id)
-    existing = await get_membership(db, inv.workspace_id, user.id)
-    role = existing.role if existing else inv.role
-    if existing is None:
-        db.add(Membership(workspace_id=inv.workspace_id, user_id=user.id, role=inv.role))
+    if await get_membership(db, inv.workspace_id, user.id) is None:
+        db.add(Membership(workspace_id=inv.workspace_id, user_id=user.id))
     inv.used_at = datetime.now(UTC)
     await db.commit()
-    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug, role=role)
-
-
-async def _target(db: Db, admin, user_id: str) -> Membership:
-    m = await get_membership(db, admin.workspace_id, user_id)
-    if m is None:
-        raise ApiError(404, "not_found", "Member not found")
-    return m
-
-
-async def _guard_last_admin(db: Db, admin, m: Membership) -> None:
-    if m.role != "admin":
-        return
-    admins = await db.scalars(
-        select(Membership).where(
-            Membership.workspace_id == admin.workspace_id, Membership.role == "admin"
-        )
-    )
-    if len(admins.all()) <= 1:
-        raise ApiError(409, "last_admin", "A workspace needs at least one admin")
-
-
-@router.patch("/workspaces/{ws}/members/{user_id}")
-async def change_role(user_id: str, body: RoleIn, admin: Admin, db: Db) -> MemberOut:
-    m = await _target(db, admin, user_id)
-    if body.role != "admin":
-        await _guard_last_admin(db, admin, m)
-    m.role = body.role
-    await db.commit()
-    return MemberOut(user_id=m.user_id, role=m.role)
+    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug)
 
 
 @router.delete("/workspaces/{ws}/members/{user_id}", status_code=204)
-async def remove_member(user_id: str, admin: Admin, db: Db) -> None:
-    m = await _target(db, admin, user_id)
-    await _guard_last_admin(db, admin, m)
+async def remove_member(user_id: str, member: AnyMember, db: Db) -> None:
+    """Any journalist may remove a colleague or leave; a newsroom never loses its last member."""
+    m = await get_membership(db, member.workspace_id, user_id)
+    if m is None:
+        raise ApiError(404, "not_found", "Member not found")
+    count = await db.scalar(
+        select(func.count())
+        .select_from(Membership)
+        .where(Membership.workspace_id == member.workspace_id)
+    )
+    if (count or 0) <= 1:
+        raise ApiError(409, "last_member", "A newsroom needs at least one member")
     await db.delete(m)
     await db.commit()
-
-
-# --- « Qui peut quoi »: the roles matrix, read from the membership dependencies the routes use.
-# Each capability names the route that grants it and the dependency it is expected to carry (used
-# when another slice's route is not mounted yet), plus the rule the handler adds in code.
-CAPABILITIES: list[tuple[str, str, str, object, str | None]] = [
-    ("read_dossiers", "GET", "/workspaces/{ws}/items", AnyMember, None),
-    ("create", "POST", "/workspaces/{ws}/items", AnyMember, None),
-    ("edit_own", "PATCH", "/workspaces/{ws}/items/{item_id}", AnyMember, None),
-    # items.update_item: the author, or an editor for every dossier
-    ("edit_all", "PATCH", "/workspaces/{ws}/items/{item_id}", AnyMember, "editor"),
-    ("delete", "DELETE", "/workspaces/{ws}/items/{item_id}", Editor, None),
-    # signing.sign: the author or an editor; a journalist signs their own dossiers
-    ("sign", "POST", "/workspaces/{ws}/items/{item_id}/sign", AnyMember, "own"),
-    ("publish", "POST", "/workspaces/{ws}/items/{item_id}/sign", AnyMember, "own"),
-    ("register", "POST", "/workspaces/{ws}/registry", Issuer, None),
-    ("seal", "POST", "/workspaces/{ws}/registry/{id}/seal", Issuer, None),
-    ("record_clip", "POST", "/workspaces/{ws}/radio-clips", Veilleur, None),
-    ("invite", "POST", "/workspaces/{ws}/invitations", Admin, None),
-    ("settings", "PATCH", "/workspaces/{ws}", Admin, None),
-    ("demo_reset", "POST", "/workspaces/{ws}/demo/reset", Admin, None),
-]
-
-
-class Capability(BaseModel):
-    key: str
-    roles: dict[str, bool]
-    # "own": a journalist may do it on their own dossiers only
-    scope: Literal["own"] | None = None
-    route: str
-
-
-class PermissionsOut(BaseModel):
-    roles: list[str]
-    capabilities: list[Capability]
-
-
-def _allowed_by(call) -> set[str] | None:
-    """The roles a membership dependency lets through (`require_role` keeps `min_role` in its
-    closure, `require_any` keeps `roles`); None for any other dependency."""
-    code, cells = getattr(call, "__code__", None), getattr(call, "__closure__", None)
-    if code is None or not cells:
-        return None
-    free = dict(zip(code.co_freevars, (c.cell_contents for c in cells), strict=False))
-    if isinstance(free.get("min_role"), str):
-        return {r for r in ROLES if RANK[r] >= RANK[free["min_role"]]}
-    if isinstance(free.get("roles"), tuple):
-        return set(free["roles"])
-    return None
-
-
-def _shape(path: str) -> str:
-    return re.sub(r"\{[^}]+\}", "{}", path.removeprefix("/api/v1"))
-
-
-def _route_roles(routes, method: str, path: str) -> set[str] | None:
-    for route in routes:
-        if not isinstance(route, APIRoute) or method not in route.methods:
-            continue
-        if _shape(route.path) != _shape(path):
-            continue
-        for dep in route.dependant.dependencies:
-            if (found := _allowed_by(dep.call)) is not None:
-                return found
-    return None
-
-
-@router.get("/workspaces/{ws}/permissions")
-async def permissions(member: Anyone, db: Db, request: Request) -> PermissionsOut:
-    rows = []
-    for key, method, path, fallback, rule in CAPABILITIES:
-        allowed = _route_roles(request.app.routes, method, path)
-        if allowed is None:
-            allowed = _allowed_by(get_args(fallback)[1].dependency) or set()
-        if rule == "editor":
-            allowed = {r for r in allowed if RANK[r] >= RANK["editor"]}
-        rows.append(
-            Capability(
-                key=key,
-                roles={r: r in allowed for r in ROLES},
-                scope="own" if rule == "own" else None,
-                route=f"{method} {path}",
-            )
-        )
-    return PermissionsOut(
-        roles=list(ROLES),
-        capabilities=rows,
-    )
 
 
 # --- partner radios: they read the day's flashes on air and mark them « Diffusé » by a token link
@@ -435,7 +298,7 @@ async def radios(member: AnyMember, db: Db) -> list[RadioOut]:
 
 
 @router.post("/workspaces/{ws}/radios", status_code=201)
-async def create_radio(body: RadioIn, member: Editor, db: Db) -> RadioOut:
+async def create_radio(body: RadioIn, member: AnyMember, db: Db) -> RadioOut:
     region = (body.region or "").strip()
     location = places.gazetteer(region) if region else None
     if region and location is None:
@@ -460,7 +323,7 @@ async def create_radio(body: RadioIn, member: Editor, db: Db) -> RadioOut:
 
 
 @router.delete("/workspaces/{ws}/radios/{radio_id}", status_code=204)
-async def delete_radio(radio_id: uuid.UUID, member: Editor, db: Db) -> None:
+async def delete_radio(radio_id: uuid.UUID, member: AnyMember, db: Db) -> None:
     radio = await db.get(RadioPartner, radio_id)
     if radio is None or radio.workspace_id != member.workspace_id:
         raise ApiError(404, "not_found", "Radio not found")

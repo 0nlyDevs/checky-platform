@@ -24,7 +24,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import ai, dates, seasons
-from app.core.access import AnyMember, Anyone, Db, Member
+from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
 from app.core.models import (
@@ -155,7 +155,7 @@ def _prefs_out(pref: MemberPref | None, workspace: Workspace) -> PrefsOut:
 
 
 @router.get("/workspaces/{ws}/me/prefs")
-async def get_prefs(member: Anyone, db: Db) -> PrefsOut:
+async def get_prefs(member: AnyMember, db: Db) -> PrefsOut:
     return _prefs_out(await load_prefs(db, member), await db.get(Workspace, member.workspace_id))
 
 
@@ -178,7 +178,7 @@ async def save_prefs(db: AsyncSession, workspace_id: uuid.UUID, user_id: str, bo
 
 
 @router.put("/workspaces/{ws}/me/prefs")
-async def put_prefs(body: PrefsIn, member: Anyone, db: Db) -> PrefsOut:
+async def put_prefs(body: PrefsIn, member: AnyMember, db: Db) -> PrefsOut:
     await save_prefs(db, member.workspace_id, member.user.id, body)
     await db.commit()
     return await get_prefs(member, db)

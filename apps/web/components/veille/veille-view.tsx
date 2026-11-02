@@ -305,8 +305,8 @@ function DeskVeille({ ws }: { ws: string }) {
 export function VeilleView() {
   const { ws } = useParams<{ ws: string }>();
   const params = useSearchParams();
-  const { role } = useMe(ws);
-  if (!role) {
+  const { joined } = useMe(ws);
+  if (!joined) {
     return (
       <div className="mx-auto max-w-[90rem] space-y-3 px-4 pt-8 lg:px-8">
         <Skeleton className="h-12 w-48" />
@@ -314,6 +314,6 @@ export function VeilleView() {
       </div>
     );
   }
-  if (role === "veilleur" || params.get("antenne") === "1") return <VeilleurView ws={ws} desk={role !== "veilleur"} />;
+  if (params.get("antenne") === "1") return <VeilleurView ws={ws} desk />;
   return <DeskVeille ws={ws} />;
 }

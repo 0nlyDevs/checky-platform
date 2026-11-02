@@ -40,7 +40,7 @@ def _claim(c, ws, title, **data):
 def test_contacts_carry_beats_places_languages_and_pages(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
-    invite(alice, ws, bob, "journalist")
+    invite(alice, ws, bob)
     made = _contact(alice, ws)
     assert made["location"]["region"] == "Analamanga"
     assert made["official_pages"][0]["verified"] is False and made["own"] is True
@@ -49,7 +49,7 @@ def test_contacts_carry_beats_places_languages_and_pages(as_user):
         JIRAMA["name"]
     ]
     assert alice.get(base, params={"region": "Atsinanana"}).json() == []
-    # Declared is not verified: no official host until an editor checked the page.
+    # Declared is not verified: no official host until a journalist checked the page.
 
     async def hosts():
         async with SessionLocal() as db:
@@ -57,8 +57,7 @@ def test_contacts_carry_beats_places_languages_and_pages(as_user):
 
     assert asyncio.run(hosts()) == set()
     path = f"{base}/{made['id']}"
-    assert bob.post(path + "/verify").status_code == 403
-    assert alice.post(path + "/verify").json()["verified_at"]
+    assert bob.post(path + "/verify").json()["verified_at"]
     assert asyncio.run(hosts()) == {"jirama.mg"}
     # Editing channels drops the verification again.
     edited = alice.patch(path, json={"name": JIRAMA["name"], "phone": "+261 34 00 000 09"}).json()

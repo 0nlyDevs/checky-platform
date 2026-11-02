@@ -462,8 +462,8 @@ export function SourcesPanel({ ws, itemId, kind }: { ws: string; itemId?: string
   const [adding, setAdding] = useState(false);
   const [upload, setUpload] = useState<{ name: string; progress: number } | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const { me, role } = useWorkspace(ws);
-  const canRemove = (s: Source) => s.created_by === me?.id || role === "editor" || role === "admin";
+  const { joined } = useWorkspace(ws);
+  const canRemove = () => joined;
 
   const mine = (s: { item_id?: string | null; kind?: string }) =>
     (!itemId || s.item_id === itemId) && (!kind || !s.kind || s.kind === kind);
@@ -586,7 +586,7 @@ export function SourcesPanel({ ws, itemId, kind }: { ws: string; itemId?: string
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border bg-card">
           {sources.map((s) => (
-            <SourceRow key={s.id} ws={ws} source={s} onRemove={canRemove(s) ? () => remove(s) : undefined} />
+            <SourceRow key={s.id} ws={ws} source={s} onRemove={canRemove() ? () => remove(s) : undefined} />
           ))}
         </ul>
       )}

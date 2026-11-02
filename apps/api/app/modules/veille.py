@@ -28,7 +28,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import dates, seasons, storage
-from app.core.access import AnyMember, Db, Member, Veilleur
+from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
@@ -385,10 +385,8 @@ async def _clips_out(db: AsyncSession, clips: list[RadioClip]) -> list[ClipOut]:
 
 
 @router.get("/workspaces/{ws}/radio-clips")
-async def clips(member: Veilleur, db: Db) -> list[ClipOut]:
+async def clips(member: AnyMember, db: Db) -> list[ClipOut]:
     stmt = select(RadioClip).where(RadioClip.workspace_id == member.workspace_id)
-    if member.role == "veilleur":
-        stmt = stmt.where(RadioClip.created_by == member.user.id)
     rows = list(await db.scalars(stmt.order_by(RadioClip.recorded_at.desc()).limit(100)))
     return await _clips_out(db, rows)
 
@@ -397,13 +395,11 @@ async def _get_clip(db: AsyncSession, member: Member, clip_id: uuid.UUID) -> Rad
     clip = await db.get(RadioClip, clip_id)
     if clip is None or clip.workspace_id != member.workspace_id:
         raise ApiError(404, "not_found", "Clip not found")
-    if member.role == "veilleur" and clip.created_by != member.user.id:
-        raise ApiError(404, "not_found", "Clip not found")
     return clip
 
 
 @router.post("/workspaces/{ws}/radio-clips/upload-url", status_code=201)
-async def clip_upload_url(body: ClipUploadIn, member: Veilleur, db: Db) -> ClipUploadOut:
+async def clip_upload_url(body: ClipUploadIn, member: AnyMember, db: Db) -> ClipUploadOut:
     """The veilleur's recording goes straight to storage, as every upload does; the clip then
     completes it. A door of its own: `files/upload-url` belongs to the desk."""
     from app.modules.sources import KIND_BY_MIME, MAX_UPLOAD_BYTES, _safe_name
@@ -438,7 +434,7 @@ async def clip_upload_url(body: ClipUploadIn, member: Veilleur, db: Db) -> ClipU
 
 
 @router.get("/workspaces/{ws}/radio-clips/{clip_id}")
-async def get_clip(clip_id: uuid.UUID, member: Veilleur, db: Db) -> ClipOut:
+async def get_clip(clip_id: uuid.UUID, member: AnyMember, db: Db) -> ClipOut:
     clip = await _get_clip(db, member, clip_id)
     return (await _clips_out(db, [clip]))[0]
 
@@ -488,7 +484,7 @@ async def _recording_source(
 
 
 @router.post("/workspaces/{ws}/radio-clips", status_code=201)
-async def create_clip(body: ClipIn, member: Veilleur, db: Db) -> ClipOut:
+async def create_clip(body: ClipIn, member: AnyMember, db: Db) -> ClipOut:
     latest = datetime.now(UTC) + timedelta(minutes=2)  # a phone clock a little ahead is fine
     if body.recorded_at.tzinfo is None or body.recorded_at > latest:
         raise ApiError(422, "invalid_time", "Use a past recording time with timezone")

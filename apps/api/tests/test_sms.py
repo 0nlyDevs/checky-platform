@@ -226,10 +226,8 @@ def test_the_simulator_answers_from_a_fictional_number_and_never_sends(as_user, 
     assert alice.post(url, json=real).json()["error"]["code"] == "fictional_only"
     log = alice.get(f"/api/v1/workspaces/{ws}/sms/messages").json()
     assert {m["direction"] for m in log} == {"in", "out"}
-    # admins only
-    token = alice.post(f"/api/v1/workspaces/{ws}/invitations", json={"role": "editor"}).json()
-    bob.post(f"/api/v1/invitations/{token['token']}/accept")
-    assert bob.post(url, json={"text": "AIDE"}).status_code == 403
+    # any journalist of the newsroom, nobody else
+    assert bob.post(url, json={"text": "AIDE"}).status_code == 404
     monkeypatch.setattr(get_settings(), "sms_gateway_secret", "")
     assert alice.post(url, json={"text": "AIDE"}).status_code == 503
 

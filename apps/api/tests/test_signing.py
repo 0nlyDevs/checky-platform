@@ -78,7 +78,7 @@ def test_private_newsroom_publishes_without_a_public_page_stop(as_user):
 def test_signer_publishes_and_a_signed_version_can_be_published_later(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
-    invite(alice, ws, bob, "editor")
+    invite(alice, ws, bob)
     item = _claim(alice, ws)
     path = f"/api/v1/workspaces/{ws}/items/{item}"
     assert bob.post(path + "/release").status_code == 409  # nothing signed yet
@@ -102,7 +102,7 @@ def test_signer_publishes_and_a_signed_version_can_be_published_later(as_user):
 def test_batch_signs_suggestions_with_their_reason_and_says_why_others_wait(as_user):
     alice, carol = as_user("alice"), as_user("carol")
     ws = _workspace(alice)
-    invite(alice, ws, carol, "journalist")
+    invite(alice, ws, carol)
     base = f"/api/v1/workspaces/{ws}"
     ready = _claim(
         alice,
@@ -119,13 +119,13 @@ def test_batch_signs_suggestions_with_their_reason_and_says_why_others_wait(as_u
     assert out["signed"][0]["data"]["verdict"] == "false"
     assert out["signed"][0]["data"]["reason"].startswith("Le communiqué N° 2026-118")
     assert {s["code"] for s in out["skipped"]} == {"missing_reason", "no_verdict", "not_found"}
-    # Signed already: a second batch leaves it alone. A journalist cannot sign others' dossiers.
+    # Signed already: a second batch leaves it alone. Any journalist signs the newsroom's dossiers.
     again = alice.post(base + "/items/sign", json={"ids": [ready]}).json()
     assert again["skipped"][0]["code"] == "already_signed"
     other = _claim(alice, ws, "Autre", verdict="true", reason="Une raison assez longue.")
-    assert carol.post(base + "/items/sign", json={"ids": [other]}).json()["skipped"][0]["code"] == (
-        "forbidden"
-    )
+    by_carol = carol.post(base + "/items/sign", json={"ids": [other]}).json()
+    assert [i["id"] for i in by_carol["signed"]] == [other]
+    assert by_carol["signed"][0]["data"]["signed_by"] == "carol"
     assert alice.post(base + "/items/sign", json={"ids": []}).status_code == 422
 
 

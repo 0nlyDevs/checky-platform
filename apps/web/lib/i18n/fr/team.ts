@@ -1,44 +1,6 @@
-// Checky strings for the team page (roles matrix, invitations) and Paramètres (newsroom settings,
+// Checky strings for Paramètres (newsroom settings,
 // SMS simulator, partner radios, questions from the public). Spread into `fr` by lib/i18n/fr.ts.
 export const team = {
-  matrix: {
-    title: "Qui peut faire quoi",
-    lead: "Lu dans les règles de l'application elle-même : ce tableau suit les règles quand elles changent.",
-    capability: "Action",
-    yes: "Oui",
-    no: "Non",
-    own: "les siens",
-    ownNote: "« les siens » : seulement ce que la personne a créé elle-même.",
-    double: "La double signature est active : un deuxième éditeur libère chaque verdict signé.",
-    single: "La double signature est désactivée : la signature publie directement.",
-    failed: "Le tableau des droits n'a pas pu être chargé.",
-    capabilities: {
-      read_dossiers: "Lire les dossiers",
-      create: "Ouvrir un dossier",
-      edit_own: "Modifier ses dossiers",
-      edit_all: "Modifier tous les dossiers",
-      delete: "Supprimer un dossier",
-      sign: "Signer un verdict",
-      publish: "Publier un verdict",
-      register: "Enregistrer un original au registre",
-      seal: "Sceller un communiqué",
-      record_clip: "Enregistrer un extrait radio",
-      invite: "Inviter, changer les rôles",
-      settings: "Régler l'espace",
-      demo_reset: "Réinitialiser la démonstration",
-    } as Record<string, string>,
-  },
-  roles: {
-    title: "Les cinq rôles",
-    lead: "Choisissez le rôle le plus étroit qui suffit : un administrateur peut l'élargir plus tard.",
-    explain: {
-      admin: "Gère l'équipe, les invitations et les réglages de l'espace. Fait aussi tout ce que fait un éditeur.",
-      editor: "Relit, modifie et supprime tous les dossiers, signe les verdicts et libère ceux des autres sous double signature.",
-      journalist: "Ouvre des dossiers, ajoute des sources, modifie les siens et signe ses propres verdicts.",
-      veilleur: "Écoute la radio et signale ce qu'il entend, depuis son téléphone. Ne voit ni les dossiers ni les verdicts en cours.",
-      issuer: "Une institution (ministère, JIRAMA, commune) qui enregistre et scelle ses propres communiqués. Ne touche à aucun dossier ni verdict.",
-    } as Record<string, string>,
-  },
   settings: {
     lead: "Les règles de la rédaction, ses rubriques, sa ligne SMS et ses radios partenaires, l'état des services.",
     beats: {
@@ -113,7 +75,6 @@ export const team = {
       demo: "démo",
       empty: "Aucune radio partenaire pour l'instant.",
       failed: "La radio n'a pas été enregistrée. Réessayez.",
-      editorOnly: "Les éditeurs et administrateurs ajoutent ou retirent les radios partenaires.",
     },
     questions: {
       title: "Ce que les gens demandent",
@@ -130,6 +91,5 @@ export const team = {
       empty: "Aucune question du public sur cette période.",
       failed: "Les questions n'ont pas pu être chargées.",
     },
-    adminOnly: "Les autres réglages de l'espace (règles, rubriques, ligne SMS, radios, données de démonstration) sont gérés par ses administrateurs. Voyez la page Équipe pour savoir qui ils sont.",
   },
 } as const;

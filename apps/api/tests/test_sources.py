@@ -406,8 +406,10 @@ def test_a_source_date_is_set_by_hand(as_user):
     assert alice.patch(url, json={"published_at": "2999-01-01"}).status_code == 422
     assert alice.patch(url, json={"published_at": None}).json()["published_at"] is None
     assert as_user("mallory").patch(url, json={"published_at": None}).status_code == 404
-    _join(alice, bob, ws, "journalist")
-    assert bob.patch(url, json={"published_at": "2020-01-01"}).status_code == 403
+    _join(alice, bob, ws)
+    assert (
+        bob.patch(url, json={"published_at": "2020-01-01"}).json()["published_at"] == "2020-01-01"
+    )
 
 
 def test_a_source_is_attached_to_a_claim_later(as_user):

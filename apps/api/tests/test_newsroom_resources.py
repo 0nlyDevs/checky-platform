@@ -1,10 +1,8 @@
-from datetime import UTC, datetime
-
 from tests.test_workspaces import _workspace
 
 
-def invite(owner, ws, client, role):
-    response = owner.post(f"/api/v1/workspaces/{ws}/invitations", json={"role": role})
+def invite(owner, ws, client):
+    response = owner.post(f"/api/v1/workspaces/{ws}/invitations")
     assert response.status_code == 201
     accepted = client.post(f"/api/v1/invitations/{response.json()['token']}/accept")
     assert accepted.status_code == 200
@@ -54,7 +52,7 @@ def test_contacts_figures_and_originals_are_workspace_scoped(as_user):
 def test_publication_needs_a_verdict_and_keeps_signed_content(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
-    invite(alice, ws, bob, "journalist")
+    invite(alice, ws, bob)
     base = f"/api/v1/workspaces/{ws}"
     item = alice.post(base + "/items", json={"title": "Port hours"}).json()
     path = base + "/items/" + item["id"]
@@ -71,37 +69,3 @@ def test_publication_needs_a_verdict_and_keeps_signed_content(as_user):
     assert signed.status_code == 200 and signed.json()["status"] == "published"
     # Published content cannot be silently replaced while retaining the old signature.
     assert alice.patch(path, json={"title": "Entirely different assertion"}).status_code == 409
-
-
-def test_issuer_can_only_read_own_entries_and_veilleur_cannot_read_desk(as_user):
-    owner, issuer, watcher = as_user("alice"), as_user("bob"), as_user("eve")
-    ws = _workspace(owner)
-    base = f"/api/v1/workspaces/{ws}"
-    invite(owner, ws, issuer, "issuer")
-    invite(owner, ws, watcher, "veilleur")
-    original = {
-        "title": "Notice",
-        "issuer": "Office",
-        "text": "Le port de Rio reste ouvert aujourd’hui.",
-        "url": "https://example.org/original",
-    }
-    owner.post(base + "/registry", json=original)
-    assert issuer.get(base + "/registry").json() == []
-    assert issuer.post(base + "/registry", json=original).status_code == 201
-    assert len(issuer.get(base + "/registry").json()) == 1
-    for client in (issuer, watcher):
-        assert client.get(base + "/items").status_code == 403
-        assert client.post(base + "/crew", json={"text": "Un test"}).status_code == 403
-    assert watcher.get(base + "/registry").status_code == 403
-    assert (
-        watcher.post(
-            base + "/radio-clips",
-            json={
-                "station": "Radio",
-                "heard_text": "Le port est fermé demain.",
-                "recorded_at": datetime.now(UTC).isoformat(),
-            },
-        ).status_code
-        == 201
-    )
-    assert len(watcher.get(base + "/radio-clips").json()) == 1

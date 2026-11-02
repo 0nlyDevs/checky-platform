@@ -138,20 +138,13 @@ def test_a_malagasy_clip_keeps_the_veilleurs_sentence(as_user):
     assert clip["location"]["region"] == "Atsinanana"  # named in the text
 
 
-def test_a_veilleur_uploads_a_recording_and_the_french_clip_takes_its_transcript(
+def test_a_journalist_uploads_a_recording_and_the_french_clip_takes_its_transcript(
     as_user, fake_storage
 ):
     alice, eve = as_user("alice"), as_user("eve")
     ws = _workspace(alice)
-    _join(alice, eve, ws, "veilleur")
+    _join(alice, eve, ws)
     base = f"/api/v1/workspaces/{ws}"
-    assert (
-        eve.post(
-            base + "/files/upload-url",
-            json={"filename": "a.webm", "mime": "audio/webm", "size_bytes": 10},
-        ).status_code
-        == 403
-    )
     assert (
         eve.post(
             base + "/radio-clips/upload-url",
@@ -193,9 +186,9 @@ def test_a_veilleur_uploads_a_recording_and_the_french_clip_takes_its_transcript
     _db(ready)
     got = eve.get(f"{base}/radio-clips/{clip['id']}").json()
     assert got["heard_text"] == transcript and got["text_from"] == "transcript"
-    # the veilleur sees their clips only, and none of the desk
-    _clip(alice, ws, "Une autre station a entendu autre chose ce matin.")
-    assert [c["id"] for c in eve.get(base + "/radio-clips").json()] == [clip["id"]]
+    # every journalist of the newsroom sees every clip
+    other = _clip(alice, ws, "Une autre station a entendu autre chose ce matin.")
+    assert {c["id"] for c in eve.get(base + "/radio-clips").json()} == {clip["id"], other["id"]}
 
 
 def test_antenne_groups_clips_by_claim_and_follow_opens_a_dossier(as_user):
@@ -256,13 +249,12 @@ def test_antenne_groups_clips_by_claim_and_follow_opens_a_dossier(as_user):
 def test_your_report_served_once_the_dossier_is_signed(as_user):
     alice, eve = as_user("alice"), as_user("eve")
     ws = _workspace(alice)
-    _join(alice, eve, ws, "veilleur")
+    _join(alice, eve, ws)
     base = f"/api/v1/workspaces/{ws}"
     claim = alice.post(
         base + "/items", json={"title": "Le pont de Mangasoavina serait fermé"}
     ).json()
     clip = _clip(eve, ws, "Le pont de Mangasoavina serait fermé jusqu'à lundi selon un auditeur.")
-    assert eve.post(f"{base}/radio-clips/{clip['id']}/follow", json={}).status_code == 403
     out = alice.post(
         f"{base}/radio-clips/{clip['id']}/follow", json={"item_id": claim["id"]}
     ).json()
@@ -291,7 +283,7 @@ def test_your_report_served_once_the_dossier_is_signed(as_user):
     served = eve.get(f"{base}/radio-clips/{clip['id']}").json()["served"]
     assert served["verdict"] == "false" and served["truth_routes"] == 1
     assert as_user("bob").get(f"{base}/radio-clips/{clip['id']}").status_code == 404
-    assert eve.get(base + "/antenne").status_code == 403
+    assert eve.get(base + "/antenne").status_code == 200
 
 
 # --- the feed and the map
@@ -351,8 +343,8 @@ def test_the_feed_merges_tips_sms_clips_and_press_and_says_what_was_checked(as_u
     ]
     assert bob.get(base + "/veille").status_code == 404
     eve = as_user("eve")
-    _join(alice, eve, ws, "veilleur")
-    assert eve.get(base + "/veille").status_code == 403
+    _join(alice, eve, ws)
+    assert eve.get(base + "/veille").status_code == 200
 
 
 def test_the_map_counts_what_circulates_per_region(as_user):

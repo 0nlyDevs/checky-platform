@@ -184,8 +184,7 @@ def test_figures_refresh_pulls_world_bank_values_into_shared_figures(as_user):
     ws = _workspace(alice)
     from tests.test_newsroom_resources import invite
 
-    invite(alice, ws, bob, "editor")
-    assert bob.post(f"/api/v1/workspaces/{ws}/figures/refresh").status_code == 403
+    invite(alice, ws, bob)
     original = figures_refresh._transport
     figures_refresh._transport = httpx.MockTransport(answer)
     try:

@@ -33,10 +33,6 @@ auth_user = Table(
     schema="better_auth",
 )
 
-# Roles follow the rumour's road, not the newsroom's organisation chart: the desk (admin, editor,
-# journalist), a `veilleur` (partner-radio journalist or correspondent who only reports what was
-# heard) and an `issuer` (an institution that registers and seals its own communiqués).
-ROLES = ("admin", "editor", "journalist", "veilleur", "issuer")
 # Places are structured everywhere (`{name, country, region, locality, lat, lng}`, see
 # app/core/places.py): a claim can come from anywhere in the world. Beats (rubriques) belong to
 # each newsroom (`workspace.settings.beats`); these are only the defaults a new newsroom starts with.
@@ -65,8 +61,8 @@ class Workspace(_Row):
     # Opt-in: the newsroom's published verdicts are shown to the public and it receives public tips.
     is_public: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
     # Newsroom settings, merged on PATCH (no migration for a new key): `beats` (its rubriques),
-    # `timezone` (IANA, default Indian/Antananarivo), `double_signature` (a journalist signs, an
-    # editor releases), `ai_enabled` (off = only the fact checks run, « Mode sans IA »), `country`.
+    # `timezone` (IANA, default Indian/Antananarivo), `ai_enabled` (off = only the fact checks
+    # run, « Mode sans IA »), `country`.
     settings: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
 
 
@@ -78,7 +74,6 @@ class Membership(_Row):
         ForeignKey("app.workspace.id", ondelete="CASCADE")
     )
     user_id: Mapped[str] = mapped_column(Text, index=True)
-    role: Mapped[str] = mapped_column(String(20))
 
 
 class Invitation(_Row):
@@ -88,7 +83,6 @@ class Invitation(_Row):
         ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
     )
     token: Mapped[str] = mapped_column(String(64), unique=True)
-    role: Mapped[str] = mapped_column(String(20))
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 

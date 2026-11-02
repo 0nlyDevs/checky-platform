@@ -1,5 +1,4 @@
 import uuid
-from typing import Literal
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -16,7 +15,6 @@ class MembershipOut(BaseModel):
     workspace_id: uuid.UUID
     name: str
     slug: str
-    role: Literal["admin", "editor", "journalist", "veilleur", "issuer"]
 
 
 class MeOut(BaseModel):
@@ -29,12 +27,12 @@ class MeOut(BaseModel):
 @router.get("/me")
 async def me(user: User, db: Db) -> MeOut:
     rows = await db.execute(
-        select(Workspace, Membership.role)
+        select(Workspace)
         .join(Membership, Membership.workspace_id == Workspace.id)
         .where(Membership.user_id == user.id)
         .order_by(Workspace.created_at)
     )
     memberships = [
-        MembershipOut(workspace_id=w.id, name=w.name, slug=w.slug, role=role) for w, role in rows
+        MembershipOut(workspace_id=w.id, name=w.name, slug=w.slug) for w in rows.scalars()
     ]
     return MeOut(id=user.id, email=user.email, name=user.name, memberships=memberships)

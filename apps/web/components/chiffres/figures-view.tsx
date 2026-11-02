@@ -6,7 +6,6 @@ import useSWR from "swr";
 import { toast } from "sonner";
 import { fieldClass, Tag } from "@/components/registre/ui";
 import { Button } from "@/components/ui/button";
-import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
 import {
   IconArrowSquareOut,
@@ -237,7 +236,6 @@ function FigureForm({ ws, onDone }: { ws: string; onDone: () => void }) {
 
 export function FiguresView() {
   const { ws } = useParams<{ ws: string }>();
-  const { role } = useWorkspace(ws);
   const { data, error, mutate } = useSWR<Figure[]>(`/workspaces/${ws}/figures`, fetcher);
   const [topic, setTopic] = useState("");
   const [country, setCountry] = useState("");
@@ -282,7 +280,7 @@ export function FiguresView() {
           <p className="mt-3 max-w-prose text-muted-foreground">{f.lead}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {role === "admin" && (
+          {(
             <Button variant="outline" size="lg" onClick={refresh} disabled={refreshing}>
               <IconArrowsClockwise className={cn(refreshing && "animate-spin")} aria-hidden />
               {f.refresh}

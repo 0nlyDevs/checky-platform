@@ -64,7 +64,7 @@ export function ClaimsView() {
   const now = useNow();
   const [q, setQ] = useState("");
   const [assignee, setAssignee] = useState<string>(ALL);
-  const { me, role, members, names } = useWorkspace(ws);
+  const { me, members, names } = useWorkspace(ws);
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -126,8 +126,8 @@ export function ClaimsView() {
   });
 
   const canMove = useCallback(
-    (c: ClaimView) => Boolean(me && (c.item.author_id === me.id || role === "editor" || role === "admin")),
-    [me, role],
+    () => Boolean(me),
+    [me],
   );
 
   /** Optimistic: the card lands in its new column now; the server confirms or it goes back. */

@@ -3,8 +3,8 @@ circulating copy can be compared word by word (Authentique / Modifié / Introuva
 
 A match proves that the words correspond to a registered original, not that the original says
 something true. « Introuvable » never means « Faux »: the registry is never complete, only the
-issuer can confirm. Who may write: the institution's own account (`issuer`) or the newsroom's
-editors and admins; another newsroom confirms an entry (« vérifié » once two newsrooms vouch).
+issuer can confirm. Every journalist of the newsroom registers originals and seals them on the
+issuer's behalf; another newsroom confirms an entry (« vérifié » once two newsrooms vouch).
 """
 
 import difflib
@@ -19,7 +19,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import dates, numbers, places, seal
-from app.core.access import AnyMember, Anyone, Db, Issuer, Member
+from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.db import SessionLocal
 from app.core.errors import ApiError
@@ -123,12 +123,6 @@ class FakeIn(BaseModel):
     url: HttpUrl | None = None
 
 
-def _ensure_reader(member: Member) -> None:
-    # A veilleur reports what was heard; the registry is the desk's and the issuers'.
-    if member.role == "veilleur":
-        raise ApiError(403, "forbidden", "Registry access requires a desk or issuer role")
-
-
 def out(c: Communique, ws: Workspace | None, viewer: uuid.UUID, fakes: int = 0) -> CommuniqueOut:
     loc = c.location or {}
     sealed = None
@@ -202,32 +196,24 @@ async def _get_visible(db: AsyncSession, member: Member, cid: uuid.UUID):
     if row is None:
         raise ApiError(404, "not_found", "Communiqué not found")
     c, ws = row
-    # An institution's account keeps to its own entries.
-    if member.role == "issuer" and (
-        c.workspace_id != member.workspace_id or c.added_by != member.user.id
-    ):
-        raise ApiError(404, "not_found", "Communiqué not found")
     return c, ws
 
 
 @router.get("/workspaces/{ws}/registry")
 async def originals(
-    member: Anyone,
+    member: AnyMember,
     db: Db,
     q: str = Query(default="", max_length=200),
     status: Literal["original", "fake_caught"] | None = None,
     scope: Literal["mine", "network"] = "mine",
 ) -> list[CommuniqueOut]:
-    """`mine`: this newsroom's registry (an issuer sees only what it registered). `network`: the
-    originals of the other public newsrooms, to confirm them."""
-    _ensure_reader(member)
+    """`mine`: this newsroom's registry. `network`: the originals of the other public newsrooms,
+    to confirm them."""
     stmt = _visible(member.workspace_id)
-    if scope == "network" and member.role != "issuer":
+    if scope == "network":
         stmt = stmt.where(Communique.workspace_id != member.workspace_id)
     else:
         stmt = stmt.where(Communique.workspace_id == member.workspace_id)
-        if member.role == "issuer":
-            stmt = stmt.where(Communique.added_by == member.user.id)
     if status:
         stmt = stmt.where(Communique.status == status)
     if q:
@@ -253,7 +239,7 @@ async def originals(
 
 
 @router.post("/workspaces/{ws}/registry", status_code=201)
-async def register(body: OriginalIn, member: Issuer, db: Db) -> CommuniqueOut:
+async def register(body: OriginalIn, member: AnyMember, db: Db) -> CommuniqueOut:
     data = body.model_dump(mode="json", exclude={"place"})
     location = None
     if body.place:
@@ -308,38 +294,21 @@ async def _key_out(db: AsyncSession, key: SealKey) -> KeyOut:
     )
 
 
-async def _own_issuers(db: AsyncSession, member: Member) -> set[str] | None:
-    """The issuers an institution's account speaks for (those it registered); None for the desk."""
-    if member.role != "issuer":
-        return None
-    rows = await db.scalars(
-        select(Communique.issuer).where(
-            Communique.workspace_id == member.workspace_id,
-            Communique.added_by == member.user.id,
-        )
-    )
-    return set(rows.all())
-
-
 @router.get("/workspaces/{ws}/registry/keys")
-async def seal_keys(member: Issuer, db: Db) -> list[KeyOut]:
+async def seal_keys(member: AnyMember, db: Db) -> list[KeyOut]:
     stmt = select(SealKey).where(SealKey.workspace_id == member.workspace_id)
-    mine = await _own_issuers(db, member)
-    if mine is not None:
-        stmt = stmt.where(SealKey.issuer.in_(mine or {""}))
     keys = (await db.scalars(stmt.order_by(SealKey.created_at.desc()))).all()
     return [await _key_out(db, k) for k in keys]
 
 
 @router.post("/workspaces/{ws}/registry/keys/{key_id}/revoke")
-async def revoke_key(key_id: str, member: Issuer, db: Db) -> KeyOut:
+async def revoke_key(key_id: str, member: AnyMember, db: Db) -> KeyOut:
     """A lost or leaked key: its seals still check out mathematically but every page shows them
     as revoked; the next seal creates a new key."""
     key = await db.scalar(
         select(SealKey).where(SealKey.workspace_id == member.workspace_id, SealKey.key_id == key_id)
     )
-    mine = await _own_issuers(db, member)
-    if key is None or (mine is not None and key.issuer not in mine):
+    if key is None:
         raise ApiError(404, "not_found", "Key not found")
     if key.revoked_at is None:
         key.revoked_at = datetime.now(UTC)
@@ -358,17 +327,15 @@ async def revoke_key(key_id: str, member: Issuer, db: Db) -> KeyOut:
 
 
 @router.get("/workspaces/{ws}/registry/{cid}")
-async def get_original(cid: uuid.UUID, member: Anyone, db: Db) -> CommuniqueOut:
-    _ensure_reader(member)
+async def get_original(cid: uuid.UUID, member: AnyMember, db: Db) -> CommuniqueOut:
     c, ws = await _get_visible(db, member, cid)
     counts = await _fake_counts(db, member.workspace_id, [c.id])
     return out(c, ws, member.workspace_id, counts.get(str(c.id), 0))
 
 
 @router.get("/workspaces/{ws}/registry/{cid}/fakes")
-async def fakes_of(cid: uuid.UUID, member: Anyone, db: Db) -> list[CommuniqueOut]:
+async def fakes_of(cid: uuid.UUID, member: AnyMember, db: Db) -> list[CommuniqueOut]:
     """The fakes caught that imitate this original, newest first (from every visible newsroom)."""
-    _ensure_reader(member)
     await _get_visible(db, member, cid)
     rows = (
         await db.execute(
@@ -404,10 +371,9 @@ async def confirm(cid: uuid.UUID, member: AnyMember, db: Db) -> CommuniqueOut:
 
 
 @router.post("/workspaces/{ws}/registry/{cid}/fake", status_code=201)
-async def record_fake(cid: uuid.UUID, body: FakeIn, member: Anyone, db: Db) -> CommuniqueOut:
+async def record_fake(cid: uuid.UUID, body: FakeIn, member: AnyMember, db: Db) -> CommuniqueOut:
     """« Faux repéré »: a circulating copy that imitates this original, kept with its word diff so
     the next newsroom (and the Fil officiel) sees at once what was changed."""
-    _ensure_reader(member)
     original, _ = await _get_visible(db, member, cid)
     if original.status != "original":
         raise ApiError(409, "not_an_original", "A fake is recorded against an original")
@@ -488,8 +454,6 @@ async def _own_original(db: AsyncSession, member: Member, cid: uuid.UUID) -> Com
     c = await db.get(Communique, cid)
     if c is None or c.workspace_id != member.workspace_id:
         raise ApiError(404, "not_found", "Communiqué not found")
-    if member.role == "issuer" and c.added_by != member.user.id:
-        raise ApiError(404, "not_found", "Communiqué not found")
     if c.status != "original":
         raise ApiError(409, "not_an_original", "Only originals can be sealed")
     return c
@@ -503,12 +467,12 @@ async def _still_valid(db: AsyncSession, c: Communique) -> bool:
 
 
 @router.post("/workspaces/{ws}/registry/{cid}/seal")
-async def seal_original(cid: uuid.UUID, member: Issuer, db: Db) -> SealResult:
+async def seal_original(cid: uuid.UUID, member: AnyMember, db: Db) -> SealResult:
     """The issuer signs its original: Ed25519 over issuer, number, date, title and the text's
     fingerprint. Sealing an entry already sealed with a valid key returns the same seal."""
     c = await _own_original(db, member, cid)
     if not await _still_valid(db, c):
-        await seal.seal(db, c, member.user.id, member.role)
+        await seal.seal(db, c, member.user.id, "newsroom")
         await record(
             db,
             member.workspace_id,
@@ -525,9 +489,8 @@ async def seal_original(cid: uuid.UUID, member: Issuer, db: Db) -> SealResult:
 
 
 @router.get("/workspaces/{ws}/registry/{cid}/seal")
-async def seal_of(cid: uuid.UUID, member: Anyone, db: Db) -> SealResult:
+async def seal_of(cid: uuid.UUID, member: AnyMember, db: Db) -> SealResult:
     """The seal and its QR again (to print or download it later)."""
-    _ensure_reader(member)
     c = await _own_original(db, member, cid)
     if not (c.sealed and c.sealed.get("signature")):
         raise ApiError(404, "not_sealed", "This original is not sealed")
@@ -544,7 +507,7 @@ class PublicSeal(BaseModel):
     key_id: str
     public_key: str
     sealed_at: str
-    # Sealed from the institution's own account, or by the newsroom on its behalf.
+    # Sealed by the newsroom on the issuer's behalf (« issuer » on seals made before 3 Nov 2026).
     sealed_by: Literal["issuer", "newsroom"]
     revoked_at: datetime | None
     is_demo: bool
@@ -1129,7 +1092,6 @@ async def match_text(
     workspace_id: uuid.UUID,
     text: str,
     *,
-    only_added_by: str | None = None,
     with_contacts: bool = True,
 ) -> dict[str, Any]:
     """Which registered original a circulating text quotes, from this newsroom's registry and every
@@ -1139,11 +1101,6 @@ async def match_text(
     cannot belong to the issuer's series) or `none` (no institution or communiqué is cited)."""
     text = (text or "").strip()
     stmt = _visible(workspace_id).where(Communique.status == "original")
-    if only_added_by:
-        # An issuer compares against its own originals only, never the desk's registry.
-        stmt = stmt.where(
-            Communique.workspace_id == workspace_id, Communique.added_by == only_added_by
-        )
     rows = (await db.execute(stmt.order_by(Communique.created_at.desc()).limit(500))).all()
     # This newsroom's own entries first, then sealed ones, then the newest.
     rows.sort(key=lambda r: (r[0].workspace_id != workspace_id, not r[0].sealed))
@@ -1233,13 +1190,8 @@ class MatchIn(BaseModel):
 
 
 @router.post("/workspaces/{ws}/registry/match")
-async def match(body: MatchIn, member: Anyone, db: Db) -> dict:
+async def match(body: MatchIn, member: AnyMember, db: Db) -> dict:
     """Compare a circulating text with the registered originals (no model involved)."""
-    _ensure_reader(member)
-    if member.role == "issuer":
-        return await match_text(
-            db, member.workspace_id, body.text, only_added_by=member.user.id, with_contacts=False
-        )
     return await match_text(db, member.workspace_id, body.text)
 
 
@@ -1358,8 +1310,7 @@ async def seed_demo(db: AsyncSession, workspace_id, user_id, items) -> None:
         db.add(c)
         await db.flush()
         if spec["seal"] and seal.available():
-            # The demo plays the institution's own account.
-            await seal.seal(db, c, user_id, "issuer")
+            await seal.seal(db, c, user_id, "newsroom")
         if spec.get("fake"):
             found = compare(c, spec["fake"])
             db.add(

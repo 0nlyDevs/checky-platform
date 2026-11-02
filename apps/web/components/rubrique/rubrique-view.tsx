@@ -2,8 +2,8 @@
 
 import type { Item } from "@fanilo/shared";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { IconArrowRight, IconArrowSquareOut, IconCopy, IconMapPin, IconPencilSimple, IconScan, IconWarning } from "@/lib/icons";
@@ -231,22 +231,16 @@ function PageSkeleton() {
  */
 export function RubriqueView() {
   const { ws } = useParams<{ ws: string }>();
-  const router = useRouter();
-  const { role } = useMe(ws);
+  const { joined } = useMe(ws);
   const [all, setAll] = useState(false);
   const [editing, setEditing] = useState(false);
   const query = all ? "?beat=*&region=*" : "";
-  const key = role && role !== "veilleur" ? `/workspaces/${ws}/rubrique${query}` : null;
+  const key = joined ? `/workspaces/${ws}/rubrique${query}` : null;
   const { data, error, mutate } = useSWR<Rubrique>(key, fetcher, { refreshInterval: 120_000 });
-
-  // A veilleur's only screen is À l'antenne.
-  useEffect(() => {
-    if (role === "veilleur") router.replace(`/w/${ws}/veille` as never);
-  }, [role, router, ws]);
 
   const refresh = () => void mutate();
   const toastSignal = useSignalToasts();
-  useWorkspaceSocket(role && role !== "veilleur" ? ws : undefined, {
+  useWorkspaceSocket(joined ? ws : undefined, {
     "item.created": refresh,
     "item.updated": refresh,
     "clip.created": refresh,

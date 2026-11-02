@@ -165,7 +165,7 @@ export function ClaimDetail() {
   );
   const { data: newsroom } = useSWR<NewsroomSettings>(`/workspaces/${ws}`, fetcher);
   const { mutate: revalidate } = useSWRConfig();
-  const { me, role, names, members } = useWorkspace(ws);
+  const { me, names, members } = useWorkspace(ws);
   const [now, setNow] = useState(() => new Date());
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -222,8 +222,8 @@ export function ClaimDetail() {
   const claim = useMemo(() => (item ? toClaim(item) : null), [item]);
   const research = useMemo(() => (item ? readResearch(item) : null), [item]);
   const reading = useMemo(() => (item ? readReading(item) : null), [item]);
-  const canEdit = Boolean(item && me && (item.author_id === me.id || role === "editor" || role === "admin"));
-  const isEditor = role === "editor" || role === "admin";
+  // Every journalist of the newsroom edits and signs its dossiers.
+  const canEdit = Boolean(item && me);
   const name = (userId: string) =>
     userId === me?.id ? t.detail.you : userId === "public" ? t.dossier.events.public : userId === "system" ? "Checky" : (names.get(userId) ?? t.detail.someone);
 
@@ -342,7 +342,7 @@ export function ClaimDetail() {
     : null;
   const steps = claimSteps(claim);
   const originLabel = claim.origin ? (t.origins[claim.origin as keyof typeof t.origins] ?? claim.origin) : null;
-  const canSign = Boolean(me && (item.author_id === me.id || claim.assigneeId === me.id || isEditor));
+  const canSign = Boolean(me);
   const aiEnabled = newsroom?.settings?.ai_enabled ?? true;
   const analysisReason = typeof (item.data.analysis as { reason?: unknown } | undefined)?.reason === "string" ? String((item.data.analysis as { reason: string }).reason) : "";
   const thread = [

@@ -19,7 +19,7 @@ from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import dates, numbers, places
-from app.core.access import Admin, AnyMember, Db
+from app.core.access import AnyMember, Db
 from app.core.activity import record
 from app.core.models import Communique, Figure, Item, Workspace
 from app.core.words import words
@@ -402,7 +402,7 @@ async def seed_shared(db: AsyncSession) -> None:
 
 
 @router.post("/workspaces/{ws}/figures/refresh", status_code=202)
-async def refresh(member: Admin, db: Db) -> dict[str, Any]:
+async def refresh(member: AnyMember, db: Db) -> dict[str, Any]:
     """Seed the shared figures if they are missing, then fetch the World Bank's latest values."""
     await seed_shared(db)
     await db.commit()

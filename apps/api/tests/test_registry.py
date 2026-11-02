@@ -56,13 +56,12 @@ def test_an_original_is_registered_read_and_confirmed_by_another_newsroom(as_use
     assert alice.get(f"/api/v1/workspaces/{ws}/registry").json()[0]["confirmed"]
 
 
-def test_a_journalist_cannot_register_but_records_a_fake_with_its_diff(as_user):
+def test_a_journalist_registers_and_records_a_fake_with_its_diff(as_user):
     alice, bob = as_user("alice"), as_user("bob")
     ws = _workspace(alice)
-    invite(alice, ws, bob, "journalist")
+    invite(alice, ws, bob)
     base = f"/api/v1/workspaces/{ws}/registry"
-    assert bob.post(base, json=ORIGINAL).status_code == 403
-    cid = alice.post(base, json=ORIGINAL).json()["id"]
+    cid = bob.post(base, json=ORIGINAL).json()["id"]
     assert bob.post(f"{base}/{cid}/fake", json={"text": ORIGINAL_TEXT}).status_code == 409
     fake = bob.post(f"{base}/{cid}/fake", json={"text": RUMOUR, "url": "https://example.org/post"})
     assert fake.status_code == 201
@@ -145,10 +144,10 @@ def test_match_statuses(as_user):
     assert match("Il pleut fort sur Toamasina ce matin, restez prudents.")["status"] == "none"
 
 
-def test_annuaire_institutions_count_as_issuers_and_veilleurs_cannot_match(as_user):
+def test_annuaire_institutions_count_as_issuers(as_user):
     alice, eve = as_user("alice"), as_user("eve")
     ws = _workspace(alice)
-    invite(alice, ws, eve, "veilleur")
+    invite(alice, ws, eve)
     contact = {"name": "Service de presse", "institution": "Office des ports (démo)"}
     assert alice.post(f"/api/v1/workspaces/{ws}/contacts", json=contact).status_code == 201
     found = alice.post(
@@ -158,8 +157,8 @@ def test_annuaire_institutions_count_as_issuers_and_veilleurs_cannot_match(as_us
     assert found["status"] == "not_found" and found["issuer"] == "Office des ports"
     # The Annuaire says who at the issuer can confirm it.
     assert [c["name"] for c in found["contacts"]] == ["Service de presse"]
-    blocked = eve.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": "N° 12 de la CENI"})
-    assert blocked.status_code == 403
+    seen = eve.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": "N° 12 de la CENI"})
+    assert seen.status_code == 200
 
 
 def test_a_private_newsrooms_fakes_are_never_counted_or_listed_elsewhere(as_user):
@@ -254,20 +253,3 @@ def test_the_demo_still_seeds_without_a_seal_secret(as_user, monkeypatch):
     alice.post(f"/api/v1/workspaces/{ws}/demo/reset")
     jirama = alice.get(f"/api/v1/workspaces/{ws}/registry", params={"q": "2026-118"}).json()
     assert len(jirama) == 1 and jirama[0]["sealed"] is None
-
-
-def test_an_issuer_matches_against_its_own_originals_only_and_sees_no_contacts(as_user):
-    alice, ivy = as_user("alice"), as_user("ivy")
-    ws = _workspace(alice)
-    invite(alice, ws, ivy, "issuer")
-    # The desk registers the JIRAMA original; the Annuaire knows its press office.
-    assert alice.post(f"/api/v1/workspaces/{ws}/registry", json=ORIGINAL).status_code == 201
-    contact = {"name": "Service de presse", "institution": "JIRAMA"}
-    assert alice.post(f"/api/v1/workspaces/{ws}/contacts", json=contact).status_code == 201
-    # The issuer account (another institution) cannot read the desk's registry through a match.
-    seen = ivy.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": RUMOUR}).json()
-    assert seen["status"] == "not_found" and seen["communique"] is None
-    assert seen["contacts"] == []
-    # The desk itself gets the modified original and who can confirm it.
-    desk = alice.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": RUMOUR}).json()
-    assert desk["status"] == "modified" and desk["communique"]["number"] == "2026-118"

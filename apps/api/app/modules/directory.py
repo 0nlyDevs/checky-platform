@@ -2,7 +2,7 @@
 
 Contacts are curated by the newsroom (or declared by the institutions): who they are, the beats
 and places they can settle, the languages they answer in, their official pages and their track
-record (kept by code in `stats`). A declared official page is not verified until an editor checks
+record (kept by code in `stats`). A declared official page is not verified until a journalist checks
 it; `official_hosts` returns only checked ones (the crew's credibility grid reads it).
 
 For a dossier, `GET …/items/{id}/who` takes each point the reading says is missing and the claim's
@@ -28,7 +28,7 @@ from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core import dates, places
-from app.core.access import AnyMember, Db, Editor
+from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.db import SessionLocal
@@ -45,7 +45,7 @@ Phone = Field(default=None, max_length=60, pattern=r"^\+?[0-9 ()-]{3,60}$")
 
 
 class OfficialPage(BaseModel):
-    # `verified` is never read from a client: an editor's « Vérifier » sets it on every page of the
+    # `verified` is never read from a client: a journalist's « Vérifier » sets it on every page of the
     # contact at once, and any edit clears it again (see update_contact).
     model_config = ConfigDict(extra="forbid")
     kind: str = Field(default="site", max_length=30)  # site|facebook|x|youtube|…
@@ -191,7 +191,7 @@ async def _own(db: AsyncSession, ws: uuid.UUID, contact_id: uuid.UUID) -> Contac
 
 @router.patch("/workspaces/{ws}/contacts/{contact_id}")
 async def edit_contact(
-    contact_id: uuid.UUID, body: ContactIn, member: Editor, db: Db
+    contact_id: uuid.UUID, body: ContactIn, member: AnyMember, db: Db
 ) -> ContactOut:
     contact = await _own(db, member.workspace_id, contact_id)
     for key, value in (await _fields(db, body, partial=True)).items():
@@ -205,8 +205,8 @@ async def edit_contact(
 
 
 @router.post("/workspaces/{ws}/contacts/{contact_id}/verify")
-async def verify_contact(contact_id: uuid.UUID, member: Editor, db: Db) -> ContactOut:
-    """An editor checked the channels and the official pages (called the switchboard, matched the
+async def verify_contact(contact_id: uuid.UUID, member: AnyMember, db: Db) -> ContactOut:
+    """A journalist checked the channels and the official pages (called the switchboard, matched the
     page to the institution): the pages now count as official in « Fiabilité de la source »."""
     contact = await _own(db, member.workspace_id, contact_id)
     contact.verified_at, contact.verified_by = datetime.now(UTC), member.user.id
@@ -217,7 +217,7 @@ async def verify_contact(contact_id: uuid.UUID, member: Editor, db: Db) -> Conta
 
 
 @router.delete("/workspaces/{ws}/contacts/{contact_id}", status_code=204)
-async def delete_contact(contact_id: uuid.UUID, member: Editor, db: Db) -> None:
+async def delete_contact(contact_id: uuid.UUID, member: AnyMember, db: Db) -> None:
     contact = await _own(db, member.workspace_id, contact_id)
     await db.delete(contact)
     await record(db, member.workspace_id, member.user.id, "contact", contact_id, "delete")
@@ -232,7 +232,7 @@ def host(url: str | None) -> str | None:
 
 async def official_hosts(db: AsyncSession, workspace_id: uuid.UUID) -> set[str]:
     """Hosts of the official pages the newsroom checked (contract used by the crew's credibility
-    grid): a page counts once an editor verified it, never because it was declared."""
+    grid): a page counts once a journalist verified it, never because it was declared."""
     hosts: set[str] = set()
     for c in await db.scalars(select(Contact).where(_visible(workspace_id))):
         # The contact's own verification stamp is the only source of truth: a page's flag is
