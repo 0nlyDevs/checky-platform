@@ -11,14 +11,13 @@ import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
-import { formatDuration, formatTime } from "@/lib/time";
+import { exact, relative } from "@/lib/when";
 
-const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
 
 function seen(c: ClaimView, now: Date) {
-  if (!c.firstSeen) return { at: t.claims.noFirstSeen, ago: null };
-  const at = c.firstSeen.toDateString() === now.toDateString() ? formatTime(c.firstSeen) : `${dateFmt.format(c.firstSeen)}, ${formatTime(c.firstSeen)}`;
-  return { at, ago: t.claims.ago(formatDuration(now.getTime() - c.firstSeen.getTime())) };
+  if (!c.firstSeen) return { at: t.claims.noFirstSeen, ago: null, exactly: undefined };
+  const iso = c.firstSeen.toISOString();
+  return { at: relative(iso, now), ago: relative(iso, now), exactly: exact(iso) };
 }
 
 const b = t.dossier.batch;
@@ -125,7 +124,7 @@ export function DossierList({ ws, claims, now, names }: { ws: string; claims: Cl
               <div className="grid gap-x-6 gap-y-3 px-4 py-4 transition-colors hover:bg-card md:grid-cols-[6.5rem_minmax(0,1fr)_auto] md:items-center lg:px-3 @4xl:grid-cols-[6.5rem_minmax(0,1fr)_13rem_11rem_1.5rem]">
                 <p className="flex items-baseline gap-3 md:block">
                   <span className="block font-display font-bold tabular">{c.ref}</span>
-                  <time dateTime={c.firstSeen?.toISOString()} className="block text-sm text-muted-foreground tabular" title={when.at}>
+                  <time dateTime={c.firstSeen?.toISOString()} className="block text-sm text-muted-foreground tabular" title={when.exactly}>
                     {when.ago ?? when.at}
                   </time>
                 </p>

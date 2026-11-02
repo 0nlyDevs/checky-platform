@@ -19,6 +19,7 @@ import { hasResearch, type NewsroomSettings, readByline, readReading, readResear
 import { WhoPanel } from "@/components/dossier/who-panel";
 import { claimSteps, StepDisc, type StepState } from "@/components/flow/step-line";
 import { formatDuration, formatTime } from "@/lib/time";
+import { exact, relative } from "@/lib/when";
 import { StatusLabel, toClaim, VERDICT_META } from "@/components/claims/verdict";
 import { VerdictDecision } from "@/components/claims/verdict-decision";
 import { Button } from "@/components/ui/button";
@@ -34,15 +35,6 @@ import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
 
 const dayFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
-const rtf = new Intl.RelativeTimeFormat("fr-FR", { numeric: "auto" });
-
-function ago(iso: string, now: Date) {
-  const s = (new Date(iso).getTime() - now.getTime()) / 1000;
-  if (s > -60) return "à l'instant";
-  if (s > -3600) return rtf.format(Math.round(s / 60), "minute");
-  if (s > -86400) return rtf.format(Math.round(s / 3600), "hour");
-  return rtf.format(Math.round(s / 86400), "day");
-}
 
 const textareaClass =
   "w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";
@@ -543,8 +535,8 @@ export function ClaimDetail() {
                     <p className="flex flex-wrap items-baseline gap-x-2">
                       <span className="font-medium">{name(e.actor)}</span>
                       {e.kind === "event" && <span>{e.body}</span>}
-                      <time dateTime={e.at} className="text-muted-foreground tabular">
-                        {ago(e.at, now)}
+                      <time dateTime={e.at} title={exact(e.at)} className="text-muted-foreground tabular">
+                        {relative(e.at, now)}
                       </time>
                     </p>
                     {e.kind === "comment" && <p className="mt-0.5 whitespace-pre-line text-pretty">{e.body}</p>}
