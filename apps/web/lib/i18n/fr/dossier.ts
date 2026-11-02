@@ -354,7 +354,7 @@ export const dossier = {
     sending: "Envoi…",
     thanks: "Merci, votre réponse est arrivée.",
     thanksLead: (newsroom: string) => `Elle est jointe au dossier de ${newsroom}, datée d'aujourd'hui. La rédaction la lira avant de conclure.`,
-    already: "Cette question a déjà reçu une réponse.",
+    already: (when: string | null) => (when ? `Cette question a déjà reçu une réponse, le ${when}.` : "Cette question a déjà reçu une réponse."),
     notFound: "Ce lien de réponse n'existe pas ou n'est plus valable.",
     failed: "La réponse n'a pas pu être envoyée. Réessayez.",
     tooMany: "Trop d'envois depuis cette adresse. Réessayez dans quelques minutes.",

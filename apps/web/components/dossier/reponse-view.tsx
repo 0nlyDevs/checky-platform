@@ -1,0 +1,146 @@
+"use client";
+
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ApiError } from "@/lib/api";
+import { t } from "@/lib/i18n/fr";
+import { IconCheck, IconCircleNotch } from "@/lib/icons";
+import { publicApi } from "@/lib/public-api";
+import { fmtWhen } from "./types";
+
+const r = t.dossier.reponse;
+const STANCES = ["confirms", "denies", "unknown"] as const;
+type Stance = (typeof STANCES)[number];
+
+type Reponse = {
+  question: string;
+  claim: string;
+  ref: string | null;
+  newsroom: string;
+  contact: string | null;
+  institution: string | null;
+  asked_at: string | null;
+  answered_at: string | null;
+  stance: string | null;
+};
+
+const field =
+  "mt-1.5 w-full rounded-md border border-input bg-card px-3 text-base outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15";
+
+/**
+ * The page a contact opens from the newsroom's message: no account, the claim and the question,
+ * three answers and a sentence. The answer joins the dossier as a dated source under their name.
+ */
+export function ReponseView() {
+  const { token } = useParams<{ token: string }>();
+  const [ask, setAsk] = useState<Reponse | null | "missing">(null);
+  const [stance, setStance] = useState<Stance | null>(null);
+  const [text, setText] = useState("");
+  const [name, setName] = useState("");
+  const [state, setState] = useState<"idle" | "sending" | "sent" | { error: string }>("idle");
+
+  useEffect(() => {
+    let live = true;
+    publicApi<Reponse>(`/reponse/${token}`)
+      .then((v) => {
+        if (!live) return;
+        setAsk(v);
+        setName([v.contact, v.institution].filter(Boolean).join(", "));
+      })
+      .catch(() => live && setAsk("missing"));
+    return () => {
+      live = false;
+    };
+  }, [token]);
+
+  async function send(e: React.FormEvent) {
+    e.preventDefault();
+    if (!stance) return;
+    setState("sending");
+    try {
+      const out = await publicApi<Reponse>(`/reponse/${token}`, { method: "POST", body: JSON.stringify({ stance, text: text.trim(), name: name.trim() }) });
+      setAsk(out);
+      setState("sent");
+    } catch (err) {
+      const code = err instanceof ApiError ? err.code : "";
+      setState({ error: err instanceof ApiError && err.status === 429 ? r.tooMany : code === "already_answered" ? r.already(null) : r.failed });
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 pt-10 pb-20 lg:pt-14">
+      <h1 className="page-title">{r.title}</h1>
+      {ask === "missing" && <p className="mt-8 text-xl">{r.notFound}</p>}
+      {!ask && <div aria-label={r.loading} className="mt-8 h-40 animate-pulse rounded-md bg-muted" />}
+      {ask && ask !== "missing" && (
+        <div className="mt-6 space-y-8">
+          <p className="text-lg text-pretty">{r.lead(ask.newsroom)}</p>
+
+          <div className="rounded-md border border-border bg-card p-5">
+            <p className="flex justify-between gap-4 text-sm text-muted-foreground">
+              <span>{r.claim}</span>
+              {ask.ref && <span className="font-display font-bold text-foreground tabular">{ask.ref}</span>}
+            </p>
+            <p className="mt-2 font-display text-xl leading-snug font-bold text-pretty">« {ask.claim} »</p>
+            <p className="mt-4 text-sm text-muted-foreground">
+              {r.question}
+              {ask.contact && ` · ${r.to([ask.contact, ask.institution].filter(Boolean).join(", "))}`}
+            </p>
+            <p className="mt-1 whitespace-pre-line text-pretty">{ask.question}</p>
+          </div>
+
+          {state === "sent" ? (
+            <div role="status" className="rounded-md border-2 border-foreground bg-card p-5">
+              <p className="flex items-center gap-2 font-display text-xl font-bold">
+                <IconCheck className="size-5" aria-hidden />
+                {r.thanks}
+              </p>
+              <p className="mt-2 text-pretty">{r.thanksLead(ask.newsroom)}</p>
+            </div>
+          ) : ask.answered_at ? (
+            <p role="status" className="rounded-md border border-border bg-card p-5">
+              {r.already(fmtWhen(ask.answered_at))}
+            </p>
+          ) : (
+            <form onSubmit={send} className="space-y-6">
+              <fieldset>
+                <legend className="font-bold">{r.stance}</legend>
+                <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                  {STANCES.map((s) => (
+                    <label
+                      key={s}
+                      className="flex min-h-12 cursor-pointer items-center gap-2.5 rounded-md border border-border bg-card px-3 py-2 has-checked:border-2 has-checked:border-foreground has-checked:font-bold has-focus-visible:ring-2 has-focus-visible:ring-ring"
+                    >
+                      <input type="radio" name="stance" value={s} checked={stance === s} onChange={() => setStance(s)} className="size-4 accent-foreground" required />
+                      {r.stances[s]}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+              <label className="block">
+                <span className="font-bold">{r.text}</span>
+                <span className="mt-0.5 block text-sm text-muted-foreground">{r.textHint}</span>
+                <textarea value={text} onChange={(e) => setText(e.target.value)} required minLength={2} maxLength={4000} rows={5} className={`${field} resize-y py-2`} />
+              </label>
+              <label className="block">
+                <span className="font-bold">{r.name}</span>
+                <input value={name} onChange={(e) => setName(e.target.value)} required maxLength={200} className={`${field} h-12`} />
+              </label>
+              {typeof state === "object" && (
+                <p role="alert" className="font-medium">
+                  {state.error}
+                </p>
+              )}
+              <Button type="submit" variant="action" size="xl" className="w-full sm:w-auto" disabled={state === "sending" || !stance}>
+                {state === "sending" && <IconCircleNotch className="animate-spin" aria-hidden />}
+                {state === "sending" ? r.sending : r.send}
+              </Button>
+              <p className="text-sm text-muted-foreground">{r.privacy}</p>
+            </form>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
