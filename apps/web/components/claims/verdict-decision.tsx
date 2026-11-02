@@ -258,7 +258,7 @@ export function VerdictDecision({
                   setPicking(false);
                 }}
                 className={cn(
-                  "flex h-12 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60",
+                  "flex h-12 items-center justify-center gap-2 rounded-md border text-sm font-medium transition-colors duration-150 outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:text-muted-foreground",
                   m.ink,
                   on ? cn(m.soft, "border-2 border-current font-bold") : "border-border bg-card hover:bg-muted",
                 )}
