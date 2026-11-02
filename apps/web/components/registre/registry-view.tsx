@@ -476,14 +476,25 @@ function ComparePanel({ ws, onRecorded }: { ws: string; onRecorded: () => void }
                 </a>
               </Button>
             )}
-            {(result.status === "not_found" || result.status === "inconsistent") && result.issuer && (
-              <Button variant="outline" asChild>
-                <Link href={`/w/${ws}/annuaire?q=${encodeURIComponent(result.issuer)}`}>
-                  <IconAddressBook aria-hidden />
-                  {r.compare.askIssuer(result.issuer)}
-                </Link>
-              </Button>
-            )}
+            {(result.status === "not_found" || result.status === "inconsistent") &&
+              result.issuer &&
+              (result.contacts?.length ? (
+                result.contacts.map((p) => (
+                  <Button key={p.id} variant="outline" asChild>
+                    <Link href={`/w/${ws}/annuaire?q=${encodeURIComponent(p.name)}`}>
+                      <IconAddressBook aria-hidden />
+                      {r.compare.askContact(p.name, p.role)}
+                    </Link>
+                  </Button>
+                ))
+              ) : (
+                <Button variant="outline" asChild>
+                  <Link href={`/w/${ws}/annuaire?q=${encodeURIComponent(result.issuer)}`}>
+                    <IconAddressBook aria-hidden />
+                    {r.compare.askIssuer(result.issuer)}
+                  </Link>
+                </Button>
+              ))}
           </div>
         </div>
       )}

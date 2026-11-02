@@ -57,7 +57,8 @@ export const registre = {
     original: "L'original enregistré",
     recordFake: "Enregistrer comme faux repéré",
     recorded: "Faux repéré enregistré.",
-    askIssuer: (issuer: string) => `Demander au service de presse de ${issuer}`,
+    askIssuer: (issuer: string) => `Chercher le service de presse (${issuer})`,
+    askContact: (name: string, role: string) => (role ? `Joindre ${name}, ${role}` : `Joindre ${name}`),
     openSeal: "Voir le sceau",
   },
   entry: {

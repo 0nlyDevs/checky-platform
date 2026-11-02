@@ -52,6 +52,8 @@ export type MatchResult = {
   diff: DiffOp[];
   changed_numbers: ChangedNumber[];
   summary: string;
+  /** Who at the issuer can confirm, from the Annuaire (not_found and inconsistent only). */
+  contacts?: { id: string; name: string; role: string; institution: string; kind: string }[];
 };
 
 export type SealResult = {
