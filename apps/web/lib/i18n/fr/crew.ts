@@ -75,7 +75,6 @@ export const crew = {
   },
   registry: {
     title: "Registre des originaux",
-    issued: (date: string) => `daté du ${date}`,
     contacts: "Peut confirmer",
     open: "Voir l'original",
   },

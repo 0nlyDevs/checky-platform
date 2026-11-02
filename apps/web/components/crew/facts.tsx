@@ -65,15 +65,9 @@ function ProvenanceFacts({ p, media }: { p: Provenance; media: boolean }) {
 
 function RegistryFacts({ r }: { r: MatchResult }) {
   const original = r.communique;
-  const issued = frDate(original?.issued_on);
+  // The summary already names the issuer, the number and the date.
   return (
     <>
-      {(r.issuer || r.number) && (
-        <p className="text-muted-foreground">
-          {[r.issuer, r.number && `N° ${r.number}`].filter(Boolean).join(" · ")}
-          {issued && ` · ${k.registry.issued(issued)}`}
-        </p>
-      )}
       <RegistryDiff diff={r.diff ?? []} summary={r.summary} status={r.status} changedNumbers={r.changed_numbers} />
       {!!r.contacts?.length && (
         <p className="text-pretty">
