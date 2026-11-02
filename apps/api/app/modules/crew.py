@@ -232,13 +232,25 @@ def merge_risk(code: dict[str, Any], raw: Any, text: str) -> dict[str, Any]:
         if not isinstance(r, dict):
             continue
         quote = str(r.get("quote") or "").strip().strip('«»"').strip()
-        if (
+        said = linkcheck._norm(quote)
+        if not (
             r.get("kind") in ("accusation", "panic", "fake_order", "violence")
             and quote
-            and linkcheck._norm(quote) in body
-            and not any(linkcheck._norm(x["quote"]) == linkcheck._norm(quote) for x in reasons)
+            and said in body
         ):
-            reasons.append({"kind": r["kind"], "quote": quote[:200]})
+            continue
+        # One reason per passage: « COMMUNIQUÉ » and « COMMUNIQUÉ N° 2026-118 » are the same one.
+        same = [
+            x
+            for x in reasons
+            if x["kind"] == r["kind"]
+            and (said in linkcheck._norm(x["quote"]) or linkcheck._norm(x["quote"]) in said)
+        ]
+        if same:
+            if len(quote) > len(same[0]["quote"]):
+                same[0]["quote"] = quote[:200]
+            continue
+        reasons.append({"kind": r["kind"], "quote": quote[:200]})
     level = max(raw["level"], code["level"], key=order.index)
     if level != "low" and not reasons:
         level = code["level"]  # a level the text does not back stays the code's

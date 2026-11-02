@@ -350,3 +350,17 @@ def test_public_facts_has_no_reading_and_finds_signed_verdicts(as_user, research
     assert facts["published"][0]["newsroom"] == "Desk du matin"
     assert facts["fact_checks"][0]["publisher"] == "AFP Factuel"
     assert facts["tone"]["level"] == "neutre" and facts["registry"] is None
+
+
+def test_a_reason_the_model_quotes_longer_replaces_the_codes_shorter_one():
+    from app.core import tone
+
+    code = tone.risk(DEMO_RUMOUR_TEXT)
+    model = {
+        "level": "high",
+        "reasons": [{"kind": "fake_order", "quote": "COMMUNIQUÉ N° 2026-118 de la JIRAMA"}],
+    }
+    merged = crew.merge_risk(code, model, DEMO_RUMOUR_TEXT)
+    orders = [r["quote"] for r in merged["reasons"] if r["kind"] == "fake_order"]
+    assert orders == ["COMMUNIQUÉ N° 2026-118 de la JIRAMA"]
+    assert {r["kind"] for r in merged["reasons"]} == {"fake_order", "panic"}
