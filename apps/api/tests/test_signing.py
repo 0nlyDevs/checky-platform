@@ -141,7 +141,7 @@ def test_adopt_relays_a_fact_checkers_review_as_source_one(as_user):
         "date": "2026-10-30",
         "title": "Non, Madagascar n'a pas quitté l'OMS",
     }
-    out = alice.post(path, json={"review": review}).json()
+    out = alice.post(path, json={"review": review, "publish": True}).json()
     assert out["data"]["verdict"] == "false" and out["status"] == "published"
     assert "AFP Factuel" in out["data"]["reason"] and "[1]" in out["data"]["reason"]
     assert out["data"]["adopted"]["publisher"] == "AFP Factuel"
@@ -154,17 +154,42 @@ def test_adopt_relays_a_fact_checkers_review_as_source_one(as_user):
     (source,) = asyncio.run(sources())
     assert source.url == "https://factuel.afp.com/exemple" and source.published_at == "2026-10-30"
     assert "30 octobre 2026" in source.text
-    bad = alice.post(path, json={"review": {**review, "rating": "Satirique"}})
+    unclear = {"review": {**review, "rating": "Satirique"}}
+    bad = alice.post(path, json=unclear)
     assert bad.status_code == 422 and bad.json()["error"]["code"] == "unknown_rating"
+    # The journalist picks the verdict for an unclear rating; by default it is signed, not published.
+    other = _claim(alice, ws, "Une autre rumeur")
+    chosen = alice.post(
+        f"/api/v1/workspaces/{ws}/items/{other}/adopt", json={**unclear, "verdict": "misleading"}
+    ).json()
+    assert chosen["data"]["verdict"] == "misleading" and chosen["status"] == "verified"
 
 
-def test_ratings_map_to_our_four_verdicts():
-    assert rating_verdict("Partly false") == "misleading"
-    assert rating_verdict("Trompeur") == "misleading"
-    assert rating_verdict("Pants on Fire") == "false"
+def test_ratings_map_to_our_four_verdicts_on_whole_words():
+    assert rating_verdict("Inaccurate") == "false"
+    assert rating_verdict("Not true") == "false"
+    assert rating_verdict("Not correct") == "false"
+    assert rating_verdict("Mostly false") == "false"
+    assert rating_verdict("Pants on Fire!") == "false"
     assert rating_verdict("Faux") == "false"
-    assert rating_verdict("Incorrect") == "false"
+    assert rating_verdict("Partly false") == "misleading"
+    assert rating_verdict("Half True") == "misleading"
+    assert rating_verdict("Trompeur") == "misleading"
+    assert rating_verdict("Missing context") == "misleading"
+    assert rating_verdict("Non prouvé") == "unverifiable"
     assert rating_verdict("Mostly True") == "true"
     assert rating_verdict("Vrai") == "true"
-    assert rating_verdict("Non prouvé") == "unverifiable"
-    assert rating_verdict("Sans objet") is None
+    assert rating_verdict("Faux et trompeur") is None
+    assert rating_verdict("Satirique") is None
+
+
+def test_the_desk_sees_how_a_rating_is_read_before_signing(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    url = f"/api/v1/workspaces/{ws}/ratings"
+    assert alice.get(url, params={"rating": "Inaccurate"}).json() == {
+        "rating": "Inaccurate",
+        "verdict": "false",
+    }
+    assert alice.get(url, params={"rating": "Satire"}).json()["verdict"] is None
+    assert as_user("bob").get(url, params={"rating": "Faux"}).status_code == 404

@@ -18,12 +18,13 @@ asked are told (`sms.notify_signed`, when that module exists).
 import hashlib
 import json
 import logging
+import re
 import unicodedata
 import uuid
 from datetime import UTC, datetime
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -321,17 +322,28 @@ async def sign_many(body: BatchIn, member: AnyMember, db: Db) -> BatchOut:
 
 # --- « Reprendre ce verdict » ---------------------------------------------------------------
 
-# A fact-checker's rating, in its own words, read as one of our four verdicts. Phrases that
-# contain another verdict's word come first (« partly false » is not « false »).
+# A fact-checker's rating, in its own words, read as one of our four verdicts. Matched on whole
+# words after accents are removed, in this order: false-leaning phrases and negations first
+# (« inaccurate », « not true » must never read as true), then misleading, then unverifiable,
+# then true only when nothing else matched. Anything unclear returns None: the journalist picks.
 RATINGS: list[tuple[str, tuple[str, ...]]] = [
+    (
+        "false",
+        (
+            "inaccurate", "not accurate", "not true", "untrue", "not correct", "incorrect",
+            "pas vrai", "pas exact", "inexact", "mostly false", "plutot faux", "faux", "fausse",
+            "false", "fake", "pants on fire", "falso", "wrong", "infonde", "sans fondement",
+            "fabrique", "hoax", "intox", "scam", "arnaque", "diso",
+        ),
+    ),
     (
         "misleading",
         (
-            "partly false", "partiellement faux", "partially false", "mostly false", "plutot faux",
-            "half true", "demi-vrai", "partly true", "partiellement vrai", "out of context",
-            "hors contexte", "sorti de son contexte", "missing context", "contexte manquant",
-            "trompeu", "misleading", "exagere", "exaggerat", "manipule", "manipulated", "altered",
-            "deforme", "distorted", "enganoso", "mixture", "mixed", "mamitaka",
+            "misleading", "trompeur", "trompeuse", "half true", "demi vrai", "mixture", "mixed",
+            "missing context", "contexte manquant", "out of context", "hors contexte",
+            "sorti de son contexte", "partly false", "partiellement faux", "partly true",
+            "partiellement vrai", "exagere", "exaggerated", "manipule", "manipulated", "altered",
+            "deforme", "distorted", "enganoso", "mamitaka",
         ),
     ),
     (
@@ -339,32 +351,30 @@ RATINGS: list[tuple[str, tuple[str, ...]]] = [
         (
             "unproven", "inverifiable", "unverifiable", "unverified", "non prouve", "non verifie",
             "sans preuve", "no evidence", "unsupported", "indetermine", "impossible a verifier",
-            "research in progress",
         ),
     ),
-    (
-        "false",
-        (
-            "faux", "fausse", "false", "fake", "untrue", "not true", "pas vrai", "incorrect",
-            "pants on fire", "falso", "wrong", "inexact", "infonde", "sans fondement", "fabrique",
-            "hoax", "intox", "scam", "arnaque", "diso",
-        ),
-    ),
-    (
-        "true",
-        ("vrai", "true", "correct", "accurate", "verdadero", "exact", "confirme", "marina"),
-    ),
+    ("true", ("vrai", "true", "mostly true", "plutot vrai", "correct", "accurate", "exact",
+              "verdadero", "marina")),
 ]  # fmt: skip
 
 
+def _flat(text: str) -> str:
+    folded = unicodedata.normalize("NFKD", text.lower())
+    folded = "".join(c for c in folded if not unicodedata.combining(c))
+    return " " + " ".join(re.findall(r"[a-z0-9]+", folded)) + " "
+
+
 def rating_verdict(rating: str) -> str | None:
-    """Our verdict for a fact-checker's rating, or None when the words are not recognised."""
-    flat = unicodedata.normalize("NFKD", " ".join(rating.lower().split()))
-    flat = "".join(c for c in flat if not unicodedata.combining(c))
-    for verdict, phrases in RATINGS:
-        if any(p in flat for p in phrases):
-            return verdict
-    return None
+    """Our verdict for a fact-checker's rating, or None when the words are not clear."""
+    flat = _flat(rating)
+    found = [v for v, phrases in RATINGS if any(f" {_flat(p).strip()} " in flat for p in phrases)]
+    if not found:
+        return None
+    if "false" in found and "misleading" in found:
+        # « Partly false » holds a false word inside a misleading phrase; anything else that
+        # says both (« faux et trompeur ») is not clear enough to sign without a person choosing.
+        return "misleading" if flat.strip().startswith(("partly", "partiellement")) else None
+    return found[0]
 
 
 class Review(BaseModel):
@@ -377,8 +387,22 @@ class Review(BaseModel):
 
 class AdoptIn(BaseModel):
     review: Review
+    # Required when the rating's words are not clear; the journalist's choice wins otherwise.
+    verdict: Verdict | None = None
     reason: str | None = Field(default=None, min_length=10, max_length=2000)
-    publish: bool = True
+    # Signing only by default: the journalist sees the mapped verdict and publishes after.
+    publish: bool = False
+
+
+class RatingOut(BaseModel):
+    rating: str
+    verdict: str | None
+
+
+@router.get("/workspaces/{ws}/ratings")
+async def read_rating(member: AnyMember, rating: str = Query(max_length=200)) -> RatingOut:
+    """How « Reprendre ce verdict » would read a fact-checker's rating, shown before signing."""
+    return RatingOut(rating=rating, verdict=rating_verdict(rating))
 
 
 @router.post("/workspaces/{ws}/items/{item_id}/adopt")
@@ -386,7 +410,7 @@ async def adopt(item_id: uuid.UUID, body: AdoptIn, member: AnyMember, db: Db) ->
     """The review is relayed as the fact-checker's, with its date and link: it becomes the
     dossier's source [1] and the newsroom signs the matching verdict under its own byline."""
     review = body.review
-    verdict = rating_verdict(review.rating)
+    verdict = body.verdict or rating_verdict(review.rating)
     if verdict is None:
         raise ApiError(422, "unknown_rating", "Choose the verdict by hand for this rating")
     item = await _locked(db, member, item_id)
