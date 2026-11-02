@@ -1,3 +1,10 @@
 import { Suspense } from "react";
-import { ResourceView } from "@/components/resources/resource-view";
-export default function Page() { return <Suspense><ResourceView kind="registry" /></Suspense>; }
+import { RegistryView } from "@/components/registre/registry-view";
+
+export default function Page() {
+  return (
+    <Suspense>
+      <RegistryView />
+    </Suspense>
+  );
+}
