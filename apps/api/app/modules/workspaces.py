@@ -147,7 +147,11 @@ async def get_workspace(member: AnyMember, db: Db) -> WorkspaceSettingsOut:
 @router.patch("/workspaces/{ws}")
 async def update_workspace(body: WorkspacePatch, member: AnyMember, db: Db) -> WorkspaceSettingsOut:
     ws = await db.get(Workspace, member.workspace_id)
-    if body.name is not None:
+    if body.name is not None and body.name != ws.name:
+        # The public reads this name next to « Rédaction vérifiée par Checky »: once verified it
+        # only changes through a new review.
+        if ws.verification == "approved":
+            raise ApiError(409, "verified_name_locked", "A verified newsroom keeps its name")
         ws.name = body.name
     if body.is_public is not None:
         ws.is_public = body.is_public

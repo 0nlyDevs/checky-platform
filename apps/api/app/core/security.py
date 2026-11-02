@@ -27,6 +27,8 @@ class CurrentUser:
     id: str
     email: str | None
     name: str | None
+    # Better Auth puts the user object in the token; emailVerified is false until a mail is confirmed.
+    email_verified: bool = False
 
 
 def decode_token(token: str) -> CurrentUser:
@@ -43,7 +45,12 @@ def decode_token(token: str) -> CurrentUser:
         )
     except jwt.PyJWTError as e:
         raise ApiError(401, "invalid_token", f"Invalid token: {e}") from e
-    return CurrentUser(id=claims["sub"], email=claims.get("email"), name=claims.get("name"))
+    return CurrentUser(
+        id=claims["sub"],
+        email=claims.get("email"),
+        name=claims.get("name"),
+        email_verified=claims.get("emailVerified") is True,
+    )
 
 
 async def current_user(

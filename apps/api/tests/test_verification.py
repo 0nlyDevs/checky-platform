@@ -19,7 +19,7 @@ REQUEST = {
 
 def _admin(as_user, make_token):
     c = as_user("checky")
-    c.headers["Authorization"] = f"Bearer {make_token('checky', email='checky@example.test')}"
+    c.headers["Authorization"] = f"Bearer {make_token('checky')}"
     return c
 
 
@@ -101,3 +101,35 @@ def test_request_checks_phone_country_and_page(as_user):
     # A French number for a French newsroom is fine: Checky is not tied to one country.
     ok = alice.put(url, json=REQUEST | {"country": "FR", "phone": "06 12 34 56 78"})
     assert ok.json()["request"]["phone"] == "+33612345678"
+
+
+def test_countries_are_listed_in_french(client):
+    rows = client.get("/api/v1/public/countries").json()
+    assert {"code": "MG", "name": "Madagascar"} in rows
+    assert {"code": "SN", "name": "Sénégal"} in rows
+
+
+def test_a_listed_email_counts_only_once_confirmed(make_token):
+    from fastapi.testclient import TestClient
+
+    from app.main import api
+
+    def me(**claims):
+        c = TestClient(api)
+        c.headers["Authorization"] = f"Bearer {make_token('mallory', **claims)}"
+        return c.get("/api/v1/me").json()["platform_admin"]
+
+    assert me(email="boss@example.test") is False
+    assert me(email="boss@example.test", emailVerified=False) is False
+    assert me(email="BOSS@example.test", emailVerified=True) is True
+
+
+def test_a_verified_newsroom_keeps_its_name(as_user, make_token):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    alice.put(f"/api/v1/workspaces/{ws}/verification", json=REQUEST)
+    assert alice.patch(f"/api/v1/workspaces/{ws}", json={"name": "Avant"}).status_code == 200
+    _admin(as_user, make_token).post(f"/api/v1/platform/requests/{ws}/approve")
+    r = alice.patch(f"/api/v1/workspaces/{ws}", json={"name": "Autre nom"})
+    assert r.status_code == 409 and r.json()["error"]["code"] == "verified_name_locked"
+    assert alice.patch(f"/api/v1/workspaces/{ws}", json={"name": "Avant"}).status_code == 200

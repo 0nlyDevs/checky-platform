@@ -24,7 +24,7 @@ os.environ["DB_POOL"] = "false"
 os.environ["JOB_WORKERS"] = "0"
 # Indexing is opt-in per test (tests/test_rag.py), so other tests never call a real provider.
 os.environ["EMBED_PROVIDER"] = "none"
-os.environ["PLATFORM_ADMINS"] = "checky@example.test"
+os.environ["PLATFORM_ADMINS"] = "checky,boss@example.test"
 
 import jwt
 import pytest

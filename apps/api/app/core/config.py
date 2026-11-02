@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     auth_issuer: str = "http://localhost:3000"
     auth_audience: str = "http://localhost:3000"
     cors_origins: str = "http://localhost:3000"
-    # The Checky team: comma-separated emails of the accounts that verify newsrooms. Not a role in
-    # the app; register these addresses before anyone else can.
+    # The Checky team: comma-separated Better Auth user ids (see GET /me) of the accounts that
+    # verify newsrooms. Not a role in the app. An email entry only counts once it is confirmed.
     platform_admins: str = ""
 
     # S3-compatible object storage (Neon Object Storage); private bucket, presigned URLs only.

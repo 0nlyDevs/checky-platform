@@ -30,8 +30,18 @@ Status = Literal["none", "pending", "approved", "refused"]
 
 
 def is_platform_admin(user: CurrentUser) -> bool:
-    admins = {e.strip().casefold() for e in get_settings().platform_admins.split(",") if e.strip()}
-    return bool(user.email) and user.email.casefold() in admins
+    """Listed by Better Auth user id (immutable). An email entry only counts once the address
+    is confirmed (`emailVerified` in the token): anyone can sign up with an address they do not own.
+    """
+    entries = {e.strip() for e in get_settings().platform_admins.split(",") if e.strip()}
+    if user.id in entries:
+        return True
+    email = (user.email or "").strip()
+    return (
+        user.email_verified
+        and email.isascii()
+        and email.lower() in {e.lower() for e in entries if "@" in e}
+    )
 
 
 def _require_admin(user: CurrentUser) -> None:
@@ -173,6 +183,17 @@ async def request_verification(body: RequestIn, member: AnyMember, db: Db) -> Ve
     await db.commit()
     await db.refresh(r)
     return _out(ws, r)
+
+
+class CountryOut(BaseModel):
+    code: str
+    name: str
+
+
+@router.get("/public/countries")
+async def list_countries() -> list[CountryOut]:
+    """Every country, French names, for the request form, Réglages and the Veille map."""
+    return [CountryOut(code=c, name=n) for c, n in countries.all_countries()]
 
 
 # The Checky team ------------------------------------------------------------------------------
