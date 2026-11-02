@@ -169,3 +169,130 @@ def qr_svg(url: str) -> str:
         out, kind="svg", scale=6, border=3, dark="#171a18", light="#ffffff", xmldecl=False
     )
     return out.getvalue().decode()
+
+
+# --- the newsroom's own seal on a signed verdict (cards, story, poster) -----------------------
+
+# The issuer name a newsroom's own key is kept under (one key per newsroom, beside its issuers').
+NEWSROOM_ISSUER = "Rédaction"
+VERDICTS = ("true", "misleading", "false", "unverifiable")
+TITLE_MAX = 100  # the signed title travels inside a QR code: a card's title, clipped by code
+
+
+def check_number(ref: str | None) -> int | None:
+    """« vérification 145 » for FAN-0145: the number said on air, typed on a phone, in /v/145."""
+    m = re.search(r"(\d{1,8})$", str(ref or "").strip())
+    return int(m[1]) if m else None
+
+
+def check_label(ref: str | None, lang: str = "fr") -> str | None:
+    """The verification number written the same way everywhere (card, story, poster, radio line,
+    SMS, voice line). The Malagasy word is machine-chosen: à relire par un locuteur."""
+    n = check_number(ref)
+    if n is None:
+        return None
+    return f"fanamarinana {n}" if lang == "mg" else f"vérification {n}"
+
+
+def clip_title(title: str, limit: int = TITLE_MAX) -> str:
+    flat = normalise(title)
+    if len(flat) <= limit:
+        return flat
+    return flat[: limit - 1].rsplit(" ", 1)[0].rstrip(" ,;:.") + "…"
+
+
+def minute(moment: datetime) -> str:
+    """UTC to the minute (`2026-11-02T05:15Z`): short enough for a QR, exact enough to compare."""
+    return moment.astimezone(UTC).strftime("%Y-%m-%dT%H:%MZ")
+
+
+def verdict_payload(
+    *,
+    item_id: uuid.UUID,
+    ref: str | None,
+    verdict: str,
+    title: str,
+    signed_at: datetime,
+    digest: str,
+) -> dict[str, Any]:
+    """What the newsroom signs for a published verdict: which dossier, its number, the verdict, the
+    title as the card prints it, when it was signed, and the fingerprint of the signed version (the
+    first 128 bits of `signing.digest`, which covers title, body, verdict and explanation)."""
+    if verdict not in VERDICTS:
+        raise ValueError(f"Unknown verdict: {verdict}")
+    return {
+        "id": str(item_id),
+        "ref": ref,
+        "verdict": verdict,
+        "title": clip_title(title),
+        "signed_at": minute(signed_at),
+        "digest": digest[:32],
+    }
+
+
+def verdict_seal_url(item_id: uuid.UUID, message: str, signature: str, key_id: str) -> str:
+    """What the card's QR encodes: the public page, with everything needed to check it offline after
+    `#` (the signed message, the signature, the key id), so the fragment never reaches a server."""
+    base = get_settings().public_web_url.rstrip("/")
+    return f"{base}/sceau/v/{item_id}#{b64u(message.encode())}.{signature}.{key_id}"
+
+
+async def sign_verdict(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    *,
+    item_id: uuid.UUID,
+    ref: str | None,
+    verdict: str,
+    title: str,
+    signed_at: datetime,
+    digest: str,
+) -> dict[str, Any]:
+    """Seal a published verdict with the newsroom's key (created on first use, flushed: the caller
+    commits). Ed25519 is deterministic, so the same version always gives the same seal and nothing
+    needs storing on the dossier. Raises 503 `seal_unavailable` without SEAL_SECRET."""
+    key = await issuer_key(db, workspace_id, NEWSROOM_ISSUER)
+    private = Ed25519PrivateKey.from_private_bytes(_fernet().decrypt(key.private_key_enc.encode()))
+    payload = verdict_payload(
+        item_id=item_id,
+        ref=ref,
+        verdict=verdict,
+        title=title,
+        signed_at=signed_at,
+        digest=digest,
+    )
+    message = canonical(payload)
+    signature = b64u(private.sign(message.encode()))
+    return {
+        "alg": ALG,
+        "key_id": key.key_id,
+        "public_key": key.public_key,
+        "payload": payload,
+        "message": message,
+        "signature": signature,
+        "url": verdict_seal_url(item_id, message, signature, key.key_id),
+        "number": check_number(ref),
+    }
+
+
+def read_fragment(fragment: str) -> tuple[dict[str, Any], str, str, str] | None:
+    """The QR's `#message.signature.key_id` back into (payload, message, signature, key_id)."""
+    try:
+        packed, signature, key_id = fragment.lstrip("#").split(".")
+        message = unb64u(packed).decode()
+        payload = json.loads(message)
+    except (ValueError, UnicodeDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    return payload, message, signature, key_id
+
+
+def verify_message(public_key_b64: str, message: str, signature: str) -> bool:
+    """Like `verify`, on the exact signed string (what a QR carries)."""
+    try:
+        public = Ed25519PublicKey.from_public_bytes(base64.b64decode(public_key_b64))
+        public.verify(unb64u(signature), message.encode())
+    except (InvalidSignature, ValueError, TypeError):
+        return False
+    return True
