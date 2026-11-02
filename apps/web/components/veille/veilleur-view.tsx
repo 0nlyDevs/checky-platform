@@ -171,7 +171,7 @@ function MyClips({ clips }: { clips: Clip[] }) {
             <span className="font-bold">{c.station}</span>
             <span className="text-muted-foreground tabular">{when(c.recorded_at)}</span>
           </p>
-          <p className="mt-1 text-pretty">{c.text_from === "pending" ? <span className="text-muted-foreground">{t.rubrique.antenne.pending}</span> : `« ${c.heard_text} »`}</p>
+          <p className="mt-1 text-pretty">{c.text_from === "pending" ? <span className="text-muted-foreground">{t.rubrique.antenne.pending}</span> : <q className="quote text-lg">{c.heard_text}</q>}</p>
           <p className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             {w.status[c.served ? "followed" : c.status] ?? c.status}
             {c.demo && <DemoTag />}
@@ -336,9 +336,9 @@ export function VeilleurView({ ws, desk }: { ws: string; desk: boolean }) {
           {!canRecord ? (
             <p className="rounded-md border border-dashed border-border p-4 text-sm">{w.noRecorder}</p>
           ) : recording.state === "recording" ? (
-            <Button type="button" onClick={recording.stop} className="h-24 w-full flex-col gap-1 bg-foreground text-lg font-bold text-background hover:bg-foreground/90">
+            <Button type="button" onClick={recording.stop} className="h-24 w-full flex-col gap-1 text-lg font-bold">
               <span className="inline-flex items-center gap-2">
-                <span className="step-active size-3 rounded-full bg-action" aria-hidden />
+                <span className="step-active size-3 rounded-full bg-primary-foreground" aria-hidden />
                 <IconStop className="size-6" aria-hidden />
                 {w.stop}
               </span>
@@ -398,13 +398,14 @@ export function VeilleurView({ ws, desk }: { ws: string; desk: boolean }) {
           {!enough && text.trim().length > 0 && <p className="mt-1 text-sm font-bold">{w.tooShort}</p>}
         </div>
 
-        <Button type="submit" size="xl" className="h-14 w-full text-base" disabled={!canSend}>
+        {/* One primary per screen: Enregistrer while nothing is recorded, then Envoyer. */}
+        <Button type="submit" variant={clip || !canRecord ? "default" : "outline"} size="xl" className="h-14 w-full text-base" disabled={!canSend}>
           {sending !== null ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconPaperPlaneTilt aria-hidden />}
           {sending !== null ? (clip && sending < 100 ? w.uploading(sending) : w.sending) : w.send}
         </Button>
       </form>
 
-      <section aria-labelledby="mes-signalements" className="mt-10 border-t-2 border-foreground pt-3">
+      <section aria-labelledby="mes-signalements" className="mt-10 border-t border-foreground pt-3">
         <h2 id="mes-signalements" className="font-display text-xl font-bold">
           {w.mine}
         </h2>

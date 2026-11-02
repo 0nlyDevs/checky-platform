@@ -40,7 +40,7 @@ export function Section({
   id?: string;
 }) {
   return (
-    <section aria-labelledby={id} className={cn("border-t-2 border-foreground pt-3", className)}>
+    <section aria-labelledby={id} className={cn("border-t border-foreground pt-3", className)}>
       <div className="flex items-start justify-between gap-3">
         <h2 id={id} className="font-display text-xl leading-tight font-bold">
           {title}

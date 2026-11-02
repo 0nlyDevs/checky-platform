@@ -101,7 +101,7 @@ function AngleItem({ ws, angle, model, itemId, i }: { ws: string; angle: Angle; 
  * Angles: the facts the newsroom already holds on a subject (numbered), then the angles the model
  * suggests on them. An angle that cites no fact, or a figure absent from them, is dropped by the
  * API. `itemId` grounds them on one dossier and keeps them there; `primary` makes « Suggérer » the
- * screen's citron action (the Angles page), otherwise it stays ink (inside another screen).
+ * screen's one primary button (the Angles page); inside another screen it stays secondary.
  */
 export function AnglesPanel({ ws, itemId, initialTopic = "", primary = false }: { ws: string; itemId?: string; initialTopic?: string; primary?: boolean }) {
   const [topic, setTopic] = useState(initialTopic);
@@ -139,7 +139,7 @@ export function AnglesPanel({ ws, itemId, initialTopic = "", primary = false }: 
           <span className="font-bold">{g.topic}</span>
           <Input value={topic} onChange={(e) => setTopic(e.target.value)} placeholder={g.topicPlaceholder} maxLength={200} className="mt-1.5 h-12 bg-card text-base" />
         </label>
-        <Button type="submit" variant={primary ? "action" : "default"} size="xl" disabled={busy || (!topic.trim() && !itemId)}>
+        <Button type="submit" variant={primary ? "action" : "outline"} size="xl" disabled={busy || (!topic.trim() && !itemId)}>
           {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconSparkle aria-hidden />}
           {busy ? g.working : g.suggest}
         </Button>

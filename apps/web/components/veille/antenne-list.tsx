@@ -23,7 +23,7 @@ function Heard({ row }: { row: AntenneRow }) {
   const from = c.text_from === "pending" ? a.pending : c.text_from === "transcript" ? a.fromTranscript : a.fromVeilleur;
   return (
     <figure className="mt-2 text-sm">
-      {c.heard_text ? <blockquote className="text-pretty">« {c.heard_text} »</blockquote> : null}
+      {c.heard_text ? <blockquote className="quote text-base text-pretty">« {c.heard_text} »</blockquote> : null}
       <figcaption className="mt-1 text-muted-foreground">
         {c.station} · {when(c.recorded_at)} · {from}
         {c.language === "mg" && c.text_from === "veilleur" && <span className="block">{a.mgNote}</span>}

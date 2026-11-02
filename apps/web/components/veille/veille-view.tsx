@@ -245,7 +245,7 @@ function DeskVeille({ ws }: { ws: string }) {
                         onClick={() => go({ region: r.region === region ? null : r.region })}
                         className={cn(
                           "inline-flex h-9 items-center gap-2 rounded-md border px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                          r.region === region ? "border-foreground bg-action font-bold text-action-foreground" : "border-input hover:border-foreground",
+                          r.region === region ? "border-primary bg-primary font-bold text-primary-foreground" : "border-input hover:bg-raised",
                         )}
                       >
                         {r.region}
