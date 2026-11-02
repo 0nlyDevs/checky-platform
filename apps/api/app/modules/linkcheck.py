@@ -239,7 +239,11 @@ async def _tracked(
                 return {"item_id": str(hit.id), "ref": hit.data.get("ref"), "title": hit.title}
         if claim:
             hit = await db.scalar(
-                select(Item).where(Item.workspace_id == ws, Item.title.ilike(claim.strip()[:300]))
+                select(Item).where(
+                    Item.workspace_id == ws,
+                    Item.type != "alert",
+                    Item.title.ilike(claim.strip()[:300]),
+                )
             )
             if hit:
                 return {"item_id": str(hit.id), "ref": hit.data.get("ref"), "title": hit.title}

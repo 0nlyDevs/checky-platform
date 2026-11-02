@@ -105,6 +105,7 @@ async def find_claims(ctx: AgentContext, query: str) -> tuple[str, str]:
                 select(Item)
                 .where(
                     Item.workspace_id == ctx.workspace_id,
+                    Item.type != "alert",
                     or_(Item.title.ilike(like), Item.body.ilike(like)),
                 )
                 .order_by(Item.created_at.desc())

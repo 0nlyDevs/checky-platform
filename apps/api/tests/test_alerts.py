@@ -211,3 +211,14 @@ def test_alerts_are_private_to_the_newsroom(as_user):
     [alert] = _alerts(alice, ws)
     assert bob.get(f"/api/v1/workspaces/{ws}/alerts").status_code == 404
     assert bob.get(f"/api/v1/workspaces/{ws}/alerts/{alert['id']}").status_code == 404
+
+
+def test_alerts_stay_out_of_the_items_list(as_user):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    _clip(alice, ws, KIDNAP_FR, "Radio Boeny (démo)", region="Boeny")
+    _dossier(alice, ws, KIDNAP_FR_2, risk="high")
+    _scan(alice, ws)
+    base = f"/api/v1/workspaces/{ws}/items"
+    assert {i["type"] for i in alice.get(base).json()["items"]} == {"claim"}
+    assert [i["type"] for i in alice.get(f"{base}?type=alert").json()["items"]] == ["alert"]

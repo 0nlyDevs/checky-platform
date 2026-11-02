@@ -108,6 +108,8 @@ async def list_items(
         where.append(Item.status == status)
     if type:
         where.append(Item.type == type)
+    else:  # alerts group dossiers and reports (app/modules/alerts.py); they are not dossiers
+        where.append(Item.type != "alert")
     if tag:
         where.append(Item.tags.contains([tag]))
     if q:
