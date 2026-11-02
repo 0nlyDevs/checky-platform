@@ -563,6 +563,11 @@ def _entry_text(action: str, diff: dict, titles: dict[str, str], contacts: dict[
         return f"Diffusé sur {n} route{'s' if n > 1 else ''}"
     if action == "broadcast":
         return f"Diffusé à l'antenne : {diff.get('station')}"
+    if action == "risk":
+        level = {"high": "élevé", "medium": "moyen", "low": "faible"}.get(diff.get("to"), "—")
+        if diff.get("reset"):
+            return f"Niveau de danger rendu à Checky : {level}"
+        return f"Niveau de danger ajusté : {level} ({diff.get('reason') or 'sans raison'})"
     if action == "comment":
         return "Commentaire dans le fil"
     if action == "update" and "status" in diff:

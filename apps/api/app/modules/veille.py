@@ -980,9 +980,21 @@ def _matches(entry: FeedEntry, region: str | None, beat: str | None) -> bool:
     return not beat or fold(beat) in {fold(b) for b in entry.beats}
 
 
-def _risk(d: dict[str, Any]) -> str | None:
-    risk = d.get("risk")
-    return risk.get("level") if isinstance(risk, dict) else None
+RISK_LEVELS = ("low", "medium", "high")
+
+
+def risk_level(d: dict[str, Any] | None) -> str | None:
+    """The danger level of a dossier: a journalist's adjustment (`risk_override`) wins over
+    Checky's own (`risk`, the tone lexicon and the Lecteur)."""
+    d = d or {}
+    for key in ("risk_override", "risk"):
+        risk = d.get(key)
+        if isinstance(risk, dict) and risk.get("level") in RISK_LEVELS:
+            return risk["level"]
+    return None
+
+
+_risk = risk_level
 
 
 async def feed_entries(
