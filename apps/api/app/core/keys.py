@@ -1,4 +1,5 @@
-"""API key lists shared by every outside service (chat, embeddings, transcription, voice).
+"""API key lists shared by every outside service (chat, embeddings, transcription, voice,
+web search, fact-checks, image detection).
 
 Any `*_API_KEY` may hold several keys separated by commas (one per teammate, or several free
 accounts). Calls take them in turn, and a key that hits its quota is set aside for a while so the

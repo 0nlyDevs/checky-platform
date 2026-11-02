@@ -20,6 +20,11 @@ no key has been invented and no paid plan or pay-as-you-go has been enabled by t
    TAVILY_API_KEY=<your private key>
    ```
 
+   Several free accounts add up: `TAVILY_API_KEY=key1,key2`. Keys are used in turn; each one's free
+   usage is checked before its search, and a key that is exhausted, refused or rate limited is set
+   aside (an hour, 30 s for a rate limit) so the next key answers. A refused key spends no credit, and
+   a timeout or server error is never retried on another key.
+
 4. Save and redeploy the existing service. Test the PARC passage again, and check that web-search
    attempts return results rather than timing out. Provider availability, relevance and coverage
    must be tested from production; local mocked tests are not a claim of successful activation.

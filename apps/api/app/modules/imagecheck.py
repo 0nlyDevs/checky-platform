@@ -20,6 +20,7 @@ from fastapi import APIRouter, Depends, Request
 from PIL import Image, UnidentifiedImageError
 from pydantic import BaseModel, Field, field_validator
 
+from app.core import keys
 from app.core.access import AnyMember
 from app.core.config import get_settings
 from app.core.errors import ApiError
@@ -140,41 +141,56 @@ def _grade(answer: DetectorReply) -> DetectorOut:
     return DetectorOut(status="assessed", assessment=assessment, model=answer.model)
 
 
+# A refused key (bad key, rate limit, used-up quota) hands over to the next one in turn; any other
+# failure says the detector is unavailable without burning a key on, say, an unreadable image.
+REFUSED = {401, 403, 429}
+REFUSAL_WORDS = ("limit", "quota", "usage", "credential", "auth", "key", "plan")
+
+
+def _set_aside(service: str, key: str, status: int) -> None:
+    keys.set_aside(service, key, get_settings().ai_cooldown if status == 429 else 3600.0)
+
+
 async def _sightengine(raw: bytes, mime: str) -> DetectorOut:
-    """Sightengine's `genai` model: multipart upload, answers {"type": {"ai_generated": 0..1}}."""
+    """Sightengine's `genai` model: multipart upload, answers {"type": {"ai_generated": 0..1}}.
+
+    SIGHTENGINE_API_USER and SIGHTENGINE_API_SECRET are comma lists paired in order (one account
+    each), used in turn like every other key list."""
     settings = get_settings()
-    try:
-        async with httpx.AsyncClient(
-            transport=_detector_transport, timeout=20, follow_redirects=False
-        ) as http:
-            response = await http.post(
-                SIGHTENGINE_URL,
-                data={
-                    "models": "genai",
-                    "api_user": settings.sightengine_api_user,
-                    "api_secret": settings.sightengine_api_secret,
-                },
-                files={"media": ("image", raw, mime)},
-            )
-        response.raise_for_status()
-        body = response.json()
-        if body.get("status") != "success":
-            raise ValueError("Sightengine refused the request")
-        score = body["type"]["ai_generated"]
-        return _grade(DetectorReply(ai_score=score, model="sightengine-genai"))
-    except (httpx.HTTPError, ValueError, TypeError, KeyError):
-        return DetectorOut(status="unavailable")
+    secrets = dict(
+        zip(keys.split(settings.sightengine_api_user), keys.split(settings.sightengine_api_secret))
+    )
+    for user in keys.rotation("sightengine", list(secrets)):
+        try:
+            async with httpx.AsyncClient(
+                transport=_detector_transport, timeout=20, follow_redirects=False
+            ) as http:
+                response = await http.post(
+                    SIGHTENGINE_URL,
+                    data={"models": "genai", "api_user": user, "api_secret": secrets[user]},
+                    files={"media": ("image", raw, mime)},
+                )
+            body = response.json()
+        except (httpx.HTTPError, ValueError):
+            return DetectorOut(status="unavailable")
+        error = json.dumps(body.get("error") or "").casefold() if isinstance(body, dict) else ""
+        if response.status_code in REFUSED or any(word in error for word in REFUSAL_WORDS):
+            _set_aside("sightengine", user, response.status_code)
+            continue
+        try:
+            response.raise_for_status()
+            if body.get("status") != "success":
+                raise ValueError("Sightengine refused the request")
+            score = body["type"]["ai_generated"]
+            return _grade(DetectorReply(ai_score=score, model="sightengine-genai"))
+        except (httpx.HTTPError, ValueError, TypeError, KeyError, AttributeError):
+            return DetectorOut(status="unavailable")
+    return DetectorOut(status="unavailable")
 
 
-async def detect_pixels(raw: bytes, mime: str) -> DetectorOut:
+async def _custom_detector(raw: bytes, mime: str) -> DetectorOut:
+    """IMAGE_DETECTOR_URL: raw bytes in, {ai_score, model} out; IMAGE_DETECTOR_TOKEN may be a list."""
     settings = get_settings()
-    sightengine = bool(settings.sightengine_api_user and settings.sightengine_api_secret)
-    if not settings.image_detector_url and not sightengine:
-        return DetectorOut(status="not_configured")
-    if not settings.image_detector_validated:
-        return DetectorOut(status="not_validated")
-    if sightengine:
-        return await _sightengine(raw, mime)
     target = urlparse(settings.image_detector_url)
     if (
         target.username
@@ -186,27 +202,45 @@ async def detect_pixels(raw: bytes, mime: str) -> DetectorOut:
         )
     ):
         return DetectorOut(status="unavailable")
-    headers = {"Content-Type": mime}
-    if settings.image_detector_token:
-        headers["Authorization"] = f"Bearer {settings.image_detector_token}"
-    try:
-        async with (
-            httpx.AsyncClient(
-                transport=_detector_transport, timeout=20, follow_redirects=False
-            ) as http,
-            http.stream(
-                "POST", settings.image_detector_url, content=raw, headers=headers
-            ) as response,
-        ):
-            response.raise_for_status()
-            data = bytearray()
-            async for chunk in response.aiter_bytes():
-                data.extend(chunk)
-                if len(data) > 16_384:
-                    raise ValueError("Detector response too large")
-        return _grade(DetectorReply.model_validate(json.loads(data)))
-    except (httpx.HTTPError, ValueError, TypeError):
-        return DetectorOut(status="unavailable")
+    tokens = keys.split(settings.image_detector_token)
+    for token in keys.rotation("image-detector", tokens) if tokens else [""]:
+        headers = {"Content-Type": mime}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        try:
+            async with (
+                httpx.AsyncClient(
+                    transport=_detector_transport, timeout=20, follow_redirects=False
+                ) as http,
+                http.stream(
+                    "POST", settings.image_detector_url, content=raw, headers=headers
+                ) as response,
+            ):
+                if token and response.status_code in REFUSED:
+                    _set_aside("image-detector", token, response.status_code)
+                    continue
+                response.raise_for_status()
+                data = bytearray()
+                async for chunk in response.aiter_bytes():
+                    data.extend(chunk)
+                    if len(data) > 16_384:
+                        raise ValueError("Detector response too large")
+            return _grade(DetectorReply.model_validate(json.loads(data)))
+        except (httpx.HTTPError, ValueError, TypeError):
+            return DetectorOut(status="unavailable")
+    return DetectorOut(status="unavailable")
+
+
+async def detect_pixels(raw: bytes, mime: str) -> DetectorOut:
+    settings = get_settings()
+    sightengine = bool(
+        keys.split(settings.sightengine_api_user) and keys.split(settings.sightengine_api_secret)
+    )
+    if not settings.image_detector_url and not sightengine:
+        return DetectorOut(status="not_configured")
+    if not settings.image_detector_validated:
+        return DetectorOut(status="not_validated")
+    return await (_sightengine if sightengine else _custom_detector)(raw, mime)
 
 
 def _limited(request: Request) -> None:
