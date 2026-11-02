@@ -54,14 +54,26 @@ def _resolve(host: str) -> list[str]:
 async def check_public_url(url: str) -> None:
     """Refuse anything but http(s) to a public address, so a pasted link cannot reach
     the API's own network (SSRF)."""
+    await _public_addresses(url)
+
+
+async def _public_addresses(url: str) -> list[str]:
     parsed = urlparse(url)
-    if parsed.scheme not in ("http", "https") or not parsed.hostname:
-        raise ValueError("Only http and https links can be added")
+    if (
+        parsed.scheme not in ("http", "https")
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+    ):
+        raise ValueError("Only public http and https links without credentials can be added")
     addresses = await asyncio.to_thread(_resolve, parsed.hostname)
+    if not addresses:
+        raise ValueError("The address did not resolve")
     for a in addresses:
         ip = ipaddress.ip_address(a)
         if not ip.is_global or ip.is_multicast:
             raise ValueError("This address is not reachable from the public internet")
+    return sorted(set(addresses), key=lambda address: ipaddress.ip_address(address).version)
 
 
 async def fetch_raw(url: str) -> tuple[str, str, bytes, str | None]:
@@ -69,8 +81,18 @@ async def fetch_raw(url: str) -> tuple[str, str, bytes, str | None]:
     Returns (final url, content type, body, encoding)."""
     async with httpx.AsyncClient(transport=_transport, timeout=15, headers=HEADERS) as http:
         for _ in range(6):
-            await check_public_url(url)
-            async with http.stream("GET", url) as resp:
+            addresses = await _public_addresses(url)
+            original = httpx.URL(url)
+            # Pin the checked IP instead of resolving the domain a second time in the HTTP
+            # transport (DNS rebinding). Preserve the domain for Host and TLS verification.
+            # Mock transports do no networking and keep the original URL for fixture routing.
+            target = original.copy_with(host=addresses[0]) if _transport is None else original
+            async with http.stream(
+                "GET",
+                target,
+                headers={"Host": original.netloc.decode("ascii")},
+                extensions={"sni_hostname": original.raw_host.decode("ascii")},
+            ) as resp:
                 if resp.is_redirect and resp.headers.get("location"):
                     url = urljoin(url, resp.headers["location"])
                     continue
