@@ -247,12 +247,14 @@ def test_demo_reset_seeds_the_line_twice_without_duplicates(as_user):
     rumour = next(g for g in groups if g["item_ref"] == "FAN-0145")
     assert rumour["count"] == 4 and rumour["regions"]["Atsimo-Andrefana"] == 3
     assert rumour["channels"] == {"sms": 3, "web": 1}
-    # signing and publishing the pitch rumour texts the askers and the Toliara subscriber
+    # publishing the pitch rumour texts the askers and the subscribers of the regions its demo
+    # road crosses (Antananarivo's radio, then SMS from Atsimo-Andrefana)
     item = rumour["item_id"]
     alice.patch(
         f"/api/v1/workspaces/{ws}/items/{item}",
         json={"status": "published", "data": {"verdict": "false", "reason": "Quatre heures."}},
     )
-    assert asyncio.run(_notify(item)) == 4  # 4 askers; the Toliara subscriber needs a route
+    assert asyncio.run(_notify(item)) == 6  # 4 askers + the 2 demo subscribers on the road
+    assert asyncio.run(_notify(item)) == 0  # once per number
     log = alice.get(f"/api/v1/workspaces/{ws}/sms/messages").json()
     assert {m["status"] for m in log} == {"simulated"}  # fictional numbers: never sent
