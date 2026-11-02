@@ -99,7 +99,10 @@ def test_without_ai_the_facts_still_show(as_user, monkeypatch, research):
     for c, w, title in [(alice, ws, "Our archive"), (bob, other, "Secret archive")]:
         c.post(
             f"/api/v1/workspaces/{w}/sources",
-            json={"title": title, "text": "Le port de Rio est ouvert selon le service maritime."},
+            json={
+                "title": title,
+                "text": "Le port de Rio n'est pas fermé, selon le service maritime.",
+            },
         )
     events, result = _run(alice, ws, text=PORT, ai_enabled=False)
     assert "analysis" not in result and result["ai_enabled"] is False
@@ -151,11 +154,13 @@ def test_model_failure_keeps_facts_visible(as_user, monkeypatch, research):
     monkeypatch.setattr(ai, "complete", unavailable)
     alice = as_user("alice")
     ws = _workspace(alice)
-    _, result = _run(alice, ws, text=PORT)
+    events, result = _run(alice, ws, text=PORT)
     assert result["results"][0]["read_status"] == "read" and "analysis" not in result
     lecteur = _trace(result)["Lecteur"]
     assert lecteur["status"] == "failed" and lecteur["summary"] == "Modèles d'IA indisponibles"
     assert "groq" not in json.dumps(result["trace"])
+    verdict = [d for e, d in events if e == "step" and d["key"] == "verdict"][-1]
+    assert verdict == {"key": "verdict", "status": "waiting", "summary": "ai_failed"}
 
 
 def test_a_failing_fact_node_never_breaks_the_stream(as_user, monkeypatch, research):

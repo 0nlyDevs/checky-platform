@@ -684,8 +684,18 @@ def step_summary(key: str, state: dict[str, Any]) -> dict[str, Any]:
         return {"key": key, "status": "done", "summary": f"{n} éléments trouvés"}
     if analysis := state.get("analysis"):
         return {"key": key, "status": "done", "summary": analysis["verdict"]}
-    # No reading (no model, or nothing readable): the conclusion waits for the journalist.
-    reason = "no_ai" if not state.get("ai_enabled") else "no_evidence"
+    # No reading (no model, a model that did not answer, or nothing readable): the conclusion
+    # waits for the journalist.
+    synthesis = next(
+        (t["status"] for t in reversed(state.get("trace") or []) if t["agent"] == "Synthèse"), None
+    )
+    reason = (
+        "no_ai"
+        if not state.get("ai_enabled")
+        else "ai_failed"
+        if synthesis in ("failed", "timeout")
+        else "no_evidence"
+    )
     return {"key": key, "status": "waiting", "summary": reason}
 
 
