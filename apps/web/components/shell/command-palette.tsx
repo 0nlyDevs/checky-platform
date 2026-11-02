@@ -67,7 +67,7 @@ export function CommandPalette() {
 
   const { data: me } = useSWR<Me>(open ? "/me" : null, fetcher);
   const key = open && ws ? `/workspaces/${ws}/items?limit=5${debounced ? `&q=${encodeURIComponent(debounced)}` : ""}` : null;
-  const { data: found, isLoading } = useSWR<ItemPage>(key, fetcher, { keepPreviousData: true });
+  const { data: found, isLoading, isValidating } = useSWR<ItemPage>(key, fetcher, { keepPreviousData: true });
 
   const close = useCallback(() => {
     setOpen(false);
@@ -84,7 +84,8 @@ export function CommandPalette() {
       const restricted = role === "issuer" || role === "veilleur";
       const spaces = restricted ? NAV.filter((n) => n.path === (role === "issuer" ? "registre" : "veille")) : [...NAV, ...WORKSPACE_NAV];
       for (const n of spaces) list.push({ id: `space-${n.path}`, group: "spaces", icon: n.icon, label: n.label, run: go(`/w/${ws}/${n.path}`) });
-      for (const item of found?.items ?? []) {
+      // a stale answer (for the previous letters) is not offered while the next one is on its way
+      for (const item of query.trim() === debounced && !isValidating ? (found?.items ?? []) : []) {
         const claim = toClaim(item as Item);
         list.push({ id: `claim-${item.id}`, group: "claims", icon: IconFolderOpen, label: item.title, hint: claim.ref, run: go(`/w/${ws}/affirmations/${item.id}`) });
       }
@@ -96,7 +97,7 @@ export function CommandPalette() {
       { id: "act-keys", group: "actions", icon: IconQuestion, label: p.actions.shortcuts, keys: ["?"], run: () => window.dispatchEvent(new Event(SHORTCUTS_EVENT)) },
     );
     return list;
-  }, [ws, me, found, router, openAssistant, setTheme, resolvedTheme]);
+  }, [ws, me, found, query, debounced, isValidating, router, openAssistant, setTheme, resolvedTheme]);
 
   const shown = useMemo(() => {
     const q = fold(query.trim());
