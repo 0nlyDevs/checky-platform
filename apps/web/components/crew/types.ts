@@ -164,7 +164,8 @@ export function frDate(value?: string | null): string | null {
   if (!value) return null;
   const d = new Date(value.length === 10 ? `${value}T00:00:00Z` : value);
   if (Number.isNaN(d.getTime())) return null;
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: value.length === 10 ? "UTC" : "Indian/Antananarivo" });
+  const said = d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: value.length === 10 ? "UTC" : "Indian/Antananarivo" });
+  return said.replace(/^1 /, "1er "); // « 1er novembre », as the API's own dates read
 }
 
 export function hostOf(url: string): string {
