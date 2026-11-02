@@ -912,6 +912,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/sources/{source_id}/memory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Memory
+         * @description Fact, no model: the same picture seen before, with the date it carried then.
+         */
+        get: operations["memory_api_v1_workspaces__ws__sources__source_id__memory_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/sources/{source_id}/reveal": {
         parameters: {
             query?: never;
@@ -4416,6 +4436,42 @@ export interface components {
             slug: string;
             /** Verification */
             verification: string;
+        };
+        /** MemoryMatch */
+        MemoryMatch: {
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Title */
+            title: string;
+            /** Kind */
+            kind: string;
+            /** Item Id */
+            item_id: string | null;
+            /** Ref */
+            ref: string | null;
+            /** Verdict Id */
+            verdict_id: string | null;
+            /** Newsroom */
+            newsroom: string | null;
+            /** Own */
+            own: boolean;
+            /** Date */
+            date: string | null;
+            /** Date Basis */
+            date_basis: string;
+            /** Days Before */
+            days_before: number | null;
+            /** Distance */
+            distance: number;
+            /** At S */
+            at_s: number | null;
+            /** Their At S */
+            their_at_s: number | null;
+            /** Line */
+            line: string;
         };
         /** MergeIn */
         MergeIn: {
@@ -8146,6 +8202,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ImageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    memory_api_v1_workspaces__ws__sources__source_id__memory_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MemoryMatch"][];
                 };
             };
             /** @description Validation Error */

@@ -11,6 +11,8 @@ hidden inside it until a journalist reveals it.
 Contract for other modules:
     frames_out(file) / image_out(file)        -> desk URLs, faces, reverse search on the blurred copy
     safe_url(file)                            -> a URL safe to leave the desk (faces blurred), or None
+    await memory_matches(db, ws, source_id)   -> older pictures of the newsroom (and of verdicts
+                                                 published by verified newsrooms) that look the same
 """
 
 import asyncio
@@ -18,13 +20,17 @@ import io
 import logging
 import re
 import tempfile
+import uuid
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 from PIL import Image, ImageOps, ImageStat
+from sqlalchemy import and_, or_, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import storage
-from app.core.models import File
+from app.core import dates, storage
+from app.core.models import File, Item, Source, Workspace
 
 log = logging.getLogger("checky.media")
 
@@ -343,3 +349,110 @@ def safe_url(file: File | None) -> str | None:
         if not frame.get("flat") and (shown := shown_key({**frame, "key": key})):
             return storage.presign_download(shown)
     return None
+
+
+def _hashes(file: File) -> list[tuple[str, float | None]]:
+    meta = file.meta or {}
+    if meta.get("dhash") and not meta.get("flat"):
+        return [(meta["dhash"], None)]
+    return [
+        (f["dhash"], f.get("at_s"))
+        for f in meta.get("keyframes") or []
+        if f.get("dhash") and not f.get("flat")
+    ]
+
+
+def _date_of(source: Source, file: File) -> tuple[date | None, str]:
+    if day := dates.parse(source.published_at):
+        return day, "published"
+    meta = file.meta or {}
+    exif = meta.get("exif") or {}
+    for value, basis in (
+        (exif.get("DateTimeOriginal") or exif.get("DateTime"), "exif"),
+        ((meta.get("tags") or {}).get("creation_time"), "video"),
+    ):
+        if day := dates.parse(value):
+            return day, basis
+    added = source.created_at.astimezone(dates.EAT).date() if source.created_at else None
+    return added, "added"
+
+
+async def memory_matches(
+    db: AsyncSession, ws: uuid.UUID, source_id: uuid.UUID, limit: int = 5
+) -> list[dict[str, Any]]:
+    """The newsroom's own pictures and frames, and those of verdicts published by public
+    newsrooms, that look like this source's (Hamming ≤ SAME_IMAGE), oldest first.
+
+    Each: {source_id, title, kind, item_id, ref, verdict_id, newsroom, own, date, date_basis,
+    days_before (their date before today), distance, at_s (ours), their_at_s, line}."""
+    source = await db.get(Source, source_id)
+    file = await db.get(File, source.file_id) if source and source.file_id else None
+    if file is None:
+        return []
+    ours = [(h, t) for h, t in _hashes(file) if informative(h)]
+    if not ours:
+        return []
+    has_picture = or_(File.meta.has_key("dhash"), File.meta.has_key("keyframes"))
+    published = and_(Workspace.publishes, Item.status == "published", Source.workspace_id != ws)
+    rows = (
+        await db.execute(
+            select(Source, File, Item, Workspace)
+            .join(File, File.id == Source.file_id)
+            .join(Workspace, Workspace.id == Source.workspace_id)
+            .outerjoin(Item, Item.id == Source.item_id)
+            .where(
+                has_picture,
+                Source.id != source.id,
+                File.id != file.id,
+                Source.status == "ready",
+                or_(Source.workspace_id == ws, published),
+            )
+            .order_by(Source.created_at.desc())
+            .limit(2000)
+        )
+    ).all()
+    today = dates.today()
+    found: dict[uuid.UUID, dict[str, Any]] = {}
+    for other, other_file, item, newsroom in rows:
+        best = None
+        for theirs, their_at in _hashes(other_file):
+            if not informative(theirs):
+                continue
+            for h, at in ours:
+                d = hamming(h, theirs)
+                if d <= SAME_IMAGE and (best is None or d < best[0]):
+                    best = (d, at, their_at)
+        if best is None:
+            continue
+        day, basis = _date_of(other, other_file)
+        own = other.workspace_id == ws
+        match = {
+            "source_id": str(other.id),
+            "title": other.title,
+            "kind": other.kind,
+            "item_id": str(item.id) if item and own else None,
+            "ref": (item.data or {}).get("ref") if item else None,
+            "verdict_id": str(item.id) if item and not own else None,
+            "newsroom": None if own else newsroom.name,
+            "own": own,
+            "date": day.isoformat() if day else None,
+            "date_basis": basis,
+            "days_before": (today - day).days if day else None,
+            "distance": best[0],
+            "at_s": best[1],
+            "their_at_s": best[2],
+        }
+        match["line"] = memory_line(match)
+        found[other.id] = match
+    return sorted(found.values(), key=lambda m: (m["date"] or "9999", m["distance"]))[:limit]
+
+
+def memory_line(match: dict[str, Any]) -> str:
+    """« Image déjà vue le 14 mars 2023 dans [titre] » (the date comes from code)."""
+    day = dates.parse(match.get("date"))
+    if day and match.get("date_basis") == "added":
+        when = f" (entrée dans la rédaction le {dates.fr(day)})"
+    else:
+        when = f" le {dates.fr(day)}" if day else ""
+    where = match["title"] + (f" ({match['newsroom']})" if match.get("newsroom") else "")
+    return f"Image déjà vue{when} dans {where}"

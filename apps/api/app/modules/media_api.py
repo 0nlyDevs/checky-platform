@@ -1,5 +1,6 @@
-"""Pictures in the desk: revealing a face that was blurred.
+"""Pictures in the desk: the image memory of a source, and revealing a face that was blurred.
 
+`GET  /workspaces/{ws}/sources/{id}/memory`  older pictures that look the same (`media.memory_matches`)
 `POST /workspaces/{ws}/sources/{id}/reveal {frame?}`  the original picture (faces not blurred), for a
       journalist who asks for it; the reveal is logged (`face_revealed`) on the dossier's carnet.
 """
@@ -10,13 +11,31 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
-from app.core import storage
+from app.core import media, storage
 from app.core.access import AnyMember, Db
 from app.core.activity import record
 from app.core.errors import ApiError
 from app.core.models import File, Source
 
 router = APIRouter(tags=["media"])
+
+
+class MemoryMatch(BaseModel):
+    source_id: uuid.UUID
+    title: str
+    kind: str
+    item_id: uuid.UUID | None
+    ref: str | None
+    verdict_id: uuid.UUID | None
+    newsroom: str | None
+    own: bool
+    date: str | None
+    date_basis: str
+    days_before: int | None
+    distance: int
+    at_s: float | None
+    their_at_s: float | None
+    line: str
 
 
 class RevealIn(BaseModel):
@@ -36,6 +55,14 @@ async def _source(db, member, source_id: uuid.UUID) -> tuple[Source, File]:
     if file is None or file.status != "ready":
         raise ApiError(404, "not_found", "Source not found")
     return source, file
+
+
+@router.get("/workspaces/{ws}/sources/{source_id}/memory")
+async def memory(source_id: uuid.UUID, member: AnyMember, db: Db) -> list[MemoryMatch]:
+    """Fact, no model: the same picture seen before, with the date it carried then."""
+    source, _ = await _source(db, member, source_id)
+    found = await media.memory_matches(db, member.workspace_id, source.id)
+    return [MemoryMatch(**m) for m in found]
 
 
 @router.post("/workspaces/{ws}/sources/{source_id}/reveal")

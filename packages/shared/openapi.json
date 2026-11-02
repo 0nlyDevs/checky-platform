@@ -3482,6 +3482,69 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/sources/{source_id}/memory": {
+      "get": {
+        "tags": [
+          "media"
+        ],
+        "summary": "Memory",
+        "description": "Fact, no model: the same picture seen before, with the date it carried then.",
+        "operationId": "memory_api_v1_workspaces__ws__sources__source_id__memory_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Source Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MemoryMatch"
+                  },
+                  "title": "Response Memory Api V1 Workspaces  Ws  Sources  Source Id  Memory Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/sources/{source_id}/reveal": {
       "post": {
         "tags": [
@@ -14939,6 +15002,148 @@
           "verification"
         ],
         "title": "MembershipOut"
+      },
+      "MemoryMatch": {
+        "properties": {
+          "source_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Source Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "item_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "verdict_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict Id"
+          },
+          "newsroom": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Newsroom"
+          },
+          "own": {
+            "type": "boolean",
+            "title": "Own"
+          },
+          "date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Date"
+          },
+          "date_basis": {
+            "type": "string",
+            "title": "Date Basis"
+          },
+          "days_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Before"
+          },
+          "distance": {
+            "type": "integer",
+            "title": "Distance"
+          },
+          "at_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "At S"
+          },
+          "their_at_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Their At S"
+          },
+          "line": {
+            "type": "string",
+            "title": "Line"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_id",
+          "title",
+          "kind",
+          "item_id",
+          "ref",
+          "verdict_id",
+          "newsroom",
+          "own",
+          "date",
+          "date_basis",
+          "days_before",
+          "distance",
+          "at_s",
+          "their_at_s",
+          "line"
+        ],
+        "title": "MemoryMatch"
       },
       "MergeIn": {
         "properties": {

@@ -434,6 +434,19 @@ def test_failed_face_detection_hides_the_frame_but_keeps_the_source(as_user, whi
     assert frame["reverse_search"] == []
 
 
+def _blocks(fmt: str, seed: int = 1) -> bytes:
+    """A picture of random grey blocks; its JPEG copy keeps the PNG's fingerprint."""
+    import random
+
+    rng = random.Random(seed)
+    cells = [rng.randrange(256) for _ in range(9 * 8)]
+    image = Image.new("L", (72, 64))
+    image.putdata([cells[(y // 8) * 9 + x // 8] for y in range(64) for x in range(72)])
+    out = io.BytesIO()
+    image.convert("RGB").save(out, format=fmt)
+    return out.getvalue()
+
+
 def test_an_image_with_a_face_is_shown_and_searched_blurred(as_user, monkeypatch):
     from app.modules import linkcheck
 
@@ -496,6 +509,43 @@ def test_revealing_an_original_picture_is_logged_on_the_dossier(as_user, whisper
     assert bob.post(path, json={"frame": 0}).status_code == 404
     log = alice.get(f"/api/v1/workspaces/{ws}/activity", params={"entity_id": item}).json()
     assert [a["action"] for a in log].count("face_revealed") == 1
+
+
+def test_image_memory_finds_a_copy_and_only_verified_newsrooms_verdicts(as_user):
+    from tests.test_workspaces import _verify
+
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    older = _upload(alice, ws, "avant.png", "image/png", _blocks("PNG")).json()
+    _upload(alice, ws, "autre.png", "image/png", _blocks("PNG", seed=2))
+    theirs_ws = _workspace(bob, "Radio voisine")
+    claim = _claim(bob, theirs_ws)
+    _upload(bob, theirs_ws, "verdict.png", "image/png", _blocks("PNG"), claim)
+    while asyncio.run(queue.run_once()):
+        pass
+    newer = _upload(alice, ws, "copie.jpg", "image/jpeg", _blocks("JPEG")).json()
+    while asyncio.run(queue.run_once()):
+        pass
+    path = f"/api/v1/workspaces/{ws}/sources/{newer['id']}/memory"
+    found = alice.get(path).json()
+    assert [m["source_id"] for m in found] == [older["id"]]
+    assert found[0]["own"] and found[0]["line"].startswith("Image déjà vue")
+    assert as_user("carol").get(path).status_code == 404
+
+    # A published verdict of a public newsroom only counts once the newsroom is verified.
+    assert bob.patch(f"/api/v1/workspaces/{theirs_ws}", json={"is_public": True}).status_code == 200
+    r = bob.patch(
+        f"/api/v1/workspaces/{theirs_ws}/items/{claim}",
+        json={"status": "published", "data": {"verdict": "false"}},
+    )
+    assert r.status_code == 200, r.text
+    assert len(alice.get(path).json()) == 1
+    _verify(theirs_ws)
+    found = alice.get(path).json()
+    assert len(found) == 2
+    other = next(m for m in found if not m["own"])
+    assert other["newsroom"] == "Radio voisine" and other["verdict_id"] == claim
+    assert other["item_id"] is None
 
 
 def test_a_silent_video_is_ready_without_a_transcript(as_user, whisper, monkeypatch):
