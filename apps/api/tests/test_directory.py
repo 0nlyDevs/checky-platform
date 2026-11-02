@@ -264,3 +264,19 @@ def test_a_client_cannot_declare_a_page_verified(as_user):
     )
     assert edited.status_code == 200, edited.text
     assert asyncio.run(hosts()) == set()
+
+
+def test_outlets_journalists_people_and_pages_are_entries_nobody_asks(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}/contacts"
+    _contact(alice, ws)
+    # An outlet, a journalist, a person and a page are Annuaire entries too, but nobody asks a
+    # page or an outlet to settle a point.
+    for kind in ("journalist", "person", "media", "page"):
+        assert _contact(alice, ws, name=f"{kind} (démo)", kind=kind)["kind"] == kind
+    item = _claim(alice, ws, "Délestage de 72 heures à Antananarivo selon la JIRAMA")
+    asked = alice.get(f"/api/v1/workspaces/{ws}/items/{item}/who").json()
+    kinds = {c["contact"]["kind"] for p in asked["points"] for c in p["contacts"]}
+    assert kinds and not kinds & {"media", "page"}
+    assert alice.post(base, json={**JIRAMA, "kind": "party"}).status_code == 422

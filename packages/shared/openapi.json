@@ -11662,7 +11662,11 @@
             "enum": [
               "institution",
               "officer",
-              "expert"
+              "expert",
+              "journalist",
+              "person",
+              "media",
+              "page"
             ],
             "title": "Kind",
             "default": "institution"

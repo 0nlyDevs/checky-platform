@@ -305,7 +305,7 @@ export const dossier = {
   },
   annuaire: {
     title: "Annuaire",
-    lead: "Qui peut prouver quoi : institutions, porte-parole et experts, par sujet et par région.",
+    lead: "Qui peut prouver quoi : institutions, porte-parole, experts, journalistes, médias et pages, par sujet et par région.",
     count: (n: number) => plural(n, "contact", "contacts"),
     search: "Nom, institution, sujet",
     allBeats: "Tous les sujets",
@@ -329,7 +329,15 @@ export const dossier = {
     demo: "démo",
     answers: (asked: number, answered: number) => `${answered} réponse${answered > 1 ? "s" : ""} sur ${asked} question${asked > 1 ? "s" : ""}`,
     languages: { fr: "français", mg: "malgache", en: "anglais" } as Record<string, string>,
-    kinds: { institution: "Institution", officer: "Porte-parole", expert: "Expert" } as Record<string, string>,
+    kinds: {
+      institution: "Institution",
+      officer: "Porte-parole",
+      expert: "Expert",
+      journalist: "Journaliste",
+      person: "Personnalité",
+      media: "Média",
+      page: "Page",
+    } as Record<string, string>,
     fields: {
       name: "Nom affiché",
       kind: "Type",

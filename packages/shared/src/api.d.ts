@@ -3339,7 +3339,7 @@ export interface components {
              * @default institution
              * @enum {string}
              */
-            kind: "institution" | "officer" | "expert";
+            kind: "institution" | "officer" | "expert" | "journalist" | "person" | "media" | "page";
             /**
              * Role
              * @default

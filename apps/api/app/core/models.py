@@ -329,7 +329,7 @@ class Contact(_Row):
     created_by: Mapped[str] = mapped_column(Text)
     kind: Mapped[str] = mapped_column(
         String(20), default="institution"
-    )  # institution|officer|expert
+    )  # institution|officer|expert|journalist|person|media|page
     name: Mapped[str] = mapped_column(String(200))
     role: Mapped[str] = mapped_column(String(200), default="")
     institution: Mapped[str] = mapped_column(String(200), default="")

@@ -15,7 +15,7 @@ import { IconAddressBook, IconArrowSquareOut, IconCircleNotch, IconMagnifyingGla
 import { cn } from "@/lib/utils";
 
 const a = t.dossier.annuaire;
-const KINDS = ["institution", "officer", "expert"] as const;
+const KINDS = ["institution", "officer", "expert", "journalist", "person", "media", "page"] as const;
 const LANGS = ["fr", "mg", "en"] as const;
 const ALL = "";
 

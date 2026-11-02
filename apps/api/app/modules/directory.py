@@ -44,6 +44,13 @@ PUBLIC_AUTHOR = "public"  # the contact answering through a token link has no ac
 Phone = Field(default=None, max_length=60, pattern=r"^\+?[0-9 ()-]{3,60}$")
 
 
+# Who an Annuaire entry is: an institution, its press officer, an expert, a journalist, a person
+# quoted in the news, a media outlet (its site and pages) or a page (a Facebook or TikTok page…).
+Kind = Literal["institution", "officer", "expert", "journalist", "person", "media", "page"]
+# Entries that cannot be asked to settle a point (« Qui peut le prouver ? » leaves them out).
+NOT_ASKED = ("media", "page")
+
+
 class OfficialPage(BaseModel):
     # `verified` is never read from a client: a journalist's « Vérifier » sets it on every page of the
     # contact at once, and any edit clears it again (see update_contact).
@@ -55,7 +62,7 @@ class OfficialPage(BaseModel):
 class ContactIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     name: str = Field(min_length=1, max_length=200)
-    kind: Literal["institution", "officer", "expert"] = "institution"
+    kind: Kind = "institution"
     role: str = Field(default="", max_length=200)
     institution: str = Field(default="", max_length=200)
     topics: list[str] = Field(default_factory=list, max_length=20)
@@ -417,7 +424,11 @@ class WhoOut(BaseModel):
 async def who(item_id: uuid.UUID, member: AnyMember, db: Db) -> WhoOut:
     item = await _get_item(db, member, item_id)
     ws = await db.get(Workspace, member.workspace_id)
-    pool = list(await db.scalars(select(Contact).where(_visible(member.workspace_id))))
+    pool = list(
+        await db.scalars(
+            select(Contact).where(_visible(member.workspace_id), Contact.kind.not_in(NOT_ASKED))
+        )
+    )
     claim = f"{item.title} {item.body}"
     beats = claim_beats(item)
     where = place_in(claim)
