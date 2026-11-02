@@ -394,7 +394,9 @@ def radio_link(token: str) -> str:
 
 
 async def _radio_out(db: Db, radio: RadioPartner) -> RadioOut:
-    # « Diffusé »: the truth stops the radio marked as broadcast (slice « dossier » writes them).
+    # « Diffusé »: the truth stops the radio marked as broadcast. `POST /public/radios/{token}/
+    # diffuse` names the stop « <name> <frequency> » and keeps the partner's id in its proof.
+    station = f"{radio.name} {radio.frequency or ''}".strip()
     count, last = (
         await db.execute(
             select(func.count(Route.id), func.max(Route.at)).where(
@@ -402,7 +404,11 @@ async def _radio_out(db: Db, radio: RadioPartner) -> RadioOut:
                 Route.side == "truth",
                 Route.channel == "radio",
                 Route.status == "broadcast",
-                or_(Route.proof["radio_id"].astext == str(radio.id), Route.place == radio.name),
+                or_(
+                    Route.proof["partner_id"].astext == str(radio.id),
+                    Route.proof["radio_id"].astext == str(radio.id),
+                    Route.place.in_({radio.name, station}),
+                ),
             )
         )
     ).one()

@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -169,6 +171,33 @@ def test_partner_radios_with_a_token_link(as_user):
     seen = anon.get(f"/api/v1/public/radios/{token}").json()
     assert seen["name"] == body["name"] and seen["newsroom"]["name"] == "Desk"
     assert anon.get("/api/v1/public/radios/nope").status_code == 404
+    # a flash the radio marked « Diffusé » is counted (the stop is named after the station)
+    asyncio.run(_aired(ws, alice, radio["id"], "Radio Fanambarana (démo) FM 98.4"))
+    listed = alice.get(f"/api/v1/workspaces/{ws}/radios").json()[0]
+    assert listed["broadcasts"] == 1 and listed["last_broadcast_at"]
     assert bob.delete(f"/api/v1/workspaces/{ws}/radios/{radio['id']}").status_code == 403
     assert alice.delete(f"/api/v1/workspaces/{ws}/radios/{radio['id']}").status_code == 204
     assert alice.get(f"/api/v1/workspaces/{ws}/radios").json() == []
+
+
+async def _aired(ws, client, radio_id, station):
+    from app.core.db import SessionLocal
+    from app.core.models import Route
+
+    item = client.post(
+        f"/api/v1/workspaces/{ws}/items", json={"title": "Flash lu à l'antenne", "data": {}}
+    ).json()["id"]
+    async with SessionLocal() as db:
+        db.add(
+            Route(
+                workspace_id=ws,
+                item_id=item,
+                added_by=f"radio:{radio_id}",
+                side="truth",
+                channel="radio",
+                place=station,
+                status="broadcast",
+                proof={"partner_id": radio_id},
+            )
+        )
+        await db.commit()
