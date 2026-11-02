@@ -25,8 +25,8 @@ const team = {
 };
 
 const product = {
-  name: "FANILO", // lib/brand.ts says the same; change both if the name changes
-  claim: "Chaque rumeur a son dossier.",
+  name: "Checky", // lib/brand.ts says the same; change both if the name changes
+  claim: "Les autres détectent. Checky prouve.",
   url: "{{fanilo.example}}",
   caseRef: "FAN-0138",
 };
