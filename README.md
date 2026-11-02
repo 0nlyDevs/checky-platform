@@ -5,8 +5,9 @@ app for newsrooms, Madagascar first, to verify claims, track misinformation and 
 content, made for the **FANILO Hackathon** (IFM + French Embassy press service, Antananarivo).
 A journalist follows a rumour from its first appearance to a signed verdict, and Checky sends the
 truth back down the same road (WhatsApp, Facebook, radio, SMS, a printed poster). The product
-rules (knowing is not publishing, facts solid and readings dashed, the crew of checks, roles that
-follow the rumour's road) are in [`CLAUDE.md`](CLAUDE.md).
+rules (knowing is not publishing, facts solid and readings dashed, the crew of checks, one kind
+of account, « tout le monde peut vérifier ; seules les rédactions vérifiées publient ») are in
+[`CLAUDE.md`](CLAUDE.md).
 
 The hackathon problem is presented on **Mon 2 Nov 2026, 08:00**. Hand-in is **Tue 3 Nov, 20:00**
 and the pitch is on **Wed 4 Nov**. Journalists follow each rumour from its first appearance to
@@ -124,6 +125,7 @@ cp .env apps/web/.env.local
 | `BETTER_AUTH_URL` | `http://localhost:3000` | where the web app runs |
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | where the API runs |
 | `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE`, `CORS_ORIGINS` | keep the example values | must point to the web app's address |
+| `PLATFORM_ADMINS` | your own user id, to review newsroom requests | `GET /api/v1/me` → `id` once you have signed up (Better Auth user ids, comma-separated) |
 | `STORAGE_ENDPOINT`, `STORAGE_REGION` | branch storage endpoint, `eu-central-1` | Neon console → project `fanilo` → Object storage → Connect |
 | `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY` | secret (`nak_…` / `nsk_…`) | same panel → Reveal credential |
 | `STORAGE_BUCKET` | `uploads-dev` | `uploads` is the production bucket |
@@ -210,8 +212,9 @@ existing data. Fields in use: `ref`, `first_seen_at`, `origin`, `verdict`, `verd
 
 1. Add a function to a module in `apps/api/app/modules/` (or a new module, then
    `api.include_router(...)` in `apps/api/app/main.py`).
-2. Protect workspace routes with a role dependency from `app/core/access.py`: `AnyMember`,
-   `Editor` or `Admin`. Outsiders automatically get a 404.
+2. Protect workspace routes with `AnyMember` from `app/core/access.py` (every member of a
+   newsroom may do everything; there are no roles). Outsiders automatically get a 404. Anything
+   that reaches the public must check `Workspace.publishes` (opted in and verified by Checky).
 3. Raise errors with `ApiError(status, "code", "message")` so they leave as
    `{"error": {"code", "message"}}`.
 4. Add a test in `apps/api/tests/` (`as_user("alice")` gives a logged-in client).
@@ -297,7 +300,7 @@ Next.js 16 is newer than most tutorials and AI training data: read
 | Login works but every API call is 401 | the web address differs from `AUTH_ISSUER` / `AUTH_AUDIENCE` / `AUTH_JWKS_URL` in `.env` |
 | CORS error in the browser | add the web address to `CORS_ORIGINS` and restart the API |
 | `relation "user" does not exist` | the `better_auth` schema or its tables are missing: redo step 5 |
-| Not sure which service is down | open **Paramètres** in the app (or `GET /api/v1/health`): database, storage and each AI provider, with the missing env variable named |
+| Not sure which service is down | open **Réglages** in the app (or `GET /api/v1/health`): database, storage and each AI provider, with the missing env variable named |
 | AI routes return 503 `ai_unavailable` | no AI key in `.env`, or every provider failed (see `app.ai_call`) |
 | `npm` warns it blocked an install script | harmless |
 
@@ -355,7 +358,7 @@ First time:
 Good to know:
 
 - A free instance sleeps after 15 minutes without a visit and takes about a minute to wake;
-  background jobs wait and resume. Open Paramètres a few minutes before a demo.
+  background jobs wait and resume. Open Réglages a few minutes before a demo.
 - `FORWARDED_ALLOW_IPS=*` makes the API read the visitor's address from Render's proxy; without
   it every visitor would share one rate limit on the public routes.
 - There is deliberately no health check path: `/api/v1/health` queries Neon and every AI
@@ -374,7 +377,7 @@ Postgres 18, free plan). Set up with `vector`, `better_auth` and `app` at the cu
   ```
   and after a Better Auth upgrade, run the Better Auth CLI the same way.
 - The database sleeps when idle; the first request after a pause takes a few seconds. Open
-  Paramètres a few minutes before a demo to wake it.
+  Réglages a few minutes before a demo to wake it.
 - Neon branches give a free copy of the database (for a risky migration or a demo snapshot).
 
 ## File storage (Neon Object Storage)

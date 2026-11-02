@@ -6,7 +6,7 @@
 
 Checky (named FANILO until 2 Nov 2026; the repos keep the old name) is a verification tool for newsrooms, Madagascar first and world-ready. Every rumour gets a dossier, from its first appearance to a signed verdict: the desk tracks claims live, gathers the sources, a crew of checks states the facts at once and an AI reading whose quotes are checked against the sources is suggested, and a journalist signs the verdict before anything leaves the newsroom under its name. Published verdicts are open to the public, and Checky sends them back down the road the rumour took (WhatsApp, Facebook, radio, SMS, a printed poster).
 
-**Checky, the product rules (2 Nov).** Knowing is not publishing: facts (a video's first appearance, a registry diff against the original communiqué, an official figure, a fact-checker's published review) show at once and solid; the AI reading « Lecture de Checky » is dashed and reserved to the newsroom; « Signer et publier » is a byline, the public never sees the reading or a percentage. A check runs as a crew: Lecteur (one model call), then Provenance, Registre, Chiffres, Fact-checkers, Web, Archives, Fiabilité and Ton in parallel without a model, then Synthèse and Contradicteur (one call each), then a confidence score computed in code; « Mode sans IA » keeps the facts when the model is off. Roles follow the rumour's road: admin, editor, journalist, veilleur (partner radio), issuer (institution), plus token links and SMS for partners and citizens; optional double signature. Madagascar first, world-ready: structured places geocoded by OpenStreetMap, beats per newsroom, worldwide fact-checkers through Google Fact Check Tools, figures per country. Assembled from the best existing tools (NewsGuard's transparency grid, The Factual's source diversity and tone, Aletheia's cited explanations, FauxLens' per-signal image breakdown, Logically's AI plus humans, Check-It's multi-signal pipeline, Snopes/PolitiFact/FactCheck.org/AFP Factuel relayed as theirs), then one step further: the road (Le trajet), the signed and attested verdict, the registry of originals with an offline seal, the radio and SMS return path. The full product thinking is in the Claude Doc « FANILO Hackathon — The brief, decoded, and how we win » (tabs Winning idea, Functionality, Stack, Pitch).
+**Checky, the product rules (2 Nov).** Knowing is not publishing: facts (a video's first appearance, a registry diff against the original communiqué, an official figure, a fact-checker's published review) show at once and solid; the AI reading « Lecture de Checky » is dashed and reserved to the newsroom; « Signer et publier » is a byline, the public never sees the reading or a percentage. A check runs as a crew: Lecteur (one model call), then Provenance, Registre, Chiffres, Fact-checkers, Web, Archives, Fiabilité and Ton in parallel without a model, then Synthèse and Contradicteur (one call each), then a confidence score computed in code; « Mode sans IA » keeps the facts when the model is off. One kind of account: every journalist of a newsroom may do everything; partners and citizens use token links and SMS. Everyone can check; only newsrooms verified by the Checky team publish. Any country, tuned for Madagascar. Madagascar first, world-ready: structured places geocoded by OpenStreetMap, beats per newsroom, worldwide fact-checkers through Google Fact Check Tools, figures per country. Assembled from the best existing tools (NewsGuard's transparency grid, The Factual's source diversity and tone, Aletheia's cited explanations, FauxLens' per-signal image breakdown, Logically's AI plus humans, Check-It's multi-signal pipeline, Snopes/PolitiFact/FactCheck.org/AFP Factuel relayed as theirs), then one step further: the road (Le trajet), the signed and attested verdict, the registry of originals with an offline seal, the radio and SMS return path. The full product thinking is in the Claude Doc « FANILO Hackathon — The brief, decoded, and how we win » (tabs Winning idea, Functionality, Stack, Pitch).
 
 **The event.** The FANILO Hackathon is organized by the Institut français de Madagascar (IFM) and the press service of the French Embassy, hosted at 42 Antananarivo in Andraharo. Teams of 4 build a working web or mobile app that meets a real need of journalists and media professionals around information resilience: verifying information, misinformation and AI-generated content.
 
@@ -51,12 +51,11 @@ FANILO serves the newsroom that verifies information, and the public that wants 
 | Persona | Who | What they need |
 | --- | --- | --- |
 | Journalist | Reporter in the field, often on a phone with a slow or unstable connection | Fast mobile pages, upload a photo, record audio, paste a link from Facebook or WhatsApp, work in French and Malagasy |
-| Editor | Desk editor or fact-checker who reviews and validates | Shared workspace, live status of items, see who did what |
-| Admin | Team lead or demo operator | Manage members and roles, reset seed data before the pitch |
+| Checky team | The people who run Checky (`PLATFORM_ADMINS`), not a role inside a newsroom | Review newsroom requests: call the number on the outlet's official page, then approve or refuse with a reason |
 | Public | Anyone who received a rumour, no account | Ask whether it is already verified, read published verdicts, report a rumour and follow it |
 | Jury | Evaluates a 3-minute pitch on 4 November | A live demo that loads instantly and never fails |
 
-**Roles:** `admin`, `editor`, `journalist`. Each workspace member has exactly one role. Permissions are kept simple.
+**One kind of account.** Every member of a newsroom is one of its journalists and may do everything the newsroom can do: invite, sign and publish, edit the Annuaire, reset the demo. **Tout le monde peut vérifier ; seules les rédactions vérifiées publient:** a new newsroom works at once, privately, and sends a verification request (outlet, kind, city, region, country, official page, the person's full name, job title, phone, professional email, optional press card). The Checky team calls the number shown on the outlet's official page and approves or refuses with a reason. Until it is approved nothing of the newsroom reaches the public (archive, tips, SMS, partner radios, « Vérifié par »); its personal data is only seen by the Checky team.
 
 ## Constraints
 
@@ -115,19 +114,19 @@ The browser talks to both services; files go straight from the browser to Neon O
 
 The requirements below describe how FANILO handles newsroom access, claims, sources and verification.
 
-### M1. Authentication and roles
+### M1. Authentication
 
 - Sign up and log in with email and password through Better Auth; optional Google OAuth.
 - Session cookie on the web; JWT issued by the Better Auth JWT plugin for calls to FastAPI.
 - FastAPI dependency `current_user` verifies the JWT signature against the cached JWKS, checks expiry, and loads the user.
-- Workspace roles `admin`, `editor`, `journalist`, checked by a FastAPI dependency `require_role(...)`.
-- Acceptance: an unauthenticated call to any `/api` route returns 401; a journalist calling an admin route returns 403.
+- Workspace membership checked by one FastAPI dependency (`AnyMember`); no roles.
+- Acceptance: an unauthenticated call to any `/api` route returns 401; an outsider gets 404 on a workspace.
 
 ### M2. Workspaces and members
 
-- Create a workspace; the creator becomes admin.
-- Invite by email (link with token, no email sending required: the admin copies the link).
-- List, change role, remove members.
+- Create a workspace; then send its verification request (or later, from Réglages).
+- Invite by link (token, no email sending required: any member copies the link).
+- List members; any member removes a colleague or leaves, never the last one.
 - Every domain record belongs to one workspace; every query filters by workspace.
 
 ### M3. Claims and newsroom records
@@ -198,10 +197,10 @@ One flexible model, `item`, for the domain objects (a claim, a story, a rumor, a
 - Typed API client generated from FastAPI's OpenAPI schema; loading, empty and error states on every page.
 - French as the default UI language, with strings kept in one file so Malagasy can be added.
 
-### M12. Admin and demo tools
+### M12. Demo tools and newsroom verification
 
-- Seed script: one workspace, 3 users (one per role), 10 items, 3 documents, 1 transcript.
-- "Reset demo data" button for admins.
+- "Reset demo data" button for any member (fictional people and numbers only, labelled démo; it never verifies a newsroom).
+- « Demandes des rédactions » (`/checky`) for the Checky team: pending, approved and refused requests, Valider / Refuser with a reason.
 - Health page showing database, storage and each AI provider as up or down.
 
 ## Features
@@ -327,7 +326,7 @@ The UI looks like civic signage for rumours, « Le signal clair »: calm, clear 
 
 **Navigation**
 
-- Desk: Vérifier (the home: paste or dictate a message or a link and watch FANILO work, with the open dossiers beside it), Dossiers (tabs À traiter, À confirmer, Vérifiés, Tous; a board view), Sources; Équipe and Paramètres.
+- Desk, five tabs and no more: Ma rubrique (home; angles), Vérifier (paste or dictate a message or a link), Dossiers (with Sources), Veille (map with a country menu and « Monde », the feed, what the public asks, « Entendu à la radio »), Annuaire (with Documents, Communiqués, Chiffres). Réglages (with Équipe and Vérification) in the account menu. New features go inside an existing page. In the UI: « rédaction » for the workspace, « dossier » for each followed rumour.
 - Public: Vérifier (the home: « Est-ce déjà vérifié ? », the latest verdicts, a fictional rumour worked through, how a rumour is verified, a band for newsrooms), Les verdicts, Signaler; « Espace rédaction » leads to sign-in.
 
 **Public features**
@@ -337,7 +336,8 @@ Ordinary people can use FANILO without an account, in the same world as the desk
 - The archive of published verdicts, searchable, each with its reason, sources and a shareable page that can be listened to and shared on WhatsApp.
 - « Signaler une rumeur » (`/signaler`): send a message or link to a newsroom; it lands in its « à vérifier » list, tagged « signalement », live. No personal data is asked; a follow-up link (`/suivi/…`) shows the steps and the verdict once published.
 - The assistant sits on every page (docked beside it on a computer) and is an agent for the site itself, not only for checking facts. For visitors it answers from published verdicts, explains FANILO, prepares a tip (shown as an editable draft, sent only when the visitor presses Envoyer), says where their own tips stand and opens the right page. Inside a workspace it is the desk's copilot: what has circulated longest, the night in brief, claims without sources, answers from the sources, and proposed changes (new claim, attach a link, run the analysis, move a status, open a claim) that run only after the journalist confirms, with their own rights. It never confirms a verdict and never publishes. Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
-- Each newsroom opts in (admin setting « Publier nos verdicts »); the demo newsroom is public after a demo reset.
+- Each newsroom opts in (« Publier nos verdicts » in Réglages) and must be verified by the Checky team; the demo reset opts the demo newsroom in, verification stays the Checky team's.
+- Any country: search covers every newsroom with the visitor's country first; a tip with no newsroom chosen goes to the newsroom where the rumour circulates, else the nearest, and the visitor is told which.
 
 **Component inventory**
 
@@ -376,8 +376,10 @@ Better Auth manages its own tables (`user`, `session`, `account`, `verification`
 | Table | Key fields | Notes |
 | --- | --- | --- |
 | `workspace` | id, name, slug |  |
-| `membership` | workspace\_id, user\_id, role | Unique on (workspace\_id, user\_id); role in `admin`, `editor`, `journalist` |
-| `invitation` | workspace\_id, token, role, expires\_at, used\_at | Link-based invites |
+| `membership` | workspace\_id, user\_id | Unique on (workspace\_id, user\_id); no role |
+| `invitation` | workspace\_id, token, expires\_at, used\_at | Link-based invites |
+| `newsroom_request` | workspace\_id, outlet, kind, city, region, country, website, full\_name, job\_title, phone, email, press\_card, reason, reviewed\_by/at | The verification request; `workspace.verification` = none, pending, approved, refused |
+| `official_source` | country, host, name, workspace\_id | A newsroom's « Sources officielles », shared with its country once it is verified |
 | `item` | workspace\_id, author\_id, type, title, body, status, tags (text\[\]), data (JSONB) | Claims and newsroom records; GIN index on tags and data |
 | `comment` | item\_id, author\_id, body |  |
 | `activity` | workspace\_id, actor\_id, entity, entity\_id, action, diff (JSONB) | Written on every create, update, delete |
@@ -395,18 +397,18 @@ The user id in `app` tables is the Better Auth user id (text), referenced withou
 
 All FastAPI routes live under `/api/v1`, require `Authorization: Bearer <jwt>` except `/health`, and are scoped by `{ws}` = workspace id. Errors use one shape: `{"error": {"code": "...", "message": "..."}}`; someone outside a workspace gets 404, not 403.
 
-| Method | Path | Purpose | Role |
+| Method | Path | Purpose | Who |
 | --- | --- | --- | --- |
 | GET | `/health` | Database, storage, AI providers status | public |
 | GET | `/me` | Current user and memberships | any |
 | POST | `/workspaces` | Create workspace | any |
 | GET | `/workspaces/{ws}/members` | List members | any member |
-| POST | `/workspaces/{ws}/invitations` | Create invite link | admin |
+| POST | `/workspaces/{ws}/invitations` | Create invite link | member |
 | POST | `/invitations/{token}/accept` | Join a workspace | any |
-| PATCH / DELETE | `/workspaces/{ws}/members/{user}` | Change role, remove | admin |
+| DELETE | `/workspaces/{ws}/members/{user}` | Remove a colleague or leave | member |
 | GET / POST | `/workspaces/{ws}/items` | List (filters, pagination) / create | any member / journalist+ |
 | GET | `/workspaces/{ws}/items/similar?q=` | Claims sharing most of the words of a claim being typed | any member |
-| GET / PATCH / DELETE | `/workspaces/{ws}/items/{id}` | Read / update / delete | member / author or editor+ / editor+ |
+| GET / PATCH / DELETE | `/workspaces/{ws}/items/{id}` | Read / update / delete | member |
 | GET / POST | `/workspaces/{ws}/items/{id}/comments` | Comments | any member |
 | GET | `/workspaces/{ws}/activity` | Activity log | any member |
 | POST | `/workspaces/{ws}/files/upload-url` | Get a presigned upload URL | journalist+ |
@@ -421,7 +423,9 @@ All FastAPI routes live under `/api/v1`, require `Authorization: Bearer <jwt>` e
 | POST | `/workspaces/{ws}/search` | Semantic search over chunks | any member |
 | POST | `/workspaces/{ws}/ask` | RAG answer with citations, streamed as SSE | any member |
 | POST | `/workspaces/{ws}/agent` | Agent run, steps streamed as SSE | any member |
-| POST | `/workspaces/{ws}/demo/reset` | Reset seed data | admin |
+| POST | `/workspaces/{ws}/demo/reset` | Reset seed data | member |
+| GET / PUT | `/workspaces/{ws}/verification` | The newsroom's verification request | member |
+| GET / POST | `/platform/requests`, `/platform/requests/{ws}/approve`, `…/refuse` | Review requests | Checky team |
 
 **SSE events for `/ai/stream`:** `delta` (`{text}`), then `done` (the full completion) or `error`.
 
@@ -497,7 +501,7 @@ fanilo-base/
 - API + in-process worker: Render free web service (Docker), or Railway trial, in Frankfurt next to the database.
 - Database and file storage: one Neon free project (`fanilo`, org 0nlydevs); migrations run with Alembic on deploy.
 - A GitHub Action regenerates the TypeScript client when the OpenAPI schema changes, and fails the build if types are out of date.
-- Before the pitch: open the API health page 5 minutes ahead to wake the service, and open Paramètres so the Neon database wakes up.
+- Before the pitch: open the API health page 5 minutes ahead to wake the service, and open Réglages so the Neon database wakes up.
 
 ## Testing and demo readiness
 
@@ -515,7 +519,7 @@ We test the paths the demo will walk, not coverage numbers.
 - [ ] Embedding comparison: 20 French and Malagasy sentences, top-3 search accuracy per provider; choose one.
 - [ ] Transcription quality on a French and a Malagasy voice note.
 - [ ] Rate-limit behavior: 30 quick requests in a row do not crash the UI.
-- [ ] Paramètres shows database, storage and AI providers up; Render service awake; all keys loaded.
+- [ ] Réglages shows database, storage and AI providers up; Render service awake; all keys loaded.
 
 **Pitch kit** (`docs/pitch/`)
 
@@ -532,9 +536,9 @@ The biggest risk is a demo that fails in front of the jury: no single free tier,
 | --- | --- | --- |
 | UI polish eats the time needed for the core | Beautiful screens on a broken flow | Design system first, then polish only screens whose flow already works end to end |
 | A free AI tier rate-limits or blocks us during the event | Features stop working | Three providers with automatic fallback; one key per member; response cache |
-| A free AI model is renamed or retired | Calls fail with model errors | Models set by env (`LLM_MODEL_*`); Paramètres shows each provider and model; already happened once (Groq Llama 3.3, Gemini 2.5 Flash) |
+| A free AI model is renamed or retired | Calls fail with model errors | Models set by env (`LLM_MODEL_*`); Réglages shows each provider and model; already happened once (Groq Llama 3.3, Gemini 2.5 Flash) |
 | Render service asleep at pitch time | 1-minute blank screen in front of the jury | Wake it 5 minutes before; backup screen recording |
-| Neon database asleep at the first request | A few seconds' delay on the first screen | Open Paramètres a few minutes before the demo to wake it |
+| Neon database asleep at the first request | A few seconds' delay on the first screen | Open Réglages a few minutes before the demo to wake it |
 | Weak Malagasy support in embeddings or transcription | Poor results on local content | Test on real French and Malagasy samples; pick the best provider; show French in the demo if Malagasy is weak |
 | Venue internet slow or down | Cannot deploy or call AI | Phone hotspot as backup; local setup works offline except AI calls |
 | Better Auth and FastAPI JWT setup breaks | Nothing works across services | Tested end to end; one integration test in CI |
