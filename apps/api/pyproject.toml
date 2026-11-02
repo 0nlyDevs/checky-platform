@@ -8,14 +8,12 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.1",
-    "arq>=0.28.0",
     "asyncpg>=0.32.0",
     "fastapi>=0.162.0",
     "httpx>=0.28.1",
     "pydantic-settings>=2.16.1",
     "pyjwt[crypto]>=2.15.1",
     "python-socketio>=5.17.0",
-    "redis>=5.3.1",
     "sqlalchemy[asyncio]>=2.1.6",
     "uvicorn[standard]>=0.54.0",
 ]
@@ -36,3 +34,4 @@ testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["alembic/versions"]

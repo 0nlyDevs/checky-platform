@@ -102,7 +102,7 @@ The browser talks to both services; files go straight from the browser to Supaba
 | Realtime | python-socketio on FastAPI; socket.io-client in the browser | SSE for streaming AI answers |
 | Database | Postgres + pgvector (Supabase free) | Better Auth tables and app tables in one database, separate schemas |
 | File storage | Supabase Storage (S3-compatible) | Never on the API server's disk |
-| Background jobs | ARQ + Redis, worker running in the API process | Avoids a paid separate worker on Render |
+| Background jobs | Postgres job table, worker loop in the API process | No extra service to host; queued jobs survive restarts |
 | Language models | Groq (primary), Gemini (fallback), NVIDIA NIM (third) | All called through one OpenAI-compatible gateway |
 | Embeddings | One provider, chosen after the 25 Oct test: Gemini Embedding or NVIDIA | Model name stored with every vector |
 | Speech-to-text | Groq Whisper; local faster-whisper as backup | Test French and Malagasy first |
@@ -154,7 +154,7 @@ One flexible model, `item`, that becomes the domain object on day one (a claim, 
 
 ### M6. Background jobs (P1)
 
-- ARQ queue on Redis; jobs: `ingest_document`, `ingest_url`, `transcribe_audio`, `embed_chunks`.
+- Queue stored in the Postgres job table and claimed with SELECT … FOR UPDATE SKIP LOCKED by a worker loop in the API process; jobs: `ingest_document`, `ingest_url`, `transcribe_audio`, `embed_chunks`.
 - Each job has status (`queued`, `running`, `done`, `failed`), progress 0 to 100, error message, result.
 - Progress pushed over Socket.IO; failed jobs can be retried from the UI.
 
@@ -200,7 +200,7 @@ One flexible model, `item`, that becomes the domain object on day one (a claim, 
 
 - Seed script: one workspace, 3 users (one per role), 10 items, 3 documents, 1 transcript.
 - "Reset demo data" button for admins.
-- Health page showing database, Redis, storage and each AI provider as up or down.
+- Health page showing database, storage and each AI provider as up or down.
 
 ## Pre-built features
 
@@ -316,7 +316,7 @@ All FastAPI routes live under `/api/v1`, require `Authorization: Bearer <jwt>` e
 
 | Method | Path | Purpose | Role |
 | --- | --- | --- | --- |
-| GET | `/health` | Database, Redis, storage, AI providers status | public |
+| GET | `/health` | Database, storage, AI providers status | public |
 | GET | `/me` | Current user and memberships | any |
 | POST | `/workspaces` | Create workspace | any |
 | GET | `/workspaces/{ws}/members` | List members | any member |
@@ -378,12 +378,12 @@ fanilo-base/
         core/       config, db, security (JWT/JWKS), errors
         modules/    workspaces, items, files, sources, jobs, ai, rag, stt, agent
         realtime/   Socket.IO server and events
-        workers/    ARQ tasks
+        workers/    job handlers (Postgres queue)
       alembic/      migrations
       scripts/      seed.py, reembed_all.py
   packages/
     shared/         generated types, constants, i18n strings
-  docker-compose.yml   postgres+pgvector, redis
+  docker-compose.yml   postgres+pgvector (optional)
   THIRD_PARTY.md
   README.md
 ```
@@ -393,7 +393,6 @@ fanilo-base/
 | Variable | Used by | Example |
 | --- | --- | --- |
 | `DATABASE_URL` | web, api | Supabase Postgres connection string |
-| `REDIS_URL` | api | `redis://localhost:6379` |
 | `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL` | web | random 32 bytes; web URL |
 | `AUTH_JWKS_URL`, `AUTH_ISSUER`, `AUTH_AUDIENCE` | api | `https://<web>/api/auth/jwks` |
 | `NEXT_PUBLIC_API_URL` | web | API base URL |
@@ -409,7 +408,7 @@ fanilo-base/
 **Deployment**
 
 - Web: Vercel Hobby, connected to the repo, root `apps/web`.
-- API + in-process worker: Render free web service (Docker), or Railway trial; Redis on Render free key-value or Railway.
+- API + in-process worker: Render free web service (Docker), or Railway trial.
 - Database and storage: Supabase free project; migrations run with Alembic on deploy.
 - A GitHub Action regenerates the TypeScript client when the OpenAPI schema changes, and fails the build if types are out of date.
 - Before the pitch: open the API health page 5 minutes ahead to wake the service, and check the Supabase project is active.

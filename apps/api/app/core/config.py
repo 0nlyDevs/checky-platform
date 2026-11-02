@@ -7,7 +7,10 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=("../../.env", ".env"), extra="ignore")
 
     database_url: str = "postgresql://fanilo:fanilo@localhost:5432/fanilo"
-    redis_url: str = "redis://localhost:6379"
+    # Tests run each request on a fresh event loop, so pooled connections must be off there.
+    db_pool: bool = True
+    # Number of in-process job workers; 0 disables them (tests run jobs explicitly).
+    job_workers: int = 2
 
     auth_jwks_url: str = "http://localhost:3000/api/auth/jwks"
     auth_issuer: str = "http://localhost:3000"

@@ -1,4 +1,4 @@
-# Optional (not used yet): Postgres + pgvector and Redis in containers. Local dev uses your own Postgres.
+# Optional (not used yet): Postgres + pgvector in a container. Local dev uses your own Postgres.
 services:
   db:
     image: pgvector/pgvector:pg17
@@ -14,8 +14,5 @@ services:
       test: ["CMD-SHELL", "pg_isready -U fanilo"]
       interval: 5s
       retries: 10
-  redis:
-    image: redis:7-alpine
-    ports: ["6379:6379"]
 volumes:
   db-data:
