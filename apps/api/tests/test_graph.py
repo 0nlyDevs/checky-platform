@@ -149,3 +149,18 @@ async def test_a_loop_reruns_only_the_nodes_that_ask_for_it():
     assert runs == {"web": 2, "registry": 1, "synthesis": 1}
     assert state["web"] == 2 and state["registry"] == 1
     assert [e["agent"] for e in events if e["status"] == "running"].count("Registre") == 1
+
+
+async def test_failures_carry_a_one_line_summary_without_the_message():
+    async def leaky(state):
+        raise ValueError("secret content of the rumour")
+
+    events = []
+
+    async def emit(event, data):
+        events.append(data)
+
+    state = await Graph().stage("facts", [Node("Chiffres", leaky)]).run({}, emit=emit)
+    failed = next(e for e in events if e["status"] == "failed")
+    assert failed["summary"] == "Réponse inexploitable"
+    assert "secret" not in str(state["trace"]) and "secret" not in str(events)

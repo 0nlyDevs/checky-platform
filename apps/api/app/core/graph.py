@@ -174,17 +174,21 @@ class Graph:
             await send("skipped", summary=str(skip), ms=trace.ms)
             return None
         except TimeoutError:
-            trace = Trace(node.name, stage.name, "timeout", _ms(started), "", node.llm, "timeout")
+            summary = f"Délai dépassé ({node.timeout:.0f} s)"
+            trace = Trace(
+                node.name, stage.name, "timeout", _ms(started), summary, node.llm, "timeout"
+            )
             state["trace"].append(trace.dict())
-            await send("timeout", ms=trace.ms)
+            await send("timeout", summary=summary, ms=trace.ms)
             return None
         except Exception as exc:  # noqa: BLE001 - one failed check must not hide the others
             log.warning("agent %s failed: %s", node.name, type(exc).__name__)
+            summary = failure_summary(exc)
             trace = Trace(
-                node.name, stage.name, "failed", _ms(started), "", node.llm, type(exc).__name__
+                node.name, stage.name, "failed", _ms(started), summary, node.llm, type(exc).__name__
             )
             state["trace"].append(trace.dict())
-            await send("failed", ms=trace.ms, error=type(exc).__name__)
+            await send("failed", summary=summary, ms=trace.ms, error=type(exc).__name__)
             return None
         update = dict(update or {})
         summary = str(update.pop("_summary", "") or "")
@@ -195,6 +199,28 @@ class Graph:
             "done", summary=summary, ms=trace.ms, **({"count": count} if count is not None else {})
         )
         return update
+
+
+# One line for the live log, from the kind of failure only: an exception's message may quote the
+# checked content or a provider's answer, so it never reaches the screen.
+FAILURES = {
+    "AiUnavailable": "Modèles d'IA indisponibles",
+    "SearchUnavailable": "Recherche indisponible",
+    "ApiError": "Service indisponible",
+    "HTTPError": "Service distant injoignable",
+    "ConnectError": "Service distant injoignable",
+    "ReadTimeout": "Service distant trop lent",
+    "ValidationError": "Réponse illisible",
+    "JSONDecodeError": "Réponse illisible",
+    "ValueError": "Réponse inexploitable",
+}
+
+
+def failure_summary(exc: BaseException) -> str:
+    for cls in type(exc).__mro__:
+        if cls.__name__ in FAILURES:
+            return FAILURES[cls.__name__]
+    return f"Échec ({type(exc).__name__})"
 
 
 def _ms(started: float) -> int:
