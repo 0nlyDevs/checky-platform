@@ -42,6 +42,7 @@ import {
   PaperPlaneTilt,
   Paperclip,
   PencilSimple,
+  Phone,
   Play,
   Plus,
   Question,
@@ -148,3 +149,4 @@ export const IconCompass = duo(Compass);
 export const IconNewspaper = duo(Newspaper);
 export const IconRadio = duo(Radio);
 export const IconStamp = duo(Stamp);
+export const IconPhone = duo(Phone);
