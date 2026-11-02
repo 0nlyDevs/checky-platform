@@ -1,0 +1,3 @@
+face-public-domain.jpg: NASA portrait of astronaut Eileen Collins (public domain, NASA photo
+S93-00049), from scikit-image sample data (skimage/data/astronaut.png), resized to 256 px.
+Used only to test that faces are detected and blurred; never shown in the app.

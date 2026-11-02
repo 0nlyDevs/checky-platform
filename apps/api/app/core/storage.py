@@ -86,6 +86,17 @@ async def read(key: str) -> bytes:
     return await asyncio.to_thread(r["Body"].read)
 
 
+async def write(key: str, body: bytes, content_type: str) -> None:
+    """Store a file the API made itself (a video's keyframe, a blurred copy)."""
+    await asyncio.to_thread(
+        client().put_object,
+        Bucket=get_settings().storage_bucket,
+        Key=key,
+        Body=body,
+        ContentType=content_type,
+    )
+
+
 async def delete(key: str) -> None:
     await asyncio.to_thread(client().delete_object, Bucket=get_settings().storage_bucket, Key=key)
 
