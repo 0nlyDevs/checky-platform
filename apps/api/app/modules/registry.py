@@ -1032,6 +1032,40 @@ async def institution_names(db: AsyncSession, workspace_id: uuid.UUID) -> list[s
     return [re.sub(r"\s*\(d[ée]mo\)\s*", "", n, flags=re.IGNORECASE).strip() for n in names if n]
 
 
+async def press_contacts(db: AsyncSession, workspace_id: uuid.UUID, issuer: str) -> list[dict]:
+    """Who at the issuer can confirm a communiqué: the newsroom's Annuaire entries (and the shared
+    ones) for that institution, press officers first. Only names and roles: the Annuaire has the rest."""
+    from app.core.models import Contact
+
+    rows = (
+        await db.scalars(
+            select(Contact)
+            .where(or_(Contact.workspace_id == workspace_id, Contact.shared.is_(True)))
+            .limit(500)
+        )
+    ).all()
+    folded = places.fold(issuer)
+    hits = [
+        c
+        for c in rows
+        if any(
+            n and (_mentions(places.fold(n), issuer) or _mentions(folded, n))
+            for n in (c.institution, c.name if c.kind == "institution" else "")
+        )
+    ]
+    hits.sort(key=lambda c: (c.kind != "officer", c.workspace_id != workspace_id, c.name))
+    return [
+        {
+            "id": str(c.id),
+            "name": c.name,
+            "role": c.role,
+            "institution": c.institution,
+            "kind": c.kind,
+        }
+        for c in hits[:3]
+    ]
+
+
 def quoted_issuers(text: str, known: list[str]) -> list[str]:
     """Institutions the text names, longest names first: known ones (registry, Annuaire, the list
     above), then « ministère de la Santé »-like names read from the text itself."""
@@ -1073,7 +1107,9 @@ def _brief(c: Communique, ws: Workspace, viewer: uuid.UUID) -> dict[str, Any]:
     return brief
 
 
-def _result(status: Status, issuer, number, communique=None, found=None, summary="") -> dict:
+def _result(
+    status: Status, issuer, number, communique=None, found=None, summary="", contacts=None
+) -> dict:
     found = found or {}
     return {
         "status": status,
@@ -1083,6 +1119,8 @@ def _result(status: Status, issuer, number, communique=None, found=None, summary
         "diff": found.get("diff", []),
         "changed_numbers": found.get("changed_numbers", []),
         "summary": found.get("summary") or summary,
+        # Who can confirm, from the Annuaire, when nothing registered settles it.
+        "contacts": contacts or [],
     }
 
 
@@ -1146,6 +1184,7 @@ async def match_text(db: AsyncSession, workspace_id: uuid.UUID, text: str) -> di
     if not issuer and not number:
         return _result("none", None, None, summary="Ce texte ne cite ni institution ni communiqué.")
     who = f" de {issuer}" if issuer else ""
+    contacts = await press_contacts(db, workspace_id, issuer) if issuer else []
     if issuer and number:
         series = [
             c.number for c, _ in rows if c.number and _mentions(places.fold(issuer), c.issuer)
@@ -1167,6 +1206,7 @@ async def match_text(db: AsyncSession, workspace_id: uuid.UUID, text: str) -> di
                     f"Le numéro N° {number} cité pour {issuer} {reason}. Seul l'émetteur peut "
                     "confirmer qu'un communiqué existe."
                 ),
+                contacts=contacts,
             )
     cited_as = f"Aucun communiqué N° {number}{who}" if number else f"Aucun communiqué{who}"
     return _result(
@@ -1177,6 +1217,7 @@ async def match_text(db: AsyncSession, workspace_id: uuid.UUID, text: str) -> di
             f"{cited_as} ne correspond à ce texte dans le registre. Introuvable ne veut pas dire "
             f"faux : le registre n'est jamais complet, seul l'émetteur peut confirmer."
         ),
+        contacts=contacts,
     )
 
 

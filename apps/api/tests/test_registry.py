@@ -156,6 +156,8 @@ def test_annuaire_institutions_count_as_issuers_and_veilleurs_cannot_match(as_us
         json={"text": "L'Office des ports annonce la fermeture du quai."},
     ).json()
     assert found["status"] == "not_found" and found["issuer"] == "Office des ports"
+    # The Annuaire says who at the issuer can confirm it.
+    assert [c["name"] for c in found["contacts"]] == ["Service de presse"]
     blocked = eve.post(f"/api/v1/workspaces/{ws}/registry/match", json={"text": "N° 12 de la CENI"})
     assert blocked.status_code == 403
 
