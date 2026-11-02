@@ -1,0 +1,185 @@
+"""The layered public check: a signed verdict first, then a fact-checker's review (relayed as
+theirs), then the facts alone; never a model verdict, never a percentage."""
+
+import json
+
+import pytest
+from fastapi.testclient import TestClient
+
+from app.core import websearch
+from app.main import app
+
+RUMOUR = (
+    "URGENT ⚠️ COMMUNIQUÉ N° 2026-118 de la JIRAMA : délestage de 72 heures à partir du 3 novembre "
+    "sur tout Antananarivo, hausse de 40 % du tarif en décembre. Partagez à tous vos contacts !!!"
+)
+CLAIM = "72 heures de délestage dès demain sur tout Antananarivo, selon la JIRAMA"
+
+
+@pytest.fixture
+def no_reviews(monkeypatch):
+    async def none(query, k=6):
+        return []
+
+    monkeypatch.setattr(websearch, "fact_checks", none)
+
+
+def _newsroom(c, public=True):
+    ws = c.post("/api/v1/workspaces", json={"name": "Desk du matin"}).json()["id"]
+    if public:
+        c.patch(f"/api/v1/workspaces/{ws}", json={"is_public": True})
+    return ws
+
+
+def _claim(c, ws, title, status="published", verdict="false", **data):
+    data = {"ref": "FAN-0145", **({"verdict": verdict} if verdict else {}), **data}
+    r = c.post(
+        f"/api/v1/workspaces/{ws}/items", json={"title": title, "status": status, "data": data}
+    )
+    assert r.status_code == 201, r.text
+    return r.json()["id"]
+
+
+def test_signed_verdict_comes_first_with_its_confidence_in_words(as_user, monkeypatch):
+    async def never(query, k=6):
+        raise AssertionError("a signed verdict needs no outside search")
+
+    monkeypatch.setattr(websearch, "fact_checks", never)
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    item = _claim(
+        alice,
+        ws,
+        CLAIM,
+        reason="Le communiqué N° 2026-118 annonce 4 heures par jour, pas 72 heures.",
+        verdict_suggested="false",
+        analysis={"confidence": {"score": 84, "level": "eleve", "reasons": ["…"]}},
+    )
+    r = TestClient(app).post("/api/v1/public/verify", json={"text": RUMOUR})
+    out = r.json()
+    assert r.status_code == 200 and out["status"] == "signed"
+    assert out["signed"]["id"] == item and out["signed"]["verdict"] == "false"
+    assert out["signed"]["confidence"] == "eleve"
+    # the percentage behind the level never leaves the newsroom
+    assert "84" not in json.dumps(out) and "score" not in json.dumps(out)
+
+
+def test_no_confidence_when_the_journalist_signed_another_verdict(as_user, no_reviews):
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    _claim(
+        alice,
+        ws,
+        CLAIM,
+        verdict="misleading",
+        verdict_suggested="false",
+        analysis={"confidence": {"score": 84, "level": "eleve"}},
+    )
+    out = TestClient(app).post("/api/v1/public/verify", json={"text": RUMOUR}).json()
+    assert out["status"] == "signed" and out["signed"]["confidence"] is None
+
+
+def test_a_fact_checkers_review_is_relayed_as_theirs(as_user, monkeypatch):
+    async def reviews(query, k=6):
+        assert "jirama" in query and "urgent" in query
+        return [
+            {
+                "title": "Non, la JIRAMA n'annonce pas 72 heures de délestage à Antananarivo",
+                "url": "https://factuel.afp.com/doc.afp.com.36XY",
+                "snippet": "AFP Factuel : « Faux ». Affirmation : 72 heures de délestage",
+                "date": "2026-10-30T10:00:00Z",
+            },
+            {
+                "title": "Did the moon landing happen?",
+                "url": "https://www.snopes.com/fact-check/moon/",
+                "snippet": "",
+            },
+        ]
+
+    monkeypatch.setattr(websearch, "fact_checks", reviews)
+    out = TestClient(app).post("/api/v1/public/verify", json={"text": RUMOUR}).json()
+    assert out["status"] == "external" and out["signed"] is None
+    assert out["external"] == [
+        {
+            "publisher": "AFP Factuel",
+            "url": "https://factuel.afp.com/doc.afp.com.36XY",
+            "rating": "Faux",
+            "date": "2026-10-30",
+            "title": "Non, la JIRAMA n'annonce pas 72 heures de délestage à Antananarivo",
+        }
+    ]
+
+
+def test_facts_alone_when_a_newsroom_follows_the_rumour(as_user, no_reviews, monkeypatch):
+    from app.modules import registry
+
+    async def match_text(db, workspace_id, text):
+        assert workspace_id is not None
+        return {
+            "status": "modified",
+            "issuer": "JIRAMA",
+            "number": "N° 2026-118",
+            "communique": {"issued_on": "2026-11-01", "url": None},
+            "diff": [{"op": "replace", "a": "4 heures", "b": "72 heures"}],
+            "summary": "Le communiqué N° 2026-118 existe, mais il annonce 4 heures, pas 72.",
+        }
+
+    monkeypatch.setattr(registry, "match_text", match_text, raising=False)
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    item = _claim(alice, ws, CLAIM, status="to_check", verdict=None)
+    out = TestClient(app).post("/api/v1/public/verify", json={"text": RUMOUR}).json()
+    assert out["status"] == "facts" and out["signed"] is None
+    assert out["tracked_id"] == item and out["tracked_ref"] == "FAN-0145"
+    assert out["followed_since"]
+    fact = out["known"][0]
+    assert fact["kind"] == "registry" and fact["date"] == "2026-11-01"
+    assert fact["diff"][0]["b"] == "72 heures" and "4 heures" in fact["text"]
+    assert out["search_status"] == "done"
+
+
+def test_the_crews_fact_agents_answer_when_they_are_there(monkeypatch):
+    from app.modules import crew
+
+    async def public_facts(db, text, url):
+        return {
+            "provenance": {"first_seen": "2023-03-14", "verdict_hint": "old_media_new_caption"},
+            "tone": {"level": "sensationnaliste", "signals": [{"kind": "caps", "quote": "URGENT"}]},
+            "fact_checks": [],
+            "analysis": {"verdict": "false"},  # never relayed: a model's reading stays inside
+        }
+
+    monkeypatch.setattr(crew, "public_facts", public_facts, raising=False)
+    out = TestClient(app).post("/api/v1/public/verify", json={"text": RUMOUR}).json()
+    assert out["status"] == "facts"
+    kinds = [f["kind"] for f in out["known"]]
+    assert kinds == ["provenance", "tone"]
+    assert "14 mars 2023" in out["known"][0]["text"] and "« URGENT »" in out["known"][1]["text"]
+    assert "analysis" not in out["facts"] and out["followed_since"] is None
+
+
+def test_nothing_known_says_so_and_reports_the_search_outage(monkeypatch):
+    async def down(query, k=6):
+        raise websearch.SearchUnavailable("ConnectError")
+
+    monkeypatch.setattr(websearch, "fact_checks", down)
+    out = TestClient(app).post("/api/v1/public/verify", json={"text": "le pont est fermé"}).json()
+    assert out["status"] == "none" and out["search_status"] == "unavailable"
+    assert TestClient(app).post("/api/v1/public/verify", json={"text": "a"}).status_code == 422
+
+
+def test_a_link_alone_is_read_first(as_user, no_reviews, monkeypatch):
+    from app.modules import linkcheck
+
+    async def read_link(url):
+        return {"text": RUMOUR, "title": "Post"}
+
+    monkeypatch.setattr(linkcheck, "read_link", read_link)
+    alice = as_user("alice")
+    _claim(alice, _newsroom(alice), CLAIM)
+    out = (
+        TestClient(app)
+        .post("/api/v1/public/verify", json={"url": "https://example.org/post/1"})
+        .json()
+    )
+    assert out["status"] == "signed"

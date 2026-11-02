@@ -16,7 +16,7 @@ from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
 
-from app.core import ai, keys, stt
+from app.core import ai, dates, keys, stt
 from app.core.access import Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
@@ -36,6 +36,11 @@ class NewsroomOut(BaseModel):
     name: str
 
 
+class EvidenceOut(BaseModel):
+    title: str
+    date: str | None  # the source's publication date (YYYY-MM-DD), when known
+
+
 class VerdictOut(BaseModel):
     id: uuid.UUID
     ref: str | None
@@ -48,6 +53,10 @@ class VerdictOut(BaseModel):
     first_seen_at: str | None
     published_at: datetime
     newsroom: NewsroomOut
+    # How solid the evidence is, in words only (computed in code, never a percentage in public).
+    confidence: Literal["eleve", "moyen", "faible"] | None = None
+    evidence: list[EvidenceOut] = Field(default_factory=list)
+    signed_at: str | None = None
 
 
 class VerdictPage(BaseModel):
@@ -126,12 +135,42 @@ def _distinct(rows):
     return out
 
 
+CONFIDENCE_LEVELS = ("eleve", "moyen", "faible")
+
+
+def confidence_level(d: dict) -> str | None:
+    """The confidence level of a signed verdict, in words. The score behind it was computed for the
+    reading Checky suggested; when the journalist signed another verdict, no level is shown."""
+    analysis = d.get("analysis") if isinstance(d.get("analysis"), dict) else {}
+    own = d.get("confidence")
+    conf = own if isinstance(own, dict) else analysis.get("confidence")
+    level = conf.get("level") if isinstance(conf, dict) else None
+    if level not in CONFIDENCE_LEVELS:
+        return None
+    suggested = d.get("verdict_suggested")
+    if not isinstance(own, dict) and suggested and suggested != d.get("verdict"):
+        return None
+    return level
+
+
 async def _verdict(db: Db, item: Item, ws: Workspace) -> VerdictOut:
     d = item.data or {}
-    titles = (await db.scalars(select(Source.title).where(Source.item_id == item.id))).all()
+    rows = (
+        await db.execute(
+            select(Source.title, Source.published_at)
+            .where(Source.item_id == item.id)
+            .order_by(Source.created_at)
+        )
+    ).all()
+    titles = [title for title, _ in rows]
     posts = d.get("posts") or {}
     post = posts.get("fr") if isinstance(posts, dict) else None
     analysis = d.get("analysis") if isinstance(d.get("analysis"), dict) else {}
+    evidence = []
+    for title, published in rows:
+        if title:
+            day = dates.parse(published)
+            evidence.append(EvidenceOut(title=title, date=day.isoformat() if day else None))
     return VerdictOut(
         id=item.id,
         ref=d.get("ref"),
@@ -144,6 +183,54 @@ async def _verdict(db: Db, item: Item, ws: Workspace) -> VerdictOut:
         first_seen_at=d.get("first_seen_at"),
         published_at=item.updated_at,
         newsroom=NewsroomOut(slug=ws.slug, name=ws.name),
+        confidence=confidence_level(d),
+        evidence=evidence,
+        signed_at=d.get("signed_at") if isinstance(d.get("signed_at"), str) else None,
+    )
+
+
+def overlap(asked: set[str], known: set[str]) -> float:
+    """How much two texts are about the same thing: shared words over the shorter text's words,
+    0 below two shared words (accent-free, no AI)."""
+    shared = asked & known
+    if len(shared) < 2:
+        return 0.0
+    return len(shared) / min(len(asked), len(known))
+
+
+def _claim_words(item: Item) -> list[set[str]]:
+    return [w for w in (words(item.title), words(f"{item.title} {item.body}")) if w]
+
+
+async def best_published(
+    db: Db, text: str, k: int = 3, threshold: float = 0.5
+) -> list[tuple[float, VerdictOut]]:
+    """Published verdicts about the same claim as `text`, best first. Stricter than `find_published`
+    (which feeds the assistant): a match here is shown to the public as the answer."""
+    asked = words(text)
+    if len(asked) < 2:
+        return []
+    scored = []
+    for item, ws in (
+        await db.execute(_published().order_by(Item.updated_at.desc()).limit(500))
+    ).all():
+        score = max((overlap(asked, known) for known in _claim_words(item)), default=0.0)
+        if score >= threshold:
+            scored.append((score, item, ws))
+    scored.sort(key=lambda r: r[0], reverse=True)
+    return [(round(s, 2), await _verdict(db, i, w)) for s, i, w in _distinct(scored)[:k]]
+
+
+async def public_newsrooms(db: Db) -> list[Workspace]:
+    return list(
+        (
+            await db.scalars(
+                select(Workspace)
+                .where(Workspace.is_public.is_(True))
+                .order_by(Workspace.created_at)
+                .limit(50)
+            )
+        ).all()
     )
 
 
