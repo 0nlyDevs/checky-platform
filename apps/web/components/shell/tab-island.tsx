@@ -33,31 +33,40 @@ export function TabIsland({ ws, items }: { ws?: string; items: NavItem[] }) {
   const ghost = useRef<HTMLDivElement>(null);
   const island = useRef<HTMLUListElement>(null);
   const pill = useRef<HTMLSpanElement>(null);
-  const placed = useRef(false);
+  // Where the pill was last put, and for which tab.
+  const last = useRef<{ tab: number; x: number; w: number } | null>(null);
   const [visible, setVisible] = useState(tabs.length);
 
   // The pill follows the current tab (or « Plus » when it holds it): transform + width, 0.5 s.
+  // It slides only when the current tab changes; when its own tab moves (first paint, fonts, a
+  // resize that folds it into « Plus ») it is put there at once, as in the mockup.
   const place = useCallback(() => {
     const el = island.current?.querySelector<HTMLElement>("[data-current]");
     const p = pill.current;
     if (!p) return;
     if (!el) {
       p.style.opacity = "0";
+      last.current = null;
       return;
     }
-    if (!placed.current) p.style.transition = "none";
-    p.style.opacity = "1";
-    p.style.width = `${el.offsetWidth}px`;
     // the tab is measured inside the list, the pill inside the island: add the island's padding
-    p.style.transform = `translateX(${el.offsetLeft + (island.current?.offsetLeft ?? 0)}px)`;
-    if (!placed.current) {
+    const x = el.offsetLeft + (island.current?.offsetLeft ?? 0);
+    const w = el.offsetWidth;
+    const prev = last.current;
+    if (prev && prev.tab === active && prev.x === x && prev.w === w) return;
+    const instant = !prev || prev.tab === active;
+    if (instant) p.style.transition = "none";
+    p.style.opacity = "1";
+    p.style.width = `${w}px`;
+    p.style.transform = `translateX(${x}px)`;
+    if (instant) {
       void p.offsetWidth;
       p.style.transition = "";
-      placed.current = true;
-      // from now on the pill carries the current tab; before, the tab paints its own paper
-      p.parentElement?.setAttribute("data-pill", "");
     }
-  }, []);
+    last.current = { tab: active, x, w };
+    // from now on the pill carries the current tab; before, the tab paints its own paper
+    p.parentElement?.setAttribute("data-pill", "");
+  }, [active]);
 
   const fit = useCallback(() => {
     const room = wrap.current?.clientWidth ?? 0;
