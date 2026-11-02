@@ -158,7 +158,9 @@ def test_a_followed_rumour_gives_the_hour_and_the_newsroom_only(as_user, no_revi
     assert out["status"] == "facts" and out["followed_by"] == "Desk du matin"
     assert out["followed_since"].endswith(("00:00Z", "00:00+00:00"))
     raw = json.dumps(out)
-    assert item not in raw and "FAN-0145" not in raw and "selon la JIRAMA" not in raw
+    assert item not in raw and "FAN-0145" not in raw
+    # the draft's title is never sent back, not even as the echo of a fact agent's clause
+    assert "dès demain sur tout Antananarivo" not in raw
     # nobody probes a draft title word by word
     for probe in ("délestage Antananarivo", "délestage Antananarivo pomme banane rouge"):
         out = anon.post("/api/v1/public/verify", json={"text": probe}).json()
@@ -290,3 +292,28 @@ def test_questions_are_grouped_and_stay_with_their_newsroom(as_user, secret):
     assert [g["count"] for g in bob.get(f"/api/v1/workspaces/{other}/questions").json()] == [1]
     private = _newsroom(alice, public=False)
     assert alice.get(f"/api/v1/workspaces/{private}/questions").json() == []
+
+
+def test_a_desk_agents_private_fields_never_leave_the_newsroom(as_user, no_reviews, monkeypatch):
+    from app.modules import registry
+
+    async def match_text(db, workspace_id, text):
+        return {
+            "status": "not_found",
+            "issuer": "JIRAMA",
+            "number": None,
+            "communique": {"id": "c-1", "own": True, "newsroom": "Desk", "text": "texte interne"},
+            "summary": "Introuvable dans le registre.",
+            "contacts": [{"name": "Chargée de communication", "phone": "+261 34 00 000 99"}],
+            "item_id": "dossier-1",
+        }
+
+    monkeypatch.setattr(registry, "match_text", match_text, raising=False)
+    _newsroom(as_user("alice"))
+    out = TestClient(app).post("/api/v1/public/verify", json={"text": RUMOUR}).json()
+    found = out["facts"]["registry"]
+    assert found["summary"] == "Introuvable dans le registre." and found["issuer"] == "JIRAMA"
+    assert "contacts" not in found and "item_id" not in found
+    assert found["communique"] == {}
+    raw = json.dumps(out)
+    assert "+261 34 00 000 99" not in raw and "texte interne" not in raw

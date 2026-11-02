@@ -46,6 +46,36 @@ log = logging.getLogger("checky.verify_public")
 router = APIRouter(tags=["public-verify"])
 
 FACT_KEYS = ("provenance", "registry", "figures", "tone", "credibility")
+# The facts come from other modules' agents, written for the desk: before they leave the newsroom,
+# anything that names a person, a dossier, a newsroom's own notes or echoes the asked text is cut.
+PRIVATE_KEYS = {
+    "contacts", "context", "clause", "text", "own", "newsroom", "notes", "proof", "author",
+    "email", "phone", "whatsapp", "items", "dossiers", "is_demo",
+}  # fmt: skip
+
+
+def scrub(value: Any, depth: int = 0) -> Any:
+    """A desk agent's result made safe for an anonymous visitor: no private keys, no ids, short
+    strings, short lists, shallow."""
+    if depth > 4:
+        return None
+    if isinstance(value, dict):
+        return {
+            k: scrub(v, depth + 1)
+            for k, v in value.items()
+            if isinstance(k, str)
+            and k not in PRIVATE_KEYS
+            and k != "id"
+            and not k.endswith("_id")
+            and not k.endswith("_ids")
+        }
+    if isinstance(value, list):
+        return [scrub(v, depth + 1) for v in value[:20]]
+    if isinstance(value, str):
+        return value[:600]
+    return value if value is None or isinstance(value, (bool, int, float)) else str(value)[:600]
+
+
 # Who published a review, by the fact-checker's host (IFCN signatories and the French-speaking ones).
 PUBLISHERS = {
     "factuel.afp.com": "AFP Factuel",
@@ -455,7 +485,7 @@ async def layered(db: Db, text: str, url: str | None) -> VerifyOut:
     return VerifyOut(
         status=status,
         external=external[:4],
-        facts={k: facts[k] for k in FACT_KEYS if facts.get(k)},
+        facts={k: scrub(facts[k]) for k in FACT_KEYS if facts.get(k)},
         known=known,
         followed_since=since_hour(tracked[0].created_at) if tracked else None,
         followed_by=tracked[1].name if tracked else None,
