@@ -1,3 +1,10 @@
 import { Suspense } from "react";
-import { ResourceView } from "@/components/resources/resource-view";
-export default function Page() { return <Suspense><ResourceView kind="figures" /></Suspense>; }
+import { FiguresView } from "@/components/chiffres/figures-view";
+
+export default function Page() {
+  return (
+    <Suspense>
+      <FiguresView />
+    </Suspense>
+  );
+}
