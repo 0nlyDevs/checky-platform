@@ -198,6 +198,7 @@ Playwright browsers are installed in `~/.cache/ms-playwright`. Drive flows with 
 - With `cacheComponents`, a client component that reads the route (`usePathname`, `useParams`) inside a layout breaks dynamic routes (`/verifies/[id]`) unless it sits in `<Suspense>`: the public header and the assistant do.
 - Don't use `pkill -f next` from a shell whose command line or cwd contains "next"/the web folder: it kills the shell. Kill by port (`ss -ltnp | grep :3000`).
 - The API runs without `--reload` in background tests: restart it after API code changes.
+- Render deploys `dev` only when a commit's checks pass (`autoDeployTrigger: checksPass`). After a run of red commits, the first green one was not picked up (2 Nov, `c89bf2c`): check the service's Events after a fix, and if nothing started, push another commit or use Manual Deploy → Deploy latest commit.
 - `npm` blocks some install scripts (unrs-resolver); harmless.
 
 ## Status
