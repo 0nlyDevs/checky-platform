@@ -7,6 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.core import websearch
+from app.core.config import get_settings
 from app.main import app
 
 RUMOUR = (
@@ -14,6 +15,18 @@ RUMOUR = (
     "sur tout Antananarivo, hausse de 40 % du tarif en décembre. Partagez à tous vos contacts !!!"
 )
 CLAIM = "72 heures de délestage dès demain sur tout Antananarivo, selon la JIRAMA"
+
+
+@pytest.fixture(autouse=True)
+def _fresh_limits():
+    from app.modules import verify_public
+
+    verify_public._NOTIFY.clear()  # conftest does not know this module's per-address limit
+
+
+@pytest.fixture
+def secret(monkeypatch):
+    monkeypatch.setattr(get_settings(), "seal_secret", "test-seal-secret-for-contacts")
 
 
 @pytest.fixture
@@ -183,3 +196,22 @@ def test_a_link_alone_is_read_first(as_user, no_reviews, monkeypatch):
         .json()
     )
     assert out["status"] == "signed"
+
+
+def test_notify_needs_the_secret_and_keeps_contacts_masked(as_user, monkeypatch):
+    monkeypatch.setattr(get_settings(), "seal_secret", "")
+    anon = TestClient(app)
+    body = {"text": RUMOUR, "contact": "034 00 000 12"}
+    assert anon.post("/api/v1/public/notify", json=body).status_code == 503
+    monkeypatch.setattr(get_settings(), "seal_secret", "test-seal-secret-for-contacts")
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    item = _claim(alice, ws, CLAIM, status="to_check", verdict=None)
+    r = anon.post("/api/v1/public/notify", json=body)
+    assert r.status_code == 201
+    assert r.json() == {"masked": "+261 34 •• ••• 12", "channel": "sms", "followed": True}
+    assert anon.post("/api/v1/public/notify", json=body).status_code == 201  # not stored twice
+    email = {"text": RUMOUR, "contact": "C.Rabe@example.org", "item_id": item}
+    assert anon.post("/api/v1/public/notify", json=email).json()["masked"] == "c•••@example.org"
+    bad = {"text": RUMOUR, "contact": "pas un numéro"}
+    assert anon.post("/api/v1/public/notify", json=bad).status_code == 422

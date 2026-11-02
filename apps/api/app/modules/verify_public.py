@@ -10,25 +10,31 @@
 Never a model verdict, never a percentage, never a dossier: the crew's fact agents (slice « crew »,
 `crew.public_facts`) answer when they are there; otherwise this module asks the registry, the
 figures, the tone lexicon and the fact-checkers itself, all without a model.
+
+`POST /public/notify` lets a visitor leave a phone number or an e-mail to hear about the verdict
+(stored as an HMAC and a masked form, see `app/core/contact.py`); `PublicQuestion` has no column for the asker's
+language or the sealed contact: both ride in its `location` JSONB (`lang`, `reach`, `kind`).
 """
 
 import asyncio
 import logging
 import re
 import uuid
+from collections import defaultdict, deque
 from datetime import datetime
 from typing import Any, Literal
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from sqlalchemy import select
 
-from app.core import dates, places, websearch
+from app.core import contact, dates, places, websearch
 from app.core.access import Db
+from app.core.activity import broadcast
 from app.core.errors import ApiError
-from app.core.models import Item, Workspace
+from app.core.models import Item, PublicQuestion, Workspace
 from app.core.public_checks import public_check_budget
 from app.core.words import words
 from app.modules import imagecheck, public
@@ -430,3 +436,75 @@ async def verify(body: VerifyIn, db: Db) -> VerifyOut:
         raise ApiError(
             503, "public_check_unavailable", "The check took too long, try again"
         ) from exc
+
+
+# --- « Me prévenir »: a phone or an e-mail to hear about the verdict
+_NOTIFY: dict[str, deque[float]] = defaultdict(deque)
+NOTIFY_LIMIT, NOTIFY_WINDOW = 5, 600.0
+
+
+class NotifyIn(BaseModel):
+    text: str = Field(min_length=3, max_length=2000)
+    item_id: uuid.UUID | None = None
+    contact: str = Field(min_length=5, max_length=200)
+    lang: Literal["fr", "mg", "en"] = "fr"
+
+
+class NotifyOut(BaseModel):
+    masked: str
+    channel: Literal["sms", "email"]
+    followed: bool  # a newsroom already follows this rumour
+
+
+@router.post("/public/notify", status_code=201)
+async def notify(body: NotifyIn, request: Request, db: Db) -> NotifyOut:
+    if not public._allow(
+        _NOTIFY, request.client.host if request.client else "unknown", NOTIFY_LIMIT, NOTIFY_WINDOW
+    ):
+        raise ApiError(429, "too_many_requests", "Too many requests, try again in a few minutes")
+    try:
+        kind, value = contact.normalise(body.contact)
+    except ValueError as exc:
+        raise ApiError(422, "invalid_contact", "Give a phone number or an e-mail address") from exc
+    item = None
+    if body.item_id:
+        item = await db.scalar(
+            select(Item)
+            .join(Workspace, Workspace.id == Item.workspace_id)
+            .where(Item.id == body.item_id, Workspace.is_public.is_(True), Item.type == "claim")
+        )
+        if item is None:
+            raise ApiError(404, "not_found", "Claim not found")
+    else:
+        item = await followed(db, body.text)
+    digest = contact.digest(kind, value)
+    same = select(PublicQuestion).where(PublicQuestion.contact_hash == digest)
+    same = (
+        same.where(PublicQuestion.item_id == item.id)
+        if item
+        else same.where(PublicQuestion.item_id.is_(None), PublicQuestion.text == body.text.strip())
+    )
+    if (await db.scalars(same.limit(1))).first() is None:
+        where = place_in(body.text)
+        question = PublicQuestion(
+            workspace_id=item.workspace_id if item else None,
+            item_id=item.id if item else None,
+            text=body.text.strip(),
+            channel="web",
+            location={**where, "lang": body.lang, "kind": kind, "reach": contact.seal(value)},
+            contact_hash=digest,
+            contact_masked=contact.mask(kind, value),
+        )
+        db.add(question)
+        await db.commit()
+        if item:
+            await broadcast(
+                item.workspace_id,
+                "question.created",
+                {"id": str(question.id), "item_id": str(item.id), "channel": "web"},
+            )
+    return NotifyOut(
+        masked=contact.mask(kind, value),
+        channel="sms" if kind == "phone" else "email",
+        followed=item is not None,
+    )
