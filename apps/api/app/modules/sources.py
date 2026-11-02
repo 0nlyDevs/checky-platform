@@ -20,7 +20,7 @@ from app.core import storage
 from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
-from app.core.models import File, Item, Source
+from app.core.models import File, Item, Source, Transcript
 from app.workers import ingest
 from app.workers.queue import enqueue
 
@@ -368,3 +368,60 @@ async def delete_source(source_id: uuid.UUID, member: AnyMember, db: Db) -> None
         {"id": str(source_id), "item_id": str(item_id) if item_id else None},
     )
     await _sync_source_count(db, member.workspace_id, item_id)
+
+
+class Segment(BaseModel):
+    start: float
+    end: float
+    text: str
+
+
+class TranscriptOut(BaseModel):
+    source_id: uuid.UUID
+    language: str | None
+    duration_s: float | None
+    model: str
+    segments: list[Segment]
+
+
+class TranscribeIn(BaseModel):
+    # ISO 639-1 hint; empty = let Whisper detect it.
+    language: str | None = Field(default=None, pattern=r"^[a-z]{2}$")
+
+
+@router.get("/workspaces/{ws}/sources/{source_id}/transcript")
+async def get_transcript(source_id: uuid.UUID, member: AnyMember, db: Db) -> TranscriptOut:
+    await _get_source(db, member, source_id)
+    tr = await db.scalar(select(Transcript).where(Transcript.source_id == source_id))
+    if tr is None:
+        raise ApiError(404, "not_found", "No transcript for this source")
+    return TranscriptOut(
+        source_id=source_id,
+        language=tr.language,
+        duration_s=tr.duration_s,
+        model=tr.model,
+        segments=[Segment(**g) for g in tr.segments],
+    )
+
+
+@router.post("/workspaces/{ws}/sources/{source_id}/transcribe", status_code=202)
+async def retranscribe(
+    source_id: uuid.UUID, body: TranscribeIn, member: AnyMember, db: Db
+) -> SourceOut:
+    """Run the transcription again, e.g. with `fr` or `mg` when detection picked the wrong one."""
+    s = await _get_source(db, member, source_id)
+    if s.kind != "audio":
+        raise ApiError(409, "not_audio", "Only audio sources can be transcribed")
+    s.status, s.error = "queued", None
+    await db.commit()
+    await db.refresh(s)
+    await enqueue(
+        db,
+        member.workspace_id,
+        member.user.id,
+        "ingest_file",
+        {"source_id": str(s.id), "language": body.language},
+    )
+    out = await _source_out(db, s)
+    await broadcast(member.workspace_id, "source.updated", out.model_dump(mode="json"))
+    return out

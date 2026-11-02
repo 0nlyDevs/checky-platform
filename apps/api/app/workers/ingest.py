@@ -16,9 +16,10 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from sqlalchemy import update
 
-from app.core import storage
+from app.core import storage, stt
+from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import File, Source
+from app.core.models import File, Source, Transcript
 from app.realtime.server import emit
 from app.workers.queue import JobContext, handler
 
@@ -145,7 +146,7 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
     async with SessionLocal() as db:
         source = await db.get(Source, source_id)
         file = await db.get(File, source.file_id)
-        key, mime = file.storage_key, file.mime
+        key, mime, filename = file.storage_key, file.mime, file.filename
     try:
         raw = await storage.read(key)
         await ctx.progress(40)
@@ -155,6 +156,12 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
             meta = await asyncio.to_thread(image_meta, raw)
         elif mime == "application/pdf":
             meta, title, text = await asyncio.to_thread(pdf_text, raw)
+        elif mime.startswith("audio/"):
+            await ctx.progress(50)
+            result = await stt.transcribe(raw, filename, mime, ctx.input.get("language"))
+            text = result["text"]
+            meta = {"duration_s": result["duration_s"], "language": result["language"]}
+            await _save_transcript(source_id, result)
         async with SessionLocal() as db:
             await db.execute(
                 update(File)
@@ -189,3 +196,20 @@ async def ingest_url(ctx: JobContext) -> dict[str, Any]:
     if not page["text"]:
         values["error"] = "No main text found on this page"
     return await _finish(source_id, ctx.workspace_id, **values)
+
+
+async def _save_transcript(source_id: uuid.UUID, result: dict[str, Any]) -> None:
+    from sqlalchemy import delete
+
+    async with SessionLocal() as db:
+        await db.execute(delete(Transcript).where(Transcript.source_id == source_id))
+        db.add(
+            Transcript(
+                source_id=source_id,
+                language=result["language"],
+                duration_s=result["duration_s"],
+                model=get_settings().stt_model,
+                segments=result["segments"],
+            )
+        )
+        await db.commit()

@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     llm_model_gemini: str = ""
     llm_model_nvidia: str = ""
     ai_timeout: float = 30.0
+    # Speech-to-text (Groq Whisper). large-v3 is the stronger one for Malagasy.
+    stt_model: str = "whisper-large-v3"
+    stt_timeout: float = 120.0
     # Attempts per provider on 429, 5xx or timeout before falling back to the next one.
     ai_attempts: int = 2
     # Development cache keyed on the request, so reloads do not burn free-tier quota.

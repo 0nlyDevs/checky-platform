@@ -1,5 +1,6 @@
 "use client";
 
+import type { components } from "@fanilo/shared";
 import { useRef, useState } from "react";
 import useSWR from "swr";
 import {
@@ -12,7 +13,9 @@ import {
   LoaderCircle,
   MapPin,
   Paperclip,
+  Play,
   Plus,
+  RotateCcw,
   TriangleAlert,
   Type,
   type LucideIcon,
@@ -107,7 +110,90 @@ function ImageFacts({ source }: { source: Source }) {
   );
 }
 
-function SourceRow({ source, onRemove }: { source: Source; onRemove?: () => void }) {
+type Transcript = components["schemas"]["TranscriptOut"];
+
+/** 75.4 → "1:15", in the airtime face. */
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+function AudioFacts({ ws, source }: { ws: string; source: Source }) {
+  const [open, setOpen] = useState(false);
+  const audio = useRef<HTMLAudioElement>(null);
+  const { data: tr } = useSWR<Transcript>(open ? `/workspaces/${ws}/sources/${source.id}/transcript` : null, fetcher);
+  const meta = (source.file?.meta ?? {}) as { language?: string };
+
+  function play(from: number) {
+    const el = audio.current;
+    if (!el) return;
+    el.currentTime = from;
+    void el.play();
+  }
+
+  async function redo(language: string) {
+    try {
+      await api(`/workspaces/${ws}/sources/${source.id}/transcribe`, { method: "POST", body: JSON.stringify({ language }) });
+      setOpen(false);
+      toast.success(t.sources.redoStarted);
+    } catch (e) {
+      toast.error(errorText(e));
+    }
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      {source.file?.download_url && (
+        <audio ref={audio} controls preload="none" src={source.file.download_url} className="h-9 w-full max-w-md" />
+      )}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="font-medium underline decoration-border underline-offset-4 hover:decoration-foreground"
+        >
+          {open ? t.sources.hideTranscript : t.sources.showTranscript}
+        </button>
+        {meta.language && <span className="text-muted-foreground">{t.sources.detected(t.sources.languages[meta.language.toLowerCase()] ?? meta.language)}</span>}
+        <span className="flex items-center gap-2 text-muted-foreground">
+          <RotateCcw className="size-3.5" aria-hidden />
+          {t.sources.redo}
+          <button type="button" onClick={() => redo("fr")} className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+            {t.sources.redoFr}
+          </button>
+          <button type="button" onClick={() => redo("mg")} className="text-foreground underline decoration-border underline-offset-4 hover:decoration-foreground">
+            {t.sources.redoMg}
+          </button>
+        </span>
+      </div>
+      {open &&
+        (!tr ? (
+          <Skeleton className="h-16 w-full" />
+        ) : tr.segments.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t.sources.noSpeech}</p>
+        ) : (
+          <ol className="max-h-80 space-y-0.5 overflow-y-auto rounded-md border border-border p-1">
+            {tr.segments.map((g, i) => (
+              <li key={i}>
+                <button
+                  type="button"
+                  onClick={() => play(g.start)}
+                  aria-label={`${t.sources.playFrom(clock(g.start))} : ${g.text}`}
+                  className="group flex w-full gap-3 rounded-sm px-2 py-1 text-left text-sm hover:bg-accent focus-visible:outline-2"
+                >
+                  <span className="flex w-12 shrink-0 items-center gap-1 font-display tracking-wide tabular text-muted-foreground">
+                    <Play className="size-3 opacity-0 group-hover:opacity-100" aria-hidden />
+                    {clock(g.start)}
+                  </span>
+                  <span className="text-pretty">{g.text}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        ))}
+    </div>
+  );
+}
+
+function SourceRow({ ws, source, onRemove }: { ws: string; source: Source; onRemove?: () => void }) {
   const [confirming, setConfirming] = useState(false);
   const Icon = KIND_ICON[source.kind] ?? FileText;
   const href = source.url ?? source.file?.download_url ?? undefined;
@@ -151,7 +237,7 @@ function SourceRow({ source, onRemove }: { source: Source; onRemove?: () => void
         {source.status === "queued" && (
           <p className="mt-2 flex items-center gap-2 text-sm text-muted-foreground" role="status">
             <LoaderCircle className="size-3.5 animate-spin" aria-hidden />
-            {t.sources.analysing}
+            {source.kind === "audio" ? t.sources.transcribing : t.sources.analysing}
           </p>
         )}
         {source.status === "failed" && (
@@ -163,7 +249,8 @@ function SourceRow({ source, onRemove }: { source: Source; onRemove?: () => void
           </p>
         )}
         {source.status === "ready" && source.kind === "image" && <ImageFacts source={source} />}
-        {source.status === "ready" && source.excerpt && (
+        {source.kind === "audio" && source.status !== "queued" && <AudioFacts ws={ws} source={source} />}
+        {source.status === "ready" && source.kind !== "audio" && source.excerpt && (
           <p className="mt-2 line-clamp-3 max-w-[70ch] text-sm text-pretty">{source.excerpt}</p>
         )}
         {source.status === "ready" && source.error && (
@@ -175,8 +262,9 @@ function SourceRow({ source, onRemove }: { source: Source; onRemove?: () => void
 }
 
 /** Sources of one claim (`itemId`), or of the whole workspace. Live: other people's additions appear as they land. */
-export function SourcesPanel({ ws, itemId }: { ws: string; itemId?: string }) {
-  const key = `/workspaces/${ws}/sources${itemId ? `?item_id=${itemId}` : ""}`;
+export function SourcesPanel({ ws, itemId, kind }: { ws: string; itemId?: string; kind?: "audio" }) {
+  const query = new URLSearchParams({ ...(itemId && { item_id: itemId }), ...(kind && { kind }) }).toString();
+  const key = `/workspaces/${ws}/sources${query ? `?${query}` : ""}`;
   const { data: sources, error, mutate } = useSWR<Source[]>(key, fetcher);
   const [url, setUrl] = useState("");
   const [adding, setAdding] = useState(false);
@@ -185,7 +273,8 @@ export function SourcesPanel({ ws, itemId }: { ws: string; itemId?: string }) {
   const { me, role } = useWorkspace(ws);
   const canRemove = (s: Source) => s.created_by === me?.id || role === "editor" || role === "admin";
 
-  const mine = (s: { item_id?: string | null }) => !itemId || s.item_id === itemId;
+  const mine = (s: { item_id?: string | null; kind?: string }) =>
+    (!itemId || s.item_id === itemId) && (!kind || !s.kind || s.kind === kind);
   useWorkspaceSocket(ws, {
     "source.created": (s: Source) => mine(s) && mutate(),
     "source.updated": (s: Source) => mine(s) && mutate(),
@@ -248,6 +337,8 @@ export function SourcesPanel({ ws, itemId }: { ws: string; itemId?: string }) {
   return (
     <div className="space-y-4">
       <form onSubmit={addUrl} className="flex flex-wrap gap-2">
+        {!kind && (
+          <>
         <Label htmlFor={inputId} className="sr-only">
           {t.sources.urlLabel}
         </Label>
@@ -264,12 +355,14 @@ export function SourcesPanel({ ws, itemId }: { ws: string; itemId?: string }) {
           {adding ? <LoaderCircle className="animate-spin" aria-hidden /> : <Plus aria-hidden />}
           {t.sources.addUrl}
         </Button>
+          </>
+        )}
         <Button type="button" variant="outline" className="h-10" disabled={Boolean(upload)} onClick={() => fileInput.current?.click()}>
           <Paperclip aria-hidden />
-          {t.sources.attach}
+          {kind ? t.transcriptions.attach : t.sources.attach}
         </Button>
-        <input ref={fileInput} type="file" accept={ACCEPT} className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => addFile(e.target.files?.[0])} />
-        <p className="w-full text-sm text-muted-foreground">{t.sources.attachHint}</p>
+        <input ref={fileInput} type="file" accept={kind ? "audio/*" : ACCEPT} className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => addFile(e.target.files?.[0])} />
+        <p className="w-full text-sm text-muted-foreground">{kind ? t.transcriptions.attachHint : t.sources.attachHint}</p>
       </form>
 
       {upload && (
@@ -291,11 +384,11 @@ export function SourcesPanel({ ws, itemId }: { ws: string; itemId?: string }) {
       ) : !sources ? (
         <Skeleton className="h-24 w-full" />
       ) : sources.length === 0 ? (
-        <p className={cn("rounded-md border border-dashed border-border px-4 py-5 text-muted-foreground")}>{t.sources.empty}</p>
+        <p className={cn("rounded-md border border-dashed border-border px-4 py-5 text-muted-foreground")}>{kind ? t.transcriptions.empty : t.sources.empty}</p>
       ) : (
         <ul className="divide-y divide-border rounded-lg border border-border bg-card">
           {sources.map((s) => (
-            <SourceRow key={s.id} source={s} onRemove={canRemove(s) ? () => remove(s) : undefined} />
+            <SourceRow key={s.id} ws={ws} source={s} onRemove={canRemove(s) ? () => remove(s) : undefined} />
           ))}
         </ul>
       )}

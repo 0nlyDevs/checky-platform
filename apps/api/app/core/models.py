@@ -201,3 +201,17 @@ class Source(_Row):
     published_at: Mapped[str | None] = mapped_column(String(40))
     text: Mapped[str] = mapped_column(Text, default="")
     error: Mapped[str | None] = mapped_column(Text)
+
+
+class Transcript(_Row):
+    """Timestamped transcript of an audio source. Segments: [{start, end, text}] in seconds."""
+
+    __tablename__ = "transcript"
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.source.id", ondelete="CASCADE"), unique=True
+    )
+    language: Mapped[str | None] = mapped_column(String(10))
+    duration_s: Mapped[float | None]
+    model: Mapped[str] = mapped_column(String(80))
+    segments: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)

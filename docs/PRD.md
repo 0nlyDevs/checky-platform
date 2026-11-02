@@ -179,7 +179,7 @@ One flexible model, `item`, that becomes the domain object on day one (a claim, 
 ### M9. Speech-to-text (P2)
 
 - Record in the browser with MediaRecorder, or upload mp3, m4a, wav, webm.
-- Transcribe through Groq Whisper with a language hint (`fr`, `mg` or auto); split files longer than the provider limit.
+- Transcribe through Groq Whisper with a language hint (`fr`, `mg` or auto). Uploads are capped at 25 MB, the provider's limit, so no splitting is needed yet.
 - Output: segments with start and end times; the transcript is saved and can be ingested into RAG.
 - Play the audio from any segment by clicking its timestamp.
 

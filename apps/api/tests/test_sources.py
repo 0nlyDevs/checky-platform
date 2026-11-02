@@ -256,3 +256,94 @@ def test_sources_are_workspace_scoped(as_user):
     item = _claim(alice, ws)
     r = mallory.post(f"/api/v1/workspaces/{ws_m}/sources", json={"text": "x", "item_id": item})
     assert r.status_code == 404
+
+
+@pytest.fixture
+def whisper(monkeypatch):
+    from app.core import stt
+    from app.core.config import get_settings
+
+    monkeypatch.setattr(get_settings(), "groq_api_key", "key-groq")
+    monkeypatch.setattr(get_settings(), "ai_attempts", 2)
+
+    async def no_sleep(_):
+        pass
+
+    monkeypatch.setattr(stt, "_sleep", no_sleep)
+    calls = []
+    replies = []
+
+    def handler(request):
+        body = request.content.decode(errors="replace")
+        calls.append(body)
+        reply = replies.pop(0) if replies else None
+        if reply is not None:
+            return reply
+        return httpx.Response(
+            200,
+            json={
+                "text": " Bonjour, le prix du riz est stable. ",
+                "language": "french",
+                "duration": 4.2,
+                "segments": [
+                    {"start": 0.0, "end": 1.5, "text": " Bonjour,"},
+                    {"start": 1.5, "end": 4.2, "text": " le prix du riz est stable."},
+                ],
+            },
+        )
+
+    monkeypatch.setattr(stt, "_transport", httpx.MockTransport(handler))
+    return calls, replies
+
+
+def test_audio_upload_is_transcribed_with_timestamps(as_user, whisper):
+    calls, _ = whisper
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    src = _upload(alice, ws, "interview.m4a", "audio/mp4", b"fake-audio").json()
+    assert src["kind"] == "audio"
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}").json()
+    assert (src["status"], src["excerpt"]) == ("ready", "Bonjour, le prix du riz est stable.")
+    assert src["file"]["meta"] == {"duration_s": 4.2, "language": "french"}
+    tr = alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}/transcript").json()
+    assert tr["segments"][1] == {"start": 1.5, "end": 4.2, "text": "le prix du riz est stable."}
+    assert 'name="model"' in calls[0] and "whisper-large-v3" in calls[0]
+    assert 'name="language"' not in calls[0]
+
+
+def test_retranscribe_with_a_language_hint(as_user, whisper):
+    calls, _ = whisper
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    src = _upload(alice, ws, "fanazavana.ogg", "audio/ogg", b"fake-audio").json()
+    asyncio.run(queue.run_once())
+    r = alice.post(
+        f"/api/v1/workspaces/{ws}/sources/{src['id']}/transcribe", json={"language": "mg"}
+    )
+    assert (r.status_code, r.json()["status"]) == (202, "queued")
+    asyncio.run(queue.run_once())
+    assert 'name="language"' in calls[1] and "\r\n\r\nmg\r\n" in calls[1]
+    assert (
+        alice.post(
+            f"/api/v1/workspaces/{ws}/sources/{src['id']}/transcribe", json={"language": "french"}
+        ).status_code
+        == 422
+    )
+    text = alice.post(f"/api/v1/workspaces/{ws}/sources", json={"text": "x"}).json()
+    assert (
+        alice.post(f"/api/v1/workspaces/{ws}/sources/{text['id']}/transcribe", json={}).status_code
+        == 409
+    )
+
+
+def test_whisper_outage_marks_the_source_failed(as_user, whisper):
+    _, replies = whisper
+    replies.extend([httpx.Response(503), httpx.Response(503)])
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    src = _upload(alice, ws, "a.mp3", "audio/mpeg", b"fake-audio").json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{src['id']}").json()
+    assert src["status"] == "failed"
+    assert "503" in src["error"]

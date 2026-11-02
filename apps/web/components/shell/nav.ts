@@ -8,7 +8,7 @@ export const NAV: NavItem[] = [
   { label: t.nav.claims, icon: ListChecks, path: "affirmations" },
   { label: t.nav.check, icon: Search },
   { label: t.nav.sources, icon: Library, path: "sources" },
-  { label: t.nav.transcriptions, icon: AudioLines },
+  { label: t.nav.transcriptions, icon: AudioLines, path: "transcriptions" },
   { label: t.nav.members, icon: Users, path: "membres" },
   { label: t.nav.settings, icon: Settings, path: "parametres" },
 ];

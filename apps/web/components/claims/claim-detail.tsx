@@ -9,6 +9,7 @@ import useSWR from "swr";
 import { ArrowLeft, LoaderCircle, Pencil, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AirtimeStrip } from "@/components/claims/airtime-strip";
+import { AnalysisPanel } from "@/components/claims/analysis-panel";
 import { formatTime } from "@/components/claims/day-grid";
 import { StatusLabel, toClaim, VERDICT_META, VerdictBadge } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,10 @@ function describe(a: Activity, nameOf: (id: string) => string): string {
   if (a.action === "comment") return t.detail.events.commented;
   if (a.action === "delete") return t.detail.events.deleted;
   if (a.action === "source") return t.detail.events.sourceAdded;
+  if (a.action === "analysis") {
+    const v = (a.diff as { verdict_suggested?: string }).verdict_suggested;
+    return t.detail.events.analysed(v && v in VERDICT_META ? VERDICT_META[v as Verdict].label : "—");
+  }
   const diff = a.diff as Record<string, { from: unknown; to: unknown }>;
   if (diff.status) {
     const s = (v: unknown) => t.status[v as Status] ?? String(v);
@@ -353,6 +358,11 @@ export function ClaimDetail() {
           <Section title={`${t.detail.sources}${claim.sources ? ` (${claim.sources})` : ""}`}>
             <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.sources.panelLead}</p>
             <SourcesPanel ws={ws} itemId={id} />
+          </Section>
+
+          <Section title={t.analysis.title}>
+            <p className="-mt-1 mb-4 max-w-prose text-sm text-muted-foreground">{t.analysis.lead}</p>
+            <AnalysisPanel ws={ws} item={item} sourceCount={claim.sources} />
           </Section>
 
           <Section title={`${t.detail.comments}${comments?.length ? ` (${comments.length})` : ""}`}>
