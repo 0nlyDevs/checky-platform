@@ -158,6 +158,16 @@ export const en: Overrides = {
       busy: "The service is busy. Try again in a moment.",
       failed: "The check did not finish. Check your connection and try again.",
       report: "Report to a newsroom",
+      ask: {
+        title: "Ask a newsroom",
+        lead: "A newsroom checks this message and signs its answer. You get a link to follow it, with no account and no number.",
+        button: "Ask a newsroom",
+        sending: "Sending…",
+        done: (name: string, ref: string) => `Asked ${name}, reference ${ref}. Keep this link:`,
+        follow: "Follow the check",
+        failed: "The request did not go through. Try again in a moment.",
+        sms: "Or get the verdict by SMS",
+      },
       signed: {
         title: "A newsroom checked this message",
         by: (name: string, date: string) => `Checked by ${name}, on ${date}`,

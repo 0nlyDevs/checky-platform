@@ -21,6 +21,16 @@ export const publicLayer = {
     busy: "Le service est très demandé. Réessayez dans un instant.",
     failed: "La vérification n'a pas abouti. Vérifiez votre connexion et réessayez.",
     report: "Signaler à une rédaction",
+    ask: {
+      title: "Demander à une rédaction",
+      lead: "Une rédaction vérifie ce message et signe sa réponse. Vous recevez un lien pour suivre, sans compte ni numéro.",
+      button: "Demander à une rédaction",
+      sending: "Envoi…",
+      done: (name: string, ref: string) => `Demandé à ${name}, référence ${ref}. Gardez ce lien :`,
+      follow: "Suivre la vérification",
+      failed: "La demande n'est pas partie. Réessayez dans un instant.",
+      sms: "Ou recevoir le verdict par SMS",
+    },
     signed: {
       title: "Une rédaction a vérifié ce message",
       by: (name: string, date: string) => `Vérifié par ${name}, le ${date}`,

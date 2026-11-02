@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { useDay, useLang, useMoment, useT } from "@/lib/i18n";
 import { IconArrowRight, IconArrowSquareOut, IconCircleNotch, IconInfo, IconPaperPlaneTilt, IconSealCheck } from "@/lib/icons";
-import { publicApi, visitorCountry } from "@/lib/public-api";
+import { publicApi, rememberTip, visitorCountry } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
 type Review = { publisher: string; url: string; rating: string | null; date: string | null; title: string };
@@ -213,13 +213,8 @@ function Known({ result, asked }: { result: Verify; asked: string }) {
         <p className="font-display text-lg font-bold">{f.noVerdict}</p>
         {result.followed_since && <p className="mt-1 text-pretty">{f.following(moment(result.followed_since), result.followed_by)}</p>}
       </div>
+      <AskNewsroom text={asked} />
       <Notify text={asked} />
-      <Link
-        href={`/signaler?texte=${encodeURIComponent(asked.slice(0, 600))}`}
-        className="inline-flex h-11 items-center gap-2 rounded-md border border-foreground px-4 font-bold hover:bg-accent"
-      >
-        {c.report} <IconArrowRight className="size-4" aria-hidden />
-      </Link>
     </div>
   );
 }
@@ -275,6 +270,57 @@ function FactRow({ fact, index }: { fact: Fact; index: number }) {
 }
 
 /** « Me prévenir »: a phone number (or e-mail) to receive the verdict once a newsroom signs it. */
+/** « Demander à une rédaction »: the message becomes a tip, routed to the newsroom where it
+ * circulates (else the nearest), with a follow-up link; no account, no number. */
+function AskNewsroom({ text }: { text: string }) {
+  const t = useT();
+  const a = t.publicLayer.check.ask;
+  const [state, setState] = useState<"idle" | "sending" | "failed" | { token: string; ref: string; name: string }>("idle");
+
+  async function ask() {
+    setState("sending");
+    try {
+      const res = await publicApi<{ token: string; ref: string; newsroom?: { name: string } | null }>("/tips", {
+        method: "POST",
+        body: JSON.stringify({ text: text.slice(0, 4000), origin: "other", country: visitorCountry() }),
+      });
+      rememberTip({ token: res.token, ref: res.ref, title: text.slice(0, 120) });
+      setState({ token: res.token, ref: res.ref, name: res.newsroom?.name ?? "" });
+    } catch {
+      setState("failed");
+    }
+  }
+
+  return (
+    <section aria-labelledby="ask-title" className="rounded-md border-2 border-foreground bg-card p-4">
+      <h3 id="ask-title" className="font-display text-lg font-bold">
+        {a.title}
+      </h3>
+      {typeof state === "object" ? (
+        <div role="status" className="mt-1">
+          <p className="text-pretty">{a.done(state.name, state.ref)}</p>
+          <Link href={`/suivi/${state.token}`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-md bg-foreground px-4 font-bold text-background">
+            {a.follow} <IconArrowRight className="size-4" aria-hidden />
+          </Link>
+        </div>
+      ) : (
+        <>
+          <p className="mt-1 text-pretty text-muted-foreground">{a.lead}</p>
+          <Button type="button" variant="action" size="xl" className="mt-3" onClick={ask} disabled={state === "sending"}>
+            {state === "sending" ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconPaperPlaneTilt aria-hidden />}
+            {state === "sending" ? a.sending : a.button}
+          </Button>
+          {state === "failed" && (
+            <p className="mt-2 text-sm font-bold text-verdict-false-ink" role="alert">
+              {a.failed}
+            </p>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 function Notify({ text }: { text: string }) {
   const t = useT();
   const n = t.publicLayer.check.notify;
@@ -322,7 +368,7 @@ function Notify({ text }: { text: string }) {
   return (
     <form onSubmit={send} className="rounded-md border border-border bg-card p-4" aria-labelledby="notify-title">
       <h3 id="notify-title" className="font-display text-lg font-bold">
-        {n.title}
+        {t.publicLayer.check.ask.sms}
       </h3>
       <p className="mt-1 text-pretty text-muted-foreground">{n.lead}</p>
       <div className="mt-3 flex flex-wrap items-end gap-2">
