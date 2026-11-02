@@ -138,7 +138,7 @@ export function SiteFooter() {
   const LINKS = links(s);
   return (
     <footer className="border-t border-border print:hidden">
-      <div className="mx-auto grid max-w-[88rem] gap-8 px-4 py-10 md:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(0,1fr))] lg:px-10">
+      <div className="mx-auto grid max-w-[88rem] gap-8 px-4 pt-10 pb-28 md:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(0,1fr))] lg:px-10">
         <div>
           <Wordmark />
           <p className="mt-3 max-w-[46ch] text-pretty text-muted-foreground">{s.footer.what}</p>
