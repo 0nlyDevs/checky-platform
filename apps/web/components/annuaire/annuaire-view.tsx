@@ -27,13 +27,21 @@ function regionOf(c: Contact): string | null {
   return typeof l.region === "string" && l.region ? l.region : typeof l.name === "string" && l.name ? l.name : null;
 }
 
+/** « tel:+261340000001 » → « +261 34 00 000 01 »; other countries as stored. */
+function showNumber(url: string): string {
+  const n = url.replace(/^tel:/, "");
+  return /^\+261\d{9}$/.test(n) ? `+261 ${n.slice(4, 6)} ${n.slice(6, 8)} ${n.slice(8, 11)} ${n.slice(11)}` : n;
+}
+
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 function ContactCard({ contact, editor, onVerify, onRemove }: { contact: Contact; editor: boolean; onVerify: () => void; onRemove: () => void }) {
   const place = regionOf(contact) ?? a.national;
   const asked = Number(contact.stats?.asked ?? 0);
   const answered = Number(contact.stats?.answered ?? 0);
-  const pages = contact.official_pages.length ? contact.official_pages : contact.website ? [{ url: contact.website, verified: false }] : [];
+  const declared = contact.official_pages.filter((p) => p.kind !== "phone");
+  const numbers = contact.official_pages.filter((p) => p.kind === "phone");
+  const pages = declared.length ? declared : contact.website ? [{ url: contact.website, verified: false }] : [];
   return (
     <li className="flex flex-col rounded-md border border-border bg-card p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -78,6 +86,18 @@ function ContactCard({ contact, editor, onVerify, onRemove }: { contact: Contact
             </a>
           </p>
         )}
+        {numbers.map((p) => (
+          <p key={p.url} className="flex flex-wrap items-center gap-x-3">
+            <span className="inline-flex items-center gap-1">
+              {p.verified && <IconSealCheck className="size-3.5" aria-hidden />}
+              {a.officialNumber}
+              {p.verified && <span className="text-muted-foreground">({t.dossier.who.pageVerified})</span>}
+            </span>
+            <a href={p.url} className="font-display font-bold tabular underline decoration-border underline-offset-4 hover:decoration-foreground">
+              {showNumber(p.url)}
+            </a>
+          </p>
+        ))}
         {pages.map((p) => (
           <p key={p.url}>
             <a href={p.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 underline decoration-border underline-offset-4 hover:decoration-foreground">
@@ -124,6 +144,11 @@ function AddContact({ ws, onSaved, onCancel }: { ws: string; onSaved: () => void
     const form = new FormData(e.currentTarget);
     const text = (k: string) => String(form.get(k) ?? "").trim() || null;
     const website = text("website");
+    const numbers = (text("numbers") ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 6);
     setBusy(true);
     try {
       await api(`/workspaces/${ws}/contacts`, {
@@ -144,7 +169,7 @@ function AddContact({ ws, onSaved, onCancel }: { ws: string; onSaved: () => void
           whatsapp: text("whatsapp"),
           email: text("email"),
           website,
-          official_pages: website ? [{ kind: "site", url: website }] : [],
+          official_pages: [...(website ? [{ kind: "site", url: website }] : []), ...numbers.map((url) => ({ kind: "phone", url }))],
           hours: text("hours"),
           shared: form.has("shared"),
         }),
@@ -216,6 +241,13 @@ function AddContact({ ws, onSaved, onCancel }: { ws: string; onSaved: () => void
       <div className="space-y-1.5">
         <Label htmlFor="c-website">{f.website}</Label>
         <Input id="c-website" name="website" type="url" className="h-10" />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="c-numbers">{f.officialNumbers}</Label>
+        <Input id="c-numbers" name="numbers" inputMode="tel" maxLength={300} aria-describedby="c-numbers-hint" className="h-10" />
+        <p id="c-numbers-hint" className="text-sm text-muted-foreground">
+          {a.officialNumbersHint}
+        </p>
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="c-hours">{f.hours}</Label>

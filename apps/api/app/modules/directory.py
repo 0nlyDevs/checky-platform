@@ -23,11 +23,11 @@ from datetime import UTC, datetime
 from typing import Any, Literal
 
 from fastapi import APIRouter, Query, Request
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, TypeAdapter, model_validator
 from sqlalchemy import delete, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import dates, places
+from app.core import countries, dates, places
 from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
@@ -44,6 +44,7 @@ PUBLIC_AUTHOR = "public"  # the contact answering through a token link has no ac
 Phone = Field(default=None, max_length=60, pattern=r"^\+?[0-9 ()-]{3,60}$")
 
 
+_HTTP = TypeAdapter(HttpUrl)
 # Who an Annuaire entry is: an institution, its press officer, an expert, a journalist, a person
 # quoted in the news, a media outlet (its site and pages) or a page (a Facebook or TikTok page…).
 Kind = Literal["institution", "officer", "expert", "journalist", "person", "media", "page"]
@@ -52,11 +53,23 @@ NOT_ASKED = ("media", "page")
 
 
 class OfficialPage(BaseModel):
+    """A channel the contact declared: a page (`site`, `facebook`, `tiktok`, `x`, `youtube`…) or
+    an official number (`phone`, written « tel:+261… » once read in the newsroom's country)."""
+
     # `verified` is never read from a client: a journalist's « Vérifier » sets it on every page of the
     # contact at once, and any edit clears it again (see update_contact).
     model_config = ConfigDict(extra="forbid")
-    kind: str = Field(default="site", max_length=30)  # site|facebook|x|youtube|…
-    url: HttpUrl
+    kind: str = Field(default="site", max_length=30)
+    url: str = Field(min_length=3, max_length=2000)
+
+    @model_validator(mode="after")
+    def channel(self) -> "OfficialPage":
+        if self.kind == "phone" or self.url.lower().startswith("tel:"):
+            self.kind = "phone"
+            self.url = self.url.strip().removeprefix("tel:").removeprefix("TEL:").strip()
+        else:
+            self.url = str(_HTTP.validate_python(self.url))
+        return self
 
 
 class ContactIn(BaseModel):
@@ -128,7 +141,9 @@ def contact_out(c: Contact, ws: uuid.UUID | None = None) -> ContactOut:
     )
 
 
-async def _fields(db: AsyncSession, body: ContactIn, partial: bool = False) -> dict[str, Any]:
+async def _fields(
+    db: AsyncSession, ws: uuid.UUID, body: ContactIn, partial: bool = False
+) -> dict[str, Any]:
     values = body.model_dump(mode="json", exclude_unset=partial)
     place = values.pop("place", None)
     if place:
@@ -139,10 +154,27 @@ async def _fields(db: AsyncSession, body: ContactIn, partial: bool = False) -> d
         if key in values:
             values[key] = [v.strip()[:60] for v in values[key] if v and v.strip()]
     if "official_pages" in values:
-        values["official_pages"] = [
-            {**p, "verified": False} for p in values["official_pages"] or []
-        ]
+        country = await _country_code(db, ws)
+        pages = []
+        for p in values["official_pages"] or []:
+            p = {"kind": "site", **p}
+            if p["kind"] == "phone":
+                number = countries.phone(p["url"], country)
+                if not number:
+                    raise ApiError(422, "invalid_phone", f"Unreadable official number: {p['url']}")
+                p = {**p, "url": f"tel:{number}"}
+            pages.append({**p, "verified": False})
+        values["official_pages"] = pages
     return values
+
+
+async def _country_code(db: AsyncSession, ws: uuid.UUID) -> str:
+    """The newsroom's country as an ISO code: a number written the national way is read there."""
+    from app.modules.workspaces import newsroom_settings
+
+    workspace = await db.get(Workspace, ws)
+    country = newsroom_settings(workspace).country if workspace else None
+    return countries.code_for(country) or countries.DEFAULT
 
 
 def _visible(ws: uuid.UUID):
@@ -180,7 +212,9 @@ async def contacts(
 @router.post("/workspaces/{ws}/contacts", status_code=201)
 async def create_contact(body: ContactIn, member: AnyMember, db: Db) -> ContactOut:
     contact = Contact(
-        workspace_id=member.workspace_id, created_by=member.user.id, **await _fields(db, body)
+        workspace_id=member.workspace_id,
+        created_by=member.user.id,
+        **await _fields(db, member.workspace_id, body),
     )
     db.add(contact)
     await db.flush()
@@ -201,7 +235,7 @@ async def edit_contact(
     contact_id: uuid.UUID, body: ContactIn, member: AnyMember, db: Db
 ) -> ContactOut:
     contact = await _own(db, member.workspace_id, contact_id)
-    for key, value in (await _fields(db, body, partial=True)).items():
+    for key, value in (await _fields(db, member.workspace_id, body, partial=True)).items():
         setattr(contact, key, value)
     # Changing identity or channels invalidates any previous verification.
     contact.verified_at = contact.verified_by = None

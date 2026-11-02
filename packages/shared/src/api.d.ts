@@ -4307,17 +4307,18 @@ export interface components {
             /** Name */
             name: string;
         };
-        /** OfficialPage */
+        /**
+         * OfficialPage
+         * @description A channel the contact declared: a page (`site`, `facebook`, `tiktok`, `x`, `youtube`…) or
+         *     an official number (`phone`, written « tel:+261… » once read in the newsroom's country).
+         */
         "OfficialPage-Input": {
             /**
              * Kind
              * @default site
              */
             kind: string;
-            /**
-             * Url
-             * Format: uri
-             */
+            /** Url */
             url: string;
         };
         /** OfficialPage */

@@ -14427,9 +14427,8 @@
           },
           "url": {
             "type": "string",
-            "maxLength": 2083,
-            "minLength": 1,
-            "format": "uri",
+            "maxLength": 2000,
+            "minLength": 3,
             "title": "Url"
           }
         },
@@ -14438,7 +14437,8 @@
         "required": [
           "url"
         ],
-        "title": "OfficialPage"
+        "title": "OfficialPage",
+        "description": "A channel the contact declared: a page (`site`, `facebook`, `tiktok`, `x`, `youtube`…) or\nan official number (`phone`, written « tel:+261… » once read in the newsroom's country)."
       },
       "OfficialPage-Output": {
         "properties": {

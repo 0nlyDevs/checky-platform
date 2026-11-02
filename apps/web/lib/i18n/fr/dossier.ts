@@ -338,6 +338,8 @@ export const dossier = {
       media: "Média",
       page: "Page",
     } as Record<string, string>,
+    officialNumber: "Numéro officiel",
+    officialNumbersHint: "Les numéros que l'institution a elle-même déclarés (standard, ligne d'urgence) : un message qui donne un autre numéro en son nom se repère.",
     fields: {
       name: "Nom affiché",
       kind: "Type",
@@ -350,6 +352,7 @@ export const dossier = {
       whatsapp: "WhatsApp professionnel",
       email: "E-mail professionnel",
       website: "Page officielle",
+      officialNumbers: "Numéros officiels, séparés par des virgules",
       hours: "Horaires",
       shared: "Partager avec les autres rédactions",
     },

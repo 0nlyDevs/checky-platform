@@ -280,3 +280,42 @@ def test_outlets_journalists_people_and_pages_are_entries_nobody_asks(as_user):
     kinds = {c["contact"]["kind"] for p in asked["points"] for c in p["contacts"]}
     assert kinds and not kinds & {"media", "page"}
     assert alice.post(base, json={**JIRAMA, "kind": "party"}).status_code == 422
+
+
+def test_official_numbers_are_read_in_the_newsrooms_country(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}/contacts"
+    # Numbers written the national way are read in the newsroom's country, into one E.164 form.
+    made = _contact(
+        alice,
+        ws,
+        official_pages=[
+            {"kind": "site", "url": "https://www.jirama.mg"},
+            {"kind": "phone", "url": "034 00 000 01"},
+            {"url": "tel:+261 20 22 000 01"},
+        ],
+    )
+    assert [(p["kind"], p["url"]) for p in made["official_pages"]] == [
+        ("site", "https://www.jirama.mg/"),
+        ("phone", "tel:+261340000001"),
+        ("phone", "tel:+261202200001"),
+    ]
+    # A declared number is not a website: it never becomes an official host.
+
+    async def hosts():
+        async with SessionLocal() as db:
+            return await directory.official_hosts(db, uuid.UUID(ws))
+
+    alice.post(f"{base}/{made['id']}/verify")
+    assert asyncio.run(hosts()) == {"jirama.mg"}
+    refused = alice.post(
+        base, json={**JIRAMA, "official_pages": [{"kind": "phone", "url": "2026"}]}
+    )
+    assert refused.status_code == 422 and refused.json()["error"]["code"] == "invalid_phone"
+    assert (
+        alice.post(base, json={**JIRAMA, "official_pages": [{"url": "jirama"}]}).status_code == 422
+    )
+    alice.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"country": "France"}})
+    paris = _contact(alice, ws, official_pages=[{"kind": "phone", "url": "01 23 45 67 89"}])
+    assert paris["official_pages"][0]["url"] == "tel:+33123456789"
