@@ -8,7 +8,7 @@ import { IconArrowCounterClockwise, IconArrowsClockwise, IconCheck, IconCircleNo
 import { toast } from "sonner";
 import { undoable } from "@/lib/undo";
 import { NewsroomRules } from "@/components/claims/publication-panel";
-import { BeatsSection, PlaceSection } from "@/components/settings/newsroom-sections";
+import { BeatsSection, OfficialSourcesSection, PlaceSection } from "@/components/settings/newsroom-sections";
 import { PeopleAsk } from "@/components/settings/people-ask";
 import { RadiosSection } from "@/components/settings/radios-section";
 import { SmsSimulator } from "@/components/settings/sms-simulator";
@@ -225,6 +225,7 @@ export function SettingsView() {
           <NewsroomRules ws={ws} />
           <BeatsSection ws={ws} />
           <PlaceSection ws={ws} />
+          <OfficialSourcesSection ws={ws} />
           <PublicSection ws={ws} />
           <PeopleAsk ws={ws} />
           <SmsSimulator ws={ws} />
