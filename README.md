@@ -1,7 +1,12 @@
-# FANILO
+# Checky
 
-An app for newsrooms in Madagascar to verify claims, track misinformation and spot AI-generated
+Checky (« La torche des rédactions », named FANILO until 2 Nov 2026; the repos keep the old name) is an
+app for newsrooms, Madagascar first, to verify claims, track misinformation and spot AI-generated
 content, made for the **FANILO Hackathon** (IFM + French Embassy press service, Antananarivo).
+A journalist follows a rumour from its first appearance to a signed verdict, and Checky sends the
+truth back down the same road (WhatsApp, Facebook, radio, SMS, a printed poster). The product
+rules (knowing is not publishing, facts solid and readings dashed, the crew of checks, roles that
+follow the rumour's road) are in [`CLAUDE.md`](CLAUDE.md).
 
 The hackathon problem is presented on **Mon 2 Nov 2026, 08:00**. Hand-in is **Tue 3 Nov, 20:00**
 and the pitch is on **Wed 4 Nov**. Journalists follow each rumour from its first appearance to
