@@ -339,6 +339,7 @@ async def check_numbers(
                 "claimed": claim["claimed"],
                 "kind": claim["kind"],
                 "context": claim["context"],
+                "clause": claim["clause"],
                 "figure": figure,
                 "verdict": verdict,
                 "summary": _summary(claim, figure, verdict),
