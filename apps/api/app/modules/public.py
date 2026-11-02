@@ -314,9 +314,9 @@ async def match(body: MatchIn, db: Db) -> list[MatchOut]:
 
 
 async def _next_ref(db: Db, ws: uuid.UUID) -> str:
-    refs = await db.scalars(select(Item.data["ref"].astext).where(Item.workspace_id == ws))
-    nums = [int(m.group(1)) for r in refs if r and (m := re.match(r"FAN-(\d+)$", r))]
-    return f"FAN-{(max(nums) + 1) if nums else 1:04d}"
+    from app.core.refs import next_ref
+
+    return await next_ref(db, ws)
 
 
 @router.post("/tips", status_code=201)
