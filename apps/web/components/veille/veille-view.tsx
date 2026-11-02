@@ -6,7 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { IconArrowSquareOut, IconArrowsClockwise, IconCircleNotch, IconMapPin, IconMicrophone, IconWarning, IconX } from "@/lib/icons";
+import { IconArrowSquareOut, IconArrowsClockwise, IconCircleNotch, IconMapPin, IconRadio, IconWarning, IconX } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -163,7 +163,7 @@ function DeskVeille({ ws }: { ws: string }) {
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="xl">
             <Link href={`${pathname}?antenne=1` as never}>
-              <IconMicrophone aria-hidden />
+              <IconRadio aria-hidden />
               {t.rubrique.antenne.record}
             </Link>
           </Button>
