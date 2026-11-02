@@ -50,7 +50,7 @@ export function ToneCard({ tone, framing }: { tone?: Tone; framing?: Framing[] }
             <ul className="mt-2 space-y-1.5 text-sm">
               {tone.signals.map((s, i) => (
                 <li key={i} className="text-pretty">
-                  <span className="font-bold">{T.kinds[s.kind] ?? s.kind}</span> · <span className="text-muted-foreground">« {s.quote} »</span>
+                  <span className="font-bold">{T.kinds[s.kind] ?? s.kind}</span> · <span className="quote text-muted-foreground">« {s.quote} »</span>
                 </li>
               ))}
             </ul>
@@ -65,7 +65,7 @@ export function ToneCard({ tone, framing }: { tone?: Tone; framing?: Framing[] }
             {framing.map((f, i) => (
               <li key={i}>
                 <p className="font-bold">{T.framingKinds[f.kind] ?? f.kind}</p>
-                <blockquote className="text-pretty text-muted-foreground">« {f.quote} »</blockquote>
+                <blockquote className="quote text-pretty text-muted-foreground">« {f.quote} »</blockquote>
                 {f.explanation && <p className="text-pretty">{f.explanation}</p>}
               </li>
             ))}
@@ -90,7 +90,7 @@ export function RiskNote({ risk }: { risk?: Risk }) {
         <ul className="mt-2 space-y-1 text-sm">
           {risk.reasons.map((x, i) => (
             <li key={i} className="text-pretty">
-              <span className="font-bold">{R.kinds[x.kind] ?? x.kind}</span> · <span className="text-muted-foreground">« {x.quote} »</span>
+              <span className="font-bold">{R.kinds[x.kind] ?? x.kind}</span> · <span className="quote text-muted-foreground">« {x.quote} »</span>
             </li>
           ))}
         </ul>

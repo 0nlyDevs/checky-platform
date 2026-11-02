@@ -135,7 +135,7 @@ export function Lecture({ r }: { r: CrewResult }) {
                       <span className="font-bold">{e.source_title || src?.title}</span>
                     )}
                   </p>
-                  <blockquote className="mt-1.5 text-pretty text-muted-foreground">« {e.quote} »</blockquote>
+                  <blockquote className="quote mt-1.5 text-pretty text-muted-foreground">« {e.quote} »</blockquote>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {when ?? t.crew.undated}
                     {e.days_before != null && ` · ${L.before(e.days_before)}`}
@@ -160,7 +160,7 @@ export function Lecture({ r }: { r: CrewResult }) {
           <ul className="mt-2 space-y-3 text-sm">
             {r.critique.map((x, i) => (
               <li key={i}>
-                <blockquote className="text-pretty">
+                <blockquote className="quote text-pretty">
                   « {x.quote} » <span className="font-display text-xs font-bold tabular">[{x.result}]</span>
                 </blockquote>
                 {x.why && <p className="mt-1 text-pretty text-muted-foreground">{x.why}</p>}
