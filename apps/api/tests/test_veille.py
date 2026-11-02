@@ -4,16 +4,27 @@ import asyncio
 import uuid
 from datetime import UTC, datetime, timedelta
 
+import httpx
 import pytest
-from sqlalchemy import select, update
+from sqlalchemy import func, select, update
 
 from app.core import dates, storage
+from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import Item, Job, Route, Source
+from app.core.models import Item, Job, PublicQuestion, RadioClip, Route, Source
 from app.modules import veille
+from app.workers import queue, radio_capture, veille_poll
+from tests.test_public import _claim, _newsroom
 from tests.test_workspaces import _join, _workspace
 
 OBJECTS: dict[str, bytes] = {}
+
+
+@pytest.fixture(autouse=True)
+def _fresh():
+    veille._POLLED.clear()
+    yield
+    veille_poll._transport = None
 
 
 @pytest.fixture
@@ -284,12 +295,145 @@ def test_your_report_served_once_the_dossier_is_signed(as_user):
 
 
 # --- the feed and the map
+def test_the_feed_merges_tips_sms_clips_and_press_and_says_what_was_checked(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    other, _ = _newsroom(bob)
+    _claim(bob, other, "Le pont de Mangasoavina est fermé jusqu'à lundi", verdict="misleading")
+    ws, slug = _newsroom(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    tip = alice.post(
+        "/api/v1/public/tips",
+        json={"newsroom": slug, "text": "On dit que l'eau est coupée à Toamasina toute la semaine"},
+    )
+    assert tip.status_code == 201
+    _clip(alice, ws, "Un auditeur affirme que le pont de Mangasoavina est fermé jusqu'à lundi.")
+
+    async def roads(db):
+        db.add(
+            PublicQuestion(
+                workspace_id=uuid.UUID(ws),
+                text="Est-ce vrai que le bac est reporté à Fianarantsoa ?",
+                channel="sms",
+                contact_masked="+261 34 •• ••• 12",
+            )
+        )
+        db.add(
+            Item(
+                workspace_id=uuid.UUID(ws),
+                author_id="press",
+                type="press",
+                title="Délestage : la JIRAMA publie son programme à Antananarivo",
+                body="",
+                tags=[],
+                data={"link": "https://journal.test/a", "outlet": "Journal test"},
+            )
+        )
+
+    _db(roads)
+    feed = alice.get(base + "/veille").json()
+    kinds = sorted(e["kind"] for e in feed["entries"])
+    assert kinds == ["clip", "press", "sms", "tip"]
+    assert feed["counts"] == {"clip": 1, "press": 1, "sms": 1, "tip": 1}
+    clip = next(e for e in feed["entries"] if e["kind"] == "clip")
+    assert (
+        clip["already_checked"]["verdict"] == "misleading" and not clip["already_checked"]["mine"]
+    )
+    sms = next(e for e in feed["entries"] if e["kind"] == "sms")
+    assert sms["place"]["region"] == "Haute Matsiatra" and sms["beats"] == ["éducation"]
+    assert sms["already_checked"] is None
+    press = next(e for e in feed["entries"] if e["kind"] == "press")
+    assert press["station"] == "Journal test" and press["beats"] == ["énergie"]
+    assert [e["kind"] for e in alice.get(base + "/veille?kind=sms").json()["entries"]] == ["sms"]
+    only = alice.get(base + "/veille?region=Atsinanana").json()["entries"]
+    assert [e["kind"] for e in only] == ["tip"]
+    assert [e["kind"] for e in alice.get(base + "/veille?beat=énergie").json()["entries"]] == [
+        "press"
+    ]
+    assert bob.get(base + "/veille").status_code == 404
+    eve = as_user("eve")
+    _join(alice, eve, ws, "veilleur")
+    assert eve.get(base + "/veille").status_code == 403
 
 
 # --- Météo des rumeurs
 
 
 # --- press and radio capture jobs
+RSS = b"""<?xml version="1.0"?><rss version="2.0"><channel><title>Journal test</title>
+<item><title>D\xc3\xa9lestage : la centrale de Toamasina en panne</title>
+<link>https://journal.test/delestage</link><description>&lt;p&gt;La JIRAMA annonce des coupures.&lt;/p&gt;</description>
+<pubDate>Mon, 02 Nov 2026 05:00:00 GMT</pubDate></item>
+<item><title>Le festival de musique report\xc3\xa9</title><link>https://journal.test/festival</link></item>
+<item><title>Sans lien</title></item>
+</channel></rss>"""
+
+
+def test_the_press_reader_stores_new_articles_once(as_user, monkeypatch):
+    monkeypatch.setattr(
+        get_settings(), "press_feeds", "Journal test|https://journal.test/rss, ftp://nope"
+    )
+    calls = []
+
+    def handler(request):
+        calls.append(str(request.url))
+        return httpx.Response(200, content=RSS, headers={"content-type": "application/rss+xml"})
+
+    veille_poll._transport = httpx.MockTransport(handler)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    alice.post(base + "/signals", json={"word": "délestage"})
+    assert alice.post(base + "/veille/refresh").json() == {"queued": ["veille_poll"]}
+    assert asyncio.run(queue.run_once())
+    alice.post(base + "/veille/refresh")
+    assert asyncio.run(queue.run_once())
+    assert calls == ["https://journal.test/rss"] * 2
+    feed = alice.get(base + "/veille?kind=press").json()
+    assert feed["feeds_configured"]
+    titles = sorted(e["title"] for e in feed["entries"])
+    assert titles == [
+        "Délestage : la centrale de Toamasina en panne",
+        "Le festival de musique reporté",
+    ]
+    article = next(e for e in feed["entries"] if e["url"] == "https://journal.test/delestage")
+    assert (
+        article["place"]["region"] == "Atsinanana"
+        and article["text"] == "La JIRAMA annonce des coupures."
+    )
+    assert alice.get(base + "/signals").json()[0]["hits"] == 1
+    # the GET drives the reader at most every 20 minutes
+    alice.get(base + "/veille")
+    assert not asyncio.run(queue.run_once())
+
+
+def test_feed_and_stream_lists_are_parsed_leniently():
+    assert veille_poll.parse_feeds(
+        "https://www.journal.test/rss,  Midi|https://m.test/feed , nope"
+    ) == [
+        veille_poll.Feed("journal.test", "https://www.journal.test/rss"),
+        veille_poll.Feed("Midi", "https://m.test/feed"),
+    ]
+    assert radio_capture.parse_streams(
+        "RDJ|https://s.test/rdj|Analamanga, Fanambarana|https://s.test/f|Atsinanana|mg,|x,Bad|ftp://x"
+    ) == [
+        radio_capture.Stream("RDJ", "https://s.test/rdj", "Analamanga", "fr"),
+        radio_capture.Stream("Fanambarana", "https://s.test/f", "Atsinanana", "mg"),
+    ]
+    assert radio_capture.parse_streams("") == []
+
+
+def test_radio_capture_skips_quietly_without_ffmpeg(as_user, monkeypatch):
+    monkeypatch.setattr(get_settings(), "radio_streams", "RDJ|https://s.test/rdj|Analamanga")
+    monkeypatch.setattr(radio_capture.shutil, "which", lambda name: None)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    assert alice.post(f"/api/v1/workspaces/{ws}/veille/refresh").json() == {
+        "queued": ["radio_capture"]
+    }
+    assert asyncio.run(queue.run_once())
+    job = _db(lambda db: db.scalar(select(Job).where(Job.kind == "radio_capture")))
+    assert job.status == "done" and job.result == {"skipped": "no_ffmpeg"}
+    assert _db(lambda db: db.scalar(select(func.count()).select_from(RadioClip))) == 0
 
 
 # --- demo

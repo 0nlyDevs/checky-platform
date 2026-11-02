@@ -16,7 +16,9 @@ Clips carry no column for extra facts, so the demo flag lives in `location.demo`
 
 import logging
 import re
+import time
 import uuid
+from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
@@ -28,10 +30,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core import dates, storage
 from app.core.access import AnyMember, Db, Member, Veilleur
 from app.core.activity import broadcast, record
+from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.models import (
     File,
     Item,
+    PublicQuestion,
     RadioClip,
     Route,
     Signal,
@@ -40,6 +44,7 @@ from app.core.models import (
 )
 from app.core.places import MG_REGIONS, fold, gazetteer
 from app.core.words import words
+from app.workers import radio_capture, veille_poll  # registers the press and capture jobs
 from app.workers.queue import enqueue
 
 log = logging.getLogger("checky.veille")
@@ -878,6 +883,274 @@ async def ignore_clip(clip_id: uuid.UUID, member: AnyMember, db: Db) -> ClipOut:
 
 
 # ------------------------------------------------------------------------------ Veille feed
+class Checked(BaseModel):
+    """A verdict a journalist already signed for this rumour (this newsroom or a public one)."""
+
+    id: uuid.UUID
+    title: str
+    verdict: str
+    newsroom: str
+    mine: bool
+
+
+class FeedEntry(BaseModel):
+    id: str
+    kind: Literal["tip", "sms", "clip", "press"]
+    title: str
+    text: str
+    at: datetime
+    place: dict[str, Any] | None
+    station: str | None = None
+    url: str | None = None
+    item_id: uuid.UUID | None = None
+    ref: str | None = None
+    status: str
+    beats: list[str]
+    risk: str | None = None
+    already_checked: Checked | None = None
+    demo: bool = False
+
+
+class Already:
+    """« Déjà vérifié »: this newsroom's signed verdicts first, then the public archive of every
+    newsroom (`public.find_published`). Word overlap, never a model; memoised per request."""
+
+    def __init__(self, db: AsyncSession, workspace_id: uuid.UUID):
+        self.db, self.workspace_id = db, workspace_id
+        self._own: list[tuple[set[str], Item]] | None = None
+        self._name: str | None = None
+        self._memo: dict[str, Checked | None] = {}
+
+    async def _load(self) -> list[tuple[set[str], Item]]:
+        if self._own is None:
+            rows = await self.db.scalars(
+                select(Item).where(
+                    Item.workspace_id == self.workspace_id,
+                    Item.type == "claim",
+                    Item.status.in_(["verified", "published"]),
+                    Item.data["verdict"].astext.in_(list(VERDICTS)),
+                )
+            )
+            self._own = [(words(f"{i.title} {(i.body or '')[:400]}"), i) for i in rows]
+            ws = await self.db.get(Workspace, self.workspace_id)
+            self._name = ws.name if ws else ""
+        return self._own
+
+    async def __call__(self, text: str, skip: uuid.UUID | None = None) -> Checked | None:
+        said = words(text)
+        if len(said) < 2:
+            return None
+        key = f"{skip}|{' '.join(sorted(said))}"
+        if key in self._memo:
+            return self._memo[key]
+        found, best = None, 0.0
+        for known, item in await self._load():
+            score = overlap(said, known)
+            if item.id != skip and score > best and len(said & known) >= 2:
+                found, best = item, score
+        result = None
+        if found is not None and best >= 0.5:
+            result = Checked(
+                id=found.id,
+                title=found.title,
+                verdict=found.data["verdict"],
+                newsroom=self._name or "",
+                mine=True,
+            )
+        else:
+            from app.modules.public import find_published
+
+            for v in await find_published(self.db, text, k=3):
+                known = words(v.title)
+                if v.id != skip and overlap(said, known) >= 0.5 and len(said & known) >= 2:
+                    result = Checked(
+                        id=v.id,
+                        title=v.title,
+                        verdict=v.verdict,
+                        newsroom=v.newsroom.name,
+                        mine=False,
+                    )
+                    break
+        self._memo[key] = result
+        return result
+
+
+def _matches(entry: FeedEntry, region: str | None, beat: str | None) -> bool:
+    if region:
+        want = canonical_region(region) or region
+        got = (entry.place or {}).get("region")
+        if not got or fold(got) != fold(want):
+            return False
+    return not beat or fold(beat) in {fold(b) for b in entry.beats}
+
+
+def _risk(d: dict[str, Any]) -> str | None:
+    risk = d.get("risk")
+    return risk.get("level") if isinstance(risk, dict) else None
+
+
+async def feed_entries(
+    db: AsyncSession,
+    workspace: Workspace,
+    *,
+    days: int = 7,
+    region: str | None = None,
+    beat: str | None = None,
+    checked: bool = True,
+) -> list[FeedEntry]:
+    """Tips, SMS questions, radio clips and press items of the last `days`, newest first."""
+    from app.modules.rubrique import beats_for, offered_beats
+
+    offered = offered_beats(workspace)
+    since = datetime.now(UTC) - timedelta(days=days)
+    entries: list[FeedEntry] = []
+
+    rows = await db.scalars(
+        select(Item).where(
+            Item.workspace_id == workspace.id,
+            Item.created_at >= since,
+            (Item.type == "press") | (Item.data["public_tip"].astext == "true"),
+        )
+    )
+    for item in rows:
+        d = item.data or {}
+        press = item.type == "press"
+        at = dates.parse_moment(d.get("published_at" if press else "first_seen_at"))
+        tagged = set(item.tags or []) & set(offered)
+        entries.append(
+            FeedEntry(
+                id=f"item:{item.id}",
+                kind="press" if press else "tip",
+                title=item.title,
+                text=(item.body or "")[:600],
+                at=at or item.created_at,
+                place=_place_out(item_location(item)),
+                station=d.get("outlet") if press else None,
+                url=d.get("link") or d.get("tip_url"),
+                item_id=None if press else item.id,
+                ref=d.get("ref"),
+                status=item.status,
+                beats=sorted(tagged | set(beats_for(f"{item.title} {item.body}", offered))),
+                risk=_risk(d),
+                demo=bool(d.get("demo")),
+            )
+        )
+
+    for q in await db.scalars(
+        select(PublicQuestion).where(
+            PublicQuestion.workspace_id == workspace.id,
+            PublicQuestion.channel == "sms",
+            PublicQuestion.created_at >= since,
+        )
+    ):
+        loc = q.location if (q.location or {}).get("region") else region_of_text(q.text)
+        entries.append(
+            FeedEntry(
+                id=f"sms:{q.id}",
+                kind="sms",
+                title=first_sentence(q.text, 200),
+                text=q.text[:600],
+                at=q.created_at,
+                place=_place_out(loc),
+                station=q.contact_masked,
+                item_id=q.item_id,
+                status="followed" if q.item_id else "new",
+                beats=beats_for(q.text, offered),
+                demo=bool((q.location or {}).get("demo")),
+            )
+        )
+
+    clips = await recent_clips(db, workspace.id, days)
+    sources = await fill_from_transcripts(db, clips)
+    for c in clips:
+        out = _clip_out(c, sources.get(c.source_id) if c.source_id else None)
+        entries.append(
+            FeedEntry(
+                id=f"clip:{c.id}",
+                kind="clip",
+                title=first_sentence(out.heard_text, 200) or c.station,
+                text=out.heard_text[:600],
+                at=c.recorded_at,
+                place=out.location,
+                station=c.station,
+                item_id=c.item_id,
+                status=c.status,
+                beats=beats_for(out.heard_text, offered),
+                demo=out.demo,
+            )
+        )
+
+    entries = [e for e in entries if _matches(e, region, beat)]
+    entries.sort(key=lambda e: e.at, reverse=True)
+    entries = entries[:FEED_LIMIT]
+    if checked:
+        already = Already(db, workspace.id)
+        for e in entries:
+            e.already_checked = await already(f"{e.title} {e.text}", skip=e.item_id)
+    return entries
+
+
+class FeedOut(BaseModel):
+    entries: list[FeedEntry]
+    counts: dict[str, int]
+    since: datetime
+    feeds_configured: bool
+    streams_configured: bool
+
+
+_POLLED: dict[uuid.UUID, float] = {}
+POLL_EVERY = 20 * 60.0
+
+
+async def _maybe_poll(db: AsyncSession, member: Member, force: bool = False) -> list[str]:
+    """Queue the press reader (and, when asked, the radio capture) when they are configured, at
+    most every 20 minutes per newsroom: there is no scheduler, the desk's visits drive it."""
+    s = get_settings()
+    if not force and time.monotonic() - _POLLED.get(member.workspace_id, -POLL_EVERY) < POLL_EVERY:
+        return []
+    _POLLED[member.workspace_id] = time.monotonic()
+    queued = []
+    if veille_poll.parse_feeds(s.press_feeds):
+        await enqueue(db, member.workspace_id, member.user.id, "veille_poll", {})
+        queued.append("veille_poll")
+    if force and radio_capture.parse_streams(s.radio_streams):
+        await enqueue(db, member.workspace_id, member.user.id, "radio_capture", {})
+        queued.append("radio_capture")
+    return queued
+
+
+@router.get("/workspaces/{ws}/veille")
+async def veille(
+    member: AnyMember,
+    db: Db,
+    region: str | None = None,
+    beat: str | None = None,
+    kind: Literal["tip", "sms", "clip", "press"] | None = None,
+    days: int = 7,
+) -> FeedOut:
+    """What circulates: tips, SMS questions, radio clips and press items, newest first, each
+    marked « Déjà vérifié » when a journalist already signed a verdict on it."""
+    days = max(1, min(days, 30))
+    workspace = await db.get(Workspace, member.workspace_id)
+    await _maybe_poll(db, member)
+    entries = await feed_entries(db, workspace, days=days, region=region, beat=beat)
+    counts: dict[str, int] = defaultdict(int)
+    for e in entries:
+        counts[e.kind] += 1
+    s = get_settings()
+    return FeedOut(
+        entries=[e for e in entries if not kind or e.kind == kind],
+        counts=dict(counts),
+        since=datetime.now(UTC) - timedelta(days=days),
+        feeds_configured=bool(veille_poll.parse_feeds(s.press_feeds)),
+        streams_configured=bool(radio_capture.parse_streams(s.radio_streams)),
+    )
+
+
+@router.post("/workspaces/{ws}/veille/refresh", status_code=202)
+async def refresh(member: AnyMember, db: Db) -> dict[str, list[str]]:
+    """Read the press feeds (and capture the radio streams) now."""
+    return {"queued": await _maybe_poll(db, member, force=True)}
 
 
 # ----------------------------------------------------------------------- Météo des rumeurs
