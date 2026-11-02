@@ -1161,6 +1161,7 @@ async def refresh(member: AnyMember, db: Db) -> dict[str, list[str]]:
 
 class RegionCount(BaseModel):
     region: str
+    country: str | None = None
     lat: float | None
     lng: float | None
     last_24h: int
@@ -1169,16 +1170,31 @@ class RegionCount(BaseModel):
     kinds: dict[str, int]
 
 
+class CountryCount(BaseModel):
+    country: str
+    last_7d: int
+
+
 class MapOut(BaseModel):
     regions: list[RegionCount]
     unplaced: int
     total: int
+    # The country shown (the newsroom's by default, « monde » for every country), the newsroom's
+    # own, and what circulated in each country this week (the menu above the map).
+    country: str = "Madagascar"
+    home: str = "Madagascar"
+    countries: list[CountryCount] = Field(default_factory=list)
 
 
 @router.get("/workspaces/{ws}/veille/map")
-async def veille_map(member: AnyMember, db: Db) -> MapOut:
+async def veille_map(member: AnyMember, db: Db, country: str | None = None) -> MapOut:
     """Where rumours circulate: per region, the claims, clips, press items and questions of the
-    last 24 hours and 7 days, and how many dossiers were judged high-risk."""
+    last 24 hours and 7 days, and how many dossiers were judged high-risk. `country` (a name, or
+    « monde ») picks the country shown; the newsroom's own country by default."""
+    from app.modules.workspaces import newsroom_settings
+
+    home = newsroom_settings(await db.get(Workspace, member.workspace_id)).country
+    shown = (country or "").strip() or home
     since = datetime.now(UTC) - timedelta(days=7)
     day_ago = datetime.now(UTC) - timedelta(hours=24)
     counts: dict[str, dict[str, Any]] = {}
@@ -1190,8 +1206,11 @@ async def veille_map(member: AnyMember, db: Db) -> MapOut:
         if not region:
             tally["unplaced"] += 1
             return
+        where = (
+            "Madagascar" if region in MG_REGIONS else ((loc or {}).get("country") or home).strip()
+        )
         row = counts.setdefault(
-            region,
+            (where, region),
             {"last_24h": 0, "last_7d": 0, "high_risk": 0, "kinds": defaultdict(int), "loc": loc},
         )
         row["last_7d"] += 1
@@ -1223,8 +1242,14 @@ async def veille_map(member: AnyMember, db: Db) -> MapOut:
         loc = q.location if (q.location or {}).get("region") else region_of_text(q.text)
         add(loc, q.created_at, "sms" if q.channel == "sms" else "question")
 
+    per_country: dict[str, int] = defaultdict(int)
+    for (where, _), row in counts.items():
+        per_country[where] += row["last_7d"]
+    world = fold(shown) in {"monde", "world"}
     regions = []
-    for region, row in counts.items():
+    for (where, region), row in counts.items():
+        if not world and fold(where) != fold(shown):
+            continue
         lat = lng = None
         if region in MG_REGIONS:
             _, lat, lng = MG_REGIONS[region]
@@ -1233,6 +1258,7 @@ async def veille_map(member: AnyMember, db: Db) -> MapOut:
         regions.append(
             RegionCount(
                 region=region,
+                country=where,
                 lat=lat,
                 lng=lng,
                 last_24h=row["last_24h"],
@@ -1242,7 +1268,17 @@ async def veille_map(member: AnyMember, db: Db) -> MapOut:
             )
         )
     regions.sort(key=lambda r: (-r.last_24h, -r.last_7d, r.region))
-    return MapOut(regions=regions, unplaced=tally["unplaced"], total=tally["total"])
+    return MapOut(
+        regions=regions,
+        unplaced=tally["unplaced"],
+        total=tally["total"],
+        country="monde" if world else shown,
+        home=home,
+        countries=[
+            CountryCount(country=c, last_7d=n)
+            for c, n in sorted(per_country.items(), key=lambda x: (-x[1], x[0]))
+        ],
+    )
 
 
 # ----------------------------------------------------------------------- Météo des rumeurs

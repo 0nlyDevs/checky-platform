@@ -365,6 +365,26 @@ def test_the_map_counts_what_circulates_per_region(as_user):
     assert by["Atsinanana"]["lat"] == pytest.approx(-18.15)
     assert by["Boeny"]["kinds"] == {"clip": 1}
     assert out["unplaced"] == 1 and out["total"] == 4
+    assert out["country"] == out["home"] == "Madagascar"
+
+
+def test_the_map_shows_one_country_or_the_world(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    alice.post(base + "/items", json={"title": "Délestage à Toamasina"})
+    dakar = {"name": "Dakar", "country": "Sénégal", "region": "Dakar", "lat": 14.7, "lng": -17.4}
+    alice.post(base + "/items", json={"title": "Rumeur à Dakar", "data": {"location": dakar}})
+    home = alice.get(base + "/veille/map").json()
+    assert [r["region"] for r in home["regions"]] == ["Atsinanana"]
+    assert home["countries"] == [
+        {"country": "Madagascar", "last_7d": 1},
+        {"country": "Sénégal", "last_7d": 1},
+    ]
+    there = alice.get(base + "/veille/map", params={"country": "sénégal"}).json()
+    assert [(r["region"], r["lat"]) for r in there["regions"]] == [("Dakar", 14.7)]
+    world = alice.get(base + "/veille/map", params={"country": "monde"}).json()
+    assert world["country"] == "monde" and len(world["regions"]) == 2
 
 
 # --- Météo des rumeurs
