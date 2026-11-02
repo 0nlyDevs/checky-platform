@@ -169,13 +169,20 @@ def out(c: Communique, ws: Workspace | None, viewer: uuid.UUID, fakes: int = 0) 
     )
 
 
-async def _fake_counts(db: AsyncSession, ids: list[uuid.UUID]) -> dict[str, int]:
+async def _fake_counts(db: AsyncSession, viewer: uuid.UUID, ids: list[uuid.UUID]) -> dict[str, int]:
+    """Fakes caught per original, counting only the fakes this newsroom may read (its own and the
+    public newsrooms'): a private newsroom's work never leaks, not even as a number."""
     if not ids:
         return {}
     key = Communique.location["original_id"].astext
     rows = await db.execute(
         select(key, func.count())
-        .where(Communique.status == "fake_caught", key.in_([str(i) for i in ids]))
+        .join(Workspace, Workspace.id == Communique.workspace_id)
+        .where(
+            Communique.status == "fake_caught",
+            key.in_([str(i) for i in ids]),
+            or_(Communique.workspace_id == viewer, Workspace.is_public.is_(True)),
+        )
         .group_by(key)
     )
     return {k: n for k, n in rows.all()}
@@ -239,7 +246,9 @@ async def originals(
             ).limit(200)
         )
     ).all()
-    counts = await _fake_counts(db, [c.id for c, _ in rows if c.status == "original"])
+    counts = await _fake_counts(
+        db, member.workspace_id, [c.id for c, _ in rows if c.status == "original"]
+    )
     return [out(c, w, member.workspace_id, counts.get(str(c.id), 0)) for c, w in rows]
 
 
@@ -272,7 +281,7 @@ async def register(body: OriginalIn, member: Issuer, db: Db) -> CommuniqueOut:
 async def get_original(cid: uuid.UUID, member: Anyone, db: Db) -> CommuniqueOut:
     _ensure_reader(member)
     c, ws = await _get_visible(db, member, cid)
-    counts = await _fake_counts(db, [c.id])
+    counts = await _fake_counts(db, member.workspace_id, [c.id])
     return out(c, ws, member.workspace_id, counts.get(str(c.id), 0))
 
 

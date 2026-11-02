@@ -80,3 +80,21 @@ def test_a_journalist_cannot_register_but_records_a_fake_with_its_diff(as_user):
     assert [e["id"] for e in alice.get(base, params={"status": "fake_caught"}).json()] == [
         caught["id"]
     ]
+
+
+def test_a_private_newsrooms_fakes_are_never_counted_or_listed_elsewhere(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws, other = _workspace(alice), _workspace(bob, "Private desk")
+    cid = alice.post(f"/api/v1/workspaces/{ws}/registry", json=ORIGINAL).json()["id"]
+    _public(alice, ws)
+    # Bob's newsroom is not public: the fake it records stays inside it.
+    mine = bob.post(f"/api/v1/workspaces/{other}/registry/{cid}/fake", json={"text": RUMOUR})
+    assert mine.status_code == 201
+    assert bob.get(f"/api/v1/workspaces/{other}/registry/{cid}").json()["fakes"] == 1
+    assert alice.get(f"/api/v1/workspaces/{ws}/registry/{cid}").json()["fakes"] == 0
+    assert alice.get(f"/api/v1/workspaces/{ws}/registry").json()[0]["fakes"] == 0
+    assert alice.get(f"/api/v1/workspaces/{ws}/registry/{cid}/fakes").json() == []
+    assert alice.get(f"/api/v1/workspaces/{ws}/registry/{mine.json()['id']}").status_code == 404
+    # Once Bob's newsroom publishes, its fakes become part of the shared record.
+    _public(bob, other)
+    assert alice.get(f"/api/v1/workspaces/{ws}/registry/{cid}").json()["fakes"] == 1
