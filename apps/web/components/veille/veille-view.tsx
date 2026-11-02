@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { IconArrowSquareOut, IconArrowsClockwise, IconCircleNotch, IconGlobe, IconMapPin, IconRadio, IconWarning, IconX } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PeopleAsk } from "@/components/settings/people-ask";
 import { Skeleton } from "@/components/ui/skeleton";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "@/components/rubrique/bits";
 import { MeteoPanel } from "@/components/rubrique/meteo-panel";
@@ -308,6 +309,8 @@ function DeskVeille({ ws }: { ws: string }) {
               </ul>
             )}
           </section>
+          {/* « N personnes ont demandé »: the public's questions are a signal like the rest. */}
+          <PeopleAsk ws={ws} />
         </div>
 
         <aside className="min-w-0 space-y-10">
@@ -326,8 +329,8 @@ function DeskVeille({ ws }: { ws: string }) {
 
 /**
  * Veille: what circulates (tips, SMS questions, radio clips, press) on a map and in a feed, with
- * the radio grouped by claim, the watched words and the season. A veilleur sees only À l'antenne,
- * the recorder; anyone else reaches it with `?antenne=1`.
+ * the radio grouped by claim, what the public asks, the watched words and the season.
+ * « Entendu à la radio » (the ten-second form) opens with `?antenne=1`.
  */
 export function VeilleView() {
   const { ws } = useParams<{ ws: string }>();

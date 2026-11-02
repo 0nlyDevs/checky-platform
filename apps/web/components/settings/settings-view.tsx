@@ -9,7 +9,6 @@ import { toast } from "sonner";
 import { undoable } from "@/lib/undo";
 import { NewsroomRules } from "@/components/claims/publication-panel";
 import { BeatsSection, OfficialSourcesSection, PlaceSection } from "@/components/settings/newsroom-sections";
-import { PeopleAsk } from "@/components/settings/people-ask";
 import { RadiosSection } from "@/components/settings/radios-section";
 import { SmsSimulator } from "@/components/settings/sms-simulator";
 import { MembersView } from "@/components/members/members-view";
@@ -227,7 +226,6 @@ export function SettingsView() {
           <PlaceSection ws={ws} />
           <OfficialSourcesSection ws={ws} />
           <PublicSection ws={ws} />
-          <PeopleAsk ws={ws} />
           <SmsSimulator ws={ws} />
           <RadiosSection ws={ws} canEdit />
           <HealthSection />
