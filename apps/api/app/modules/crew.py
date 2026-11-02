@@ -90,6 +90,12 @@ KIND_FR = {
 }
 RISK_FR = {"high": "élevé", "medium": "moyen", "low": "faible"}
 LEVEL_FR = {"eleve": "Élevé", "moyen": "Moyen", "faible": "Faible"}
+VERDICT_FR = {
+    "true": "Vrai",
+    "misleading": "Trompeur",
+    "false": "Faux",
+    "unverifiable": "Invérifiable",
+}
 SEARCH_FR = {"ok": "faite", "partial": "partielle", "unavailable": "indisponible", "empty": "vide"}
 REGISTRY_SUMMARY = {
     "authentic": "Texte identique à l'original déposé",
@@ -984,7 +990,8 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
         )
         cleaned = linkcheck.clean_verdict(linkcheck._json(completion.content), pool)
         analysis = shape_analysis(cleaned, state, completion, rumour)
-        return {"analysis": analysis, "_summary": analysis["verdict"]}
+        word = VERDICT_FR[analysis["verdict"]]
+        return {"analysis": analysis, "_summary": f"Lecture suggérée : {word}"}
 
     async def critic(state):
         analysis = state.get("analysis")

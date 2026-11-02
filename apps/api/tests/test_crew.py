@@ -256,6 +256,8 @@ def test_three_model_calls_quotes_bound_and_one_targeted_loop(
     assert result["recheck"]["results"][0]["url"] == "https://example.org/capitainerie"
     assert research["search"] == 1  # the first search is not run again
     assert research["queries"] == ["port Rio fermé", "port Rio fermé démenti"]
+    synthesis = [d for e, d in events if e == "agent" and d["agent"] == "Synthèse"][-1]
+    assert synthesis["summary"] == "Lecture suggérée : Faux"
     runs = [d["agent"] for e, d in events if e == "agent" and d["status"] == "running"]
     assert runs.count("Web") == 2 and runs.count("Registre") == 1 and runs.count("Synthèse") == 1
     # the risk keeps only reasons quoted from the text
