@@ -247,12 +247,22 @@
   textarea {
     caret-color: var(--foreground);
   }
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="range"] {
+    accent-color: var(--primary);
+  }
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
   a {
     text-underline-offset: 3px;
+  }
+  /* The browser's yellow highlight is a colour outside the verdicts. */
+  mark {
+    background: transparent;
+    color: inherit;
   }
   /* Times, counts and FAN references line up in columns. */
   time,
