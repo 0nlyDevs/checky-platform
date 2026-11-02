@@ -715,6 +715,7 @@ export const fr = {
     open: "Ouvrir l'assistant",
     close: "Fermer l'assistant",
     ask: "Demander à Checky",
+    hint: "Une question ? Demandez à Checky",
     title: "Assistant Checky",
     leadPublic: "Je réponds à partir des verdicts publiés par les rédactions et je cite mes dossiers. Je peux aussi préparer un signalement, vous dire où en sont les vôtres et vous ouvrir la bonne page. Je n'invente jamais de verdict.",
     leadDesk: "Je lis le desk et vos sources : ce qui circule depuis le plus longtemps, la nuit en bref, les affirmations sans source. Je prépare les actions, vous confirmez. Je ne confirme jamais un verdict et je ne publie jamais.",

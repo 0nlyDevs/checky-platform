@@ -860,6 +860,71 @@
   }
 }
 
+/* First visit: a hand-drawn arrow to Checky, drawn once. */
+.checky-hint {
+  position: fixed;
+  z-index: 28;
+  right: calc(var(--inset) + 50px);
+  bottom: calc(var(--inset) + 40px);
+  width: 300px;
+  height: 104px;
+  pointer-events: none;
+  animation: hint-in 0.3s 0.2s both;
+}
+.checky-hint p {
+  position: absolute;
+  left: 0;
+  bottom: 6px;
+  width: 186px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--background);
+  text-align: right;
+  font-family: var(--font-quote);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 21px;
+  line-height: 1.15;
+  color: var(--foreground);
+}
+.checky-hint svg {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 110px;
+  height: 96px;
+  overflow: visible;
+}
+.checky-hint path {
+  fill: none;
+  stroke: var(--foreground);
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw 1.1s cubic-bezier(0.65, 0, 0.35, 1) 0.35s forwards;
+}
+.checky-hint path + path {
+  animation-delay: 1.3s;
+  animation-duration: 0.35s;
+}
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes hint-in {
+  from {
+    opacity: 0;
+  }
+}
+@media (max-width: 900px) {
+  .checky-hint {
+    display: none;
+  }
+}
+
 /* The assistant: a panel growing out of the Checky button's corner, above it. */
 .assistant-panel {
   position: fixed;
