@@ -206,3 +206,29 @@ def test_a_number_left_on_the_site_is_handed_to_the_gateway(as_user):
     assert asyncio.run(_notify(item)) == 1
     box = TestClient(app).get("/api/v1/public/sms/outbox", headers=GW).json()
     assert [m["to"] for m in box] == ["+261329999994"]
+
+
+def test_the_simulator_answers_from_a_fictional_number_and_never_sends(as_user, monkeypatch):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _newsroom(alice)
+    item = _claim(alice, ws, CLAIM, reason="Le communiqué annonce 4 heures par jour.")
+    url = f"/api/v1/workspaces/{ws}/sms/simulate"
+    out = alice.post(url, json={"text": RUMOUR}).json()
+    assert out["inbound"]["action"] == "verdict" and out["inbound"]["verdict_id"] == item
+    assert out["inbound"]["masked"] == "+261 34 •• ••• 09"
+    assert [m["status"] for m in out["replies"]] == ["simulated"]
+    assert out["replies"][0]["text"].startswith("Faux — ")
+    for _ in range(6):  # rehearsals are not limited
+        assert alice.post(url, json={"text": "AIDE"}).status_code == 200
+    # the gateway never receives what was written to the fictional block
+    assert TestClient(app).get("/api/v1/public/sms/outbox", headers=GW).json() == []
+    real = {"from": "+261 32 99 999 95", "text": "AIDE"}
+    assert alice.post(url, json=real).json()["error"]["code"] == "fictional_only"
+    log = alice.get(f"/api/v1/workspaces/{ws}/sms/messages").json()
+    assert {m["direction"] for m in log} == {"in", "out"}
+    # admins only
+    token = alice.post(f"/api/v1/workspaces/{ws}/invitations", json={"role": "editor"}).json()
+    bob.post(f"/api/v1/invitations/{token['token']}/accept")
+    assert bob.post(url, json={"text": "AIDE"}).status_code == 403
+    monkeypatch.setattr(get_settings(), "sms_gateway_secret", "")
+    assert alice.post(url, json={"text": "AIDE"}).status_code == 503

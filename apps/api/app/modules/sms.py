@@ -29,7 +29,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 
 from app.core import contact, places
-from app.core.access import Db
+from app.core.access import Admin, Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
@@ -476,3 +476,56 @@ async def notify_signed(db, item: Item) -> int:
                 queued += 1
     await db.commit()
     return queued
+
+
+# --- Paramètres: try the line from the desk, and read what it wrote
+class SimulateIn(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    from_: str = Field(default="+261 34 00 000 09", alias="from", max_length=40)
+    text: str = Field(min_length=1, max_length=480)
+
+
+class SimulateOut(BaseModel):
+    inbound: InboundOut
+    replies: list[SmsOut]
+
+
+@router.post("/workspaces/{ws}/sms/simulate")
+async def simulate(body: SimulateIn, admin: Admin, db: Db) -> SimulateOut:
+    """The phone-shaped form in Paramètres: the gateway's own handling, with the secret kept on the
+    server, from the fictional block only, so its replies are shown and never sent."""
+    gateway(get_settings().sms_gateway_secret)
+    try:
+        _, number = contact.normalise(body.from_)
+    except ValueError as exc:
+        raise ApiError(
+            422, "fictional_only", "The simulator writes from +261 34 00 000 xx"
+        ) from exc
+    if not FICTIONAL.match(number):
+        raise ApiError(422, "fictional_only", "The simulator writes from +261 34 00 000 xx")
+    started = datetime.now(UTC) - timedelta(seconds=1)
+    result = await handle(db, number, body.text, None)
+    replies = await db.scalars(
+        select(SmsMessage)
+        .where(
+            SmsMessage.direction == "out",
+            SmsMessage.phone_hash == result.phone_hash,
+            SmsMessage.created_at >= started,
+        )
+        .order_by(SmsMessage.created_at)
+    )
+    return SimulateOut(inbound=result, replies=[_sms_out(m) for m in replies])
+
+
+@router.get("/workspaces/{ws}/sms/messages")
+async def messages(
+    admin: Admin, db: Db, limit: int = Query(default=30, ge=1, le=200)
+) -> list[SmsOut]:
+    """The newsroom's latest SMS in and out (numbers masked), simulated ones included."""
+    rows = await db.scalars(
+        select(SmsMessage)
+        .where(SmsMessage.workspace_id == admin.workspace_id)
+        .order_by(SmsMessage.created_at.desc())
+        .limit(limit)
+    )
+    return [_sms_out(m) for m in rows]
