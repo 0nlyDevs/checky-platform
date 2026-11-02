@@ -8,6 +8,7 @@ import { IconArrowCounterClockwise, IconArrowsClockwise, IconCheck, IconCircleNo
 import { toast } from "sonner";
 import { NewsroomRules } from "@/components/claims/publication-panel";
 import { BeatsSection, PlaceSection } from "@/components/settings/newsroom-sections";
+import { PeopleAsk } from "@/components/settings/people-ask";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
@@ -203,6 +204,8 @@ export function SettingsView() {
   const { ws } = useParams<{ ws: string }>();
   const { role } = useWorkspace(ws);
   const admin = role === "admin";
+  // Veilleurs and institutions do not read the desk's questions or partners (journalist and up).
+  const desk = admin || role === "editor" || role === "journalist";
 
   return (
     <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
@@ -222,6 +225,7 @@ export function SettingsView() {
               <PublicSection ws={ws} />
             </>
           )}
+          {desk && <PeopleAsk ws={ws} />}
           {admin ? (
             <>
               <HealthSection />
