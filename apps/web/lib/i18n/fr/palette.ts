@@ -1,9 +1,9 @@
 export const palette = {
   title: "Rechercher partout",
-  description: "Espaces, dossiers et actions. Flèches pour choisir, Entrée pour ouvrir, Échap pour fermer.",
-  placeholder: "Un espace, un dossier, une action",
+  description: "Sections, dossiers et actions. Flèches pour choisir, Entrée pour ouvrir, Échap pour fermer.",
+  placeholder: "Une section, un dossier, une action",
   list: "Résultats",
-  groups: { spaces: "Espaces", claims: "Dossiers", actions: "Actions" },
+  groups: { spaces: "Sections", claims: "Dossiers", actions: "Actions" },
   empty: "Rien ne correspond. Essayez « sources », une référence de dossier ou « thème ».",
   loading: "Recherche des dossiers…",
   actions: { check: "Vérifier un contenu", ask: "Demander à Checky", theme: "Changer de thème", shortcuts: "Raccourcis clavier" },

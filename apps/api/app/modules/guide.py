@@ -50,7 +50,7 @@ PAGES = {
     "verifies": ("/verifies", "Les verdicts"),
     "signaler": ("/signaler", "Signaler une rumeur"),
     "connexion": ("/connexion", "Se connecter"),
-    "inscription": ("/inscription", "Créer l'espace d'une rédaction"),
+    "inscription": ("/inscription", "Inscrire sa rédaction"),
 }
 
 GUIDE_SYSTEM = (

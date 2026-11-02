@@ -8,7 +8,7 @@ import { palette as p } from "@/lib/i18n/fr/palette";
 import { IconX } from "@/lib/icons";
 
 /** G then a letter: where it goes, relative to /w/[ws]. */
-const GO: Record<string, string> = { d: "affirmations", s: "sources", e: "membres", p: "parametres" };
+const GO: Record<string, string> = { d: "affirmations", s: "sources", e: "parametres#equipe", p: "parametres" };
 const G_WINDOW_MS = 1200;
 
 const typing = (el: EventTarget | null) => {

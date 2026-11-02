@@ -252,7 +252,7 @@ def _nullable(schema: dict[str, Any]) -> dict[str, Any]:
 
 DESK_REFUSAL = (
     "Ce n'est pas mon rôle : je vérifie des affirmations à partir des sources de votre espace, "
-    "des fact-checkeurs, de Wikipedia et du web, et j'aide à faire avancer le travail du desk. "
+    "des fact-checkeurs, de Wikipedia et du web, et j'aide à faire avancer le travail de la rédaction. "
     "Posez-moi une question de vérification."
 )
 
