@@ -87,8 +87,12 @@ Dedicated search: `WEB_SEARCH_PROVIDER=auto|tavily|duckduckgo`. `auto` chooses T
 uncached Tavily search, the backend verifies `/usage`: only Researcher/free accounts with a
 plan limit ≤1,000, remaining quota and pay-as-you-go disabled are accepted. Search is always
 `basic`, with automatic upgrades and generated answers disabled. No POST retry or automatic
-HTML fallback on API failure. Keys stay server-side; users need no account. This provider
-cannot be activated or production-tested without an operator's key. Setup: `docs/WEB_SEARCH.md`.
+HTML fallback on API failure. Keys stay server-side; users need no account. Setup: `docs/WEB_SEARCH.md`.
+Production (Render) runs `WEB_SEARCH_PROVIDER=tavily` since 2 Nov: DuckDuckGo's HTML pages never answer
+Render's addresses (every web and fact-check search timed out at 12 s while Wikipedia answered in
+0.6 s through the same client), whereas they answer locally in ~1.5 s. Checked live on the PARC text:
+web 6 results in 3.5 s (newsmada, parcrobotics.org…). Keep the key out of local `.env` files so local
+runs do not spend the production quota (tests blank it anyway).
 Public URL downloads pin a checked public IP for each redirect, preserving Host/TLS SNI, so
 the HTTP transport cannot re-resolve an attacker-controlled domain to an internal address.
 Connection is optional for saving a dossier or choosing newsroom analysis: the extension uses
