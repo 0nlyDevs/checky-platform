@@ -69,6 +69,9 @@ TEXT_CHARS = 6000
 PASSAGE_CHARS = 2200
 # A newsroom passage this close to the message counts as « déjà dans vos sources ».
 ARCHIVE_MIN_SCORE = 0.75
+# Without embeddings: distinctive words shared with the message (two matched a rice-price note
+# against a power-cut rumour on « Antananarivo » and « hausse »).
+ARCHIVE_MIN_WORDS = 3
 STEP_OF = {"read": "claims", "facts": "search", "synthesis": "verdict"}
 # Fact kinds that live outside the newsroom (shown on the sources wall, attachable as links).
 OUTSIDE = ("web", "fact-check", "wikipedia", "recheck")
@@ -449,7 +452,7 @@ async def _archives(ws: uuid.UUID, text: str, use_embeddings: bool) -> list[dict
             "kind": s.kind,
         }
         for score, s in scored[:4]
-        if score >= 2
+        if score >= ARCHIVE_MIN_WORDS
     ]
 
 
