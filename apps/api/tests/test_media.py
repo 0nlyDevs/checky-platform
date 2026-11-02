@@ -190,3 +190,19 @@ def test_real_ffprobe_refuses_a_playlist_pointing_at_a_local_file(tmp_path):
     assert asyncio.run(sample_frames(playlist.encode(), 1, ffmpeg)) == []
     meta, *_ = asyncio.run(ingest.video_meta_and_audio(secret.read_bytes(), "video/mp4"))
     assert meta["container"] == "mov"
+
+
+def test_the_safe_copy_is_one_frame_without_exif():
+    exif = Image.Exif()
+    exif[0x010F] = "Canon"
+    photo = io.BytesIO()
+    Image.new("RGB", (48, 48), "white").save(photo, format="JPEG", exif=exif)
+    copy, faces = blur_faces(photo.getvalue())
+    assert faces == 0 and copy.startswith(b"\xff\xd8")
+    assert not Image.open(io.BytesIO(copy)).getexif()
+
+    pages = io.BytesIO()
+    first, second = Image.new("RGB", (32, 32), "red"), Image.new("RGB", (32, 32), "blue")
+    first.save(pages, format="TIFF", save_all=True, append_images=[second])
+    with pytest.raises(ValueError, match="Multi-frame"):
+        blur_faces(pages.getvalue())

@@ -381,8 +381,8 @@ def test_video_keyframes_are_stored_with_their_blurred_copy_and_reverse_search(
         ]
 
     def blur(raw):
-        # The second frame shows a face.
-        return (b"blurred", 1) if raw.endswith(b"1") else (raw, 0)
+        # The second frame shows a face; every frame gets a re-encoded copy all the same.
+        return (b"blurred", 1) if raw.endswith(b"1") else (b"re-encoded", 0)
 
     monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)
     monkeypatch.setattr(ingest.media, "sample_frames", frames)
@@ -397,16 +397,15 @@ def test_video_keyframes_are_stored_with_their_blurred_copy_and_reverse_search(
     assert [f["at_s"] for f in previews] == [0, 1, 2, 3]
     assert [f["faces"] for f in previews] == [0, 1, 0, 0]
     shown = [f["image_url"].removeprefix("https://s3.test/").removesuffix("?get") for f in previews]
-    # The frame with a face is shown blurred; the original stays next to it, inside the desk.
-    assert OBJECTS[shown[1]] == b"blurred" and shown[1].endswith("1.blur.jpg")
-    assert OBJECTS[shown[0]] == b"\xff\xd8frame0"
-    assert OBJECTS[shown[1].replace(".blur.jpg", ".jpg")] == b"\xff\xd8frame1"
+    # Every frame is shown as its safe copy (the face blurred); the originals stay in the desk.
+    assert all(key.endswith(f"{i}.safe.jpg") for i, key in enumerate(shown))
+    assert OBJECTS[shown[1]] == b"blurred" and OBJECTS[shown[0]] == b"re-encoded"
+    assert OBJECTS[shown[1].replace(".safe.jpg", ".jpg")] == b"\xff\xd8frame1"
     assert all("lens.google.com/uploadbyurl" in f["reverse_search"][0]["url"] for f in previews)
-    # Reverse-search engines only ever receive the blurred copy.
-    assert all("1.blur.jpg" in link["url"] for link in previews[1]["reverse_search"])
-    assert not any(
-        "frames%2F1.jpg" in link["url"] for f in previews for link in f["reverse_search"]
-    )
+    # Reverse-search engines only ever receive the safe copies, never an original frame.
+    for i, frame in enumerate(previews):
+        assert all(f"{i}.safe.jpg" in link["url"] for link in frame["reverse_search"])
+        assert not any(f"frames%2F{i}.jpg" in link["url"] for link in frame["reverse_search"])
 
 
 def test_failed_face_detection_hides_the_frame_but_keeps_the_source(as_user, whisper, monkeypatch):
@@ -457,14 +456,38 @@ def test_an_image_with_a_face_is_shown_and_searched_blurred(as_user, monkeypatch
     asyncio.run(queue.run_once())
     src = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()
     picture = src["file"]["picture"]
-    assert picture["faces"] == 2 and picture["image_url"].endswith("foule.blur.jpg?get")
+    assert picture["faces"] == 2 and picture["image_url"].endswith("foule.safe.jpg?get")
     assert OBJECTS[picture["image_url"].removeprefix("https://s3.test/").removesuffix("?get")] == (
         b"blurred"
     )
-    assert all("foule.blur.jpg" in link["url"] for link in picture["reverse_search"])
+    assert all("foule.safe.jpg" in link["url"] for link in picture["reverse_search"])
     # The link check hands reverse-search engines the same blurred copy, never the upload.
     page = asyncio.run(linkcheck.read_source(uuid.UUID(ws), uuid.UUID(made["id"])))
-    assert page["image_url"].endswith("foule.blur.jpg?get")
+    assert page["image_url"].endswith("foule.safe.jpg?get")
+
+
+def test_a_picture_without_faces_is_still_shared_as_a_re_encoded_copy(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    made = _upload(alice, ws, "marche.jpg", "image/jpeg", _jpeg_with_exif()).json()
+    asyncio.run(queue.run_once())
+    picture = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()["file"]["picture"]
+    assert picture["faces"] == 0 and picture["image_url"].endswith("marche.safe.jpg?get")
+    copy = OBJECTS[picture["image_url"].removeprefix("https://s3.test/").removesuffix("?get")]
+    assert not Image.open(io.BytesIO(copy)).getexif()  # the camera's EXIF stays in the desk
+
+
+def test_an_animated_image_is_hidden_since_later_frames_go_unchecked(as_user):
+    frames = [Image.new("RGB", (32, 32), c) for c in ("red", "blue", "green")]
+    gif = io.BytesIO()
+    frames[0].save(gif, format="GIF", save_all=True, append_images=frames[1:], duration=100)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    made = _upload(alice, ws, "boucle.gif", "image/gif", gif.getvalue()).json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()
+    assert src["status"] == "ready"
+    assert src["file"]["picture"] == {"faces": None, "image_url": None, "reverse_search": []}
 
 
 def test_an_image_whose_faces_could_not_be_checked_never_leaves_the_desk(as_user, monkeypatch):
