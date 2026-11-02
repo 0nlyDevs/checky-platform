@@ -45,10 +45,11 @@ Phone = Field(default=None, max_length=60, pattern=r"^\+?[0-9 ()-]{3,60}$")
 
 
 class OfficialPage(BaseModel):
+    # `verified` is never read from a client: an editor's « Vérifier » sets it on every page of the
+    # contact at once, and any edit clears it again (see update_contact).
     model_config = ConfigDict(extra="forbid")
     kind: str = Field(default="site", max_length=30)  # site|facebook|x|youtube|…
     url: HttpUrl
-    verified: bool = False
 
 
 class ContactIn(BaseModel):
@@ -130,6 +131,10 @@ async def _fields(db: AsyncSession, body: ContactIn, partial: bool = False) -> d
     for key in ("topics", "languages"):
         if key in values:
             values[key] = [v.strip()[:60] for v in values[key] if v and v.strip()]
+    if "official_pages" in values:
+        values["official_pages"] = [
+            {**p, "verified": False} for p in values["official_pages"] or []
+        ]
     return values
 
 
@@ -230,10 +235,14 @@ async def official_hosts(db: AsyncSession, workspace_id: uuid.UUID) -> set[str]:
     grid): a page counts once an editor verified it, never because it was declared."""
     hosts: set[str] = set()
     for c in await db.scalars(select(Contact).where(_visible(workspace_id))):
+        # The contact's own verification stamp is the only source of truth: a page's flag is
+        # derived from it and never trusted on its own.
+        if not c.verified_at:
+            continue
         for page in c.official_pages or []:
             if page.get("verified") and (h := host(page.get("url"))):
                 hosts.add(h)
-        if c.verified_at and (h := host(c.website)):
+        if h := host(c.website):
             hosts.add(h)
     return hosts
 

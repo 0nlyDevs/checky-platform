@@ -236,3 +236,32 @@ def test_demo_contacts_are_fictional_and_replaced_on_reset(as_user):
             return await directory.official_hosts(db, uuid.UUID(ws))
 
     assert {"jirama.mg", "instat.mg", "bngrc.mg"} <= asyncio.run(hosts())
+
+
+def test_a_client_cannot_declare_a_page_verified(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    # `verified` is not an input: the schema refuses it, and a page declared on creation or on an
+    # edit never counts as an official host until an editor's « Vérifier ».
+    forged = alice.post(
+        f"/api/v1/workspaces/{ws}/contacts",
+        json={**JIRAMA, "official_pages": [{"url": "https://www.jirama.mg", "verified": True}]},
+    )
+    assert forged.status_code == 422
+    made = _contact(alice, ws)
+    assert made["official_pages"][0]["verified"] is False
+
+    async def hosts():
+        async with SessionLocal() as db:
+            return await directory.official_hosts(db, uuid.UUID(ws))
+
+    assert asyncio.run(hosts()) == set()
+    path = f"/api/v1/workspaces/{ws}/contacts/{made['id']}"
+    alice.post(path + "/verify")
+    assert asyncio.run(hosts()) == {"jirama.mg"}
+    # An edit that re-declares the pages clears the verification and its hosts with it.
+    edited = alice.patch(
+        path, json={"name": JIRAMA["name"], "official_pages": [{"url": "https://www.jirama.mg"}]}
+    )
+    assert edited.status_code == 200, edited.text
+    assert asyncio.run(hosts()) == set()
