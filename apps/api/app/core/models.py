@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
     Column,
@@ -19,6 +20,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.config import get_settings
 from app.core.db import Base
 
 # Better Auth's user table (schema `better_auth`), read-only here and never migrated by Alembic.
@@ -215,3 +217,33 @@ class Transcript(_Row):
     duration_s: Mapped[float | None]
     model: Mapped[str] = mapped_column(String(80))
     segments: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    # F3: key quotes and checkable claims picked by the AI, each tied to a timestamp.
+    highlights: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+
+
+class Chunk(_Row):
+    """A passage of a source with its embedding. `start_s`/`end_s` for transcripts."""
+
+    __tablename__ = "chunk"
+    __table_args__ = (
+        Index(
+            "ix_chunk_embedding",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+        {"schema": "app"},
+    )
+
+    source_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.source.id", ondelete="CASCADE"), index=True
+    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    ord: Mapped[int]
+    text: Mapped[str] = mapped_column(Text)
+    start_s: Mapped[float | None]
+    end_s: Mapped[float | None]
+    embedding: Mapped[list[float]] = mapped_column(Vector(get_settings().embed_dim))
+    embed_model: Mapped[str] = mapped_column(String(80))

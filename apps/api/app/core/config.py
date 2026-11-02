@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     llm_model_gemini: str = ""
     llm_model_nvidia: str = ""
     ai_timeout: float = 30.0
+    # Embeddings for RAG. Chosen on 25 Oct: both Gemini models scored 18/18 on French, Malagasy
+    # and cross-language retrieval; embedding-2 is the newer one. Never change mid-event without
+    # rebuilding every vector (scripts/reembed_all.py).
+    embed_provider: str = "gemini"
+    embed_model: str = "gemini-embedding-2"
+    embed_dim: int = 768
     # Speech-to-text (Groq Whisper). large-v3 is the stronger one for Malagasy.
     stt_model: str = "whisper-large-v3"
     stt_timeout: float = 120.0

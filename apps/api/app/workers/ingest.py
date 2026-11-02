@@ -175,7 +175,10 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
     values: dict[str, Any] = {"status": "ready", "text": text, "error": None}
     if title:
         values["title"] = title[:500]
-    return await _finish(source_id, ctx.workspace_id, **values)
+    result = await _finish(source_id, ctx.workspace_id, **values)
+    if text:
+        await _queue_embedding(ctx, source_id)
+    return result
 
 
 @handler("ingest_url")
@@ -195,7 +198,10 @@ async def ingest_url(ctx: JobContext) -> dict[str, Any]:
     values = {"status": "ready", "error": None, **{k: v for k, v in page.items() if v}}
     if not page["text"]:
         values["error"] = "No main text found on this page"
-    return await _finish(source_id, ctx.workspace_id, **values)
+    result = await _finish(source_id, ctx.workspace_id, **values)
+    if page["text"]:
+        await _queue_embedding(ctx, source_id)
+    return result
 
 
 async def _save_transcript(source_id: uuid.UUID, result: dict[str, Any]) -> None:
@@ -213,3 +219,10 @@ async def _save_transcript(source_id: uuid.UUID, result: dict[str, Any]) -> None
             )
         )
         await db.commit()
+
+
+async def _queue_embedding(ctx: JobContext, source_id: uuid.UUID) -> None:
+    from app.modules.rag import queue_embedding  # avoid an import cycle at module load
+
+    async with SessionLocal() as db:
+        await queue_embedding(db, ctx.workspace_id, ctx.created_by, source_id)

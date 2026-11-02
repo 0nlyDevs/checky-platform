@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import useSWR from "swr";
 import {
   AudioLines,
+  Check,
   Copy,
   ExternalLink,
   FileText,
@@ -16,6 +17,7 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Sparkles,
   TriangleAlert,
   Type,
   type LucideIcon,
@@ -115,10 +117,111 @@ type Transcript = components["schemas"]["TranscriptOut"];
 /** 75.4 → "1:15", in the airtime face. */
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
+type Highlight = { text: string; start: number | null };
+type Highlights = { quotes: Highlight[]; claims: Highlight[]; dropped_quotes: number; model: string };
+
+/** F3: the interview's key quotes (click to hear) and its checkable claims (one click to track). */
+function HighlightsBlock({ ws, source, highlights, play, onRefresh }: { ws: string; source: Source; highlights?: Highlights | null; play: (s: number) => void; onRefresh: () => void }) {
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [created, setCreated] = useState<Set<number>>(new Set());
+
+  useWorkspaceSocket(ws, {
+    "source.updated": (s: Source) => {
+      if (s.id !== source.id || !jobId) return;
+      setJobId(null);
+      onRefresh();
+    },
+    "job.failed": (j: { id: string }) => {
+      if (j.id !== jobId) return;
+      setJobId(null);
+      toast.error(t.sources.extractFailed);
+    },
+  });
+
+  async function extract() {
+    try {
+      const job = await api<{ id: string }>(`/workspaces/${ws}/sources/${source.id}/quotes`, { method: "POST" });
+      setJobId(job.id);
+    } catch (e) {
+      toast.error(errorText(e));
+    }
+  }
+
+  async function toClaim(c: Highlight, i: number) {
+    try {
+      await api(`/workspaces/${ws}/items`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: c.text.slice(0, 300),
+          body: t.sources.claimBody(source.title, c.start != null ? clock(c.start) : "—"),
+          data: { first_seen_at: new Date().toISOString(), origin: "other", from_source_id: source.id },
+        }),
+      });
+      setCreated((prev) => new Set(prev).add(i));
+      toast.success(t.sources.claimCreated);
+    } catch (e) {
+      toast.error(errorText(e));
+    }
+  }
+
+  return (
+    <div className="space-y-3 pt-1">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="outline" size="sm" onClick={extract} disabled={Boolean(jobId)}>
+          {jobId ? <LoaderCircle className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
+          {highlights ? t.sources.reExtract : t.sources.extract}
+        </Button>
+        {jobId && (
+          <span className="text-sm text-muted-foreground" role="status">
+            {t.sources.extracting}
+          </span>
+        )}
+      </div>
+      {highlights && (
+        <>
+          {highlights.quotes.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">{t.sources.quotes}</h4>
+              <ul className="mt-1.5 space-y-1.5">
+                {highlights.quotes.map((q, i) => (
+                  <li key={i}>
+                    <button type="button" onClick={() => q.start != null && play(q.start)} className="group flex w-full gap-3 rounded-sm px-2 py-1 text-left hover:bg-accent">
+                      <span className="w-12 shrink-0 font-display text-sm tracking-wide tabular text-muted-foreground">{q.start != null ? clock(q.start) : "—"}</span>
+                      <span className="text-pretty italic">« {q.text} »</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {highlights.claims.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-muted-foreground">{t.sources.claims}</h4>
+              <ul className="mt-1.5 divide-y divide-border rounded-md border border-border">
+                {highlights.claims.map((c, i) => (
+                  <li key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2">
+                    <span className="w-12 shrink-0 font-display text-sm tracking-wide tabular text-muted-foreground">{c.start != null ? clock(c.start) : "—"}</span>
+                    <span className="min-w-0 flex-1 text-sm text-pretty">{c.text}</span>
+                    <Button variant="ghost" size="sm" onClick={() => toClaim(c, i)} disabled={created.has(i)}>
+                      {created.has(i) ? <Check aria-hidden /> : <Plus aria-hidden />}
+                      {t.sources.toClaim}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {highlights.dropped_quotes > 0 && <p className="text-sm text-muted-foreground">{t.sources.droppedQuotes(highlights.dropped_quotes)}</p>}
+        </>
+      )}
+    </div>
+  );
+}
+
 function AudioFacts({ ws, source }: { ws: string; source: Source }) {
   const [open, setOpen] = useState(false);
   const audio = useRef<HTMLAudioElement>(null);
-  const { data: tr } = useSWR<Transcript>(open ? `/workspaces/${ws}/sources/${source.id}/transcript` : null, fetcher);
+  const { data: tr, mutate: refreshTranscript } = useSWR<Transcript>(open ? `/workspaces/${ws}/sources/${source.id}/transcript` : null, fetcher);
   const meta = (source.file?.meta ?? {}) as { language?: string };
 
   function play(from: number) {
@@ -189,6 +292,9 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
             ))}
           </ol>
         ))}
+      {open && tr && tr.segments.length > 0 && (
+        <HighlightsBlock ws={ws} source={source} highlights={tr.highlights as Highlights | null | undefined} play={play} onRefresh={() => refreshTranscript()} />
+      )}
     </div>
   );
 }

@@ -7,7 +7,20 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.errors import install_error_handlers
-from app.modules import ai, checker, demo, health, items, jobs, me, sources, workspaces
+from app.modules import (
+    agent,
+    ai,
+    checker,
+    demo,
+    health,
+    items,
+    jobs,
+    me,
+    quotes,
+    rag,
+    sources,
+    workspaces,
+)
 from app.realtime.server import sio
 from app.workers import queue
 
@@ -44,6 +57,9 @@ api.include_router(demo.router, prefix="/api/v1")
 api.include_router(ai.router, prefix="/api/v1")
 api.include_router(sources.router, prefix="/api/v1")
 api.include_router(checker.router, prefix="/api/v1")
+api.include_router(rag.router, prefix="/api/v1")
+api.include_router(agent.router, prefix="/api/v1")
+api.include_router(quotes.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)

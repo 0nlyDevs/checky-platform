@@ -305,6 +305,10 @@ async def add_source(body: SourceIn, member: AnyMember, db: Db) -> SourceOut:
     db.add(source)
     await db.flush()
     out = await _created(db, member, source)
+    if source.kind == "text":
+        from app.modules.rag import queue_embedding
+
+        await queue_embedding(db, member.workspace_id, member.user.id, source.id)
     if source.kind == "url":
         await enqueue(
             db, member.workspace_id, member.user.id, "ingest_url", {"source_id": str(source.id)}
@@ -382,6 +386,8 @@ class TranscriptOut(BaseModel):
     duration_s: float | None
     model: str
     segments: list[Segment]
+    # F3: {quotes: [{text, start}], claims: [{text, start}], dropped_quotes, model, at}
+    highlights: dict[str, Any] | None = None
 
 
 class TranscribeIn(BaseModel):
@@ -401,6 +407,7 @@ async def get_transcript(source_id: uuid.UUID, member: AnyMember, db: Db) -> Tra
         duration_s=tr.duration_s,
         model=tr.model,
         segments=[Segment(**g) for g in tr.segments],
+        highlights=tr.highlights,
     )
 
 

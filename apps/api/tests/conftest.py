@@ -18,6 +18,8 @@ os.environ["DATABASE_URL"] = (
 )
 os.environ["DB_POOL"] = "false"
 os.environ["JOB_WORKERS"] = "0"
+# Indexing is opt-in per test (tests/test_rag.py), so other tests never call a real provider.
+os.environ["EMBED_PROVIDER"] = "none"
 
 import jwt
 import pytest
@@ -30,7 +32,7 @@ from app.core.config import get_settings
 from app.core.db import engine
 from app.main import api
 
-TABLES = "app.transcript, app.source, app.file, app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
+TABLES = "app.chunk, app.transcript, app.source, app.file, app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -106,7 +106,7 @@ The browser talks to both services; files go straight from the browser to Neon O
 | File storage | Neon Object Storage (S3-compatible, private buckets `uploads` and `uploads-dev`, same Neon project) | Never on the API server's disk; boto3 presigned URLs; branches with the database |
 | Background jobs | Postgres job table, worker loop in the API process | No extra service to host; queued jobs survive restarts |
 | Language models | Groq `openai/gpt-oss-120b` (primary), Gemini `gemini-3.5-flash-lite` (fallback), NVIDIA NIM (third) | All called through one OpenAI-compatible gateway; models change often on free tiers, so they are set by env |
-| Embeddings | One provider, chosen after the embedding test: Gemini Embedding or NVIDIA | Model name stored with every vector |
+| Embeddings | Gemini `gemini-embedding-2`, 768 dimensions (chosen 25 Oct: 18/18 on French, Malagasy and cross-language top-3) | Model name stored with every vector |
 | Speech-to-text | Groq Whisper; local faster-whisper as backup | Test French and Malagasy first |
 | Parsing | pypdf (PDF, BSD), trafilatura (web pages), Pillow (EXIF) | pypdf rather than PyMuPDF, which is AGPL |
 | API hosting | Render free (or Railway trial), Frankfurt | Wake it up before the pitch |
@@ -186,7 +186,7 @@ One flexible model, `item`, that becomes the domain object on day one (a claim, 
 ### M10. Agent (P2)
 
 - A simple loop: model, tool calls, results, until an answer or a limit of 6 steps.
-- Starting tools: `search_documents` (RAG), `fetch_url`, `web_search` (if a free search API is available), `get_item`.
+- Starting tools: `search_sources` (RAG), `fetch_url`, `find_claims`; `web_search` only if a free search API is found.
 - Each step is shown in the UI (tool called, short result), so the reasoning is visible in the demo.
 - Adding a tool means writing one Python function with a typed signature and a docstring.
 
@@ -480,7 +480,7 @@ The biggest risk is guessing the wrong features: time spent on F1 to F5 is lost 
 - [x] Supabase or Neon? Neon, for both the database and file storage (decided 25 October).
 - [ ] Does the team registration page of the rules need to be submitted, or is the form enough?
 - [ ] What prizes are offered, and does that change what the jury values?
-- [ ] Which embedding provider wins the test: Gemini or NVIDIA?
+- [x] Which embedding model? Gemini `gemini-embedding-2` (both Gemini models scored 18/18; NVIDIA not tested, no key).
 - [ ] Is the Gemini free tier usable from Madagascar?
 - [ ] Is a free vision model available for screenshot OCR in F1?
 - [ ] Is a free web search API available for the agent's `web_search` tool, or do we leave it out?

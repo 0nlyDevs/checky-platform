@@ -431,6 +431,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search Route */
+        post: operations["search_route_api_v1_workspaces__ws__search_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask */
+        post: operations["ask_api_v1_workspaces__ws__ask_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/agent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Run Agent */
+        post: operations["run_agent_api_v1_workspaces__ws__agent_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/sources/{source_id}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Queue Quotes */
+        post: operations["queue_quotes_api_v1_workspaces__ws__sources__source_id__quotes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -462,6 +530,23 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** AgentIn */
+        AgentIn: {
+            /** Question */
+            question: string;
+        };
+        /** AskIn */
+        AskIn: {
+            /** Question */
+            question: string;
+            /**
+             * K
+             * @default 6
+             */
+            k: number;
+            /** Item Id */
+            item_id?: string | null;
         };
         /** Check */
         Check: {
@@ -739,6 +824,35 @@ export interface components {
              */
             role: "admin" | "editor" | "journalist";
         };
+        /** Passage */
+        Passage: {
+            /** N */
+            n: number;
+            /**
+             * Chunk Id
+             * Format: uuid
+             */
+            chunk_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Title */
+            title: string;
+            /** Kind */
+            kind: string;
+            /** Url */
+            url: string | null;
+            /** Text */
+            text: string;
+            /** Start S */
+            start_s: number | null;
+            /** End S */
+            end_s: number | null;
+            /** Score */
+            score: number;
+        };
         /** RoleIn */
         RoleIn: {
             /**
@@ -746,6 +860,18 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "editor" | "journalist";
+        };
+        /** SearchIn */
+        SearchIn: {
+            /** Query */
+            query: string;
+            /**
+             * K
+             * @default 6
+             */
+            k: number;
+            /** Item Id */
+            item_id?: string | null;
         };
         /** Segment */
         Segment: {
@@ -831,6 +957,10 @@ export interface components {
             model: string;
             /** Segments */
             segments: components["schemas"]["Segment"][];
+            /** Highlights */
+            highlights?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** UploadCompleteIn */
         UploadCompleteIn: {
@@ -1898,6 +2028,145 @@ export interface operations {
             header?: never;
             path: {
                 item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_route_api_v1_workspaces__ws__search_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Passage"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_api_v1_workspaces__ws__ask_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AskIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_agent_api_v1_workspaces__ws__agent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AgentIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    queue_quotes_api_v1_workspaces__ws__sources__source_id__quotes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                source_id: string;
                 ws: string;
             };
             cookie?: never;
