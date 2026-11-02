@@ -24,6 +24,7 @@ import time
 import uuid
 from collections.abc import AsyncIterator, Coroutine
 from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import asdict, dataclass, field
 from typing import Any, Literal, overload
 
@@ -63,6 +64,17 @@ class Provider:
 # (Shared with embeddings, transcription and voice through app.core.keys.)
 _turn = keys._turn
 _cooldown = keys._cooldown
+_allowed: ContextVar[frozenset[str] | None] = ContextVar("ai_allowed_providers", default=None)
+
+
+@contextmanager
+def only_providers(names):
+    """Restrict one async call tree without mutating other requests' provider configuration."""
+    token = _allowed.set(frozenset(names))
+    try:
+        yield
+    finally:
+        _allowed.reset(token)
 
 
 def _keys(name: str) -> list[str]:
@@ -78,6 +90,8 @@ def providers(prompt_tokens: int | None = None) -> list[Provider]:
     s = get_settings()
     out: list[Provider] = []
     for name in s.llm_provider_list:
+        if _allowed.get() is not None and name not in _allowed.get():
+            continue
         if name not in PROVIDERS:
             log.warning("unknown LLM provider %r in LLM_PROVIDERS", name)
             continue
@@ -327,7 +341,8 @@ async def check_providers() -> dict[str, dict[str, Any]]:
 def _cache_key(messages, tools, params) -> str | None:
     if not get_settings().ai_cache:
         return None
-    raw = json.dumps({"m": messages, "t": tools, "p": params}, sort_keys=True, default=str)
+    scope = {"allowed": sorted(_allowed.get())} if _allowed.get() is not None else {}
+    raw = json.dumps({"m": messages, "t": tools, "p": params, **scope}, sort_keys=True, default=str)
     return hashlib.sha256(raw.encode()).hexdigest()
 
 
@@ -357,8 +372,8 @@ async def _cache_put(key: str | None, completion: Completion) -> None:
 # --- non-streaming ----------------------------------------------------------------------
 
 
-async def _complete(messages, tools, workspace_id, params) -> Completion:
-    key = _cache_key(messages, tools, params)
+async def _complete(messages, tools, workspace_id, params, *, use_cache=True) -> Completion:
+    key = _cache_key(messages, tools, params) if use_cache else None
     if hit := await _cache_get(key):
         return hit
 
@@ -407,13 +422,18 @@ class Stream:
     tools: list[dict[str, Any]] | None
     workspace_id: uuid.UUID | None
     params: dict[str, Any]
+    use_cache: bool = True
     completion: Completion | None = field(default=None, init=False)
 
     def __aiter__(self) -> AsyncIterator[str]:
         return self._run()
 
     async def _run(self) -> AsyncIterator[str]:
-        key = _cache_key(self.messages, self.tools, {**self.params, "stream": True})
+        key = (
+            _cache_key(self.messages, self.tools, {**self.params, "stream": True})
+            if self.use_cache
+            else None
+        )
         if hit := await _cache_get(key):
             self.completion = hit
             if hit.content:
@@ -549,12 +569,13 @@ def complete(
 ) -> Stream: ...
 
 
-def complete(messages, tools=None, *, stream=False, workspace_id=None, **params):
+def complete(messages, tools=None, *, stream=False, workspace_id=None, use_cache=True, **params):
     """Chat completion. `await` it, or with stream=True iterate it with `async for`.
 
     Extra keyword arguments (temperature, max_tokens, response_format, ...) are passed through
-    to the provider.
+    to the provider. `use_cache=False` skips persistent response caching. `only_providers()`
+    restricts the current async call tree; await the completion inside that context.
     """
     if stream:
-        return Stream(messages, tools, workspace_id, params)
-    return _complete(messages, tools, workspace_id, params)
+        return Stream(messages, tools, workspace_id, params, use_cache)
+    return _complete(messages, tools, workspace_id, params, use_cache=use_cache)

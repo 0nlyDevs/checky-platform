@@ -264,6 +264,14 @@ Five features cover the journalist's main verification tasks, from checking a cl
 - Anonymous text checks return related, journalist-confirmed published verdicts and external
   sources. Matches are candidates to compare with the original claim, not automatic verdicts on
   the submitted passage. New subjects receive evidence to examine, never an invented AI verdict.
+- Before searching, one bounded AI call extracts literal claims, entities and grounded queries
+  from the full cleaned text. No invented name, year or verdict is accepted. Distinctive names
+  beyond the first 200 characters are retained; unavailable/invalid AI preparation falls back
+  explicitly. Public preparation excludes paid Claude fallback and uses no persistent response cache.
+- Queries and service outcomes are visible. Blocked services, partial coverage and successful
+  empty results are distinguished. Up to three sources are read for literal passages, with
+  unread search snippets clearly labelled. Similar wording is a possible reprise, not proof of
+  independent corroboration. No source count is presented as a confidence score.
 - Selected text is checked independently of the surrounding page. No passive page reading,
   content scripts, browsing history, provider keys or cookie-reading permission.
 - Connection is optional at save time or for newsroom analysis. It reuses the website session JWT,
@@ -276,8 +284,9 @@ Five features cover the journalist's main verification tasks, from checking a cl
   An optional pixel-detector adapter remains disabled until configured and evaluated by an operator.
   No external pixel detector is enabled or claimed to be reliable by default.
 - `POST /public/check {text?,url?}` and `/public/image-check {url}` require no JWT. They share
-  per-process limits: 12 requests/IP/10 minutes, 1,000/24-hour budget period, 2 in flight. No LLM
-  calls on the public text route. Public detector use needs an additional operator opt-in.
+  per-process limits: 12 requests/IP/10 minutes, 1,000/24-hour budget period, 2 in flight. The public
+  `/check/stream` route exposes preparation/search/reading progress without a token. Public detector
+  use needs an additional operator opt-in.
 - Initial distribution is an unpacked Chromium extension. Browser-store publication, OCR,
   screenshots, private images and Firefox/Safari are not included. Production login and Edge/Brave
   behaviour require manual validation before distribution.

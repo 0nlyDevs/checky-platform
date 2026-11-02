@@ -818,6 +818,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/check/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Check Stream */
+        post: operations["check_stream_api_v1_public_check_stream_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/image-check": {
         parameters: {
             query?: never;
@@ -1357,6 +1374,32 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** Preparation */
+        Preparation: {
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "ai" | "fallback";
+            /**
+             * Summary
+             * @default
+             */
+            summary: string;
+            /** Claims */
+            claims?: string[];
+            /** Entities */
+            entities?: string[];
+            /** Queries */
+            queries?: string[];
+            /** Warning */
+            warning?: ("ai_unavailable" | "invalid_output" | "disabled") | null;
+            /**
+             * Cached
+             * @default false
+             */
+            cached: boolean;
+        };
         /** PublicCheckIn */
         PublicCheckIn: {
             /** Text */
@@ -1387,6 +1430,14 @@ export interface components {
             published: components["schemas"]["VerdictOut"][];
             /** Results */
             results: components["schemas"]["PublicSource"][];
+            preparation?: components["schemas"]["Preparation"] | null;
+            /**
+             * Search Status
+             * @default empty
+             */
+            search_status: string;
+            /** Searches */
+            searches?: components["schemas"]["SearchAttempt"][];
         };
         /** PublicSource */
         PublicSource: {
@@ -1402,6 +1453,26 @@ export interface components {
             snippet: string;
             /** Date */
             date?: string | null;
+            /**
+             * Read Status
+             * @default not_read
+             * @enum {string}
+             */
+            read_status: "not_read" | "read" | "blocked" | "unavailable" | "unsupported";
+            /** Passages */
+            passages?: string[];
+            /**
+             * Wording Overlap
+             * @default false
+             */
+            wording_overlap: boolean;
+            /** Similar To */
+            similar_to?: number[];
+            /**
+             * Older Than Claim
+             * @default false
+             */
+            older_than_claim: boolean;
         };
         /** RoleIn */
         RoleIn: {
@@ -1410,6 +1481,31 @@ export interface components {
              * @enum {string}
              */
             role: "admin" | "editor" | "journalist";
+        };
+        /** SearchAttempt */
+        SearchAttempt: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "web" | "fact-check" | "wikipedia";
+            /** Query */
+            query: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "empty" | "blocked" | "unavailable" | "timeout";
+            /**
+             * Count
+             * @default 0
+             */
+            count: number;
+            /**
+             * Duration Ms
+             * @default 0
+             */
+            duration_ms: number;
         };
         /** SearchIn */
         SearchIn: {
@@ -3547,6 +3643,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PublicCheckOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    check_stream_api_v1_public_check_stream_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PublicCheckIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/event-stream": unknown;
                 };
             };
             /** @description Validation Error */

@@ -93,6 +93,9 @@ def _clean_db():
     from app.core import websearch
 
     websearch._cache.clear()
+    from app.core import query_plan
+
+    query_plan._cache.clear()
     yield
 
     async def truncate():

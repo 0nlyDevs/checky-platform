@@ -85,6 +85,9 @@ class Settings(BaseSettings):
     public_checks_per_window: int = 12  # requests per address, per 10 minutes
     public_checks_per_day: int = 1000  # all addresses, per 24-hour budget period
     public_checks_concurrency: int = 2
+    # Query preparation only, never an anonymous truth verdict. Paid Claude is excluded in code.
+    public_preparation_enabled: bool = True
+    public_preparation_providers: str = "groq,gemini,nvidia"
     # Separate opt-in: a validated private detector is not automatically offered anonymously.
     public_image_detector_enabled: bool = False
 

@@ -3210,6 +3210,62 @@
         }
       }
     },
+    "/api/v1/public/check/stream": {
+      "post": {
+        "tags": [
+          "public-checks"
+        ],
+        "summary": "Check Stream",
+        "operationId": "check_stream_api_v1_public_check_stream_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicCheckIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/event-stream": {
+                "itemSchema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    },
+                    "event": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "retry": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/public/image-check": {
       "post": {
         "tags": [
@@ -4614,6 +4670,70 @@
         ],
         "title": "PostOut"
       },
+      "Preparation": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "ai",
+              "fallback"
+            ],
+            "title": "Method"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary",
+            "default": ""
+          },
+          "claims": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Claims"
+          },
+          "entities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "queries": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Queries"
+          },
+          "warning": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "ai_unavailable",
+                  "invalid_output",
+                  "disabled"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warning"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "method"
+        ],
+        "title": "Preparation"
+      },
       "PublicCheckIn": {
         "properties": {
           "text": {
@@ -4710,6 +4830,28 @@
             },
             "type": "array",
             "title": "Results"
+          },
+          "preparation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Preparation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "search_status": {
+            "type": "string",
+            "title": "Search Status",
+            "default": "empty"
+          },
+          "searches": {
+            "items": {
+              "$ref": "#/components/schemas/SearchAttempt"
+            },
+            "type": "array",
+            "title": "Searches"
           }
         },
         "type": "object",
@@ -4755,6 +4897,42 @@
               }
             ],
             "title": "Date"
+          },
+          "read_status": {
+            "type": "string",
+            "enum": [
+              "not_read",
+              "read",
+              "blocked",
+              "unavailable",
+              "unsupported"
+            ],
+            "title": "Read Status",
+            "default": "not_read"
+          },
+          "passages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Passages"
+          },
+          "wording_overlap": {
+            "type": "boolean",
+            "title": "Wording Overlap",
+            "default": false
+          },
+          "similar_to": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Similar To"
+          },
+          "older_than_claim": {
+            "type": "boolean",
+            "title": "Older Than Claim",
+            "default": false
           }
         },
         "type": "object",
@@ -4784,6 +4962,51 @@
           "role"
         ],
         "title": "RoleIn"
+      },
+      "SearchAttempt": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "web",
+              "fact-check",
+              "wikipedia"
+            ],
+            "title": "Kind"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "empty",
+              "blocked",
+              "unavailable",
+              "timeout"
+            ],
+            "title": "Status"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count",
+            "default": 0
+          },
+          "duration_ms": {
+            "type": "integer",
+            "title": "Duration Ms",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "query",
+          "status"
+        ],
+        "title": "SearchAttempt"
       },
       "SearchIn": {
         "properties": {

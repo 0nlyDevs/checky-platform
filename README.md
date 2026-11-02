@@ -47,6 +47,8 @@ How the pieces talk:
   routes return published verdict candidates, external sources and image provenance hints, not
   new AI verdicts or private dossiers. Connection is optional for saving into a newsroom or using
   its authenticated analysis. It never confirms or publishes a verdict. Its README covers installation.
+  Public text checks now prepare grounded queries with a bounded AI call, stream actual progress,
+  distinguish search outages from empty results, and label source passages and possible reprises.
   The optional pixel-detector contract and evaluation gate are in [`docs/IMAGE_DETECTOR.md`](docs/IMAGE_DETECTOR.md).
 
 ## Access you need

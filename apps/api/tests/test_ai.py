@@ -196,6 +196,25 @@ def test_cache_answers_repeat_requests(fake, monkeypatch):
     assert calls == ["groq"]
 
 
+def test_provider_scope_is_request_local_and_does_not_leak_into_provider_params(fake):
+    routes, calls = fake
+    seen = []
+
+    def reply(request):
+        seen.append(json.loads(request.content))
+        return httpx.Response(200, json=_reply("scoped"))
+
+    routes["gemini"] = reply
+
+    async def run():
+        with ai.only_providers({"gemini"}):
+            await ai.complete(MSGS, use_cache=False)
+        assert ai._allowed.get() is None
+
+    asyncio.run(run())
+    assert calls == ["gemini"] and "use_cache" not in seen[0]
+
+
 def _collect(stream: ai.Stream) -> list[str]:
     async def go():
         return [t async for t in stream]

@@ -1,17 +1,18 @@
 """Anonymous extension checks: public evidence and published verdicts, never private drafts.
 
-No AI call or new truth verdict is produced here. A similar published claim is a candidate to
-read, not an automatic verdict on the submitted passage. Nothing is written to a newsroom.
+AI prepares grounded searches, never a truth verdict. A similar published claim is a candidate
+to read, not an automatic verdict on the submitted passage. Nothing is written to a newsroom.
 """
 
 import asyncio
-from urllib.parse import urlparse
+from collections.abc import AsyncIterable
 
 import httpx
 from fastapi import APIRouter, Depends
+from fastapi.sse import EventSourceResponse, ServerSentEvent
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.core import dates
+from app.core import dates, evidence_search, query_plan
 from app.core.access import Db
 from app.core.config import get_settings
 from app.core.errors import ApiError
@@ -41,13 +42,8 @@ class PublicCheckIn(BaseModel):
         return self
 
 
-class PublicSource(BaseModel):
-    n: int
-    kind: str
-    title: str
-    url: str
-    snippet: str
-    date: str | None = None
+class PublicSource(evidence_search.ResearchSource):
+    pass
 
 
 class PublicCheckOut(BaseModel):
@@ -60,18 +56,43 @@ class PublicCheckOut(BaseModel):
     needs_text: bool = False
     published: list[public.VerdictOut]
     results: list[PublicSource]
+    preparation: query_plan.Preparation | None = None
+    search_status: str = "empty"
+    searches: list[evidence_search.SearchAttempt] = Field(default_factory=list)
 
 
 @router.post("/check")
 async def check(body: PublicCheckIn, db: Db) -> PublicCheckOut:
     try:
-        async with asyncio.timeout(45):
-            return await _check(body, db)
+        async with asyncio.timeout(60):
+            async for event, data in _pipeline(body, db):
+                if event == "result":
+                    return data
     except TimeoutError as exc:
         raise ApiError(503, "public_check_unavailable", "Public evidence search timed out") from exc
+    raise ApiError(503, "public_check_incomplete", "Public evidence search did not finish")
 
 
-async def _check(body: PublicCheckIn, db: Db) -> PublicCheckOut:
+@router.post("/check/stream", response_class=EventSourceResponse)
+async def check_stream(body: PublicCheckIn, db: Db) -> AsyncIterable[ServerSentEvent]:
+    try:
+        async with asyncio.timeout(60):
+            async for event, data in _pipeline(body, db):
+                yield ServerSentEvent(event=event, data=data)
+    except TimeoutError:
+        yield ServerSentEvent(event="error", data={"code": "public_check_unavailable"})
+    except ApiError as exc:
+        yield ServerSentEvent(event="error", data={"code": exc.code})
+    except (httpx.HTTPError, ValueError, TypeError):
+        yield ServerSentEvent(event="error", data={"code": "public_check_failed"})
+
+
+def _step(key, status, **extra):
+    return "step", {"key": key, "status": status, "summary": "", **extra}
+
+
+async def _pipeline(body: PublicCheckIn, db: Db):
+    yield _step("read", "running")
     text = body.text or ""
     kind, title, final, published_at = "text", "", body.url, None
     if not text and body.url:
@@ -83,6 +104,7 @@ async def _check(body: PublicCheckIn, db: Db) -> PublicCheckOut:
         kind, title = str(page.get("kind") or "page"), str(page.get("title") or "")[:500]
         final = page.get("final_url") or body.url
         published_at = dates.parse(page.get("published_at"))
+    text = query_plan.clean_text(text)
     out = PublicCheckOut(
         url=final,
         kind=kind,
@@ -94,31 +116,34 @@ async def _check(body: PublicCheckIn, db: Db) -> PublicCheckOut:
         published=[],
         results=[],
     )
+    yield _step("read", "done")
     if not text:
-        return out
+        yield "result", out
+        yield "done", {}
+        return
     out.published = await public.find_published(db, text[:4000], k=3)
-    # The selected passage itself is the query: no model, invented claims or private workspace.
-    query = " ".join((title or text).split())[:200]
-    found = await linkcheck._search(query, final)
-    for source in found:
-        parsed = urlparse(source.get("url") or "")
-        if (
-            parsed.scheme in ("http", "https")
-            and parsed.hostname
-            and not parsed.username
-            and not parsed.password
-        ):
-            out.results.append(
-                PublicSource(
-                    n=source["n"],
-                    kind=source["kind"],
-                    title=source["title"][:500],
-                    url=source["url"],
-                    snippet=source["snippet"][:700],
-                    date=source.get("date"),
-                )
-            )
-    return out
+    yield _step("claims", "running")
+    out.preparation = await query_plan.prepare(text)
+    yield "preparation", out.preparation
+    yield _step("claims", "done", method=out.preparation.method, count=len(out.preparation.queries))
+    yield _step("search", "running")
+    report = await evidence_search.search(out.preparation, final)
+    out.search_status, out.searches = report.status, report.attempts
+    yield _step(
+        "search",
+        "failed" if report.status == "unavailable" else "done",
+        search_status=report.status,
+        count=len(report.sources),
+    )
+    if report.sources:
+        yield _step("verdict", "running")
+        await evidence_search.read_sources(report.sources, out.preparation, text)
+        yield _step(
+            "verdict", "done", count=sum(source.read_status == "read" for source in report.sources)
+        )
+    out.results = [PublicSource(**source.model_dump()) for source in report.sources]
+    yield "result", out
+    yield "done", {}
 
 
 @router.post("/image-check")

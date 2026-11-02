@@ -64,8 +64,20 @@ related published verdicts and external search results, never a new AI verdict o
 Both share per-process budgets (`core/public_checks.py`): 12 requests/IP/10 min, 1,000 requests
 per 24-hour budget period and 2 concurrent requests; configurable via `PUBLIC_CHECKS_*`. Address
 storage is bounded; there is no persistent visitor ID. These limits are not distributed: use an
-edge limiter before scaling to multiple API workers. Public check timeouts are 45 s (text) and
-35 s (image). No public LLM calls. Private detector access is not enabled anonymously unless
+edge limiter before scaling to multiple API workers. Public check timeouts are 60 s (text) and
+35 s (image). Public text now has a 60-second overall budget: one 10-second AI preparation
+(`core/query_plan.py`), 24 seconds of observable parallel searches (`core/evidence_search.py`),
+then up to 10 seconds to read literal passages from three sources. No new public AI truth verdict.
+`POST /public/check/stream` sends real read/claims/search/source-reading steps, preparation,
+result and done; the JSON route remains compatible. Preparation validates claims/entities as
+literal source excerpts and query words against the input, preserves distinctive names across
+the whole passage, and falls back explicitly on AI failure. Only configured Groq/Gemini/NVIDIA
+are eligible (`PUBLIC_PREPARATION_*`); paid Claude fallback is excluded with a request-local
+gateway provider scope. Persistent gateway response caching is disabled for preparation; validated
+plans have a bounded in-memory 10-minute reuse window. Search statuses distinguish blocked,
+unavailable, timed-out, empty and successful attempts. Unrecognized/challenged DuckDuckGo pages
+are not cached as empty results. Similar source wording is only a possible reprise, never proof
+of independent corroboration. Private detector access is not enabled anonymously unless
 `PUBLIC_IMAGE_DETECTOR_ENABLED=true` as well as the existing validation gate.
 Public URL downloads pin a checked public IP for each redirect, preserving Host/TLS SNI, so
 the HTTP transport cannot re-resolve an attacker-controlled domain to an internal address.

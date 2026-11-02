@@ -1,11 +1,12 @@
 import httpx
 import pytest
 
-from app.core import ai
+from app.core import evidence_search, query_plan
 from app.core.config import get_settings
 from app.core.public_checks import budget
 from app.modules import imagecheck, linkcheck
 from app.workers import ingest
+from tests.test_agent import _events
 from tests.test_imagecheck import png
 from tests.test_public import _claim, _newsroom
 
@@ -14,23 +15,31 @@ from tests.test_public import _claim, _newsroom
 def evidence(monkeypatch):
     seen = []
 
-    async def search(query, skip):
-        seen.append((query, skip))
-        return [
-            {
-                "n": 1,
-                "kind": "fact-check",
-                "title": "Public evidence",
-                "url": "https://factuel.example/checked",
-                "snippet": "A passage to read.",
-            }
-        ]
+    async def prepare(text):
+        return query_plan.Preparation(method="fallback", summary=text[:500], queries=[text[:160]])
 
-    async def no_ai(*args, **kwargs):
-        pytest.fail("Anonymous checks must not generate an AI verdict or spend LLM credits")
+    async def search(plan, skip):
+        seen.append((plan.queries[0], skip))
+        return evidence_search.SearchReport(
+            status="ok",
+            attempts=[],
+            sources=[
+                evidence_search.ResearchSource(
+                    n=1,
+                    kind="fact-check",
+                    title="Public evidence",
+                    url="https://factuel.example/checked",
+                    snippet="A passage to read.",
+                )
+            ],
+        )
 
-    monkeypatch.setattr(linkcheck, "_search", search)
-    monkeypatch.setattr(ai, "complete", no_ai)
+    async def read(*args):
+        return None
+
+    monkeypatch.setattr(query_plan, "prepare", prepare)
+    monkeypatch.setattr(evidence_search, "search", search)
+    monkeypatch.setattr(evidence_search, "read_sources", read)
     return seen
 
 
@@ -67,6 +76,34 @@ def test_a_new_claim_has_sources_but_no_invented_verdict(client, evidence):
     assert budget.active == 0
 
 
+def test_public_stream_reports_real_stages_and_requires_no_account(client, evidence):
+    response = client.post("/api/v1/public/check/stream", json={"text": "Le pont est fermé"})
+    assert response.status_code == 200
+    events = _events(response.text)
+    assert [
+        data["key"] for event, data in events if event == "step" and data["status"] == "running"
+    ] == ["read", "claims", "search", "verdict"]
+    prepared = next(data for event, data in events if event == "preparation")
+    assert prepared["queries"] == ["Le pont est fermé"]
+    result = next(data for event, data in events if event == "result")
+    assert result["search_status"] == "ok" and result["preparation"] == prepared
+    assert events[-1][0] == "done" and "analysis" not in result and budget.active == 0
+
+
+def test_search_failures_stay_visible_in_the_response(client, evidence, monkeypatch):
+    async def unavailable(*args):
+        return evidence_search.SearchReport(
+            status="unavailable",
+            attempts=[evidence_search.SearchAttempt(kind="web", query="Le pont", status="blocked")],
+            sources=[],
+        )
+
+    monkeypatch.setattr(evidence_search, "search", unavailable)
+    result = client.post("/api/v1/public/check", json={"text": "Le pont est fermé"}).json()
+    assert result["search_status"] == "unavailable" and result["results"] == []
+    assert result["searches"][0]["status"] == "blocked"
+
+
 def test_selected_text_does_not_fetch_the_whole_page(client, evidence, monkeypatch):
     async def unexpected(_):
         pytest.fail("A pasted passage must not trigger fetching its surrounding page")
@@ -95,7 +132,7 @@ def test_public_link_can_be_read_and_private_payloads_are_rejected(client, evide
     monkeypatch.setattr(linkcheck, "read_link", page)
     result = client.post("/api/v1/public/check", json={"url": "https://page.example/a"}).json()
     assert result["published_at"] == "2019-01-14" and result["days_old"] > 1000
-    assert evidence[0] == ("Le pont d’Anosy", "https://page.example/a")
+    assert evidence[0] == ("Le pont est fermé", "https://page.example/a")
     for body in (
         {},
         {"text": "x"},
