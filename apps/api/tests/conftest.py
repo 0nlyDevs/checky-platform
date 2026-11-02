@@ -8,7 +8,11 @@ from pathlib import Path
 _base = os.environ.get("DATABASE_URL") or next(
     (
         line.split("=", 1)[1].strip()
-        for line in (Path(__file__).parents[3] / ".env").read_text().splitlines()
+        for line in (
+            (Path(__file__).parents[3] / ".env").read_text().splitlines()
+            if (Path(__file__).parents[3] / ".env").exists()
+            else []
+        )
         if line.startswith("DATABASE_URL=")
     ),
     "postgresql://postgres@localhost:5432/fanilo",
@@ -32,7 +36,13 @@ from app.core.config import get_settings
 from app.core.db import engine
 from app.main import api
 
-TABLES = "app.ai_cache, app.chunk, app.transcript, app.source, app.file, app.ai_call, app.job, app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace"
+TABLES = (
+    "app.ai_cache, app.chunk, app.transcript, app.source, app.file, app.ai_call, app.job, "
+    "app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace, "
+    "app.place, app.contact, app.contact_request, app.communique, app.seal_key, app.figure, "
+    "app.signal, app.route, app.radio_clip, app.radio_partner, app.public_question, "
+    "app.member_pref, app.sms_subscriber, app.sms_message, app.season"
+)
 
 
 @pytest.fixture(scope="session", autouse=True)

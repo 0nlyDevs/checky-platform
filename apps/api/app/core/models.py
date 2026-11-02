@@ -33,7 +33,17 @@ auth_user = Table(
     schema="better_auth",
 )
 
-ROLES = ("admin", "editor", "journalist")
+# Roles follow the rumour's road, not the newsroom's organisation chart: the desk (admin, editor,
+# journalist), a `veilleur` (partner-radio journalist or correspondent who only reports what was
+# heard) and an `issuer` (an institution that registers and seals its own communiqués).
+ROLES = ("admin", "editor", "journalist", "veilleur", "issuer")
+# Places are structured everywhere (`{name, country, region, locality, lat, lng}`, see
+# app/core/places.py): a claim can come from anywhere in the world. Beats (rubriques) belong to
+# each newsroom (`workspace.settings.beats`); these are only the defaults a new newsroom starts with.
+DEFAULT_BEATS = (
+    "santé", "éducation", "politique", "économie", "énergie", "sécurité", "environnement",
+    "transport", "sport", "culture", "société", "international",
+)  # fmt: skip
 
 
 class _Row(Base):
@@ -54,6 +64,10 @@ class Workspace(_Row):
     slug: Mapped[str] = mapped_column(String(140), unique=True)
     # Opt-in: the newsroom's published verdicts are shown to the public and it receives public tips.
     is_public: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Newsroom settings, merged on PATCH (no migration for a new key): `beats` (its rubriques),
+    # `timezone` (IANA, default Indian/Antananarivo), `double_signature` (a journalist signs, an
+    # editor releases), `ai_enabled` (off = only the fact checks run, « Mode sans IA »), `country`.
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
 
 
 class Membership(_Row):
@@ -249,6 +263,346 @@ class Chunk(_Row):
     end_s: Mapped[float | None]
     embedding: Mapped[list[float]] = mapped_column(Vector(get_settings().embed_dim))
     embed_model: Mapped[str] = mapped_column(String(80))
+
+
+class Place(Base):
+    """A geocoded place (OpenStreetMap Nominatim), cached by the text that was looked up."""
+
+    __tablename__ = "place"
+    __table_args__ = {"schema": "app"}  # noqa: RUF012 - SQLAlchemy convention
+
+    query: Mapped[str] = mapped_column(String(200), primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    country: Mapped[str | None] = mapped_column(String(80))
+    region: Mapped[str | None] = mapped_column(String(120))
+    locality: Mapped[str | None] = mapped_column(String(120))
+    lat: Mapped[float | None]
+    lng: Mapped[float | None]
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Contact(_Row):
+    """The Annuaire: who can prove it. An institution, a press officer or an expert, with the topics
+    and places they can settle, their official pages and how to reach them. Private to the newsroom
+    unless `shared`. Never scraped personal numbers: entered by newsrooms or the institutions."""
+
+    __tablename__ = "contact"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    created_by: Mapped[str] = mapped_column(Text)
+    kind: Mapped[str] = mapped_column(
+        String(20), default="institution"
+    )  # institution|officer|expert
+    name: Mapped[str] = mapped_column(String(200))
+    role: Mapped[str] = mapped_column(String(200), default="")
+    institution: Mapped[str] = mapped_column(String(200), default="")
+    topics: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    languages: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    # {name, country, region, locality, lat, lng}; empty = national / any place
+    location: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    phone: Mapped[str | None] = mapped_column(String(60))
+    whatsapp: Mapped[str | None] = mapped_column(String(60))
+    email: Mapped[str | None] = mapped_column(String(200))
+    website: Mapped[str | None] = mapped_column(Text)
+    # [{"kind": "facebook|site|x|…", "url": "…", "verified": true}] declared by the institution
+    official_pages: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    hours: Mapped[str | None] = mapped_column(String(200))
+    shared: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    verified_by: Mapped[str | None] = mapped_column(Text)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    # Track record kept by code: last_answer_hours, last_answered_at, asked, answered, communiques
+    stats: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+
+
+class ContactRequest(_Row):
+    """A question sent to a contact about a claim (« Envoyer la question »). The reply comes back
+    through `token` without an account and becomes a dated source of the dossier."""
+
+    __tablename__ = "contact_request"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.item.id", ondelete="CASCADE"), index=True
+    )
+    contact_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.contact.id", ondelete="SET NULL")
+    )
+    created_by: Mapped[str] = mapped_column(Text)
+    token: Mapped[str] = mapped_column(String(64), unique=True)
+    question: Mapped[str] = mapped_column(Text)
+    channel: Mapped[str] = mapped_column(String(20), default="email")  # email|whatsapp|sms|call
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reminded_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    answered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # {"stance": "confirms|denies|unknown", "text": "…", "name": "…"}
+    answer: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    source_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.source.id", ondelete="SET NULL")
+    )
+
+
+class Communique(_Row):
+    """The Registre: an original communiqué, decree or notice as its issuer published it, with the
+    fingerprint of the file, so a circulating copy can be matched (Authentique / Modifié /
+    Introuvable / Incohérent). `sealed` holds the issuer's Ed25519 signature when it has one."""
+
+    __tablename__ = "communique"
+    __table_args__ = (Index("ix_communique_issuer_number", "issuer", "number"), {"schema": "app"})
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    added_by: Mapped[str] = mapped_column(Text)
+    issuer: Mapped[str] = mapped_column(String(200))
+    number: Mapped[str | None] = mapped_column(String(60))
+    issued_on: Mapped[str | None] = mapped_column(String(10))  # YYYY-MM-DD
+    title: Mapped[str] = mapped_column(String(500), default="")
+    text: Mapped[str] = mapped_column(Text, default="")
+    fingerprint: Mapped[str | None] = mapped_column(String(64), index=True)
+    url: Mapped[str | None] = mapped_column(Text)
+    file_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.file.id", ondelete="SET NULL")
+    )
+    status: Mapped[str] = mapped_column(String(20), default="original")  # original|fake_caught
+    # Workspaces (other newsrooms) that confirmed the entry; verified once a second one did.
+    confirmed_by: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    # {"key_id", "payload", "signature", "sealed_at"} — see app/core/seal.py
+    sealed: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    location: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+
+class SealKey(_Row):
+    """An issuer's Ed25519 key pair. The private key is stored encrypted with SEAL_SECRET; the
+    public key is published so any phone can check a seal offline."""
+
+    __tablename__ = "seal_key"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    issuer: Mapped[str] = mapped_column(String(200))
+    key_id: Mapped[str] = mapped_column(String(40), unique=True)
+    public_key: Mapped[str] = mapped_column(Text)  # base64 raw 32 bytes
+    private_key_enc: Mapped[str] = mapped_column(Text)
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Figure(_Row):
+    """« Chiffres officiels »: one official figure, dated and sourced. `workspace_id` empty = a
+    figure every newsroom shares (World Bank, national statistics seeds)."""
+
+    __tablename__ = "figure"
+    __table_args__ = (Index("ix_figure_topic", "topic"), {"schema": "app"})
+
+    workspace_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    added_by: Mapped[str | None] = mapped_column(Text)
+    topic: Mapped[str] = mapped_column(String(80))
+    label: Mapped[str] = mapped_column(String(300))
+    value: Mapped[str] = mapped_column(String(80))
+    unit: Mapped[str | None] = mapped_column(String(40))
+    as_of: Mapped[str | None] = mapped_column(String(10))  # YYYY-MM-DD, or YYYY
+    country: Mapped[str | None] = mapped_column(String(80))
+    location: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    source_name: Mapped[str] = mapped_column(String(200))
+    source_url: Mapped[str | None] = mapped_column(Text)
+    communique_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.communique.id", ondelete="SET NULL")
+    )
+    keywords: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+
+class Signal(_Row):
+    """« Mots surveillés »: a word or name the desk watches in bulletins, clips, tips and SMS."""
+
+    __tablename__ = "signal"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    created_by: Mapped[str] = mapped_column(Text)
+    word: Mapped[str] = mapped_column(String(120))
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    hits: Mapped[int] = mapped_column(default=0)
+
+
+class Route(_Row):
+    """« Le trajet »: one stop of a rumour (`side` = rumour: where it was seen) or of the truth
+    (`side` = truth: where the correction went). Added by code on every gesture, or by hand."""
+
+    __tablename__ = "route"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    item_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.item.id", ondelete="CASCADE"), index=True
+    )
+    added_by: Mapped[str] = mapped_column(Text)
+    side: Mapped[str] = mapped_column(String(10))  # rumour|truth
+    # facebook|whatsapp|tiktok|radio|sms|press|web|poster|institution|voice|other
+    channel: Mapped[str] = mapped_column(String(20))
+    place: Mapped[str] = mapped_column(String(300), default="")  # page, group, station, outlet
+    location: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    # the proof: {url, source_id, clip_at_s, screenshot_file_id, sms_count, note}
+    proof: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    # rumour stops: seen; truth stops: sent|received|broadcast
+    status: Mapped[str] = mapped_column(String(20), default="seen")
+    auto: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+
+
+class RadioClip(_Row):
+    """A veilleur's « Enregistrer » or a server-captured bulletin: a station, a time, a clip and
+    what was heard (transcribed when French, said in one sentence when Malagasy)."""
+
+    __tablename__ = "radio_clip"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    created_by: Mapped[str] = mapped_column(Text)
+    source_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.source.id", ondelete="SET NULL")
+    )
+    item_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.item.id", ondelete="SET NULL"), index=True
+    )
+    station: Mapped[str] = mapped_column(String(120))
+    location: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    recorded_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    language: Mapped[str | None] = mapped_column(String(10))
+    heard_text: Mapped[str] = mapped_column(Text, default="")
+    origin: Mapped[str] = mapped_column(String(20), default="veilleur")  # veilleur|capture
+    status: Mapped[str] = mapped_column(String(20), default="new")  # new|followed|ignored|checked
+    clip_at_s: Mapped[float | None]
+
+
+class RadioPartner(_Row):
+    """A partner radio that receives flashes and marks them « Diffusé » through a token link."""
+
+    __tablename__ = "radio_partner"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    name: Mapped[str] = mapped_column(String(120))
+    frequency: Mapped[str | None] = mapped_column(String(40))
+    location: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    languages: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    contact_role: Mapped[str | None] = mapped_column(String(120))
+    whatsapp: Mapped[str | None] = mapped_column(String(60))
+    sms: Mapped[str | None] = mapped_column(String(60))
+    format_pref: Mapped[str] = mapped_column(String(20), default="script")  # script|audio
+    hours: Mapped[str | None] = mapped_column(String(120))
+    token: Mapped[str] = mapped_column(String(64), unique=True)
+    approved: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+
+class PublicQuestion(_Row):
+    """What people ask with no verdict yet (web « Me prévenir », SMS), by place; notified once a
+    verdict is signed. Phone numbers are stored scrambled (HMAC) and shown masked."""
+
+    __tablename__ = "public_question"
+
+    workspace_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="SET NULL"), index=True
+    )
+    item_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.item.id", ondelete="SET NULL"), index=True
+    )
+    text: Mapped[str] = mapped_column(Text)
+    channel: Mapped[str] = mapped_column(String(10), default="web")  # web|sms|voice
+    location: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    contact_hash: Mapped[str | None] = mapped_column(String(64), index=True)
+    contact_masked: Mapped[str | None] = mapped_column(String(60))
+    notified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class MemberPref(_Row):
+    """« Ma rubrique »: a member's beats, places and language in a newsroom."""
+
+    __tablename__ = "member_pref"
+    __table_args__ = (UniqueConstraint("workspace_id", "user_id"), {"schema": "app"})
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    user_id: Mapped[str] = mapped_column(Text)
+    beats: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    regions: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    language: Mapped[str] = mapped_column(String(5), default="fr")
+    station: Mapped[str | None] = mapped_column(String(120))  # a veilleur's radio
+
+
+class SmsSubscriber(Base):
+    """« ABONNE »: a basic phone that receives the flashes of its region. Number stored scrambled."""
+
+    __tablename__ = "sms_subscriber"
+    __table_args__ = {"schema": "app"}  # noqa: RUF012 - SQLAlchemy convention
+
+    phone_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
+    phone_masked: Mapped[str] = mapped_column(String(60))
+    region: Mapped[str | None] = mapped_column(String(120))
+    language: Mapped[str] = mapped_column(String(5), default="fr")
+    active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="true")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class SmsMessage(_Row):
+    """One SMS in (a question) or out (a verdict, a flash); the gateway phone polls the outbox."""
+
+    __tablename__ = "sms_message"
+    __table_args__ = (
+        Index(
+            "ix_sms_outbox",
+            "created_at",
+            postgresql_where="direction = 'out' AND status = 'queued'",
+        ),
+        {"schema": "app"},
+    )
+
+    workspace_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="SET NULL"), index=True
+    )
+    item_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.item.id", ondelete="SET NULL"), index=True
+    )
+    direction: Mapped[str] = mapped_column(String(3))  # in|out
+    phone_hash: Mapped[str] = mapped_column(String(64), index=True)
+    phone_masked: Mapped[str] = mapped_column(String(60))
+    text: Mapped[str] = mapped_column(String(480))
+    status: Mapped[str] = mapped_column(String(20), default="queued")  # received|queued|sent
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class Season(_Row):
+    """« Ça revient »: a calendar rule for a country (cyclone season, exams, pay days, elections),
+    so the desk hears about this week's likely rumours before they spread."""
+
+    __tablename__ = "season"
+
+    country: Mapped[str] = mapped_column(String(80), index=True)
+    name: Mapped[str] = mapped_column(String(200))
+    topic: Mapped[str] = mapped_column(String(80))
+    start_month: Mapped[int]
+    end_month: Mapped[int]
+    note: Mapped[str] = mapped_column(Text, default="")
+    keywords: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
 
 
 class AiCacheEntry(Base):
