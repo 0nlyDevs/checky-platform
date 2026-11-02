@@ -353,7 +353,7 @@ async def link_check(body: LinkIn, member: AnyMember) -> AsyncIterable[ServerSen
         )
         # In the instructions, not beside the content, so the model does not read it as the post's.
         dated = (
-            f"\n\nDates, calculées par FANILO (elles ne font pas partie du contenu) : "
+            f"\n\nDates, calculées par Checky (elles ne font pas partie du contenu) : "
             f"{dates.today_line()} {when}"
         )
         if page.get("kind") == "image":

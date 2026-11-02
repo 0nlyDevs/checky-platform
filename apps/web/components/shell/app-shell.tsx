@@ -8,7 +8,7 @@ import useSWR from "swr";
 import { Check, ChevronsUpDown, LogOut, Monitor, Moon, Plus, Sun } from "lucide-react";
 import { AssistantLauncher, AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
-import { NAV, WORKSPACE_NAV, type NavItem } from "@/components/shell/nav";
+import { BAR_NAV, CARNET_NAV, NAV, WORKSPACE_NAV, type NavItem } from "@/components/shell/nav";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,7 +50,7 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
         <DropdownMenuLabel>{t.nav.workspace}</DropdownMenuLabel>
         {me?.memberships.map((m) => (
           <DropdownMenuItem key={m.workspace_id} asChild>
-            <Link href={`/w/${m.workspace_id}/verifier`}>
+            <Link href={`/w/${m.workspace_id}/${m.role === "issuer" ? "registre" : m.role === "veilleur" ? "veille" : "rubrique"}`}>
               <span className="flex-1 truncate">{m.name}</span>
               {m.workspace_id === current && <Check className="size-4" aria-hidden />}
             </Link>
@@ -123,7 +123,8 @@ function UserMenu({ user, compact = false }: { user: SessionUser; compact?: bool
 /** Rail and phone bar share the items; the active one carries the citron, the others stay ink. */
 function NavLinks({ ws, variant, items = NAV }: { ws?: string; variant: "rail" | "bar"; items?: NavItem[] }) {
   const pathname = usePathname();
-  const links = items.map(({ label, icon: Icon, path }) => {
+  const links = items.map(({ label: full, short, icon: Icon, path }) => {
+        const label = variant === "bar" && short ? short : full;
         const href = ws && path ? `/w/${ws}/${path}` : undefined;
         // Analyser lives inside Vérifier now: its old address still lights Vérifier.
         const active = href ? pathname.startsWith(href) || (path === "verifier" && pathname.startsWith(`/w/${ws}/analyser`)) : false;
@@ -179,6 +180,9 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
   const { ws } = useParams<{ ws?: string }>();
   const { data: me } = useSWR<Me>("/me", fetcher);
 
+  const role = me?.memberships.find(m => m.workspace_id === ws)?.role;
+  const restricted = role === "issuer" || role === "veilleur";
+  const allowedNav = restricted ? NAV.filter(n => n.path === (role === "issuer" ? "registre" : "veille")) : NAV;
   return (
     <AssistantProvider scope="desk">
       <div data-app-shell className="min-h-dvh bg-background lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
@@ -194,9 +198,17 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
           </Link>
           <WorkspaceSwitcher me={me} current={ws} />
           <nav aria-label="Navigation principale" className="mt-4 flex-1">
-            <NavLinks ws={ws} variant="rail" />
+            <NavLinks ws={ws} variant="rail" items={allowedNav} />
+            {ws && !restricted && (
+              <>
+                <p className="mt-4 mb-1 px-3 font-display text-[0.6875rem] font-bold tracking-[0.14em] text-sidebar-muted uppercase">
+                  {t.nav.carnet}
+                </p>
+                <NavLinks ws={ws} variant="rail" items={CARNET_NAV} />
+              </>
+            )}
           </nav>
-          {ws && (
+          {ws && !restricted && (
             <nav aria-label={t.nav.workspace} className="pb-3">
               <NavLinks ws={ws} variant="rail" items={WORKSPACE_NAV} />
             </nav>
@@ -225,8 +237,8 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
           aria-label="Navigation principale"
           className="fixed inset-x-0 bottom-0 z-30 border-t border-sidebar-border bg-sidebar pb-[env(safe-area-inset-bottom)] text-sidebar-foreground lg:hidden"
         >
-          <ul className="grid grid-cols-4">
-            <NavLinks ws={ws} variant="bar" />
+          <ul className="grid grid-cols-5">
+            <NavLinks ws={ws} variant="bar" items={restricted ? allowedNav : BAR_NAV} />
             <li>
               <AssistantLauncher variant="bar" />
             </li>

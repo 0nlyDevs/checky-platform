@@ -8,6 +8,8 @@ import { useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
 import { ArrowLeft, ImageIcon, LoaderCircle, Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { RoutePanel } from "@/components/claims/route-panel";
+import { PublicationPanel } from "@/components/claims/publication-panel";
 import { AnalysisPanel } from "@/components/claims/analysis-panel";
 import { VerdictCard } from "@/components/claims/verdict-card";
 import { claimSteps, StepDisc, type StepState } from "@/components/flow/step-line";
@@ -403,6 +405,8 @@ export function ClaimDetail() {
         </div>
 
         <aside className="space-y-8">
+          <RoutePanel item={item} />
+          {canEdit && <PublicationPanel key={item.id} item={item} onSaved={(saved) => { mutate(saved, { revalidate: false }); mutateHistory(); }} />}
           <Section id="details" title={t.detail.details}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">
               <dt className="self-center text-muted-foreground">

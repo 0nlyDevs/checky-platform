@@ -6,6 +6,7 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Check, CircleMinus, LoaderCircle, RefreshCw, RotateCcw, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
+import { NewsroomRules } from "@/components/claims/publication-panel";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
@@ -211,6 +212,7 @@ export function SettingsView() {
       {role === "admin" ? (
         <div className="space-y-8">
           <HealthSection />
+        {role === "admin" && <NewsroomRules ws={ws} />}
           <PublicSection ws={ws} />
           <DemoSection ws={ws} />
         </div>

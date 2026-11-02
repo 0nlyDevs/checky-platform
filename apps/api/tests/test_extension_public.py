@@ -52,7 +52,17 @@ def test_anonymous_check_only_exposes_published_confirmed_public_verdicts(
     title = "Une vidéo montre une inondation à Analakely"
     shown = _claim(alice, ws, title, reason="La vidéo est ancienne.")
     _claim(alice, ws, title + " brouillon secret", status="in_progress")
-    _claim(alice, ws, title + " suggestion secrète", verdict=None, verdict_suggested="true")
+    assert (
+        alice.post(
+            f"/api/v1/workspaces/{ws}/items",
+            json={
+                "title": title + " suggestion secrète",
+                "status": "published",
+                "data": {"verdict_suggested": "true"},
+            },
+        ).status_code
+        == 409
+    )
     _claim(bob, private, title + " rédaction privée")
     response = client.post("/api/v1/public/check", json={"text": title})
     assert response.status_code == 200
@@ -66,7 +76,7 @@ def test_anonymous_check_only_exposes_published_confirmed_public_verdicts(
         for word in ("brouillon secret", "suggestion secrète", "rédaction privée")
     )
     assert evidence == [(title, None)]
-    assert len(alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"]) == 3
+    assert len(alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"]) == 2
 
 
 def test_a_new_claim_has_sources_but_no_invented_verdict(client, evidence):

@@ -1,4 +1,4 @@
-"""The site agent for visitors without an account: it explains FANILO, finds published verdicts,
+"""The site agent for visitors without an account: it explains Checky, finds published verdicts,
 prepares a tip, follows the visitor's own tips and opens the right page.
 
 `POST /public/agent` SSE, same events as the desk agent (`step`, `answer` {text, citations,
@@ -54,9 +54,9 @@ PAGES = {
 }
 
 GUIDE_SYSTEM = (
-    """Tu es le guide du site FANILO, à Madagascar. Tu aides les visiteurs, sans compte.
+    """Tu es le guide du site Checky, à Madagascar. Tu aides les visiteurs, sans compte.
 
-Ce qu'est FANILO : un outil de vérification pour les rédactions. Les journalistes suivent les rumeurs \
+Ce qu'est Checky : un outil de vérification pour les rédactions. Les journalistes suivent les rumeurs \
 de la nuit (Facebook, WhatsApp, TikTok, radio), joignent leurs sources, une IA propose un verdict et \
 un journaliste le confirme toujours. Les verdicts publiés (Vrai, Trompeur, Faux, Invérifiable) sont \
 publics sur la page « Les verdicts ». N'importe qui peut signaler un message douteux à une rédaction, \
@@ -81,9 +81,9 @@ brouillon. Il n'est PAS envoyé : le visiteur le relit et appuie sur « Envoyer 
 
 
 GUIDE_REFUSAL = {
-    "fr": "Ce n'est pas mon rôle : je suis le guide de FANILO. Je peux chercher si une rumeur a "
+    "fr": "Ce n'est pas mon rôle : je suis le guide de Checky. Je peux chercher si une rumeur a "
     "déjà été vérifiée par une rédaction, préparer un signalement ou vous dire où en sont les vôtres.",
-    "mg": "Tsy anjarako izany : mpitari-dalana ao amin'ny FANILO aho. Afaka mijery aho raha efa "
+    "mg": "Tsy anjarako izany : mpitari-dalana ao amin'ny Checky aho. Afaka mijery aho raha efa "
     "nohamarinin'ny mpanao gazety ny tsaho iray, na manomana fitarainana ho anao.",
 }
 GUIDE_NO_VERDICT = {

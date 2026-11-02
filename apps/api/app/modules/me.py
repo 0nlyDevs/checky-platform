@@ -16,7 +16,7 @@ class MembershipOut(BaseModel):
     workspace_id: uuid.UUID
     name: str
     slug: str
-    role: Literal["admin", "editor", "journalist"]
+    role: Literal["admin", "editor", "journalist", "veilleur", "issuer"]
 
 
 class MeOut(BaseModel):

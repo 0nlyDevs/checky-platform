@@ -13,8 +13,11 @@ from app.modules import (
     card,
     checker,
     copilot,
+    crew,
     demo,
+    directory,
     extension_public,
+    figures,
     guide,
     health,
     imagecheck,
@@ -25,7 +28,12 @@ from app.modules import (
     public,
     quotes,
     rag,
+    registry,
+    rubrique,
+    signing,
     sources,
+    trajet,
+    veille,
     workspaces,
 )
 from app.realtime.server import sio
@@ -46,7 +54,7 @@ async def lifespan(_: FastAPI):
             await t
 
 
-api = FastAPI(title="FANILO API", version="0.1.0", lifespan=lifespan)
+api = FastAPI(title="Checky API", version="0.1.0", lifespan=lifespan)
 api.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().cors_origin_list,
@@ -74,6 +82,14 @@ api.include_router(copilot.router, prefix="/api/v1")
 api.include_router(linkcheck.router, prefix="/api/v1")
 api.include_router(imagecheck.router, prefix="/api/v1")
 api.include_router(extension_public.router, prefix="/api/v1")
+api.include_router(crew.router, prefix="/api/v1")
+api.include_router(directory.router, prefix="/api/v1")
+api.include_router(figures.router, prefix="/api/v1")
+api.include_router(registry.router, prefix="/api/v1")
+api.include_router(rubrique.router, prefix="/api/v1")
+api.include_router(signing.router, prefix="/api/v1")
+api.include_router(trajet.router, prefix="/api/v1")
+api.include_router(veille.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)

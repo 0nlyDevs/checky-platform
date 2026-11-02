@@ -5,7 +5,7 @@ import { t } from "@/lib/i18n/fr";
 const s = t.site.home.specimen;
 const m = VERDICT_META.misleading;
 
-/** The message with the phrases FANILO flags lit one after the other, as on the Vérifier screen. */
+/** The message with the phrases Checky flags lit one after the other, as on the Vérifier screen. */
 function Marked({ text, quotes }: { text: string; quotes: readonly string[] }) {
   const parts: React.ReactNode[] = [];
   let rest = text;
@@ -26,7 +26,7 @@ function Marked({ text, quotes }: { text: string; quotes: readonly string[] }) {
 
 /**
  * One fictional rumour, worked through: the message as received, the phrases that raise doubt, the
- * three steps, and the verdict the newsroom confirmed. It plays once, the way FANILO works.
+ * three steps, and the verdict the newsroom confirmed. It plays once, the way Checky works.
  */
 export function Specimen() {
   const Icon = m.icon;

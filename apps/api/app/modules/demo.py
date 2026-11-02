@@ -94,7 +94,25 @@ DEMO_CLAIMS = [
         2,
         ["économie"],
     ),
+    # The rumour the pitch follows from birth to the fokontany poster (FAN-0145): a video of 2023
+    # and a doctored JIRAMA communiqué (the registry holds the original: 4 hours a day, not 72).
+    (
+        430,
+        "72 heures de délestage dès demain sur tout Antananarivo, selon la JIRAMA",
+        "to_check",
+        None,
+        None,
+        "facebook",
+        1,
+        ["énergie"],
+    ),
 ]
+
+# The circulating text of the demo rumour (pasted into Vérifier during the pitch). Fictional.
+DEMO_RUMOUR_TEXT = (
+    "URGENT ⚠️ COMMUNIQUÉ N° 2026-118 de la JIRAMA : délestage de 72 heures à partir du 3 novembre "
+    "sur tout Antananarivo, hausse de 40 % du tarif en décembre. Partagez à tous vos contacts !!!"
+)
 
 
 # The reason a journalist wrote for each published demo verdict (shown on the public archive).
@@ -161,7 +179,18 @@ DEMO_SOURCES = {
             "TikTok sont un montage."
         ),
     ),
+    8: (
+        "Démo · La vidéo du délestage retrouvée en ligne le 14 mars 2023 (exemple fictif)",
+        (
+            "La vidéo jointe au message montre des quartiers d'Antananarivo plongés dans le noir. Les "
+            "mêmes images ont été mises en ligne le 14 mars 2023 sur la chaîne YouTube d'une télévision "
+            "nationale, lors des coupures de mars 2023. Elles ne montrent donc pas la situation de "
+            "novembre 2026."
+        ),
+    ),
 }
+# The demo video's fictional upload date (the source above is dated to it, not to the rumour).
+DEMO_SOURCE_DATES = {8: "2023-03-14"}
 
 
 @router.post("/workspaces/{ws}/demo/reset")
@@ -210,11 +239,11 @@ async def reset_demo(admin: Admin, db: Db) -> dict:
                 status="ready",
                 title=title,
                 text=text,
-                # Written the day the rumour surfaced, so the checker reads it as current.
-                published_at=(now - timedelta(minutes=ago))
-                .astimezone(dates.EAT)
-                .date()
-                .isoformat(),
+                # Written the day the rumour surfaced, so the checker reads it as current (or the
+                # real date of an old video, so the date check sees it is old).
+                published_at=DEMO_SOURCE_DATES.get(
+                    i, (now - timedelta(minutes=ago)).astimezone(dates.EAT).date().isoformat()
+                ),
             )
             db.add(source)
             await db.flush()

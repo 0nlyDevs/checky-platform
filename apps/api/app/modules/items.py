@@ -122,6 +122,11 @@ async def list_items(
 
 @router.post("/workspaces/{ws}/items", status_code=201)
 async def create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
+    from app.modules.signing import SIGNATURE_FIELDS, publication_guard
+
+    if SIGNATURE_FIELDS & body.data.keys():
+        raise ApiError(422, "protected_fields", "Use the signature endpoint")
+    await publication_guard(db, member, body.status, body.title, body.body, body.data)
     item = Item(workspace_id=member.workspace_id, author_id=member.user.id, **body.model_dump())
     db.add(item)
     await db.flush()
@@ -176,7 +181,19 @@ async def update_item(item_id: uuid.UUID, body: ItemPatch, member: AnyMember, db
     item = await _get_item(db, member, item_id)
     if item.author_id != member.user.id and not member.at_least("editor"):
         raise ApiError(403, "forbidden", "Only the author or an editor can edit this item")
+    from app.modules.signing import SIGNATURE_FIELDS, publication_guard
+
+    if body.data is not None and SIGNATURE_FIELDS & body.data.keys():
+        raise ApiError(422, "protected_fields", "Use the signature endpoint")
     changes = body.model_dump(exclude_unset=True)
+    await publication_guard(
+        db,
+        member,
+        body.status or item.status,
+        body.title or item.title,
+        body.body if body.body is not None else item.body,
+        {**item.data, **(body.data or {})},
+    )
     diff = {}
     for field, value in changes.items():
         if field == "data":
