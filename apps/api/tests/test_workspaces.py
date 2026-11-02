@@ -1,3 +1,8 @@
+from fastapi.testclient import TestClient
+
+from app.main import app
+
+
 def _workspace(c, name="Desk"):
     r = c.post("/api/v1/workspaces", json={"name": name})
     assert r.status_code == 201
@@ -143,3 +148,27 @@ def test_permission_matrix_follows_the_routes_dependencies(as_user):
     assert out["double_signature"] is False
     assert as_user("mallory").get(f"/api/v1/workspaces/{ws}/permissions").status_code == 404
 
+
+def test_partner_radios_with_a_token_link(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws = _workspace(alice)
+    _join(alice, bob, ws)
+    body = {"name": "Radio Fanambarana (démo)", "frequency": "FM 98.4", "region": "Toamasina"}
+    r = alice.post(f"/api/v1/workspaces/{ws}/radios", json=body)
+    assert r.status_code == 201
+    radio = r.json()
+    assert radio["location"]["region"] == "Atsinanana"
+    assert "/flashs?radio=" in radio["link"] and radio["broadcasts"] == 0
+    assert radio["languages"] == ["mg", "fr"] and radio["last_broadcast_at"] is None
+    # a journalist reads the list but does not add or remove partners
+    assert [x["name"] for x in bob.get(f"/api/v1/workspaces/{ws}/radios").json()] == [body["name"]]
+    assert bob.post(f"/api/v1/workspaces/{ws}/radios", json=body).status_code == 403
+    # the radio opens its link without an account
+    token = radio["link"].rsplit("=", 1)[1]
+    anon = TestClient(app)
+    seen = anon.get(f"/api/v1/public/radios/{token}").json()
+    assert seen["name"] == body["name"] and seen["newsroom"]["name"] == "Desk"
+    assert anon.get("/api/v1/public/radios/nope").status_code == 404
+    assert bob.delete(f"/api/v1/workspaces/{ws}/radios/{radio['id']}").status_code == 403
+    assert alice.delete(f"/api/v1/workspaces/{ws}/radios/{radio['id']}").status_code == 204
+    assert alice.get(f"/api/v1/workspaces/{ws}/radios").json() == []

@@ -22,7 +22,7 @@ from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.http import shared as shared_http
-from app.core.models import Item, Source, Workspace
+from app.core.models import Item, RadioPartner, Source, Workspace
 from app.core.words import words
 
 router = APIRouter(prefix="/public", tags=["public"])
@@ -276,6 +276,34 @@ async def tip_status(token: str, db: Db) -> TipStatusOut:
         received_at=item.created_at,
         newsroom=NewsroomOut(slug=ws.slug, name=ws.name),
         verdict=await _verdict(db, item, ws) if published else None,
+    )
+
+
+# --- a partner radio's token link (no account): who it is, for the flashes page it reads on air
+class RadioPublicOut(BaseModel):
+    name: str
+    frequency: str | None
+    languages: list[str]
+    newsroom: NewsroomOut
+
+
+@router.get("/radios/{token}")
+async def radio(token: str, db: Db) -> RadioPublicOut:
+    row = (
+        await db.execute(
+            select(RadioPartner, Workspace)
+            .join(Workspace, Workspace.id == RadioPartner.workspace_id)
+            .where(RadioPartner.token == token, RadioPartner.approved.is_(True))
+        )
+    ).first()
+    if row is None:
+        raise ApiError(404, "not_found", "Radio link not found")
+    partner, ws = row
+    return RadioPublicOut(
+        name=partner.name,
+        frequency=partner.frequency,
+        languages=list(partner.languages or []),
+        newsroom=NewsroomOut(slug=ws.slug, name=ws.name),
     )
 
 

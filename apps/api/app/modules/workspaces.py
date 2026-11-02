@@ -8,8 +8,9 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import APIRouter, Request
 from fastapi.routing import APIRoute
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import select
+from sqlalchemy import func, or_, select
 
+from app.core import places
 from app.core.access import (
     RANK,
     Admin,
@@ -21,12 +22,15 @@ from app.core.access import (
     Veilleur,
     get_membership,
 )
+from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.models import (
     DEFAULT_BEATS,
     ROLES,
     Invitation,
     Membership,
+    RadioPartner,
+    Route,
     Workspace,
     auth_user,
 )
@@ -352,3 +356,114 @@ async def permissions(member: Anyone, db: Db, request: Request) -> PermissionsOu
         double_signature=newsroom_settings(ws).double_signature,
         capabilities=rows,
     )
+
+
+# --- partner radios: they read the day's flashes on air and mark them « Diffusé » by a token link
+class RadioIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    frequency: str | None = Field(default=None, max_length=40)
+    region: str | None = Field(default=None, max_length=120)
+    languages: list[Literal["fr", "mg", "en"]] = Field(default_factory=lambda: ["mg", "fr"])
+    contact_role: str | None = Field(default=None, max_length=120)
+    whatsapp: str | None = Field(default=None, max_length=60)
+    sms: str | None = Field(default=None, max_length=60)
+    format_pref: Literal["script", "audio"] = "script"
+    hours: str | None = Field(default=None, max_length=120)
+
+
+class RadioOut(BaseModel):
+    id: uuid.UUID
+    name: str
+    frequency: str | None
+    location: dict
+    languages: list[str]
+    contact_role: str | None
+    whatsapp: str | None
+    sms: str | None
+    format_pref: str
+    hours: str | None
+    approved: bool
+    is_demo: bool
+    link: str
+    broadcasts: int
+    last_broadcast_at: datetime | None
+
+
+def radio_link(token: str) -> str:
+    return f"{get_settings().public_web_url.rstrip('/')}/flashs?radio={token}"
+
+
+async def _radio_out(db: Db, radio: RadioPartner) -> RadioOut:
+    # « Diffusé »: the truth stops the radio marked as broadcast (slice « dossier » writes them).
+    count, last = (
+        await db.execute(
+            select(func.count(Route.id), func.max(Route.at)).where(
+                Route.workspace_id == radio.workspace_id,
+                Route.side == "truth",
+                Route.channel == "radio",
+                Route.status == "broadcast",
+                or_(Route.proof["radio_id"].astext == str(radio.id), Route.place == radio.name),
+            )
+        )
+    ).one()
+    return RadioOut(
+        id=radio.id,
+        name=radio.name,
+        frequency=radio.frequency,
+        location=radio.location or {},
+        languages=list(radio.languages or []),
+        contact_role=radio.contact_role,
+        whatsapp=radio.whatsapp,
+        sms=radio.sms,
+        format_pref=radio.format_pref,
+        hours=radio.hours,
+        approved=radio.approved,
+        is_demo=radio.is_demo,
+        link=radio_link(radio.token),
+        broadcasts=count or 0,
+        last_broadcast_at=last,
+    )
+
+
+@router.get("/workspaces/{ws}/radios")
+async def radios(member: AnyMember, db: Db) -> list[RadioOut]:
+    rows = await db.scalars(
+        select(RadioPartner)
+        .where(RadioPartner.workspace_id == member.workspace_id)
+        .order_by(RadioPartner.name)
+    )
+    return [await _radio_out(db, r) for r in rows]
+
+
+@router.post("/workspaces/{ws}/radios", status_code=201)
+async def create_radio(body: RadioIn, member: Editor, db: Db) -> RadioOut:
+    region = (body.region or "").strip()
+    location = places.gazetteer(region) if region else None
+    if region and location is None:
+        location = places.place(region, region=region)
+    radio = RadioPartner(
+        workspace_id=member.workspace_id,
+        name=body.name.strip(),
+        frequency=body.frequency,
+        location=location or {},
+        languages=list(dict.fromkeys(body.languages)),
+        contact_role=body.contact_role,
+        whatsapp=body.whatsapp,
+        sms=body.sms,
+        format_pref=body.format_pref,
+        hours=body.hours,
+        token=secrets.token_urlsafe(24),
+    )
+    db.add(radio)
+    await db.commit()
+    await db.refresh(radio)
+    return await _radio_out(db, radio)
+
+
+@router.delete("/workspaces/{ws}/radios/{radio_id}", status_code=204)
+async def delete_radio(radio_id: uuid.UUID, member: Editor, db: Db) -> None:
+    radio = await db.get(RadioPartner, radio_id)
+    if radio is None or radio.workspace_id != member.workspace_id:
+        raise ApiError(404, "not_found", "Radio not found")
+    await db.delete(radio)
+    await db.commit()
