@@ -276,6 +276,17 @@
   }
 }
 
+/* The theme switch (lib/theme-reveal.ts): the new theme opens from a diagonal slit, drawn by script
+   on the new snapshot; the browser's cross-fade is switched off. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-new(root) {
+  z-index: 2;
+}
+
 /* Page titles: Bricolage Grotesque, heavy and tight. */
 .page-title {
   font-family: var(--font-bricolage), sans-serif;
