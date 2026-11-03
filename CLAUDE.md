@@ -125,8 +125,13 @@ image (5 MB, 20 MP max), returns metadata hints, cautious `detected|none|inconcl
 (`none` only when a detector assessed the pixels and scored low: stripped metadata alone give `inconclusive`;
 `detector.score` is the detector's raw 0..1 score, shown by the extension as the detector's score, not a probability),
 reverse-search links and a separate optional pixel detector result. No image or dossier is
-persisted by this endpoint. Content Credentials signatures are not verified; no markers never
-proves authenticity. `IMAGE_DETECTOR_URL`/`TOKEN` stay server-side and the detector is not contacted
+persisted by this endpoint. Content Credentials are verified by the C2PA library (`app/core/content_credentials.py`:
+signature and hashes, signer recognised only when it chains to the bundled C2PA trust list in
+`app/core/data/`; `trusted|valid|invalid` in `meta.credentials`, « Signée par … » only when it verifies);
+no markers never proves authenticity. Reverse search run by Checky (`app/core/reverse_search.py`, Google
+Lens through SerpApi when `SERPAPI_API_KEY` is set, the links otherwise): pages showing the same
+(blurred or public) picture, each page's own publication date read, the earliest in `provenance.first_page`
+and used as `first_seen` (basis `reverse`); cached 6 h, 60 searches a day. `IMAGE_DETECTOR_URL`/`TOKEN` stay server-side and the detector is not contacted
 until `IMAGE_DETECTOR_VALIDATED=true` after evaluation. Its contract is raw image bytes →
 `{ai_score: 0..1, model: versioned_id}`; 0.9/0.1 are conservative operational cutoffs, not calibrated
 probabilities. **Sightengine** (`genai` model, multipart `media` → `type.ai_generated`) is built in:
