@@ -248,6 +248,8 @@ Done, on `dev`, CI green:
   - **Media** (`app/core/media.py`, `app/modules/media_api.py`, opencv-python-headless): every uploaded image and video keyframe (4–6 per video, from scene changes) gets a safe copy (one frame, JPEG, EXIF removed, faces blurred); only that copy is shown or sent to reverse search; multi-frame images or a failed detection give no picture at all. ffmpeg/ffprobe run with protocol and format whitelists (an uploaded playlist is refused). `POST …/sources/{id}/reveal` shows an original with the look logged; `GET …/sources/{id}/memory` recalls where the picture was already seen (this newsroom, or published verdicts of newsrooms that publish). Deleting a source deletes its keyframes and safe copies. Face detection is OpenCV's frontal model: profiles and small faces can be missed.
   - Browser-checked: A−/A+ and Mode éco, sign-up → invite → the colleague can do everything, the Annuaire check, Veille alerts, the Malagasy reread lock. Not yet driven: the Sources panel with a real upload (local storage unreachable) and the full demo journey with a live model (local Groq key answers 401).
 
+- **Malagasy desk (3 Nov)**: `mg.ts` + `mg/*.ts` (one per `fr/*.ts`, typed `Part<typeof fr>` from `mg/part.ts`, glossary at the top of `mg.ts`) give every French key; machine-drafted, each file marked `// relire (mg)`, not yet reread by a native speaker. `lib/i18n.test.ts` (in `npm test`) fails on any French key without Malagasy, or a function whose parameters differ.
+
 ## Next steps (in order)
 
 Not blocked:
