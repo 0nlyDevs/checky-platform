@@ -624,6 +624,26 @@ class MemberPref(_Row):
     station: Mapped[str | None] = mapped_column(String(120))  # a veilleur's radio
 
 
+class JournalistProfile(_Row):
+    """What a journalist gives at sign-up: how to reach them and a photo of their press card.
+
+    The card lives in the private bucket under `press-cards/<user>/…` and is shown only to the
+    owner and, through a short-lived link, to the Checky team that reviews newsroom requests.
+    """
+
+    __tablename__ = "journalist_profile"
+
+    user_id: Mapped[str] = mapped_column(Text, unique=True)
+    phone: Mapped[str] = mapped_column(String(24))
+    outlet: Mapped[str] = mapped_column(String(160))
+    card_number: Mapped[str | None] = mapped_column(String(60))
+    card_key: Mapped[str] = mapped_column(String(400))
+    card_filename: Mapped[str] = mapped_column(String(255))
+    card_mime: Mapped[str] = mapped_column(String(120))
+    card_size_bytes: Mapped[int]
+    card_sha256: Mapped[str] = mapped_column(String(64), index=True)
+
+
 class SmsSubscriber(Base):
     """« ABONNE »: a basic phone that receives the flashes of its region. Number stored scrambled."""
 

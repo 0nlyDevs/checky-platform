@@ -44,6 +44,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/press-card/upload-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Card Upload Url */
+        post: operations["card_upload_url_api_v1_me_press_card_upload_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/profile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Profile */
+        get: operations["my_profile_api_v1_me_profile_get"];
+        /** Save Profile */
+        put: operations["save_profile_api_v1_me_profile_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/profiles/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Platform Profile
+         * @description The Checky team reads a journalist's profile and card; anyone else gets a 404.
+         */
+        get: operations["platform_profile_api_v1_platform_profiles__user_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces": {
         parameters: {
             query?: never;
@@ -3723,6 +3778,28 @@ export interface components {
              */
             is_demo: boolean;
         };
+        /** CardUploadIn */
+        CardUploadIn: {
+            /** Filename */
+            filename: string;
+            /** Mime */
+            mime: string;
+            /** Size Bytes */
+            size_bytes: number;
+        };
+        /** CardUploadOut */
+        CardUploadOut: {
+            /** Card Key */
+            card_key: string;
+            /** Upload Url */
+            upload_url: string;
+            /** Headers */
+            headers: {
+                [key: string]: string;
+            };
+            /** Expires In */
+            expires_in: number;
+        };
         /** CarnetEntry */
         CarnetEntry: {
             /**
@@ -5196,6 +5273,32 @@ export interface components {
             data?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** JournalistProfileIn */
+        JournalistProfileIn: {
+            /** Phone */
+            phone: string;
+            /** Outlet */
+            outlet: string;
+            /** Card Number */
+            card_number?: string | null;
+            /** Card Key */
+            card_key: string;
+            /** Card Filename */
+            card_filename: string;
+        };
+        /** JournalistProfileOut */
+        JournalistProfileOut: {
+            /** Phone */
+            phone: string;
+            /** Outlet */
+            outlet: string;
+            /** Card Number */
+            card_number: string | null;
+            /** Card Filename */
+            card_filename: string;
+            /** Card Url */
+            card_url?: string | null;
         };
         /** KeepIn */
         KeepIn: {
@@ -8048,6 +8151,123 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeOut"];
+                };
+            };
+        };
+    };
+    card_upload_url_api_v1_me_press_card_upload_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CardUploadIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CardUploadOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_profile_api_v1_me_profile_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalistProfileOut"];
+                };
+            };
+        };
+    };
+    save_profile_api_v1_me_profile_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JournalistProfileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalistProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    platform_profile_api_v1_platform_profiles__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JournalistProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
