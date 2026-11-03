@@ -16,6 +16,15 @@ export const look: NonNullable<Overrides["look"]> = {
   report: { hero: ["Report", "a *rumour*"], note: "As it is, typos and all" },
   follow: { hero: ["Following", "your *report*"] },
   reponse: { hero: ["A newsroom has", "a *question* for you"] },
+  auth: {
+    hero: ["Your newsroom's", "*tool*."],
+    heroUp: ["Your newsroom", "checks *faster*."],
+    back: "Check without an account",
+    doors: "Newsroom access",
+    steps: ["You", "The newsroom", "Verification"],
+    stepsLabel: "The sign-up steps",
+    credits: "Video: Wikimedia Commons",
+  },
   verdict: {
     seal: "Newsroom verified by Checky",
   },

@@ -144,7 +144,7 @@ function FontButtons() {
 }
 
 /** Light or dark for a visitor, with the same diagonal reveal as the desk. */
-function ThemeButton() {
+export function ThemeButton() {
   const flip = useThemeFlip();
   return (
     <button type="button" onClick={flip} className="site-round" data-ripple>
