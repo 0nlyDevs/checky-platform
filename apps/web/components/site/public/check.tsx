@@ -96,7 +96,7 @@ export function CheckForm({ id = "check", className, initialText = "" }: { id?: 
         <label htmlFor={`${id}-text`} className="sr-only">
           {c.label}
         </label>
-        <div className="rounded-md border border-input bg-card focus-within:border-foreground focus-within:ring-2 focus-within:ring-foreground/15">
+        <div className="pub-prompt">
           <textarea
             id={`${id}-text`}
             rows={3}
@@ -107,13 +107,13 @@ export function CheckForm({ id = "check", className, initialText = "" }: { id?: 
             }}
             placeholder={c.placeholder}
             maxLength={6000}
-            className="block w-full resize-none bg-transparent px-4 pt-4 pb-2 text-lg leading-relaxed outline-none placeholder:text-muted-foreground"
+            className="block w-full resize-none bg-transparent px-6 pt-5 pb-2 text-lg leading-relaxed outline-none placeholder:text-muted-foreground"
           />
-          <div className="flex items-center justify-end border-t border-border px-3 py-2.5">
-            <Button type="submit" variant="action" size="xl" disabled={busy}>
+          <div className="flex items-center justify-end px-3 pb-3">
+            <Button type="submit" variant="action" size="xl" disabled={busy} className="group rounded-full px-6">
               {busy && <IconCircleNotch className="animate-spin" aria-hidden />}
               {busy ? c.searching : c.submit}
-              {!busy && <IconArrowRight aria-hidden />}
+              {!busy && <IconArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />}
             </Button>
           </div>
         </div>
@@ -188,7 +188,7 @@ function External({ reviews }: { reviews: Review[] }) {
       <h2 className="font-display text-xl font-bold">{c.title}</h2>
       <ul className="space-y-3">
         {reviews.map((r) => (
-          <li key={r.url} className="arrive rounded-md border-2 border-foreground bg-card p-4 md:p-5">
+          <li key={r.url} className="arrive rounded-[20px] border border-input bg-card p-5 md:p-6">
             <p className="flex items-center gap-2 font-bold">
               <IconSealCheck className="size-5 shrink-0" aria-hidden />
               {c.by(r.publisher, r.date ? day(r.date) : null)}
@@ -240,7 +240,7 @@ function Known({ result, asked }: { result: Verify; asked: string }) {
           {f.searchDown}
         </p>
       )}
-      <div className="rounded-md border border-dashed border-foreground p-4">
+      <div className="rounded-[20px] border-2 border-dashed border-foreground p-5">
         <p className="font-display text-lg font-bold">{f.noVerdict}</p>
         {result.followed_since && <p className="mt-1 text-pretty">{f.following(moment(result.followed_since), result.followed_by)}</p>}
       </div>
@@ -255,7 +255,7 @@ function Known({ result, asked }: { result: Verify; asked: string }) {
 function Alert({ fact }: { fact: Fact }) {
   const a = useT().publicLayer.check.facts.alert;
   return (
-    <section aria-labelledby="alert-title" className="rounded-md border-2 border-foreground bg-card p-4 md:p-5">
+    <section aria-labelledby="alert-title" className="rounded-[20px] border border-input bg-card p-5 md:p-6">
       <h2 id="alert-title" className="font-display text-xl font-bold">
         {a.title}
       </h2>
@@ -346,21 +346,21 @@ function AskNewsroom({ text }: { text: string }) {
   }
 
   return (
-    <section aria-labelledby="ask-title" className="rounded-md border-2 border-foreground bg-card p-4">
+    <section aria-labelledby="ask-title" className="rounded-[20px] border border-input bg-card p-5">
       <h3 id="ask-title" className="font-display text-lg font-bold">
         {a.title}
       </h3>
       {typeof state === "object" ? (
         <div role="status" className="mt-1">
           <p className="text-pretty">{a.done(state.name, state.ref)}</p>
-          <Link href={`/suivi/${state.token}`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-md bg-foreground px-4 font-bold text-background">
+          <Link href={`/suivi/${state.token}`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 font-bold text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground">
             {a.follow} <IconArrowRight className="size-4" aria-hidden />
           </Link>
         </div>
       ) : (
         <>
           <p className="mt-1 text-pretty text-muted-foreground">{a.lead}</p>
-          <Button type="button" variant="action" size="xl" className="mt-3" onClick={ask} disabled={state === "sending"}>
+          <Button type="button" variant="action" size="xl" className="mt-3 rounded-full px-6" onClick={ask} disabled={state === "sending"}>
             {state === "sending" ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconPaperPlaneTilt aria-hidden />}
             {state === "sending" ? a.sending : a.button}
           </Button>
@@ -415,12 +415,12 @@ function Notify({ text }: { text: string }) {
 
   if (done)
     return (
-      <p className="rounded-md border border-foreground bg-card p-4 text-pretty" role="status">
+      <p className="rounded-[20px] border border-foreground bg-card p-5 text-pretty" role="status">
         {done}
       </p>
     );
   return (
-    <form onSubmit={send} className="rounded-md border border-border bg-card p-4" aria-labelledby="notify-title">
+    <form onSubmit={send} className="rounded-[20px] border border-border bg-card p-5" aria-labelledby="notify-title">
       <h3 id="notify-title" className="font-display text-lg font-bold">
         {t.publicLayer.check.ask.sms}
       </h3>
@@ -437,10 +437,10 @@ function Notify({ text }: { text: string }) {
             placeholder={n.placeholder}
             aria-invalid={!!error}
             aria-describedby="notify-privacy"
-            className="mt-1 h-11 w-full rounded-md border border-input bg-background px-3 outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+            className="mt-1 h-12 w-full rounded-full border border-input bg-background px-5 outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
           />
         </label>
-        <Button type="submit" variant="outline" size="xl" disabled={busy}>
+        <Button type="submit" variant="outline" size="xl" disabled={busy} className="rounded-full px-6">
           {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconPaperPlaneTilt aria-hidden />}
           {busy ? n.sending : n.submit}
         </Button>

@@ -52,26 +52,26 @@ export function VerdictPage() {
   if (!v)
     return (
       <Shell>
-        <div className="mt-8 h-12 w-2/3 animate-pulse rounded-md bg-muted" />
-        <div className="mt-6 h-48 animate-pulse rounded-md bg-muted" />
+        <div className="mt-10 h-14 w-2/3 rounded-[20px] bg-muted" />
+        <div className="mt-8 h-56 rounded-[24px] bg-muted" />
       </Shell>
     );
 
   const origin = v.origin ? ((t.origins as Record<string, string>)[v.origin] ?? null) : null;
   return (
     <Shell>
-      <h1 className="mt-6 max-w-[30ch] font-display text-[1.7rem] leading-[1.1] font-extrabold tracking-tight text-pretty md:mt-8 md:text-[2.6rem]">«&nbsp;{tidy(v.title)}&nbsp;»</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <h1 className="pub-title rise mt-8 max-w-[26ch] text-pretty md:mt-10">«&nbsp;{tidy(v.title)}&nbsp;»</h1>
+      <p className="rise mt-4 text-muted-foreground" style={{ "--d": "0.15s" } as React.CSSProperties}>
         {t.publicLayer.check.signed.by(v.newsroom.name, day(v.signed_at ?? v.published_at))}
         {checkNumber(v.ref) !== null ? <span className="tabular"> · {p.number(checkNumber(v.ref)!)}</span> : v.ref && <span className="tabular"> · {v.ref}</span>}
       </p>
       <VerifiedBadge className="mt-1" />
       <CardSeal outcome={sealed} newsroom={v.newsroom.name} />
 
-      <div className="mt-6 grid gap-10 md:mt-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+      <div className="mt-8 grid gap-12 md:mt-10 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0">
           <VerdictBlock v={v} />
-          <div className="mt-4">
+          <div className="mt-5">
             <ShareActions v={v} primary />
           </div>
           {v.voice_note && <NewsroomVoice note={v.voice_note} />}
@@ -121,7 +121,7 @@ export function VerdictPage() {
               conclusion: p.publishedBy(day(v.published_at), v.newsroom.name),
             }}
           />
-          <div className="mt-8 rounded-md border border-border bg-card p-4">
+          <div className="mt-8 rounded-[20px] border border-border bg-card p-5">
             <p className="text-pretty">{p.wrong}</p>
             <Link
               href={`/signaler?texte=${encodeURIComponent(v.title)}`}
@@ -149,7 +149,7 @@ function checkNumber(ref: string | null | undefined): number | null {
 function NewsroomVoice({ note }: { note: VoiceNote }) {
   const p = useT().site.pub.file;
   return (
-    <section className="mt-6 max-w-xl rounded-md border border-border bg-card p-4" aria-labelledby="newsroom-voice">
+    <section className="mt-6 max-w-xl rounded-[20px] border border-border bg-card p-5" aria-labelledby="newsroom-voice">
       <h2 id="newsroom-voice" className="flex items-center gap-2 font-display text-lg font-bold">
         <IconSpeakerHigh className="size-5" aria-hidden />
         {p.newsroomVoice}
@@ -196,7 +196,7 @@ function CardSeal({ outcome, newsroom }: { outcome: SealOutcome; newsroom: strin
             : [IconSealCheck, s.valid(newsroom)]
           : [IconQuestion, t.offline.seal.unknownLead];
   return (
-    <p role="status" data-seal={check.status} className="mt-3 flex max-w-[70ch] items-start gap-2 rounded-md border border-foreground bg-card px-3 py-2 font-bold text-pretty">
+    <p role="status" data-seal={check.status} className="mt-4 flex max-w-[70ch] items-start gap-2 rounded-[20px] border border-foreground bg-card px-4 py-3 font-bold text-pretty">
       <Glyph className="mt-0.5 size-5 shrink-0" aria-hidden />
       {text}
     </p>
@@ -206,9 +206,12 @@ function CardSeal({ outcome, newsroom }: { outcome: SealOutcome; newsroom: strin
 function Shell({ children }: { children: React.ReactNode }) {
   const p = useT().site.pub.file;
   return (
-    <div className="mx-auto max-w-[88rem] px-4 pt-8 pb-20 lg:px-10">
-      <Link href="/verifies" className="inline-flex items-center gap-1.5 text-sm font-bold hover:underline">
-        <IconArrowLeft className="size-4" aria-hidden /> {p.back}
+    <div className="mx-auto max-w-[88rem] px-4 pt-8 pb-24 lg:px-10 lg:pt-10">
+      <Link
+        href="/verifies"
+        className="group inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-bold text-foreground outline-none hover:bg-raised hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        <IconArrowLeft className="size-4 transition-transform duration-300 group-hover:-translate-x-0.5" aria-hidden /> {p.back}
       </Link>
       {children}
     </div>

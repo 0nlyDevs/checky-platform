@@ -11,6 +11,7 @@ import { resources } from "./en/resources";
 import { rubrique } from "./en/rubrique";
 import { team } from "./en/team";
 import { verification } from "./en/verification";
+import { look } from "./en/look";
 import type { Overrides } from "./index";
 import { alertKit } from "./en/alertKit";
 import { offline } from "./en/offline";
@@ -44,6 +45,7 @@ export const en: Overrides = {
   rubrique,
   team,
   verification,
+  look,
   reach,
   palette,
   publication,

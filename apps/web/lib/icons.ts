@@ -1,5 +1,13 @@
 import { createElement } from "react";
 import {
+  WhatsappLogo as WhatsappLogoGlyph,
+  FacebookLogo as FacebookLogoGlyph,
+  TiktokLogo as TiktokLogoGlyph,
+  YoutubeLogo as YoutubeLogoGlyph,
+  MessengerLogo as MessengerLogoGlyph,
+  TelegramLogo as TelegramLogoGlyph,
+  XLogo as XLogoGlyph,
+  ArrowUpRight as ArrowUpRightGlyph,
   AddressBook,
   ArrowCounterClockwise,
   ArrowLeft,
@@ -179,3 +187,11 @@ export const IconTextAa = duo(TextAaGlyph);
 export const IconCloudSlash = duo(CloudSlashGlyph);
 export const IconTray = duo(TrayGlyph);
 export const IconTranslate = duo(TranslateGlyph);
+export const IconWhatsappLogo = duo(WhatsappLogoGlyph);
+export const IconFacebookLogo = duo(FacebookLogoGlyph);
+export const IconTiktokLogo = duo(TiktokLogoGlyph);
+export const IconYoutubeLogo = duo(YoutubeLogoGlyph);
+export const IconMessengerLogo = duo(MessengerLogoGlyph);
+export const IconTelegramLogo = duo(TelegramLogoGlyph);
+export const IconXLogo = duo(XLogoGlyph);
+export const IconArrowUpRight = duo(ArrowUpRightGlyph);

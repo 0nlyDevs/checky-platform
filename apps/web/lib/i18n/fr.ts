@@ -15,6 +15,7 @@ import { rubrique } from "./fr/rubrique";
 import { studio } from "./fr/studio";
 import { team } from "./fr/team";
 import { verification } from "./fr/verification";
+import { look } from "./fr/look";
 
 /** A distance in days, rounded the way a person says it (same rounding as the API's dates.span). */
 const span = (days: number) => {
@@ -954,6 +955,7 @@ export const fr = {
   publicLayer,
   team,
   verification,
+  look,
   reach,
   offline,
   alertKit,
