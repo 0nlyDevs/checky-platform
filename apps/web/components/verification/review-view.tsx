@@ -3,6 +3,7 @@
 import type { components, Me } from "@fanilo/shared";
 import { useState } from "react";
 import { toast } from "sonner";
+import { notFound } from "next/navigation";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -139,8 +140,9 @@ export function ReviewView() {
   const [tab, setTab] = useState<(typeof TABS)[number]>("pending");
   const rows = useSWR<Row[]>(me?.platform_admin ? `/platform/requests?status=${tab}` : null, fetcher);
 
+  // Only the Checky team reviews requests: anyone else gets the page's 404, not an empty queue.
   if (me && !me.platform_admin) {
-    return <p className="p-8 text-muted-foreground">{r.empty}</p>;
+    notFound();
   }
   return (
     <div className="mx-auto max-w-3xl px-4 pt-6 pb-16 lg:px-8 lg:pt-8">

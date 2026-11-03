@@ -31,7 +31,7 @@ export const registre: Part<typeof fr> = {
     addedNumber: "nampiana, tsy ao amin'ny dika voalohany",
   },
   page: {
-    title: "Rejisitra",
+    title: "Fanambarana",
     lead: "Ny dika voalohany amin'ireo fanambarana, araka ny namoahan'ny tompony azy, hampitahana teny isan-teny izay miely. Manaporofo ny teny ny dika voalohany voarakitra, fa tsy manaporofo fa marina izay lazainy.",
     count: (n: number) => `dika voalohany ${n}`,
     tabsLabel: "Fizaran'ny rejisitra",
