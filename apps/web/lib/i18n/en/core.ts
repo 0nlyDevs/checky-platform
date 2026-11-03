@@ -87,6 +87,8 @@ export const core: Overrides = {
     more: "More",
     moreLabel: "Other sections",
     account: "Your account",
+    roleAdmin: "Checky admin",
+    roleJournalist: "Journalist",
     preferences: "Preferences",
     search: "Search everything (Ctrl K)",
     toDark: "Dark theme",

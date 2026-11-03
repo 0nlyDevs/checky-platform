@@ -134,6 +134,8 @@ export const mg: Overrides = {
     more: "Hafa koa",
     moreLabel: "Fizarana hafa",
     account: "Ny kaontinao",
+    roleAdmin: "Mpandrindra Checky",
+    roleJournalist: "Mpanao gazety",
     preferences: "Safidy",
     search: "Hikaroka na aiza na aiza (Ctrl K)",
     toDark: "Endrika maizina",
