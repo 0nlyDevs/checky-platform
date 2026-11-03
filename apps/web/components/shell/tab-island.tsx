@@ -2,19 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import type { NavItem } from "@/components/shell/nav";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { IconCaretDown, IconDotsThree } from "@/lib/icons";
 import { t } from "@/lib/i18n/live";
 import { foldTabs } from "@/lib/priority-nav";
+import { useSlidingPill } from "@/lib/use-sliding-pill";
 
 type Tab = NavItem & { href: string };
-
-/** Marks the one tab whose label reads ink on the paper pill (`data-lit`), or none. */
-function light(list: HTMLElement | null, lit: HTMLElement | null) {
-  list?.querySelectorAll<HTMLElement>(".tab").forEach((tab) => tab.toggleAttribute("data-lit", tab === lit));
-}
 
 /** The tabs a workspace shows, with their addresses and the one that is lit. */
 export function useTabs(ws: string | undefined, items: NavItem[]) {
@@ -36,72 +32,10 @@ export function TabIsland({ ws, items }: { ws?: string; items: NavItem[] }) {
   const { tabs, active } = useTabs(ws, items);
   const wrap = useRef<HTMLDivElement>(null);
   const ghost = useRef<HTMLDivElement>(null);
-  const island = useRef<HTMLUListElement>(null);
-  const pill = useRef<HTMLSpanElement>(null);
-  // Where the pill was last put, and for which tab.
-  const last = useRef<{ tab: number; x: number; w: number } | null>(null);
-  // The frame that keeps the lit label under the sliding pill (0 when the pill rests).
-  const follow = useRef(0);
   const [visible, setVisible] = useState(tabs.length);
-  useEffect(() => () => cancelAnimationFrame(follow.current), []);
-
-  // The pill follows the current tab (or « Plus » when it holds it): transform + width, 0.5 s.
-  // It slides only when the current tab changes; when its own tab moves (first paint, fonts, a
-  // resize that folds it into « Plus ») it is put there at once, as in the mockup.
-  const place = useCallback(() => {
-    const el = island.current?.querySelector<HTMLElement>("[data-current]");
-    const p = pill.current;
-    if (!p) return;
-    if (!el) {
-      p.style.opacity = "0";
-      last.current = null;
-      light(island.current, null);
-      return;
-    }
-    // the tab is measured inside the list, the pill inside the island: add the island's padding
-    const x = el.offsetLeft + (island.current?.offsetLeft ?? 0);
-    const w = el.offsetWidth;
-    const prev = last.current;
-    if (prev && prev.tab === active && prev.x === x && prev.w === w) {
-      if (!follow.current) light(island.current, el);
-      return;
-    }
-    const instant = !prev || prev.tab === active;
-    if (instant) p.style.transition = "none";
-    p.style.opacity = "1";
-    p.style.width = `${w}px`;
-    p.style.transform = `translateX(${x}px)`;
-    cancelAnimationFrame(follow.current);
-    follow.current = 0;
-    if (instant) {
-      void p.offsetWidth;
-      p.style.transition = "";
-      light(island.current, el);
-    } else {
-      // The ink label belongs on the paper: a tab is lit only while the pill sits under its centre,
-      // so a label never turns ink over the ink island ahead of the sliding pill.
-      const step = () => {
-        const list = island.current;
-        if (!list) return;
-        const r = p.getBoundingClientRect();
-        if (p.getAnimations().length) {
-          const under = Array.from(list.querySelectorAll<HTMLElement>(".tab")).find((tab) => {
-            const c = tab.getBoundingClientRect();
-            return r.left <= c.left + c.width / 2 && c.left + c.width / 2 <= r.right;
-          });
-          light(list, under ?? null);
-          follow.current = requestAnimationFrame(step);
-        } else {
-          light(list, list.querySelector<HTMLElement>("[data-current]"));
-          follow.current = 0;
-        }
-      };
-      follow.current = requestAnimationFrame(step);
-    }
-    last.current = { tab: active, x, w };
-    // from now on the pill carries the current tab; before, the tab paints its own paper
-    p.parentElement?.setAttribute("data-pill", "");
-  }, [active]);
+  // The paper pill rests under the current tab (or « Plus » when it holds it) and follows the
+  // pointer and the keyboard over the others, as on the public bar (lib/use-sliding-pill.ts).
+  const { host: island, pill, place, handlers } = useSlidingPill<HTMLUListElement>(active);
 
   const fit = useCallback(() => {
     const room = wrap.current?.clientWidth ?? 0;
@@ -130,7 +64,8 @@ export function TabIsland({ ws, items }: { ws?: string; items: NavItem[] }) {
 
   const folded = tabs.slice(visible);
   const holds = active >= visible;
-  useLayoutEffect(place);
+  // Folding moves the tabs (and maybe the current one into « Plus »): the pill follows at once.
+  useLayoutEffect(() => place(), [visible, place]);
 
   if (!tabs.length) return <div ref={wrap} className="tab-wrap" />;
   const current = active >= 0 ? tabs[active] : undefined;
@@ -140,10 +75,10 @@ export function TabIsland({ ws, items }: { ws?: string; items: NavItem[] }) {
     <div ref={wrap} className="tab-wrap">
       <nav aria-label={t.nav.main} className="tab-island">
         <span ref={pill} className="tab-pill" aria-hidden />
-        <ul ref={island} className="tab-list">
+        <ul ref={island} className="tab-list" {...handlers}>
           {tabs.slice(0, visible).map(({ label, icon: Icon, href }, i) => (
             <li key={href}>
-              <Link href={href} className="tab" data-ripple data-current={i === active || undefined} aria-current={i === active ? "page" : undefined}>
+              <Link href={href} className="tab" data-ripple data-pill-item data-current={i === active || undefined} aria-current={i === active ? "page" : undefined}>
                 <Icon className="tab-icon" aria-hidden />
                 {label}
               </Link>
@@ -152,7 +87,7 @@ export function TabIsland({ ws, items }: { ws?: string; items: NavItem[] }) {
           {folded.length > 0 && (
             <li>
               <DropdownMenu>
-                <DropdownMenuTrigger className="tab" data-ripple data-current={holds || undefined} aria-label={holds && current ? `${current.label}, ${t.nav.more}` : undefined}>
+                <DropdownMenuTrigger className="tab" data-ripple data-pill-item data-current={holds || undefined} aria-label={holds && current ? `${current.label}, ${t.nav.more}` : undefined}>
                   {holds && HeldIcon ? <HeldIcon className="tab-icon" aria-hidden /> : null}
                   {holds && current ? current.label : t.nav.more}
                   <IconCaretDown className="tab-caret" aria-hidden />
