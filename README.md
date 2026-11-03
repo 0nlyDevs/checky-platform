@@ -146,7 +146,12 @@ cp .env apps/web/.env.local
 | `LLM_PROVIDERS` | `groq,gemini,nvidia,claude` | the order is the fallback order; put `claude` first to prefer it |
 | `SEAL_SECRET` | any random string | `openssl rand -base64 32`; seals verdicts and communiqués (without it sealing answers 503) |
 | `PUBLIC_WEB_URL` | `http://localhost:3000` | the public site, written into QR codes and `/v/<n>` short links |
-| `SMS_GATEWAY_SECRET` | any random string locally | shared with the SMS gateway in production |
+| `SMS_GATEWAY_SECRET` | any random string | shared with the SMS gateway phone |
+| `SMS_GATEWAY_URL` | optional Android phone gateway API base URL | the phone's LAN address or its gateway relay URL |
+| `SMS_GATEWAY_USER`, `SMS_GATEWAY_PASSWORD` | optional basic-auth credentials | the gateway app's API settings |
+| `SMS_GATEWAY_TOKEN` | optional bearer token instead of basic auth | the gateway app's API settings |
+| `SMS_GATEWAY_SIGNING_KEY` | optional webhook HMAC key | the gateway app's webhook settings |
+| `SMS_GATEWAY_SIM` | `0` for the phone's default SIM | choose `1`–`3` for a specific SIM |
 
 Several teammates' keys can share one variable: `GROQ_API_KEY=gsk_a,gsk_b` (one free account each;
 several accounts per person usually breaks the providers' terms).
@@ -176,6 +181,25 @@ cd apps/web && npx next dev -p 3000
 
 Open http://localhost:3000, create an account, and create a workspace with
 **"Données de démonstration"** ticked (the default) to get 8 example claims. API docs: http://localhost:8000/docs.
+
+### SMS gateway phone
+
+Install an Android SMS gateway app that supports the `POST /messages` API and `sms:received`,
+`sms:sent`, `sms:delivered`, and `sms:failed` webhooks (the adapter currently speaks the
+SMS Gateway for Android format). Put a local SIM in the phone, enable its API, and set
+`SMS_GATEWAY_URL` and either the basic-auth credentials or bearer token above. Point each of its
+four webhooks to `https://<API-address>/api/v1/public/sms/gateway` (the app requires HTTPS,
+except for a localhost development bridge). Set the same signing key in the app and
+`SMS_GATEWAY_SIGNING_KEY`; if the app cannot sign, append `?secret=<SMS_GATEWAY_SECRET>` to the
+webhook URL. The API accepts inbound SMS through that webhook and pushes queued replies through
+its Postgres worker, retrying temporary failures. The SMS simulator in Réglages exercises the
+same message handling without a phone. With `SMS_GATEWAY_URL` empty, the authenticated polling
+outbox remains available to another gateway.
+
+In **Vérifier → Avant l'antenne**, paste a caller's claim or dictate it in French. The signed
+verdicts of public newsrooms appear first, with a two-sentence radio line and the verification
+number. A Malagasy radio line appears only after a journalist has reread and attested it;
+Malagasy input can be typed. Fact-checkers' published reviews follow under their own names.
 
 ## Everyday commands
 
