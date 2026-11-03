@@ -28,10 +28,9 @@ function regionOf(c: Contact): string | null {
   return typeof l.region === "string" && l.region ? l.region : typeof l.name === "string" && l.name ? l.name : null;
 }
 
-/** « tel:+261340000001 » → « +261 34 00 000 01 »; other countries as stored. */
-function showNumber(url: string): string {
-  const n = url.replace(/^tel:/, "");
-  return /^\+261\d{9}$/.test(n) ? `+261 ${n.slice(4, 6)} ${n.slice(6, 8)} ${n.slice(8, 11)} ${n.slice(11)}` : n;
+/** The API writes each official number the way its country writes it abroad (`display`). */
+function showNumber(page: { url: string; display?: unknown }): string {
+  return typeof page.display === "string" && page.display ? page.display : page.url.replace(/^tel:/, "");
 }
 
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -92,7 +91,7 @@ function ContactCard({ contact, editor, onVerify, onRemove }: { contact: Contact
               {p.verified && <span className="text-muted-foreground">({t.dossier.who.pageVerified})</span>}
             </span>
             <a href={p.url} className="font-display font-bold tabular underline decoration-border underline-offset-4 hover:decoration-foreground">
-              {showNumber(p.url)}
+              {showNumber(p)}
             </a>
           </p>
         ))}

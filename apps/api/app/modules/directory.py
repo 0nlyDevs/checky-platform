@@ -116,6 +116,14 @@ class ContactOut(BaseModel):
     own: bool = True
 
 
+def _page_out(page: dict[str, Any]) -> dict[str, Any]:
+    """An official number also carries `display`, written the way its country writes it abroad."""
+    url = str(page.get("url") or "")
+    if page.get("kind") == "phone" or url.lower().startswith("tel:"):
+        return {**page, "display": countries.display(url.removeprefix("tel:"))}
+    return dict(page)
+
+
 def contact_out(c: Contact, ws: uuid.UUID | None = None) -> ContactOut:
     return ContactOut(
         id=c.id,
@@ -130,7 +138,7 @@ def contact_out(c: Contact, ws: uuid.UUID | None = None) -> ContactOut:
         whatsapp=c.whatsapp,
         email=c.email,
         website=c.website,
-        official_pages=list(c.official_pages or []),
+        official_pages=[_page_out(p) for p in c.official_pages or []],
         hours=c.hours,
         shared=bool(c.shared),
         verified_at=c.verified_at,

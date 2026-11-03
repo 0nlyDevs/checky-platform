@@ -319,3 +319,7 @@ def test_official_numbers_are_read_in_the_newsrooms_country(as_user):
     alice.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"country": "France"}})
     paris = _contact(alice, ws, official_pages=[{"kind": "phone", "url": "01 23 45 67 89"}])
     assert paris["official_pages"][0]["url"] == "tel:+33123456789"
+    # Each number is also written the way its country writes it abroad, for the cards.
+    assert paris["official_pages"][0]["display"] == "+33 1 23 45 67 89"
+    assert made["official_pages"][1]["display"] == "+261 34 00 000 01"
+    assert "display" not in made["official_pages"][0]
