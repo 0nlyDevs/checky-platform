@@ -17,7 +17,7 @@ import { claimSteps, type Step, StepLine, type StepState } from "@/components/fl
 import { Button } from "@/components/ui/button";
 import { useDictation } from "@/components/verify/dictation";
 import { OnAir } from "@/components/verify/on-air";
-import { useStickyColumn } from "@/hooks/use-sticky-column";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { isOffline, useOnline } from "@/lib/offline";
@@ -113,6 +113,7 @@ function Lit({ text, quotes }: { text: string; quotes: string[] }) {
  * The second tab asks every source of the newsroom (and the agent for a deeper search).
  */
 export function VerifyView() {
+  const columns = useStickyColumns<HTMLDivElement>();
   const { ws } = useParams<{ ws: string }>();
   const router = useRouter();
   const pathname = usePathname();
@@ -283,7 +284,7 @@ export function VerifyView() {
 
   return (
     <div className="@container mx-auto max-w-[88rem] px-4 pt-6 pb-16 lg:px-10 lg:pt-10">
-      <div className="grid gap-10 @5xl:grid-cols-[minmax(0,1fr)_19rem] @5xl:gap-12">
+      <div ref={columns} className="grid gap-10 @5xl:grid-cols-[minmax(0,1fr)_19rem] @5xl:gap-12">
         <div className="min-w-0">
           <div role="tablist" aria-label={v.modes.label} className="mb-6 inline-flex rounded-md border border-border bg-card p-1">
             {(["message", "onAir", "sources"] as const).map((m) => (
@@ -667,7 +668,6 @@ function Wall({ r, picked, toggle }: { r: Result; picked: Set<string>; toggle: (
 /** Beside the check: the dossiers still open (oldest first) and what the desk settled lately. */
 function DeskColumn({ ws }: { ws: string }) {
   const { data } = useSWR<ItemPage>(`/workspaces/${ws}/items?limit=200`, fetcher);
-  const column = useStickyColumn<HTMLElement>();
   const claims = useMemo(() => (data?.items ?? []).map(toClaim), [data]);
   const open = claims
     .filter((x) => x.status === "to_check" || x.status === "in_progress")
@@ -678,7 +678,7 @@ function DeskColumn({ ws }: { ws: string }) {
     .sort((a, b) => b.item.updated_at.localeCompare(a.item.updated_at))
     .slice(0, 3);
   return (
-    <aside ref={column} className="space-y-8 min-[1101px]:sticky min-[1101px]:self-start @6xl:pt-14">
+    <aside className="space-y-8 @6xl:pt-14">
       <section>
         <h2 className="flex items-baseline justify-between gap-3 font-display text-lg font-bold">
           {v.open}

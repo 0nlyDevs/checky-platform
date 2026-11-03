@@ -21,6 +21,7 @@ import { BeatPicker } from "./beat-picker";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "./bits";
 import { MeteoPanel } from "./meteo-panel";
 import type { Alert, AngleCard, AntenneRow, Circulating, ContactCard, FigureCard, Rubrique } from "./types";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 
 const r = t.rubrique;
 // The API says the day in French (« mardi 3 novembre 2026 »); other languages format `today` themselves.
@@ -288,6 +289,7 @@ function PageSkeleton() {
  * those waiting for a signature, the figures and the people to call. One action: Vérifier.
  */
 export function RubriqueView() {
+  const columns = useStickyColumns<HTMLDivElement>();
   const { ws } = useParams<{ ws: string }>();
   const { joined } = useMe(ws);
   const [all, setAll] = useState(false);
@@ -431,7 +433,7 @@ export function RubriqueView() {
         ) : (
           // Phone order (DOM): what circulates, my dossiers, the context, the references, the angles.
           // From @5xl the context column stands on the right beside the first four rows.
-          <div className="grid gap-x-10 gap-y-10 px-4 sm:gap-y-14 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_22rem] @5xl:grid-rows-[auto_auto_auto_1fr]">
+          <div ref={columns} className="grid gap-x-10 gap-y-10 px-4 sm:gap-y-14 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_22rem] @5xl:grid-rows-[auto_auto_auto_1fr]">
             <Section id="circule" tone="lead" title={r.circulating.title} lead={r.circulating.lead} className="min-w-0 @5xl:col-start-1 @5xl:row-start-1">
               {data.circulating.length === 0 ? (
                 <div className="rounded-md border border-dashed border-border px-4 py-6 text-center">

@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { EvidenceLine, FlagLabel, flagOf, questionFor, type Evidence } from "./flag";
 import type { ChunkResult, ClaimOut, Pack, ShowOut } from "./types";
 import { ThemedSelect } from "@/components/ui/select";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 
 const s = t.studio;
 const CHUNK_MS = 10_000;
@@ -110,6 +111,7 @@ function ClaimCard({
 }
 
 export function ShowRoom() {
+  const columns = useStickyColumns<HTMLDivElement>();
   const { ws, id } = useParams<{ ws: string; id: string }>();
   const { data: show, error, mutate } = useSWR<ShowOut>(`/workspaces/${ws}/studio/${id}`, fetcher, {
     refreshInterval: 5000,
@@ -325,7 +327,7 @@ export function ShowRoom() {
       )}
 
       {show.status !== "draft" && tab === "live" && (
-        <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
+        <div ref={columns} className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
           <div className="min-w-0">
             <p className="text-sm font-bold text-muted-foreground">{s.live.modeCautious}</p>
             <h2 className="mt-3 font-display text-lg font-bold">{s.live.flags}</h2>
