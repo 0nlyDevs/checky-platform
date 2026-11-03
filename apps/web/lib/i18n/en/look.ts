@@ -13,6 +13,9 @@ export const look: NonNullable<Overrides["look"]> = {
     allNewsrooms: "All newsrooms",
     seenOn: (where: string) => `Seen on ${where}`,
   },
+  report: { hero: ["Report", "a *rumour*"], note: "As it is, typos and all" },
+  follow: { hero: ["Following", "your *report*"] },
+  reponse: { hero: ["A newsroom has", "a *question* for you"] },
   verdict: {
     seal: "Newsroom verified by Checky",
   },

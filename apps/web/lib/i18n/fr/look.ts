@@ -12,6 +12,9 @@ export const look = {
     allNewsrooms: "Toutes les rédactions",
     seenOn: (where: string) => `Vu sur ${where}`,
   },
+  report: { hero: ["Signaler", "une *rumeur*"], note: "Tel quel, fautes comprises" },
+  follow: { hero: ["Suivi du", "*signalement*"] },
+  reponse: { hero: ["Une rédaction vous", "pose une *question*"] },
   verdict: {
     seal: "Rédaction vérifiée par Checky",
   },

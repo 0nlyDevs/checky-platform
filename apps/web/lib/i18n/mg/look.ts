@@ -14,6 +14,9 @@ export const look: Part<typeof fr> = {
     allNewsrooms: "Ny mpanao gazety rehetra",
     seenOn: (where: string) => `Hita tao amin'ny ${where}`,
   },
+  report: { hero: ["Hampahafantatra", "*tsaho*"], note: "Toy izao ihany, na misy diso aza" },
+  follow: { hero: ["Fanarahana ny", "*tatitra*"] },
+  reponse: { hero: ["Misy mpanao gazety", "*manontany* anao"] },
   verdict: {
     seal: "Mpanao gazety nohamarinin'i Checky",
   },
