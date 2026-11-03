@@ -45,6 +45,13 @@ How the pieces talk:
   Wikipedia and fact-checkers (`apps/api/app/core/websearch.py`). Dedicated web search uses
   Tavily when configured; keyless HTML search is best-effort and may fail on hosting IPs.
   See [`docs/WEB_SEARCH.md`](docs/WEB_SEARCH.md) for the free-plan setup and cost guards.
+- **One kind of account.** Every member of a newsroom can do everything. Anything public (verdicts,
+  seals, SMS, radio flashes) only leaves a newsroom that the Checky team has verified
+  (`Workspace.publishes`; reviewers are the user ids in `PLATFORM_ADMINS`, page `/checky`).
+- **Pictures leave the desk blurred.** Every uploaded image and video keyframe gets a single-frame,
+  EXIF-free copy with faces blurred (OpenCV, `apps/api/app/core/media.py`); only that copy is shown
+  or sent to reverse image search. ffmpeg only reads plain video containers.
+- **Reading preferences:** A−/A+ and « Mode éco », per device (`apps/web/lib/prefs.ts`).
 - **In production:** web on Vercel, API on Render, database and file storage on **Neon**
   (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
 - **Phone app:** [`0nlyDevs/fanilo-mobile`](https://github.com/0nlyDevs/fanilo-mobile) (Expo,
@@ -137,6 +144,9 @@ cp .env apps/web/.env.local
 | `GOOGLE_FACTCHECK_API_KEY` | optional: claim reviews from fact-checkers worldwide | a Google Cloud key with the Fact Check Tools API enabled |
 | `LLM_MODEL_*` | empty = gateway default | set once we have picked models |
 | `LLM_PROVIDERS` | `groq,gemini,nvidia,claude` | the order is the fallback order; put `claude` first to prefer it |
+| `SEAL_SECRET` | any random string | `openssl rand -base64 32`; seals verdicts and communiqués (without it sealing answers 503) |
+| `PUBLIC_WEB_URL` | `http://localhost:3000` | the public site, written into QR codes and `/v/<n>` short links |
+| `SMS_GATEWAY_SECRET` | any random string locally | shared with the SMS gateway in production |
 
 Several teammates' keys can share one variable: `GROQ_API_KEY=gsk_a,gsk_b` (one free account each;
 several accounts per person usually breaks the providers' terms).
@@ -250,6 +260,9 @@ queues `ingest_file`. In the UI, drop `<SourcesPanel ws={ws} itemId={id} />` any
 add-link, upload and the live list. Server side, read a file with `storage.read(key)`.
 Videos (`mp4`, `webm`, `quicktime`, `3gpp`) become `video` sources: ffmpeg pulls out the soundtrack
 for Whisper and `ffprobe` reads the tags, which are scanned for AI generators (Sora, Veo…).
+Images and 4–6 keyframes per video also get a face-blurred safe copy; a failed transcription keeps
+the video ready with its keyframes (re-run it with « Transcrire »). Deleting a source deletes its
+frames and copies.
 `PATCH …/sources/{id} {item_id}` attaches a source to a claim later; `link-check {source_id}`
 checks an uploaded file on its transcript (the phone app's share flow).
 
