@@ -7,7 +7,7 @@ export const ROUTES = {
   /** « Est-ce déjà vérifié ? » with the visitor's text, checked as soon as the page opens. */
   check: (text: string) => `/verdicts?q=${encodeURIComponent(text)}`,
   /** Preview APK of the phone app (EAS build, profile `preview`). */
-  android: "https://expo.dev/artifacts/eas/oR4NkynNFr1zEdrw2DaLCgjHVVnmnSNb7cRhdX8lpcQ.apk",
+  android: "https://expo.dev/artifacts/eas/TRHDMXkY7EYPgNIMAgsySUSoZRAcHYFzwDp_QXWujAQ.apk",
 };
 
 export const SECTIONS = [
