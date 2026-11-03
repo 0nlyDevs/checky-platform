@@ -1804,24 +1804,48 @@ html[data-ruler="on"]::-webkit-scrollbar {
 
 .landing .fin-ghost {
   position: relative;
-  height: clamp(100px, 20vw, 300px);
+  width: 100%;
   overflow: hidden;
-  margin-top: 20px;
+  margin-top: clamp(28px, 5vw, 80px);
+  padding-top: clamp(20px, 4vw, 64px);
+  pointer-events: none;
 }
 
-.landing .fin-ghost span {
+.landing .fin-ghost svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  transform: translateY(14%);
+}
+
+.landing .fin-ghost::after {
+  content: "";
   position: absolute;
-  left: 50%;
-  bottom: -0.28em;
-  transform: translateX(-50%);
+  inset: 65% 0 0;
+  -webkit-backdrop-filter: blur(clamp(1px, 0.2vw, 3px));
+  backdrop-filter: blur(clamp(1px, 0.2vw, 3px));
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 80%);
+  mask-image: linear-gradient(to bottom, transparent, #000 80%);
+}
+
+.landing .fin-ghost text {
+  font-family: var(--font-display);
   font-weight: 800;
-  font-size: clamp(7rem, 26vw, 30rem);
+  font-size: 290px;
   letter-spacing: -0.06em;
-  line-height: 1;
-  color: transparent;
-  -webkit-text-stroke: 1px rgb(243 242 238 / 0.18);
-  white-space: nowrap;
-  pointer-events: none;
+  fill: #fff;
+  filter:
+    drop-shadow(0 0 6px rgb(255 255 255 / 0.4))
+    drop-shadow(0 0 24px rgb(255 255 255 / 0.18));
+}
+
+.landing .fin-ghost .fin-ghost-bloom {
+  fill: url(#fin-wordmark-glow);
+  filter:
+    drop-shadow(0 12px 14px rgb(255 255 255 / 0.95))
+    drop-shadow(0 22px 38px rgb(255 255 255 / 0.65))
+    drop-shadow(0 30px 72px rgb(255 255 255 / 0.35));
 }
 
 .landing .fin-legal {
