@@ -82,9 +82,19 @@ def grounded(query: str, text: str) -> bool:
     )
 
 
+def rubric(text: str) -> set[str]:
+    """Words of a section label opening a headline (« COMMERCE – … »): capitals, not acronyms."""
+    match = re.match(r"\s*((?:[^\W\d_]+\s+){0,2}[^\W\d_]+)\s*[–—-]\s", text)
+    label = match.group(1) if match else ""
+    return set(label.split()) if label.isupper() else set()
+
+
 def cover_entities(queries: list[str], entities: list[str], text: str) -> list[str]:
     """Keep a distinctive name in the search even if some model queries were rejected."""
-    acronyms = sorted(set(re.findall(r"\b[A-Z]{3,}\b", text)), key=lambda word: (-len(word), word))
+    labels = rubric(text)
+    acronyms = sorted(
+        set(re.findall(r"\b[A-Z]{3,}\b", text)) - labels, key=lambda word: (-len(word), word)
+    )
     years = list(dict.fromkeys(re.findall(r"\b20\d{2}\b", text)))
     candidates = list(queries)
     if acronyms and not any(acronyms[0].lower() in tokens(query) for query in queries):
@@ -101,11 +111,15 @@ def cover_entities(queries: list[str], entities: list[str], text: str) -> list[s
 def fallback(text: str, warning="ai_unavailable") -> Preparation:
     # Rank distinctive terms across the ENTIRE passage; acronyms near the end must survive.
     candidates = re.findall(r"[^\W_]+(?:[-’'][^\W_]+)*", text, re.UNICODE)
+    labels = rubric(text)
     unique = list(
         dict.fromkeys(
             word
             for word in candidates
-            if len(word) >= 3 and tokens(word) and tokens(word)[0] not in STOP
+            if len(word) >= 3
+            and tokens(word)
+            and tokens(word)[0] not in STOP
+            and word not in labels
         )
     )
     anchors = [word for word in unique if word.isupper() and len(word) >= 3]

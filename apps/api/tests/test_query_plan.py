@@ -93,3 +93,24 @@ def test_an_ai_failure_is_explicit_and_still_searches_the_whole_text(monkeypatch
     plan = asyncio.run(query_plan.prepare(query_plan.clean_text(PARC)))
     assert plan.method == "fallback" and plan.warning
     assert "MAZAVALOHA" in plan.queries[0]
+
+
+LITCHI = (
+    "COMMERCE – Une récolte légèrement tardive et moins abondante des litchis attendue "
+    "à partir du 20 novembre"
+)
+
+
+def test_a_section_label_opening_a_headline_is_not_searched_as_an_acronym():
+    draft = {
+        "summary": LITCHI,
+        "claims": [LITCHI],
+        "entities": ["20 novembre"],
+        "queries": ["récolte tardive litchis 20 novembre"],
+    }
+    prepared = query_plan.validate_plan(json.dumps(draft), LITCHI)
+    assert prepared.queries == ["récolte tardive litchis 20 novembre"]
+    assert "COMMERCE" not in query_plan.fallback(LITCHI).queries[0]
+    acronym = "CTHT – Le centre annonce la récolte des litchis du 20 novembre"
+    assert query_plan.rubric(acronym) == {"CTHT"}
+    assert query_plan.rubric("Le CTHT annonce la récolte - tardive") == set()
