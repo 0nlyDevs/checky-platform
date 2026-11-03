@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { IconArrowSquareOut, IconCopy, IconSealCheck } from "@/lib/icons";
+import { Em, Lines, PillChoice } from "@/components/site/public/kit";
+import { IconArrowSquareOut, IconCopy, IconMagnifyingGlass, IconSealCheck, IconWarning } from "@/lib/icons";
 import { publicApi } from "@/lib/public-api";
-import { cn } from "@/lib/utils";
 import { RegistryDiff } from "./registry-diff";
 import { communiqueRef, frenchDay, type OfficialEntry } from "./types";
 import { Tag } from "./ui";
@@ -13,8 +13,7 @@ import { t } from "@/lib/i18n/live";
 const registre = t.registre;
 
 const f = registre.feed;
-const KINDS = ["all", "original", "fake_caught"] as const;
-type Kind = (typeof KINDS)[number];
+type Kind = "all" | "original" | "fake_caught";
 
 function Entry({ e, index }: { e: OfficialEntry; index: number }) {
   async function copy() {
@@ -23,7 +22,7 @@ function Entry({ e, index }: { e: OfficialEntry; index: number }) {
   }
   const fake = e.kind === "fake_caught";
   return (
-    <li id={`c-${e.id}`} className="arrive scroll-mt-28 border-b border-border py-6" style={{ "--i": Math.min(index, 8) } as React.CSSProperties}>
+    <li id={`c-${e.id}`} className="arrive scroll-mt-28 rounded-[24px] border border-border bg-card p-6 md:p-7" style={{ "--i": Math.min(index, 8) } as React.CSSProperties}>
       <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
         <span className="font-display font-bold">{fake ? f.fake : f.original}</span>
         <span className="text-muted-foreground">
@@ -58,7 +57,7 @@ function Entry({ e, index }: { e: OfficialEntry; index: number }) {
       ) : (
         <details className="mt-3">
           <summary className="cursor-pointer font-bold underline-offset-4 hover:underline">{f.more}</summary>
-          <p className="mt-2 max-w-prose rounded-sm bg-card p-3 whitespace-pre-wrap">{e.text}</p>
+          <p className="mt-3 max-w-prose rounded-[16px] bg-raised p-4 whitespace-pre-wrap">{e.text}</p>
           {e.url && /^https?:\/\//i.test(e.url) && (
             <a href={e.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4">
               {registre.entry.source}
@@ -67,7 +66,7 @@ function Entry({ e, index }: { e: OfficialEntry; index: number }) {
           )}
         </details>
       )}
-      <div className="mt-3 flex flex-wrap gap-4 text-sm">
+      <div className="mt-4 flex flex-wrap gap-4 text-sm">
         {e.seal_url && (
           <a href={e.seal_url} className="inline-flex items-center gap-1 font-bold underline underline-offset-4">
             <IconSealCheck className="size-4" aria-hidden />
@@ -113,54 +112,42 @@ export function OfficialFeed() {
   }, [page]);
 
   return (
-    <div className="mx-auto max-w-[88rem] px-4 pt-10 pb-20 lg:px-10 lg:pt-14">
-      <h1 className="page-title">{f.title}</h1>
-      {page && <p className="mt-2 text-muted-foreground">{f.count(page.total)}</p>}
-      <p className="mt-4 max-w-[62ch] text-lg leading-relaxed text-pretty text-muted-foreground">{f.lead}</p>
-      <div className="mt-8 flex flex-wrap items-end justify-between gap-4 border-b border-foreground pb-4">
-        <div role="group" aria-label={f.tabsLabel} className="flex gap-1">
-          {KINDS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              aria-pressed={kind === k}
-              onClick={() => setKind(k)}
-              className={cn(
-                "h-11 rounded-md px-3.5 font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                kind === k ? "bg-foreground font-bold text-background" : "hover:bg-accent",
-              )}
-            >
-              {f.tabs[k]}
-            </button>
-          ))}
-        </div>
-        <label className="block w-full max-w-sm">
-          <span className="text-sm font-bold">{f.filter}</span>
-          <input
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            className="mt-1 h-11 w-full rounded-md border border-input bg-card px-3 outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-          />
+    <div className="mx-auto max-w-[88rem] px-4 pt-10 pb-24 lg:px-10 lg:pt-16">
+      <Lines className="pub-display" lines={t.look.official.hero.map((line, i) => <Em key={i} text={line} />)} />
+      <p className="pub-lead rise mt-7 max-w-[62ch]" style={{ "--d": "0.25s" } as React.CSSProperties}>
+        {f.lead}
+      </p>
+      <div className="rise mt-10 flex flex-wrap items-center justify-between gap-4" style={{ "--d": "0.35s" } as React.CSSProperties}>
+        <PillChoice
+          value={kind}
+          onChange={setKind}
+          label={f.tabsLabel}
+          options={[
+            { value: "all", label: f.tabs.all },
+            { value: "original", label: f.tabs.original, icon: IconSealCheck },
+            { value: "fake_caught", label: f.tabs.fake_caught, icon: IconWarning },
+          ]}
+        />
+        <label className="pub-search pub-search-wide">
+          <span className="sr-only">{f.filter}</span>
+          <IconMagnifyingGlass className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+          <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={f.filter} />
         </label>
       </div>
+      {page && <p className="mt-6 text-muted-foreground">{f.count(page.total)}</p>}
       {failed && (
         <p role="alert" className="py-8">
           {f.failed}
         </p>
       )}
       {page && !page.items.length && <p className="py-8 text-muted-foreground">{f.empty}</p>}
-      <ul className="max-w-4xl">
+      <ul className="mt-4 flex max-w-4xl flex-col gap-4">
         {page?.items.map((e, i) => (
           <Entry key={e.id} e={e} index={i} />
         ))}
       </ul>
       {page && page.total > page.items.length && (
-        <button
-          type="button"
-          onClick={() => setLimit(limit + 30)}
-          className="mt-6 h-11 rounded-md border border-border px-4 font-bold outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-        >
+        <button type="button" onClick={() => setLimit(limit + 30)} className="pub-ghost-btn mt-8">
           {f.loadMore}
         </button>
       )}

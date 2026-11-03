@@ -25,6 +25,10 @@ export const look: NonNullable<Overrides["look"]> = {
     stepsLabel: "The sign-up steps",
     credits: "Video: Wikimedia Commons",
   },
+  official: { hero: ["The official", "*feed*"] },
+  scanner: { hero: ["Scan", "a *seal*"] },
+  seal: { hero: ["Check", "a *seal*"] },
+  flashs: { hero: "Today's *flashes*" },
   verdict: {
     seal: "Newsroom verified by Checky",
   },

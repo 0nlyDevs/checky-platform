@@ -26,6 +26,10 @@ export const look: Part<typeof fr> = {
     stepsLabel: "Ireo dingana fisoratana anarana",
     credits: "Horonan-tsary: Wikimedia Commons",
   },
+  official: { hero: ["Ny fampitam-baovao", "*ofisialy*"] },
+  scanner: { hero: ["Hijery", "*tombo-kase*"] },
+  seal: { hero: ["Hamarino", "ny *tombo-kase*"] },
+  flashs: { hero: "Flash *anio*" },
   verdict: {
     seal: "Mpanao gazety nohamarinin'i Checky",
   },

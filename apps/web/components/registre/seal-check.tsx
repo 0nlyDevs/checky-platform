@@ -1,5 +1,6 @@
 "use client";
 
+import { Em, Lines } from "@/components/site/public/kit";
 import Link from "next/link";
 import { useState, useSyncExternalStore } from "react";
 import { SealStatus, SignedFields } from "@/components/seal/seal-result";
@@ -19,7 +20,7 @@ async function fingerprint(text: string): Promise<string | null> {
 
 function Status({ icon: Glyph, title, lead }: { icon: Icon; title: string; lead: string }) {
   return (
-    <div className="verdict-land rounded-md border-2 border-foreground bg-card p-5">
+    <div className="verdict-land rounded-[24px] border-2 border-foreground bg-card p-6 md:p-7">
       <p className="flex items-center gap-2 font-display text-3xl font-extrabold tracking-tight">
         <Glyph className="size-8 shrink-0" aria-hidden />
         {title}
@@ -40,7 +41,7 @@ function PasteCheck({ expected }: { expected: string }) {
   }
   if (typeof window !== "undefined" && !globalThis.crypto?.subtle) return null;
   return (
-    <form onSubmit={run} className="rounded-md border border-border bg-card p-4">
+    <form onSubmit={run} className="rounded-[24px] border border-border bg-card p-5 md:p-6">
       <label htmlFor="paste" className="font-bold">
         {c.paste}
       </label>
@@ -54,13 +55,13 @@ function PasteCheck({ expected }: { expected: string }) {
         rows={4}
         placeholder={c.pastePlaceholder}
         aria-label={c.pasteLabel}
-        className="mt-2 block w-full rounded-md border border-input bg-background p-3 outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
+        className="mt-3 block w-full rounded-[20px] border border-input bg-background px-5 py-3.5 outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
       />
       <div className="mt-2 flex flex-wrap items-center gap-3">
         <button
           type="submit"
           disabled={!text.trim()}
-          className="h-10 rounded-md bg-foreground px-3.5 text-sm font-bold text-background outline-none hover:bg-foreground/85 focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
+          className="h-11 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground outline-none hover:bg-primary-hover hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:bg-raised disabled:text-muted-foreground"
         >
           {c.pasteAction}
         </button>
@@ -141,7 +142,7 @@ export function SealCheck() {
           <SignedFields check={check} />
         </section>
         {seal && (
-          <details className="rounded-md border border-border bg-card p-4">
+          <details className="rounded-[20px] border border-border bg-card p-5">
             <summary className="cursor-pointer font-bold">{c.text}</summary>
             <p className="mt-3 max-w-prose whitespace-pre-wrap">{seal.text}</p>
             <p className="mt-2 text-sm text-muted-foreground">{c.newsroom(seal.newsroom.name)}</p>
@@ -153,16 +154,16 @@ export function SealCheck() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pt-10 pb-20 lg:px-10 lg:pt-14">
-      <h1 className="page-title">{c.title}</h1>
-      <div className="mt-8" aria-live="polite">
+    <div className="mx-auto max-w-3xl px-4 pt-10 pb-24 lg:px-10 lg:pt-16">
+      <Lines className="pub-display" lines={t.look.seal.hero.map((line, i) => <Em key={i} text={line} />)} />
+      <div className="rise mt-10" style={{ "--d": "0.25s" } as React.CSSProperties} aria-live="polite">
         {body}
       </div>
-      <p className="mt-10 flex flex-wrap gap-x-6 gap-y-2">
-        <Link href="/scanner" className="font-bold underline underline-offset-4">
+      <p className="mt-10 flex flex-wrap gap-3">
+        <Link href="/scanner" className="pub-ghost-btn">
           {t.offline.scanner.again}
         </Link>
-        <Link href="/officiel" className="font-bold underline underline-offset-4">
+        <Link href="/officiel" className="pub-ghost-btn">
           {c.feed}
         </Link>
       </p>
