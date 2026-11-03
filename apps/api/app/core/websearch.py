@@ -22,7 +22,7 @@ from app.core import keys
 from app.core.config import get_settings
 
 # Wikimedia asks every client for a User-Agent with a way to reach its maintainers.
-WIKI_UA = "Checky/0.1 (https://github.com/0nlyDevs/fanilo-base; newsroom fact-checking tool)"
+WIKI_UA = "Checky/0.1 (https://github.com/0nlyDevs/checky-platform; newsroom fact-checking tool)"
 BROWSER_UA = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
     "Chrome/141.0 Safari/537.36"
