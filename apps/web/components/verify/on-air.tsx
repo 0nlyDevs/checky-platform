@@ -11,6 +11,7 @@ import { api } from "@/lib/api";
 import { useDay, useT } from "@/lib/i18n";
 import { IconArrowCounterClockwise, IconArrowRight, IconArrowSquareOut, IconCheck, IconCircleNotch, IconCopy, IconMicrophone, IconStop } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 type OnAirVerdict = {
   id: string;
@@ -321,23 +322,14 @@ function Signed({ v }: { v: OnAirVerdict }) {
             <h3 className="font-display text-sm font-bold">{o.line}</h3>
             <p className="text-sm text-muted-foreground">{o.lineHelp}</p>
           </div>
-          <div role="radiogroup" aria-label={o.lineLang} className="inline-flex rounded-md border border-border p-0.5">
-            {(["fr", "mg"] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                role="radio"
-                aria-checked={lineLang === l}
-                onClick={() => setLineLang(l)}
-                className={cn(
-                  "rounded-[3px] px-3 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  lineLang === l ? "bg-foreground font-bold text-background" : "text-muted-foreground",
-                )}
-              >
-                {o.langs[l]}
-              </button>
-            ))}
-          </div>
+          <PillTabs
+            kind="radio"
+            size="sm"
+            label={o.lineLang}
+            value={lineLang}
+            onChange={setLineLang}
+            items={(["fr", "mg"] as const).map((l) => ({ value: l, label: o.langs[l] }))}
+          />
         </div>
         {line ? (
           <>

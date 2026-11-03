@@ -19,7 +19,7 @@ import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { dateFormat, t } from "@/lib/i18n/live";
-import { cn } from "@/lib/utils";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const ALL = "all";
 const dayFmt = dateFormat({ weekday: "long", day: "numeric", month: "long" });
@@ -188,30 +188,14 @@ export function ClaimsView() {
 
       <div className="flex flex-wrap items-center gap-2 px-4 pb-4 lg:px-0">
         {view === "list" && (
-          <div role="tablist" aria-label={t.claims.tabs.label} className="-mx-4 flex basis-[calc(100%+2rem)] gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:px-0 @3xl:basis-auto">
-            {TABS.map((k) => (
-              <button
-                key={k}
-                type="button"
-                role="tab"
-                aria-selected={tab === k}
-                onClick={() => go({ onglet: k })}
-                className={cn(
-                  "inline-flex h-11 shrink-0 items-center gap-2 rounded-md px-3 outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  tab === k ? "bg-foreground font-bold text-background" : "hover:bg-card",
-                )}
-              >
-                {t.claims.tabs[k]}
-                <span
-                  className={cn(
-                    "rounded-sm px-1.5 text-sm font-bold tabular",
-                    k === "confirm" && counts.confirm > 0 ? "bg-action text-action-foreground" : tab === k ? "bg-background/15" : "bg-muted",
-                  )}
-                >
-                  {counts[k]}
-                </span>
-              </button>
-            ))}
+          <div className="-mx-4 basis-[calc(100%+2rem)] px-4 lg:mx-0 lg:px-0 @3xl:basis-auto">
+            <PillTabs
+              className="seg-scroll"
+              label={t.claims.tabs.label}
+              value={tab}
+              onChange={(k) => go({ onglet: k })}
+              items={TABS.map((k) => ({ value: k, label: t.claims.tabs[k], count: counts[k], alert: k === "confirm" && counts.confirm > 0 }))}
+            />
           </div>
         )}
         <div className="relative min-w-0 flex-1 basis-56">
@@ -235,29 +219,17 @@ export function ClaimsView() {
               ))}
           </SelectContent>
         </Select>
-        <div role="radiogroup" aria-label={t.claims.views.label} className="flex h-10 shrink-0 rounded-md border border-input bg-card p-0.5">
-          {(
-            [
-              ["list", t.claims.views.grid, IconRows],
-              ["board", t.claims.views.board, IconColumns],
-            ] as const
-          ).map(([v, label, Icon]) => (
-            <button
-              key={v}
-              type="button"
-              role="radio"
-              aria-checked={view === v}
-              onClick={() => go({ vue: v })}
-              className={cn(
-                "flex items-center gap-1.5 rounded-[3px] px-3 text-sm font-bold outline-none transition-colors duration-150 focus-visible:ring-2 focus-visible:ring-ring",
-                view === v ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Icon className="size-4" aria-hidden />
-              <span className="sr-only sm:not-sr-only">{label}</span>
-            </button>
-          ))}
-        </div>
+        <PillTabs
+          kind="radio"
+          className="shrink-0"
+          label={t.claims.views.label}
+          value={view}
+          onChange={(v) => go({ vue: v })}
+          items={[
+            { value: "list", label: t.claims.views.grid, icon: IconRows },
+            { value: "board", label: t.claims.views.board, icon: IconColumns },
+          ]}
+        />
       </div>
 
       {error ? (

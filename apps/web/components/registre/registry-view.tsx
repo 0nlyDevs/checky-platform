@@ -25,6 +25,7 @@ import { RegistryDiff } from "./registry-diff";
 import { fieldClass, Tag } from "./ui";
 import { type Communique, communiqueRef, frenchDay, type MatchResult, type SealKey, type SealResult } from "./types";
 import { t } from "@/lib/i18n/live";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const r = t.registre;
 
@@ -547,21 +548,13 @@ export function RegistryView() {
         />
       )}
       <ComparePanel ws={ws} onRecorded={refresh} />
-      <nav aria-label={r.page.tabsLabel} className="mb-2 flex gap-1 overflow-x-auto border-b border-border">
-        {tabs.map((x) => (
-          <Link
-            key={x.key}
-            href={`/w/${ws}/registry${x.key === "originaux" ? "" : `?onglet=${x.key}`}`}
-            aria-current={x.key === tab ? "page" : undefined}
-            className={cn(
-              "-mb-px shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-150",
-              x.key === tab ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {x.label}
-          </Link>
-        ))}
-      </nav>
+      <PillTabs
+        kind="nav"
+        className="seg-scroll mb-2"
+        label={r.page.tabsLabel}
+        value={tab}
+        items={tabs.map((x) => ({ value: x.key, label: x.label, href: `/w/${ws}/registry${x.key === "originaux" ? "" : `?onglet=${x.key}`}` }))}
+      />
       {tab === "cles" ? (
         <KeysList ws={ws} />
       ) : (

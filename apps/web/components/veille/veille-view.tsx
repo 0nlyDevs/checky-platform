@@ -25,6 +25,7 @@ import { AntenneList } from "./antenne-list";
 import { SignalsPanel, useSignalToasts } from "./signals-panel";
 import { VeilleurView } from "./veilleur-view";
 import { useStickyColumns } from "@/hooks/use-sticky-columns";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const v = t.rubrique.veille;
 const KINDS = ["all", "tip", "sms", "clip", "press"] as const;
@@ -191,23 +192,14 @@ function DeskVeille({ ws }: { ws: string }) {
       </header>
 
       <div className="flex flex-wrap items-center gap-2 px-4 pb-5 lg:px-0">
-        <div role="tablist" aria-label={v.tabsLabel} className="-mx-4 flex basis-[calc(100%+2rem)] gap-1 overflow-x-auto px-4 pb-1 [scrollbar-width:none] lg:mx-0 lg:px-0 @3xl:basis-auto">
-          {KINDS.map((k) => (
-            <button
-              key={k}
-              type="button"
-              role="tab"
-              aria-selected={tab === k}
-              onClick={() => go({ type: k === "all" ? null : k })}
-              className={cn(
-                "inline-flex h-11 shrink-0 items-center gap-2 rounded-md px-3 outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                tab === k ? "bg-foreground font-bold text-background" : "hover:bg-card",
-              )}
-            >
-              {v.tabs[k]}
-              <span className={cn("rounded-sm px-1.5 text-sm font-bold tabular", tab === k ? "bg-background/15" : "bg-muted")}>{k === "all" ? total : (counts[k] ?? 0)}</span>
-            </button>
-          ))}
+        <div className="-mx-4 basis-[calc(100%+2rem)] px-4 lg:mx-0 lg:px-0 @3xl:basis-auto">
+          <PillTabs
+            className="seg-scroll"
+            label={v.tabsLabel}
+            value={tab}
+            onChange={(k) => go({ type: k === "all" ? null : k })}
+            items={KINDS.map((k) => ({ value: k, label: v.tabs[k], count: k === "all" ? total : (counts[k] ?? 0) }))}
+          />
         </div>
         {region && (
           <button

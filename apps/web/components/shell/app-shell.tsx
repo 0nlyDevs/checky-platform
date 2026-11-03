@@ -4,6 +4,7 @@ import type { Me } from "@checky/shared";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useSyncExternalStore } from "react";
 import useSWR from "swr";
 import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon, IconNewspaper, IconPlus, IconSealCheck, IconShieldCheck, IconSignOut, IconSun } from "@/lib/icons";
 import { AssistantProvider } from "@/components/assistant/assistant-context";
@@ -32,6 +33,32 @@ import { VerificationBanner } from "@/components/verification/status";
 import { t } from "@/lib/i18n/live";
 import type { SessionUser } from "@/lib/session";
 import { toggleThemeWithReveal } from "@/lib/theme-reveal";
+
+const subscribeNothing = () => () => {};
+/** True on Apple systems, where the palette's shortcut reads ⌘ K (false on the server). */
+function useApple() {
+  return useSyncExternalStore(subscribeNothing, () => /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent), () => false);
+}
+
+/** Search everywhere, with the key that opens it from anywhere (Ctrl K, ⌘ K on a Mac). */
+function SearchButton() {
+  const apple = useApple();
+  return (
+    <button
+      type="button"
+      className="bar-icon bar-search"
+      data-ripple
+      onClick={openPalette}
+      aria-label={t.nav.search}
+      aria-keyshortcuts={apple ? "Meta+K" : "Control+K"}
+    >
+      <IconMagnifyingGlass className="size-5" aria-hidden />
+      <kbd className="bar-kbd" aria-hidden>
+        {apple ? "⌘" : "Ctrl"} K
+      </kbd>
+    </button>
+  );
+}
 
 function initials(name: string) {
   return name
@@ -191,9 +218,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
           </div>
           <TabIsland ws={ws} items={items} />
           <div className="bar-right">
-            <button type="button" className="bar-icon" data-ripple onClick={openPalette} aria-label={t.nav.search} aria-keyshortcuts="Control+K">
-              <IconMagnifyingGlass className="size-5" aria-hidden />
-            </button>
+            <SearchButton />
             <UserMenu user={user} ws={ws} team admin={Boolean(me?.platform_admin)} />
           </div>
         </header>

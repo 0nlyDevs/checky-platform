@@ -17,7 +17,8 @@ function set(el: HTMLElement, prop: "position" | "top" | "alignSelf", value: str
 
 /**
  * For a grid laid out as two columns side by side: the shorter column rides with the page. It
- * scrolls with the longer one until its bottom comes into view, then stays there (or under the bar,
+ * scrolls with the longer one until its bottom comes into view, then stays there, as high as the page
+ * ends under the grid so it never jumps at the very end (or under the bar,
  * when it fits the screen) while the longer one goes on. Whichever side is shorter, and only while
  * the grid really shows two columns: on one column nothing sticks. Put the ref on the grid; it is
  * re-measured when the window, the grid or any column changes size, or a column appears.
@@ -45,7 +46,9 @@ export function useStickyColumns<T extends HTMLElement>() {
       if (index === null) return;
       const column = kids[index];
       set(column, "position", "sticky");
-      set(column, "top", `${stickyTop(barHeight(), window.innerHeight, column.offsetHeight)}px`);
+      // Its bottom stops where the page ends under the grid, so it does not jump at the very end.
+      const below = document.documentElement.scrollHeight - (grid.getBoundingClientRect().bottom + window.scrollY);
+      set(column, "top", `${stickyTop(barHeight(), window.innerHeight, column.offsetHeight, Math.max(24, below))}px`);
     };
 
     const sizes = new ResizeObserver(() => place());

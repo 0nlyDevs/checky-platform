@@ -22,6 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/live";
 import { ThemedSelect } from "@/components/ui/select";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const registre = t.registre;
 
@@ -307,21 +308,15 @@ export function FiguresView() {
       <NumbersCheck ws={ws} />
 
       <div className="flex flex-wrap items-end gap-3 border-b border-foreground pb-4">
-        <div role="group" aria-label={f.topicsLabel} className="flex min-w-0 flex-1 flex-wrap gap-1">
-          {["", ...topics].map((name) => (
-            <button
-              key={name || "all"}
-              type="button"
-              aria-pressed={topic === name}
-              onClick={() => setTopic(name)}
-              className={cn(
-                "h-10 rounded-md px-3 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                topic === name ? "bg-foreground font-bold text-background" : "hover:bg-accent",
-              )}
-            >
-              {name || f.allTopics}
-            </button>
-          ))}
+        <div className="min-w-0 flex-1">
+          <PillTabs
+            kind="radio"
+            className="seg-scroll"
+            label={f.topicsLabel}
+            value={topic}
+            onChange={setTopic}
+            items={["", ...topics].map((name) => ({ value: name, label: name || f.allTopics }))}
+          />
         </div>
         <div className="block text-sm font-bold">
           {f.country}
