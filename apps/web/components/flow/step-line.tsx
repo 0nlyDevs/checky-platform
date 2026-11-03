@@ -56,6 +56,7 @@ export function StepLine({
   notes,
   variant = "full",
   explain = false,
+  labels = true,
   className,
 }: {
   states: Record<Step, StepState>;
@@ -63,16 +64,22 @@ export function StepLine({
   variant?: "full" | "mini";
   /** The method explained (nothing is running): every label reads at full strength, no state. */
   explain?: boolean;
+  /** `mini` only: show the step names under the discs. A list of rows names them once instead. */
+  labels?: boolean;
   className?: string;
 }) {
   if (variant === "mini") {
     return (
       <ol className={cn("flex items-start", className)} aria-label={f.label}>
         {STEPS.map((step, i) => (
-          <li key={step} className="relative flex w-[4.25rem] flex-col items-center gap-1" title={`${f.short[step]} · ${f.state[states[step]]}`}>
+          <li
+            key={step}
+            className={cn("relative flex flex-col items-center gap-1", labels ? "w-[4.25rem]" : "w-9")}
+            title={`${f.short[step]} · ${f.state[states[step]]}`}
+          >
             {i > 0 && <span aria-hidden className={cn("absolute top-3 right-1/2 h-px w-full", states[step] === "waiting" ? "bg-border" : "bg-foreground")} />}
             <StepDisc n={i + 1} state={states[step]} size="sm" />
-            <span className={cn("text-[0.7rem] leading-none", states[step] === "waiting" ? "text-muted-foreground" : "font-bold")}>{f.short[step]}</span>
+            <span className={cn(labels ? "text-[0.7rem] leading-none" : "sr-only", states[step] === "waiting" ? "text-muted-foreground" : "font-bold")}>{f.short[step]}</span>
             <span className="sr-only">{f.state[states[step]]}</span>
           </li>
         ))}

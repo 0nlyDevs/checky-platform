@@ -23,6 +23,17 @@ export function when(at: string | Date, now = new Date()) {
   return d.toDateString() === now.toDateString() ? formatTime(d) : `${dayFmt.format(d)}, ${formatTime(d)}`;
 }
 
+/** How loud a section speaks. `lead`: the one a page exists for, a large heading and no rule (the
+ *  page header's rule is right above it). `main`: a heading on an ink rule, newspaper style.
+ *  `aside`: a smaller heading on a hairline, for the context column. */
+export type SectionTone = "lead" | "main" | "aside";
+
+const TONE: Record<SectionTone, { box: string; heading: string; lead: string; body: string }> = {
+  lead: { box: "", heading: "text-2xl leading-none font-extrabold tracking-tight sm:text-3xl", lead: "mt-2", body: "mt-5" },
+  main: { box: "border-t border-foreground pt-3", heading: "text-xl leading-tight font-bold", lead: "mt-1", body: "mt-3" },
+  aside: { box: "border-t border-border pt-3", heading: "text-lg leading-tight font-bold", lead: "mt-0.5", body: "mt-3" },
+};
+
 /** A section of the page: a heading on a ruled line, newspaper style, meta under it. */
 export function Section({
   title,
@@ -31,6 +42,7 @@ export function Section({
   children,
   className,
   id,
+  tone = "main",
 }: {
   title: string;
   lead?: React.ReactNode;
@@ -38,17 +50,19 @@ export function Section({
   children: React.ReactNode;
   className?: string;
   id?: string;
+  tone?: SectionTone;
 }) {
+  const s = TONE[tone];
   return (
-    <section aria-labelledby={id} className={cn("border-t border-foreground pt-3", className)}>
+    <section aria-labelledby={id} className={cn(s.box, className)}>
       <div className="flex items-start justify-between gap-3">
-        <h2 id={id} className="font-display text-xl leading-tight font-bold">
+        <h2 id={id} className={cn("font-display text-balance", s.heading)}>
           {title}
         </h2>
         {action}
       </div>
-      {lead && <p className="mt-1 text-sm text-pretty text-muted-foreground">{lead}</p>}
-      <div className="mt-3">{children}</div>
+      {lead && <p className={cn("text-sm text-pretty text-muted-foreground", s.lead)}>{lead}</p>}
+      <div className={s.body}>{children}</div>
     </section>
   );
 }

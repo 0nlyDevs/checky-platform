@@ -2,16 +2,16 @@ import Link from "next/link";
 import { IconCalendarDots } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
 import { t } from "@/lib/i18n/fr";
-import { DemoTag, Section } from "./bits";
+import { DemoTag, Section, type SectionTone } from "./bits";
 import type { Meteo } from "./types";
 
 const m = t.rubrique.meteo;
 
 /** Météo des rumeurs: the seasons in effect (from a calendar written by hand) and « Ça revient »,
  *  the verdicts signed around this date in earlier years. */
-export function MeteoPanel({ ws, meteo, id = "meteo" }: { ws: string; meteo: Meteo; id?: string }) {
+export function MeteoPanel({ ws, meteo, id = "meteo", tone }: { ws: string; meteo: Meteo; id?: string; tone?: SectionTone }) {
   return (
-    <Section id={id} title={m.title} lead={m.lead}>
+    <Section id={id} title={m.title} lead={m.lead} tone={tone}>
       {meteo.seasons.length === 0 ? (
         <p className="text-sm text-muted-foreground">{m.empty}</p>
       ) : (
