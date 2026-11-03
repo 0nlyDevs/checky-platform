@@ -35,6 +35,7 @@ from app.core.errors import ApiError
 from app.core.models import (
     File,
     Item,
+    Job,
     PublicQuestion,
     RadioClip,
     Route,
@@ -1141,6 +1142,26 @@ _POLLED: dict[uuid.UUID, float] = {}
 POLL_EVERY = 20 * 60.0
 
 
+CAPTURE_EVERY = timedelta(minutes=5)
+
+
+async def _capture_recent(db: AsyncSession, workspace_id: uuid.UUID) -> bool:
+    """This newsroom already has a capture started in the last minutes (queued or running ones
+    count only while recent, so a stuck job cannot block captures for ever): each one records a
+    minute of every stream, so a refresh must not stack them up."""
+    since = datetime.now(UTC) - CAPTURE_EVERY
+    found = await db.scalar(
+        select(Job.id)
+        .where(
+            Job.workspace_id == workspace_id,
+            Job.kind == "radio_capture",
+            Job.created_at >= since,
+        )
+        .limit(1)
+    )
+    return found is not None
+
+
 async def _maybe_poll(db: AsyncSession, member: Member, force: bool = False) -> list[str]:
     """Queue the press reader (and, when asked, the radio capture) when they are configured, at
     most every 20 minutes per newsroom: there is no scheduler, the desk's visits drive it."""
@@ -1152,7 +1173,11 @@ async def _maybe_poll(db: AsyncSession, member: Member, force: bool = False) -> 
     if veille_poll.parse_feeds(s.press_feeds):
         await enqueue(db, member.workspace_id, member.user.id, "veille_poll", {})
         queued.append("veille_poll")
-    if force and radio_capture.parse_streams(s.radio_streams):
+    if (
+        force
+        and radio_capture.parse_streams(s.radio_streams)
+        and not await _capture_recent(db, member.workspace_id)
+    ):
         await enqueue(db, member.workspace_id, member.user.id, "radio_capture", {})
         queued.append("radio_capture")
     return queued

@@ -516,6 +516,16 @@ def test_feed_and_stream_lists_are_parsed_leniently():
         radio_capture.Stream("Fanambarana", "https://s.test/f", "Atsinanana", "mg"),
     ]
     assert radio_capture.parse_streams("") == []
+    assert radio_capture.parse_streams("RDJ|https://user:pw@s.test/rdj") == []
+
+
+def test_radio_capture_refresh_does_not_stack_captures(as_user, monkeypatch):
+    monkeypatch.setattr(get_settings(), "radio_streams", "RDJ|https://s.test/rdj|Analamanga")
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    url = f"/api/v1/workspaces/{ws}/veille/refresh"
+    assert alice.post(url).json() == {"queued": ["radio_capture"]}
+    assert alice.post(url).json() == {"queued": []}
 
 
 def test_radio_capture_skips_quietly_without_ffmpeg(as_user, monkeypatch):

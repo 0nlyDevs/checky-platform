@@ -15,6 +15,7 @@ import shutil
 import uuid
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import urlsplit
 
 from app.core import dates, storage
 from app.core.config import get_settings
@@ -45,6 +46,8 @@ def parse_streams(raw: str | None) -> list[Stream]:
         station, url = fields[0], fields[1]
         if not url.startswith(("http://", "https://")):
             continue
+        if urlsplit(url).username or urlsplit(url).password:
+            continue  # credentials in a URL would end up in process lists and logs
         region = fields[2] if len(fields) > 2 and fields[2] else None
         language = fields[3].lower() if len(fields) > 3 and fields[3] else "fr"
         streams.append(
@@ -82,7 +85,9 @@ async def record_stream(url: str, seconds: int, ffmpeg: str) -> bytes:
     )
     out, err = await asyncio.wait_for(proc.communicate(), timeout=seconds + 60)
     if proc.returncode or not out:
-        raise ValueError(f"ffmpeg failed: {err.decode(errors='replace')[-200:]}")
+        # The stream URL can carry a token: keep it out of the message.
+        detail = err.decode(errors="replace").replace(url, "<stream>")[-200:]
+        raise ValueError(f"ffmpeg failed: {detail}")
     return out
 
 
@@ -171,6 +176,6 @@ async def radio_capture(ctx: JobContext) -> dict[str, Any]:
         try:
             captured.append(await _capture(ctx, stream, ffmpeg, seconds))
         except Exception as e:  # noqa: BLE001 - one silent station must not stop the others
-            log.warning("capture of %s failed: %s", stream.station, e)
+            log.warning("capture of %s failed: %s", stream.station, type(e).__name__)
             failed.append(stream.station)
     return {"captured": len(captured), "failed": failed}
