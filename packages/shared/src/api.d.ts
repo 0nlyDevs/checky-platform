@@ -8609,8 +8609,10 @@ export interface operations {
                 order?: ("newest" | "oldest") | null;
                 /** @description The `next` cursor of the previous page */
                 after?: string | null;
-                /** @description Dossier tab; the answer then carries every tab's count */
+                /** @description Dossier tab */
                 tab?: ("all" | "todo" | "confirm" | "done") | null;
+                /** @description Also count every tab (and demo rows) under the filters */
+                counts?: boolean;
                 /** @description `me`, `none` or a member's user id */
                 assignee?: string | null;
             };

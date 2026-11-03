@@ -58,7 +58,8 @@ class ItemPage(BaseModel):
     total: int
     # With `order`: the cursor of the next page (`after=`), null on the last one.
     next: str | None = None
-    # With `tab`: how many dossiers each tab holds under the same search and assignee.
+    # With `counts=true`: how many dossiers each tab holds under the same search and assignee,
+    # plus `demo` (how many of them are demo rows).
     counts: dict[str, int] | None = None
 
 
@@ -67,9 +68,17 @@ TABS = ("all", "todo", "confirm", "done")
 
 # When the rumour was first seen, else when the item was created. `first_seen_at` is free text in
 # the JSONB, so it is only cast when Postgres says it reads as a timestamp (never a 500).
+# A literal date is required first: Postgres also reads « now », « today » or « infinity » as
+# timestamps, and those would move between two page requests.
 _seen_text = Item.data["first_seen_at"].astext
 SEEN = case(
-    (func.pg_input_is_valid(_seen_text, "timestamptz"), cast(_seen_text, TIMESTAMP(timezone=True))),
+    (
+        and_(
+            _seen_text.op("~")(r"^\d{4}-\d{2}-\d{2}"),
+            func.pg_input_is_valid(_seen_text, "timestamptz"),
+        ),
+        cast(_seen_text, TIMESTAMP(timezone=True)),
+    ),
     else_=Item.created_at,
 )
 
@@ -156,8 +165,9 @@ async def list_items(
         None, description="Sort by when the rumour was first seen and page with `after`"
     ),
     after: str | None = Query(None, description="The `next` cursor of the previous page"),
-    tab: Literal["all", "todo", "confirm", "done"] | None = Query(
-        None, description="Dossier tab; the answer then carries every tab's count"
+    tab: Literal["all", "todo", "confirm", "done"] | None = Query(None, description="Dossier tab"),
+    with_counts: bool = Query(
+        False, alias="counts", description="Also count every tab (and demo rows) under the filters"
     ),
     assignee: str | None = Query(None, description="`me`, `none` or a member's user id"),
 ) -> ItemPage:
@@ -188,25 +198,28 @@ async def list_items(
         else:
             where.append(owner == (member.user.id if assignee == "me" else assignee))
 
-    counts = None
-    if tab:
-        filters = {k: _tab_filter(k) for k in TABS}
-        row = (
-            await db.execute(
-                select(
-                    *(
-                        func.count().filter(f).label(k) if f is not None else func.count().label(k)
-                        for k, f in filters.items()
-                    )
-                ).where(*where)
-            )
-        ).one()
-        counts = {k: int(getattr(row, k)) for k in TABS}
-        tab_where = filters[tab]
-        if tab_where is not None:
-            where.append(tab_where)
+    if after and order is None:
+        raise ApiError(422, "cursor_needs_order", "A page cursor goes with `order`")
 
-    total = await db.scalar(select(func.count()).select_from(Item).where(*where))
+    counts = None
+    if with_counts:
+        filters = {k: _tab_filter(k) for k in TABS}
+        columns = [
+            func.count().filter(f).label(k) if f is not None else func.count().label(k)
+            for k, f in filters.items()
+        ]
+        columns.append(func.count().filter(Item.data["demo"].astext == "true").label("demo"))
+        row = (await db.execute(select(*columns).where(*where))).one()
+        counts = {k: int(getattr(row, k)) for k in (*TABS, "demo")}
+    tab_where = _tab_filter(tab) if tab else None
+    if tab_where is not None:
+        where.append(tab_where)
+
+    # The counts already hold this number (counted before the tab filter): no second scan.
+    if counts is not None:
+        total = counts[tab or "all"]
+    else:
+        total = await db.scalar(select(func.count()).select_from(Item).where(*where)) or 0
 
     if order is None:
         rows = await db.scalars(
@@ -244,21 +257,27 @@ async def list_items(
 async def create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
     if "ref" in body.data:
         raise ApiError(422, "protected_fields", "References are assigned by the server")
-    if body.type == "claim":
-        # A dossier gets the newsroom's next FAN reference, allocated atomically (app/core/refs.py).
-        body = body.model_copy(
-            update={"data": {**body.data, "ref": await next_ref(db, member.workspace_id)}}
-        )
-    return await _create_item(body, member, db)
+    # A dossier gets the newsroom's next FAN reference (app/core/refs.py), once it is accepted.
+    return await _create_item(body, member, db, allocate_ref=body.type == "claim")
 
 
-async def _create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
-    """Create an item from a trusted server flow, which may have allocated its reference."""
+async def _create_item(
+    body: ItemIn, member: AnyMember, db: Db, allocate_ref: bool = False
+) -> ItemOut:
+    """Create an item from a trusted server flow, which may have allocated its reference.
+
+    `allocate_ref` takes the newsroom's next FAN reference after every check has passed, so the
+    workspace row lock it holds until commit is never taken by a request that is then refused.
+    """
     from app.modules.signing import SIGNATURE_FIELDS, publication_guard
 
     if SIGNATURE_FIELDS & body.data.keys():
         raise ApiError(422, "protected_fields", "Use the signature endpoint")
     await publication_guard(db, member, body.status, body.title, body.body, body.data)
+    if allocate_ref:
+        body = body.model_copy(
+            update={"data": {**body.data, "ref": await next_ref(db, member.workspace_id)}}
+        )
     item = Item(workspace_id=member.workspace_id, author_id=member.user.id, **body.model_dump())
     db.add(item)
     await db.flush()
