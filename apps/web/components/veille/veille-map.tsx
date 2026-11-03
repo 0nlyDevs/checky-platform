@@ -133,7 +133,7 @@ export default function VeilleMap({ regions, selected, onSelect, country = "Mada
               {r.high_risk > 0 && (
                 <>
                   <br />
-                  {v.highRisk} : {r.high_risk}
+                  {v.highRisk}{t.common.colon} {r.high_risk}
                 </>
               )}
             </Tooltip>

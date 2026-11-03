@@ -113,7 +113,7 @@ export function PublicStrip({ r }: { r: CrewResult }) {
       <dl className="flex flex-wrap gap-x-2 gap-y-1">
         {rows.map(([label, value], i) => (
           <div key={label} className="inline">
-            <dt className="inline font-bold">{label} :</dt> <dd className="inline">{value}</dd>
+            <dt className="inline font-bold">{label}{t.common.colon}</dt> <dd className="inline">{value}</dd>
             {i < rows.length - 1 && (
               <span className="ml-2 text-muted-foreground" aria-hidden>
                 ·

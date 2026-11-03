@@ -194,7 +194,7 @@ function ImageFacts({ ws, source }: { ws: string; source: Source }) {
       <PictureMemory ws={ws} source={source} />
       {!!picture?.reverse_search.length && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-muted-foreground">
-          <span>{t.sources.reverse} :</span>
+          <span>{t.sources.reverse}{t.common.colon}</span>
           <ReverseLinks links={picture.reverse_search} />
         </p>
       )}
@@ -402,7 +402,7 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
                 <button
                   type="button"
                   onClick={() => play(g.start)}
-                  aria-label={`${t.sources.playFrom(clock(g.start))} : ${g.text}`}
+                  aria-label={`${t.sources.playFrom(clock(g.start))}${t.common.colon} ${g.text}`}
                   className="group flex w-full gap-3 rounded-sm px-2 py-1 text-left text-sm hover:bg-accent focus-visible:outline-2"
                 >
                   <span className="flex w-12 shrink-0 items-center gap-1 font-display tracking-wide tabular text-muted-foreground">

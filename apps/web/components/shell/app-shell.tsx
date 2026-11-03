@@ -47,7 +47,7 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
   const active = me?.memberships.find((m) => m.workspace_id === current);
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="bar-scope" aria-label={`${t.nav.workspace} : ${active?.name ?? "—"}`}>
+      <DropdownMenuTrigger className="bar-scope" aria-label={`${t.nav.workspace}${t.common.colon} ${active?.name ?? "—"}`}>
         <span className="truncate">{active?.name ?? "—"}</span>
         <IconCaretUpDown className="size-4 shrink-0" aria-hidden />
       </DropdownMenuTrigger>
@@ -88,7 +88,7 @@ function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: s
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="bar-avatar" data-ripple aria-label={`${t.nav.account} : ${user.name}`}>
+      <DropdownMenuTrigger className="bar-avatar" data-ripple aria-label={`${t.nav.account}${t.common.colon} ${user.name}`}>
         {initials(user.name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-60">

@@ -435,7 +435,7 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
                   )}
                   {!!used.length && !used.some((c) => c.verdict) && (
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {a.passages} : {used.map((c) => `[${c.n}] ${c.title}`).join(" · ")}
+                      {a.passages}{t.common.colon} {used.map((c) => `[${c.n}] ${c.title}`).join(" · ")}
                     </p>
                   )}
                   {x.actions?.map((ac) => (

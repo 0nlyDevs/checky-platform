@@ -934,6 +934,8 @@ export const fr = {
   when: whenFr,
   common: {
     loading: "Chargement…",
+    /** After a label (« Sources : … »): French puts a space before the colon. */
+    colon: " :",
     demoData: "Données de démonstration",
   },
   // Checky sections, one file per Wave 1 agent (lib/i18n/fr/*.ts).

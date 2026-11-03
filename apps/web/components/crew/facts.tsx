@@ -59,7 +59,7 @@ function ProvenanceFacts({ p, media }: { p: Provenance; media: boolean }) {
       {media && p.no_trace && <ImageTrace state="none">{k.provenance.noTrace}</ImageTrace>}
       {!!p.reverse_links.length && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="text-muted-foreground">{k.provenance.reverse} :</span>
+          <span className="text-muted-foreground">{k.provenance.reverse}{t.common.colon}</span>
           {p.reverse_links.map((x) => (
             <Out key={x.name} href={x.url}>
               {x.name}
@@ -79,7 +79,7 @@ function RegistryFacts({ r }: { r: MatchResult }) {
       <RegistryDiff diff={r.diff ?? []} summary={r.summary} status={r.status} changedNumbers={r.changed_numbers} />
       {!!r.contacts?.length && (
         <p className="text-pretty">
-          <span className="font-bold">{k.registry.contacts} :</span> {r.contacts.map((x) => [x.name, x.role, x.institution].filter(Boolean).join(", ")).join(" · ")}
+          <span className="font-bold">{k.registry.contacts}{t.common.colon}</span> {r.contacts.map((x) => [x.name, x.role, x.institution].filter(Boolean).join(", ")).join(" · ")}
         </p>
       )}
       {original?.url && <Out href={original.url}>{k.registry.open}</Out>}
@@ -104,7 +104,7 @@ function FigureFacts({ list }: { list: FigureCheck[] }) {
               <p className="mt-1 text-pretty">
                 <span className="text-muted-foreground">{k.figures.official} · </span>
                 <span className="font-bold">
-                  {f.figure.label} : {f.figure.value}
+                  {f.figure.label}{t.common.colon} {f.figure.value}
                   {f.figure.unit ? ` ${f.figure.unit}` : ""}
                 </span>
                 {f.figure.source_name && <span className="text-muted-foreground"> · {f.figure.source_name}</span>}

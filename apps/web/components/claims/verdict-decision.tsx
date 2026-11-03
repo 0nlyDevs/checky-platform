@@ -139,7 +139,7 @@ export function VerdictDecision({
                   <li>{t.detail.decision.visible}</li>
                   {asking.publish && (
                     <li>
-                      <span className="font-bold text-foreground">{s.strip.after} :</span> {s.strip.afterText}
+                      <span className="font-bold text-foreground">{s.strip.after}{t.common.colon}</span> {s.strip.afterText}
                     </li>
                   )}
                 </ul>

@@ -31,7 +31,8 @@ export function PublicStrip({ className }: { className?: string }) {
           <li key={label} className="flex gap-2.5 p-3 text-sm">
             <Icon className="mt-0.5 size-4 shrink-0" aria-hidden />
             <p className="text-pretty">
-              <span className="font-bold">{label}</span> : {text}
+              <span className="font-bold">{label}</span>
+              {messages.common.colon} {text}
             </p>
           </li>
         ))}
