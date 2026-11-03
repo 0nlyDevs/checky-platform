@@ -33,23 +33,68 @@ const DATA_ROUTES = [
   /^\/public\/(seal-keys|verdicts|registry|sceau|newsrooms|countries|flashs)(\/|$)/,
 ];
 // Pages never kept: signing in and out, invitations.
-const NO_PAGE = /^\/(sign-in|sign-up|connexion|inscription|invitation|api)(\/|$)/;
-// French page paths before the English ones (next.config.ts redirects them online): an old QR
-// scanned with no network is sent to the new address, whose cached copy then opens.
+const NO_PAGE = /^\/(sign-in|sign-up|invitation|api)(\/|$)/;
+
+// French page paths before the English ones. The same table as MOVED in next.config.ts, which
+// redirects them online (lib/moved-paths.test.ts keeps the two identical): an old QR, bookmark or
+// SMS link opened with no network goes to the new address, whose cached copy then opens.
 const MOVED = [
-  ["/accueil", "/home"], ["/verifies", "/verdicts"], ["/signaler", "/report"], ["/suivi", "/track"],
-  ["/officiel", "/official"], ["/sceau", "/seal"], ["/reponse", "/reply"], ["/flashs", "/flashes"],
-  ["/connexion", "/sign-in"], ["/inscription", "/sign-up"],
+  ["/accueil", "/home"],
+  ["/verifies/:path*", "/verdicts/:path*"],
+  ["/signaler", "/report"],
+  ["/suivi/:path*", "/track/:path*"],
+  ["/officiel", "/official"],
+  ["/sceau/:path*", "/seal/:path*"],
+  ["/reponse/:path*", "/reply/:path*"],
+  ["/flashs/:path*", "/flashes/:path*"],
+  ["/connexion", "/sign-in"],
+  ["/inscription", "/sign-up"],
+  ["/w/:ws/affirmations/:id/affiche", "/w/:ws/claims/:id/poster"],
+  ["/w/:ws/affirmations/:path*", "/w/:ws/claims/:path*"],
+  ["/w/:ws/analyser", "/w/:ws/analyze"],
+  ["/w/:ws/annuaire", "/w/:ws/directory"],
+  ["/w/:ws/chiffres", "/w/:ws/figures"],
+  ["/w/:ws/membres", "/w/:ws/settings#equipe"],
+  ["/w/:ws/parametres", "/w/:ws/settings"],
+  ["/w/:ws/registre", "/w/:ws/registry"],
+  ["/w/:ws/rubrique", "/w/:ws/beat"],
+  ["/w/:ws/transcriptions", "/w/:ws/sources?vue=enregistrements"],
+  ["/w/:ws/veille", "/w/:ws/watch"],
+  ["/w/:ws/verifier", "/w/:ws/verify"],
 ];
 
-/** The English address of an old French path, or null. */
+/** The values a MOVED pattern captures from a path (`:name` one segment, `:path*` the rest), or null. */
+function capture(pattern, pathname) {
+  const names = [];
+  const source = pattern
+    .split("/")
+    .slice(1)
+    .map((part) => {
+      if (part === ":path*") {
+        names.push("path");
+        return "(?:/(.*))?";
+      }
+      if (part.startsWith(":")) {
+        names.push(part.slice(1));
+        return "/([^/]+)";
+      }
+      return "/" + part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    })
+    .join("");
+  const match = new RegExp(`^${source}$`).exec(pathname);
+  if (!match) return null;
+  return Object.fromEntries(names.map((name, i) => [name, match[i + 1] || ""]));
+}
+
+/** The English address of an old French page address (query kept), or null. */
 function moved(url) {
   for (const [from, to] of MOVED) {
-    if (url.pathname === from || url.pathname.startsWith(`${from}/`)) {
-      const next = new URL(url.href);
-      next.pathname = to + url.pathname.slice(from.length);
-      return next.href;
-    }
+    const values = capture(from, url.pathname);
+    if (!values) continue;
+    const target = to.replace(/\/:(\w+)\*?/g, (_, name) => (values[name] ? `/${values[name]}` : ""));
+    const next = new URL(target, url.origin);
+    for (const [key, value] of url.searchParams) if (!next.searchParams.has(key)) next.searchParams.append(key, value);
+    return next.href;
   }
   return null;
 }
@@ -104,6 +149,9 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(
     (async () => {
       for (const name of await caches.keys()) if (name.startsWith("checky-") && !KEEP.includes(name)) await caches.delete(name);
+      // Pages saved under an old French path are never served again: the address redirects.
+      const pages = await caches.open(PAGES);
+      for (const request of await pages.keys()) if (moved(new URL(request.url))) await pages.delete(request);
       await self.clients.claim();
     })(),
   );

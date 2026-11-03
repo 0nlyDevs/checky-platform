@@ -16,7 +16,7 @@ export type NavItem = {
 export const NAV: NavItem[] = [
   { get label() { return t.nav.rubrique; }, get short() { return t.nav.rubriqueShort; }, icon: IconNewspaper, path: "beat", also: ["angles"] },
   { get label() { return t.nav.check; }, icon: IconScan, path: "verify", also: ["analyze", "scanner"] },
-  { get label() { return t.nav.claims; }, icon: IconFolderOpen, path: "claims", also: ["sources", "transcriptions"] },
+  { get label() { return t.nav.claims; }, icon: IconFolderOpen, path: "claims", also: ["sources"] },
   { get label() { return t.nav.veille; }, icon: IconRadio, path: "watch", also: ["studio"] },
   { get label() { return t.nav.annuaire; }, icon: IconAddressBook, path: "directory", also: ["documents", "registry", "figures"] },
 ];
