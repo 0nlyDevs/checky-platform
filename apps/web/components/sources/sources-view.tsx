@@ -15,7 +15,7 @@ export function SourcesView() {
     { key: "audio", label: t.sources.tabs.audio, href: `/w/${ws}/sources?vue=enregistrements`, active: audio },
   ];
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
+    <div className="mx-auto max-w-[90rem] px-4 pt-6 pb-12 *:max-w-4xl lg:px-8 lg:pt-8">
       <header className="pb-5">
         <h1 className="page-title">{t.sources.title}</h1>
         <p className="mt-1 max-w-prose text-muted-foreground">{audio ? t.transcriptions.lead : t.sources.lead}</p>

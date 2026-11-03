@@ -50,7 +50,7 @@ export const crew = {
   noAi: {
     label: "Sans IA",
     hint: "Pour cette vérification : les faits seulement, aucune lecture d'un modèle.",
-    newsroomOff: "L'IA est coupée pour toute la rédaction (Paramètres) : les faits seulement.",
+    newsroomOff: "L'IA est coupée pour toute la rédaction (Réglages) : les faits seulement.",
   },
 
   // the facts, first

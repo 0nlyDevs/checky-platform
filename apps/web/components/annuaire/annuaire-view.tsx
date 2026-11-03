@@ -45,15 +45,12 @@ function ContactCard({ contact, editor, onVerify, onRemove }: { contact: Contact
   const pages = declared.length ? declared : contact.website ? [{ url: contact.website, verified: false }] : [];
   return (
     <li className="flex flex-col rounded-md border border-border bg-card p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="font-bold text-pretty">{contact.name}</p>
           <p className="text-sm text-muted-foreground">{[contact.role, contact.institution].filter(Boolean).join(" · ")}</p>
         </div>
-        <span className="flex flex-wrap gap-1 text-xs">
-          <span className="rounded-sm border border-border px-1.5 py-0.5">{a.kinds[contact.kind] ?? contact.kind}</span>
-          {contact.is_demo && <span className="rounded-sm border border-border px-1.5 py-0.5 text-muted-foreground">{a.demo}</span>}
-        </span>
+        {contact.is_demo && <span className="shrink-0 rounded-sm border border-border px-1.5 py-0.5 text-xs text-muted-foreground">{a.demo}</span>}
       </div>
       <p className="mt-2 text-sm">
         {place}
@@ -125,9 +122,8 @@ function ContactCard({ contact, editor, onVerify, onRemove }: { contact: Contact
                 {a.verify}
               </Button>
             )}
-            <Button size="sm" variant="ghost" onClick={onRemove}>
+            <Button size="icon-sm" variant="ghost" onClick={onRemove} aria-label={`${a.remove} ${contact.name}`} title={a.remove} className="ml-auto text-muted-foreground">
               <IconX aria-hidden />
-              {a.remove}
             </Button>
           </div>
         )}
@@ -316,7 +312,7 @@ export function AnnuaireView() {
   }
 
   return (
-    <div className="mx-auto max-w-[90rem] px-4 pt-8 pb-16 lg:px-8">
+    <div className="mx-auto max-w-[90rem] px-4 pt-6 pb-16 lg:px-8 lg:pt-8">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <h1 className="page-title">{a.title}</h1>
@@ -404,11 +400,24 @@ export function AnnuaireView() {
         </div>
       )}
       {data && shown.length > 0 && (
-        <ul className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {shown.map((c) => (
-            <ContactCard key={c.id} contact={c} editor={editor} onVerify={() => verify(c)} onRemove={() => remove(c)} />
-          ))}
-        </ul>
+        // Grouped by kind, like Chiffres by theme: institutions first, the people and pages after.
+        <div className="mt-10 space-y-12">
+          {KINDS.map((kind) => [kind, shown.filter((c) => (KINDS.includes(c.kind as (typeof KINDS)[number]) ? c.kind : "institution") === kind)] as const)
+            .filter(([, group]) => group.length > 0)
+            .map(([kind, group]) => (
+              <section key={kind} aria-labelledby={`kind-${kind}`}>
+                <h2 id={`kind-${kind}`} className="flex items-baseline gap-2 border-b border-border pb-2 font-display text-xl font-bold">
+                  {a.kindGroups[kind]}
+                  <span className="text-base font-normal text-muted-foreground tabular">{group.length}</span>
+                </h2>
+                <ul className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                  {group.map((c) => (
+                    <ContactCard key={c.id} contact={c} editor={editor} onVerify={() => verify(c)} onRemove={() => remove(c)} />
+                  ))}
+                </ul>
+              </section>
+            ))}
+        </div>
       )}
     </div>
   );

@@ -177,7 +177,7 @@ export function ClaimsView() {
         </p>
       )}
 
-      {view === "list" && tab !== "confirm" && counts.confirm > 0 && (
+      {view === "list" && tab !== "confirm" && counts.confirm > 0 && !claims.some((c) => c.suggested && !c.verdict) && (
         <div className="mx-4 mb-5 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-md border-2 border-dashed border-foreground bg-card px-4 py-3 lg:mx-0">
           <p className="font-bold">{t.claims.waiting(counts.confirm)}</p>
           <button type="button" onClick={() => go({ onglet: "confirm" })} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">

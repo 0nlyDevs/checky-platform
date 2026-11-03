@@ -83,7 +83,7 @@ function BatchSign({ ws, claims }: { ws: string; claims: ClaimView[] }) {
               const reason = batchReason(c);
               return (
                 <li key={c.item.id} className="grid gap-x-4 gap-y-1 py-3 sm:grid-cols-[5.5rem_minmax(0,1fr)_auto]">
-                  <span className="font-display font-bold tabular">{c.ref}</span>
+                  <span className="font-medium tabular">{c.ref}</span>
                   <div className="min-w-0">
                     <p className="font-medium text-pretty">{c.item.title}</p>
                     <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{reason || b.noReason}</p>
@@ -122,7 +122,7 @@ export function DossierList({ ws, claims, now, names }: { ws: string; claims: Cl
             <li key={c.item.id} className="arrive relative border-b border-border" style={{ "--i": Math.min(i, 12) } as React.CSSProperties}>
               <div className="grid gap-x-6 gap-y-3 px-4 py-4 transition-colors hover:bg-card md:grid-cols-[6.5rem_minmax(0,1fr)_auto] md:items-center lg:px-3 @4xl:grid-cols-[6.5rem_minmax(0,1fr)_13rem_11rem_1.5rem]">
                 <p className="flex items-baseline gap-3 md:block">
-                  <span className="block font-display font-bold tabular">{c.ref}</span>
+                  <span className="block font-medium tabular">{c.ref}</span>
                   <time dateTime={c.firstSeen?.toISOString()} className="block text-sm text-muted-foreground tabular" title={when.exactly}>
                     {when.ago ?? when.at}
                   </time>
@@ -130,7 +130,7 @@ export function DossierList({ ws, claims, now, names }: { ws: string; claims: Cl
                 <div className="min-w-0">
                   <Link
                     href={`/w/${ws}/affirmations/${c.item.id}`}
-                    className="block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset md:text-[1.05rem]"
+                    className="block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
                   >
                     {c.item.title}
                   </Link>

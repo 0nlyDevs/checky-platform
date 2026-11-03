@@ -48,7 +48,7 @@ function CardBody({ claim, now, names }: { claim: ClaimView; now: Date; names: M
   return (
     <>
       <div className="flex items-baseline justify-between gap-2 pr-7 text-sm">
-        <span className="font-display text-sm font-bold tabular">{claim.ref}</span>
+        <span className="text-sm font-medium tabular">{claim.ref}</span>
         {claim.firstSeen && (
           <span className="font-display tracking-wide text-muted-foreground tabular">
             {formatDuration(now.getTime() - claim.firstSeen.getTime())}

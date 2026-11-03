@@ -2,7 +2,7 @@
 
 import type { components } from "@fanilo/shared";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { IconArrowCounterClockwise, IconArrowsClockwise, IconCheck, IconCircleNotch, IconMinusCircle, IconWarning } from "@/lib/icons";
 import { toast } from "sonner";
@@ -89,7 +89,7 @@ function HealthSection() {
     <section aria-labelledby="health-title" className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 id="health-title" className="font-semibold">
+          <h2 id="health-title" className="font-display text-lg font-bold">
             {t.settings.healthTitle}
           </h2>
           {data && (
@@ -142,7 +142,7 @@ function PublicSection({ ws }: { ws: string }) {
 
   return (
     <section aria-labelledby="public-title" className="rounded-lg border border-border bg-card p-5">
-      <h2 id="public-title" className="font-semibold">
+      <h2 id="public-title" className="font-display text-lg font-bold">
         {t.settings.publicTitle}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t.settings.publicLead}</p>
@@ -184,7 +184,7 @@ function DemoSection({ ws }: { ws: string }) {
 
   return (
     <section aria-labelledby="demo-title" className="rounded-lg border border-border bg-card p-5">
-      <h2 id="demo-title" className="font-semibold">
+      <h2 id="demo-title" className="font-display text-lg font-bold">
         {t.settings.demoTitle}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{t.settings.demoLead}</p>
@@ -205,31 +205,130 @@ function DemoSection({ ws }: { ws: string }) {
   );
 }
 
+const INDEX = [
+  { id: "verification", label: t.settings.index.verification },
+  { id: "equipe", label: t.settings.index.team },
+  { id: "regles", label: t.settings.index.rules },
+  { id: "rubriques", label: t.settings.index.beats },
+  { id: "lieu", label: t.settings.index.place },
+  { id: "sources-officielles", label: t.settings.index.official },
+  { id: "publication", label: t.settings.index.public },
+  { id: "sms", label: t.settings.index.sms },
+  { id: "radios", label: t.settings.index.radios },
+  { id: "services", label: t.settings.index.health },
+  { id: "demo", label: t.settings.index.demo },
+] as const;
+
+/** The page's index, beside the sections from lg up: where am I, and one click to the rest. */
+function SettingsIndex() {
+  const [current, setCurrent] = useState<string>(INDEX[0].id);
+  useEffect(() => {
+    // Measured on scroll rather than observed: the sections load at different times and move.
+    let frame = 0;
+    const pick = () => {
+      frame = 0;
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      const line = window.innerHeight * 0.3;
+      let at: string = INDEX[0].id;
+      for (const x of INDEX) {
+        const node = document.getElementById(x.id);
+        if (node && (atBottom || node.getBoundingClientRect().top <= line)) at = x.id;
+      }
+      setCurrent(at);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(pick);
+    };
+    pick();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    // Sections that finish loading push the others down without any scroll.
+    const grown = new ResizeObserver(onScroll);
+    grown.observe(document.body);
+    return () => {
+      cancelAnimationFrame(frame);
+      grown.disconnect();
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+  return (
+    <nav aria-label={t.settings.index.label} className="sticky top-24 hidden self-start lg:block">
+      <ul className="space-y-0.5 border-l border-border">
+        {INDEX.map((x) => (
+          <li key={x.id}>
+            <a
+              href={`#${x.id}`}
+              aria-current={current === x.id ? "true" : undefined}
+              className={cn(
+                "-ml-px block border-l-2 py-1.5 pl-4 text-sm transition-colors",
+                current === x.id ? "border-foreground font-bold text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {x.label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  );
+}
+
+/** A section of the page the index can point at. */
+function Anchor({ id, children }: { id: string; children: React.ReactNode }) {
+  return (
+    <div id={id} className="scroll-mt-24">
+      {children}
+    </div>
+  );
+}
+
 export function SettingsView() {
   const { ws } = useParams<{ ws: string }>();
   const { joined } = useWorkspace(ws);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
-      <header className="pb-6">
+    <div className="mx-auto max-w-[90rem] px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
+      <header className="max-w-4xl pb-6">
         <h1 className="page-title">{t.settings.title}</h1>
         <p className="mt-1 text-muted-foreground">{t.team.settings.lead}</p>
       </header>
       {joined && (
-        <div className="space-y-8">
-          {/* The newsroom's own rules first; then what the public asks and where verdicts go back out;
-              service health and the demo last. Every journalist of the newsroom sets them. */}
-          <VerificationSection ws={ws} />
-          <MembersView embedded />
-          <NewsroomRules ws={ws} />
-          <BeatsSection ws={ws} />
-          <PlaceSection ws={ws} />
-          <OfficialSourcesSection ws={ws} />
-          <PublicSection ws={ws} />
-          <SmsSimulator ws={ws} />
-          <RadiosSection ws={ws} canEdit />
-          <HealthSection />
-          <DemoSection ws={ws} />
+        <div className="lg:grid lg:grid-cols-[12rem_minmax(0,56rem)] lg:gap-12">
+          <SettingsIndex />
+          <div className="min-w-0 space-y-10">
+            {/* The newsroom's own rules first; then what the public asks and where verdicts go back out;
+                service health and the demo last. Every journalist of the newsroom sets them. */}
+            <VerificationSection ws={ws} />
+            <MembersView embedded />
+            <Anchor id="regles">
+              <NewsroomRules ws={ws} />
+            </Anchor>
+            <Anchor id="rubriques">
+              <BeatsSection ws={ws} />
+            </Anchor>
+            <Anchor id="lieu">
+              <PlaceSection ws={ws} />
+            </Anchor>
+            <Anchor id="sources-officielles">
+              <OfficialSourcesSection ws={ws} />
+            </Anchor>
+            <Anchor id="publication">
+              <PublicSection ws={ws} />
+            </Anchor>
+            <Anchor id="sms">
+              <SmsSimulator ws={ws} />
+            </Anchor>
+            <Anchor id="radios">
+              <RadiosSection ws={ws} canEdit />
+            </Anchor>
+            <Anchor id="services">
+              <HealthSection />
+            </Anchor>
+            <Anchor id="demo">
+              <DemoSection ws={ws} />
+            </Anchor>
+          </div>
         </div>
       )}
     </div>
