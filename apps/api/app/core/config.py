@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     search_ipv4_only: bool = True
     web_search_provider: Literal["auto", "tavily", "duckduckgo"] = "auto"
     tavily_api_key: str = ""
+    # Reverse image search run by Checky (Google Lens through SerpApi); a comma list rotates keys.
+    # Empty = only the Lens/TinEye/Yandex links, as before.
+    serpapi_api_key: str = ""
     # Empty means the gateway's default model for that provider.
     llm_model_groq: str = ""
     llm_model_gemini: str = ""

@@ -34,6 +34,8 @@ export const dossier: Part<typeof fr> = {
     none: "Mbola tsy misy zava-misy voapetraka. Atombohy ny fanamarinana avy amin'ny « Hamarino », na ampio loharano.",
     provenance: "Fisehoana voalohany",
     firstSeen: (when: string) => `Hita voalohany ny ${when}`,
+    // relire (mg)
+    firstPage: (when: string, host: string) => `Efa tao amin'ny aterineto tamin'ny ${when} (${host})`,
     reverse: "Fikarohana mivadika",
     registry: "Rejisitry ny dika voalohany",
     registryStatus: {

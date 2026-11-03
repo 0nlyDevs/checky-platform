@@ -51,6 +51,7 @@ from app.core import (
     evidence_search,
     places,
     query_plan,
+    reverse_search,
     tone,
     websearch,
 )
@@ -414,6 +415,15 @@ async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | Non
     ):
         if day := dates.parse(value):
             found.append((day, basis))
+    earliest_page = None
+    if (
+        image_url
+        and reverse_search.configured()
+        and (hit := await reverse_search.earliest(image_url))
+    ):
+        earliest_page = hit.get("first")
+        if earliest_page and (day := dates.parse(earliest_page["date"])):
+            found.append((day, "reverse"))
     if (
         credentials
         and credentials.get("state") == "trusted"
@@ -435,6 +445,7 @@ async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | Non
         "days_old": days_old,
         "signals": signals,
         "reverse_links": reverse,
+        "first_page": earliest_page,
         "verdict_hint": hint,
         "no_trace": not meta.get("ai_markers"),
     }

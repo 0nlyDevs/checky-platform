@@ -173,6 +173,12 @@ export function FactsPanel({
         {provenance && (
           <Fact icon={IconScan} title={d.provenance}>
             {provenance.firstSeen && <p className="font-medium">{d.firstSeen(fmtDay(provenance.firstSeen) ?? provenance.firstSeen)}</p>}
+            {provenance.firstPage && (
+              <p className="text-sm">
+                {d.firstPage(fmtDay(provenance.firstPage.date) ?? provenance.firstPage.date, provenance.firstPage.host)}{" "}
+                <Out href={provenance.firstPage.url}>{d.open}</Out>
+              </p>
+            )}
             {provenance.signals.length > 0 && (
               <ul className="list-disc space-y-0.5 pl-5 text-sm">
                 {provenance.signals.map((s, i) => (

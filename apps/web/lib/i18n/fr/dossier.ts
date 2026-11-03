@@ -35,6 +35,7 @@ export const dossier = {
     none: "Aucun fait établi pour l'instant. Lancez une vérification depuis Vérifier ou ajoutez des sources.",
     provenance: "Première apparition",
     firstSeen: (when: string) => `Vu pour la première fois le ${when}`,
+    firstPage: (when: string, host: string) => `Déjà en ligne le ${when} (${host})`,
     reverse: "Recherche inversée",
     registry: "Registre des originaux",
     registryStatus: {

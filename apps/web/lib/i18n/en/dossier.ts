@@ -35,6 +35,7 @@ export const dossier: NonNullable<Overrides["dossier"]> = {
     none: "No established facts yet. Run a check from Check or add sources.",
     provenance: "First appearance",
     firstSeen: (when: string) => `First seen on ${when}`,
+    firstPage: (when: string, host: string) => `Already online on ${when} (${host})`,
     reverse: "Reverse search",
     registry: "Registry of originals",
     registryStatus: {
