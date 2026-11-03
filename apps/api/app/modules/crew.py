@@ -60,7 +60,7 @@ from app.core.errors import ApiError
 from app.core.graph import Graph, Node, Skip
 from app.core.models import Source, Workspace
 from app.core.words import words
-from app.modules import linkcheck, rag
+from app.modules import gestures, linkcheck, rag
 from app.workers import ingest
 
 log = logging.getLogger("checky.crew")
@@ -216,6 +216,15 @@ def code_reading(text: str) -> dict[str, Any]:
         "language": tone.language(text),
         "by": "code",
     }
+
+
+def _isodate(value: str) -> bool:
+    """A YYYY-MM-DD the API can read; anything else (a year, « récemment ») is left out of the ages."""
+    try:
+        date.fromisoformat(value)
+    except ValueError:
+        return False
+    return True
 
 
 def _verbatim(values: Any, text: str, limit: int = 8, size: int = 160) -> list[str]:
@@ -968,6 +977,23 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
         read = tone.analyse(text)
         return {"tone": read, "_summary": f"Ton {read['level']}"}
 
+    async def gestes(state):
+        """The four gestures, in code and on the card: « selon le ministère… », the page, the number,
+        the headline. They say what is on record, never what to conclude."""
+        if not (text or url):
+            raise Skip("Pas de message ni de lien : aucun geste à faire")
+        async with SessionLocal() as db:
+            found = await gestures.facts(
+                db, ws, text, url, registry=state.get("registry"), title=page.get("title")
+            )
+        if not found:
+            raise Skip("Rien à confronter à l'Annuaire")
+        return {
+            "gestures": found,
+            "_summary": f"{len(found)} geste(s) fait(s)",
+            "_count": len(found),
+        }
+
     async def collect(state):
         numbered = numbered_facts(state)
         return {
@@ -1112,6 +1138,7 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
                 Node("Archives", archives, timeout=15, rerun=False),
                 Node("Fiabilité", fiabilite, timeout=12, rerun=False),
                 Node("Ton", ton, timeout=5, rerun=False),
+                Node("Gestes", gestes, timeout=12, rerun=False),
             ],
         )
         .stage("collect", [Node("Éléments", collect, timeout=5)])
@@ -1171,6 +1198,7 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
         "provenance",
         "credibility",
         "tone",
+        "gestures",
         "critique",
         "recheck",
         "trace",
@@ -1182,6 +1210,28 @@ async def run_check(body: CrewIn, ws: uuid.UUID, emit) -> dict[str, Any]:
         if key in state:
             out[key] = state[key]
     claims = state["plan"]["claims"] or ([text[:300]] if text else [])
+    # « Âge des éléments »: how old the oldest and the newest dated element are, against the rumour.
+    dated = sorted(
+        (
+            {
+                "date": r["date"],
+                "title": str(r.get("title") or ""),
+                "url": str(r.get("url") or ""),
+                "days_before": (rumour - date.fromisoformat(str(r["date"])[:10])).days
+                if _isodate(str(r["date"])[:10])
+                else None,
+            }
+            for r in (state.get("numbered") or [])
+            if r.get("date") and _isodate(str(r["date"])[:10])
+        ),
+        key=lambda x: x["date"],
+    )
+    out["age"] = {
+        "oldest": dated[0] if dated else None,
+        "newest": dated[-1] if dated else None,
+        "count": len(dated),
+        "rumour": rumour.isoformat(),
+    }
     out.update(
         claims=claims,
         summary=state["plan"]["summary"],

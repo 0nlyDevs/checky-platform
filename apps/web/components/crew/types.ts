@@ -154,6 +154,13 @@ export type CrewResult = {
   recheck?: { query: string; results: Numbered[] };
   trace?: AgentEvent[];
   reverse_search?: { name: string; url: string }[];
+  age?: {
+    oldest: { date: string; title: string; url: string; days_before: number | null } | null;
+    newest: { date: string; title: string; url: string; days_before: number | null } | null;
+    count: number;
+    rumour: string;
+  };
+  gestures?: { kind: string; status: string; text: string; subject: string; proof: Record<string, unknown> }[];
   ai_enabled?: boolean;
   newsroom_ai?: boolean;
   tracked?: { item_id: string; ref: string | null; title: string } | null;

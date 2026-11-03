@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconArrowSquareOut, IconBooks, IconCalculator, IconCalendarDots, IconNewspaper, IconSealCheck, IconStamp, type Icon } from "@/lib/icons";
+import { IconArrowSquareOut, IconBooks, IconCalculator, IconCalendarDots, IconGlobe, IconNewspaper, IconPhone, IconSealCheck, IconStamp, IconHourglass, type Icon } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
 import { type CrewResult, type FigureCheck, frDate, hostOf, type Provenance } from "@/components/crew/types";
 import { RegistryDiff } from "@/components/registre/registry-diff";
@@ -9,7 +9,14 @@ import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const k = t.crew;
-const FACT_AGENTS = ["Provenance", "Registre", "Chiffres", "Fact-checkers", "Archives"];
+const g = t.dossier.annuaire.check;
+const FACT_AGENTS = ["Provenance", "Registre", "Chiffres", "Fact-checkers", "Archives", "Gestes"];
+const GESTURE_ICON: Record<string, Icon> = {
+  attribution: IconStamp,
+  official_page: IconGlobe,
+  number: IconPhone,
+  press_article: IconNewspaper,
+};
 
 function Card({ icon: Icon, title, i, wide, children }: { icon: Icon; title: string; i: number; wide?: boolean; children: React.ReactNode }) {
   return (
@@ -183,6 +190,35 @@ export function Facts({ r, ws }: { r: CrewResult; ws: string }) {
             </li>
           ))}
         </ul>
+      </Card>,
+    );
+  if (r.age?.oldest || r.age?.newest)
+    cards.push(
+      <Card key="age" icon={IconHourglass} title={k.age.title} i={cards.length}>
+        <p className="text-pretty">{k.age.span(frDate(r.age.oldest?.date) ?? k.undated, frDate(r.age.newest?.date) ?? k.undated)}</p>
+        {!!r.age.oldest?.title && <p className="text-pretty text-muted-foreground">{k.age.oldest(r.age.oldest.title, r.age.oldest.days_before ?? null)}</p>}
+        <p className="text-xs text-muted-foreground">{k.age.note(r.age.count)}</p>
+      </Card>,
+    );
+  if (r.gestures?.length)
+    cards.push(
+      <Card key="gestures" icon={IconStamp} title={g.title} i={cards.length} wide>
+        <ul className="space-y-2">
+          {r.gestures.map((x, i) => {
+            const Icon = GESTURE_ICON[x.kind] ?? IconStamp;
+            const proof = typeof x.proof?.url === "string" ? x.proof.url : typeof x.proof?.page === "string" ? x.proof.page : null;
+            return (
+              <li key={`${x.kind}-${i}`} className="flex items-start gap-2">
+                <Icon className="mt-1 size-4 shrink-0" aria-hidden />
+                <span className="text-pretty">
+                  <span className="font-bold">{g.kinds[x.kind] ?? x.kind} :</span> {x.text}
+                  {proof && <Out href={proof}> {g.open}</Out>}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="text-xs text-muted-foreground">{g.note}</p>
       </Card>,
     );
   if (r.archives?.length)

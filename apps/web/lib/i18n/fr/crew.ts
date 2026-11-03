@@ -76,6 +76,12 @@ export const crew = {
     none: "Aucun fait retrouvé pour ce message. La lecture, s'il y en a une, repose sur le web.",
     notChecked: "Non vérifié cette fois",
   },
+  age: {
+    title: "Âge des éléments",
+    span: (oldest: string, newest: string) => `Du plus ancien au plus récent : du ${oldest} au ${newest}.`,
+    oldest: (title: string, days: number | null) => (days == null ? `Le plus ancien : ${title}` : `Le plus ancien : ${title} (${days} jour(s) avant la rumeur)`),
+    note: (n: number) => `${n} élément(s) daté(s). Une source récente ne prouve rien à elle seule, et une source ancienne ne rend pas la rumeur actuelle.`,
+  },
   provenance: {
     title: "Provenance",
     first: (date: string) => `Première trace datée : ${date}`,

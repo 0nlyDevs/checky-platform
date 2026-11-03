@@ -76,6 +76,12 @@ export const crew: NonNullable<Overrides["crew"]> = {
     none: "No facts found for this message. The reading, if there is one, rests on the web.",
     notChecked: "Not checked this time",
   },
+  age: {
+    title: "Age of the elements",
+    span: (oldest: string, newest: string) => `From the oldest to the newest: ${oldest} to ${newest}.`,
+    oldest: (title: string, days: number | null) => (days == null ? `The oldest: ${title}` : `The oldest: ${title} (${days} day(s) before the rumour)`),
+    note: (n: number) => `${n} dated element(s). A recent source proves nothing by itself, and an old source does not make the rumour current.`,
+  },
   provenance: {
     title: "Provenance",
     first: (date: string) => `Earliest dated trace: ${date}`,

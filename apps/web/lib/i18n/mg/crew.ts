@@ -71,6 +71,12 @@ export const crew: Part<typeof fr> = {
     none: "Tsy nisy zava-misy hita ho an'ity hafatra ity. Ny famakiana, raha misy, dia miankina amin'ny aterineto.",
     notChecked: "Tsy nohamarinina tamin'ity indray mitoraka ity",
   },
+  age: {
+    title: "Taonan'ny porofo", // relire (mg)
+    span: (oldest: string, newest: string) => `Manomboka amin'ny tranainy ka hatramin'ny vaovao: ${oldest} ka hatramin'ny ${newest}.`, // relire (mg)
+    oldest: (title: string, days: number | null) => (days == null ? `Ny tranainy indrindra: ${title}` : `Ny tranainy indrindra: ${title} (${days} andro talohan'ny tsaho)`), // relire (mg)
+    note: (n: number) => `${n} porofo manana daty. Ny loharano vaovao tsy manaporofo irery, ary ny loharano tranainy tsy mahatonga ny tsaho ho ankehitriny.`, // relire (mg)
+  },
   provenance: {
     title: "Niaviana",
     first: (date: string) => `Dian-dia voalohany misy daty: ${date}`,

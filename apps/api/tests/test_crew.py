@@ -428,3 +428,36 @@ def test_the_code_stance_of_a_fact_outweighs_the_readings():
     weighed = {e["n"]: e["stance"] for e in crew.weighed_evidence(model, numbered)}
     # a modified original contradicts; « Introuvable » decides nothing, the reading stands
     assert weighed == {1: "supports", 2: "contradicts", 3: "supports"}
+
+
+def test_the_four_gestures_and_the_age_of_the_elements_sit_on_the_card(
+    as_user, monkeypatch, research
+):
+    """« Selon … », the page, the number and the headline come from the Annuaire in code, and the
+    card says how old its oldest and newest dated element are."""
+    _forbid_models(monkeypatch)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    alice.post(
+        f"/api/v1/workspaces/{ws}/contacts",
+        json={
+            "name": "JIRAMA",
+            "kind": "institution",
+            "institution": "JIRAMA",
+            "phone": "+261 20 22 200 00",
+            "official_pages": [{"url": "https://jirama.mg", "verified": True}],
+        },
+    )
+    _, result = _run(alice, ws, text="Selon la JIRAMA, appelez le 034 11 111 11.", ai_enabled=False)
+    kinds = {g["kind"] for g in result["gestures"]}
+    assert "number" in kinds
+    number = next(g for g in result["gestures"] if g["kind"] == "number")
+    # a number that is not the declared one: said as is, never « arnaque »
+    assert "déclaré" in number["text"].lower() or "declared" in number["text"].lower()
+    # the age block reads the dated elements only, and names the oldest
+    assert result["age"]["count"] >= 1
+    assert result["age"]["oldest"]["date"] == "2026-01-01"
+    assert result["age"]["oldest"]["days_before"] >= 0
+    assert result["age"]["rumour"]
+    trace = _trace(result)
+    assert trace["Gestes"]["status"] == "done"
