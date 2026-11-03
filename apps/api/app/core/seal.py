@@ -162,11 +162,28 @@ def verify(public_key_b64: str, payload: dict[str, Any], signature: str) -> bool
     return True
 
 
-def seal_url(communique_id: uuid.UUID, signature: str) -> str:
-    """What the QR encodes: the public page, with the signature after `#` so a phone can check it
-    without the signature ever being sent to a server."""
+def seal_url(communique_id: uuid.UUID, sealed: dict[str, Any]) -> str:
+    """What the QR encodes: the public page, with everything needed to check it offline after `#`
+    (`<b64u(canonical payload)>.<signature>.<key_id>`, like a verdict card), so a phone with the
+    issuers' keys checks the paper with no network and the fragment never reaches a server.
+    QRs printed before 3 Nov 2026 carry only `#<signature>`; the page still reads them."""
     base = get_settings().public_web_url.rstrip("/")
-    return f"{base}/sceau/{communique_id}#{signature}"
+    packed = b64u(canonical(sealed["payload"]).encode())
+    return f"{base}/sceau/{communique_id}#{packed}.{sealed['signature']}.{sealed['key_id']}"
+
+
+def read_communique_fragment(fragment: str) -> tuple[dict[str, Any], str, str, str] | None:
+    """A communiqué QR's `#message.signature.key_id` back into (payload, message, signature,
+    key_id); None for an old `#signature` fragment or anything carrying a `type` (a verdict)."""
+    try:
+        packed, signature, key_id = fragment.lstrip("#").split(".")
+        message = unb64u(packed).decode()
+        payload = json.loads(message)
+    except (ValueError, UnicodeDecodeError):
+        return None
+    if not isinstance(payload, dict) or "type" in payload or set(payload) != set(FIELDS):
+        return None
+    return payload, message, signature, key_id
 
 
 def qr_svg(url: str) -> str:

@@ -139,7 +139,7 @@ def out(c: Communique, ws: Workspace | None, viewer: uuid.UUID, fakes: int = 0) 
             key_id=c.sealed["key_id"],
             signature=c.sealed["signature"],
             sealed_at=c.sealed["sealed_at"],
-            url=seal_url(c.id, c.sealed["signature"]),
+            url=seal_url(c.id, c.sealed),
         )
     confirmations = 1 + len(c.confirmed_by or [])
     original_id = loc.get("original_id")
@@ -445,7 +445,7 @@ class SealResult(BaseModel):
 async def _seal_result(db: AsyncSession, c: Communique) -> SealResult:
     key = await db.scalar(select(SealKey).where(SealKey.key_id == c.sealed["key_id"]))
     ws = await db.get(Workspace, c.workspace_id)
-    url = seal.seal_url(c.id, c.sealed["signature"])
+    url = seal.seal_url(c.id, c.sealed)
     return SealResult(
         sealed=SealOut(
             key_id=c.sealed["key_id"],
@@ -562,7 +562,7 @@ async def public_seal(cid: uuid.UUID, db: Db) -> PublicSeal:
         revoked_at=key.revoked_at,
         is_demo=c.is_demo,
         newsroom=NewsroomOut(slug=ws.slug, name=ws.name),
-        url=seal.seal_url(c.id, c.sealed["signature"]),
+        url=seal.seal_url(c.id, c.sealed),
         text=c.text,
     )
 
@@ -571,6 +571,10 @@ class VerifyIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     # The signature printed in the QR (after `#`); the stored one when absent.
     signature: str | None = Field(default=None, max_length=200)
+    # A self-contained QR also carries the signed message and the key id: then the printed
+    # message is what is checked, and compared with the registry.
+    message: str | None = Field(default=None, max_length=4000)
+    key_id: str | None = Field(default=None, max_length=40)
 
 
 class VerifyOut(BaseModel):
@@ -584,8 +588,25 @@ class VerifyOut(BaseModel):
 @router.post("/public/sceau/{cid}/verify")
 async def verify_public_seal(cid: uuid.UUID, body: VerifyIn, db: Db) -> VerifyOut:
     """The server-side check, for browsers without Ed25519 in WebCrypto."""
-    c, _, key = await _public_sealed(db, cid)
+    c, ws, key = await _public_sealed(db, cid)
     payload = c.sealed["payload"]
+    if body.message is not None:
+        found = seal.read_communique_fragment(f"{seal.b64u(body.message.encode())}.x.y")
+        printed = key
+        if body.key_id and body.key_id != key.key_id:
+            printed = await db.scalar(
+                select(SealKey).where(SealKey.key_id == body.key_id, SealKey.workspace_id == ws.id)
+            )
+        if found is None or printed is None or seal.reserved_issuer(printed.issuer):
+            return VerifyOut(
+                valid=False, revoked=False, matches_record=False, key_id=body.key_id or ""
+            )
+        return VerifyOut(
+            valid=seal.verify_message(printed.public_key, body.message, body.signature or ""),
+            revoked=printed.revoked_at is not None,
+            matches_record=found[0] == seal.payload_of(c),
+            key_id=printed.key_id,
+        )
     return VerifyOut(
         valid=seal.verify(key.public_key, payload, body.signature or c.sealed["signature"]),
         revoked=key.revoked_at is not None,
@@ -770,7 +791,7 @@ async def official_feed(
                 newsroom=NewsroomOut(slug=w.slug, name=w.name),
                 confirmed=1 + len(c.confirmed_by or []) >= CONFIRMED_AT,
                 sealed=bool(signature),
-                seal_url=seal_url(c.id, signature) if signature else None,
+                seal_url=seal_url(c.id, c.sealed) if signature else None,
                 fakes=counts.get(str(c.id), 0),
                 original=OriginalRef(
                     id=original.id,

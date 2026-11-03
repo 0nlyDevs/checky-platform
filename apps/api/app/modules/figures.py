@@ -455,7 +455,7 @@ async def seed_demo(db: AsyncSession, workspace_id, user_id, items: dict[str, It
                 country="Madagascar",
                 location=tana,
                 source_name="JIRAMA, communiqué N° 2026-118 (démo)",
-                source_url=seal_url(original.id, signature) if signature else None,
+                source_url=seal_url(original.id, original.sealed) if signature else None,
                 communique_id=original.id if original else None,
                 keywords=["délestage", "coupure", "électricité", "jirama", "antananarivo"],
                 is_demo=True,
