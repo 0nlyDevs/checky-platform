@@ -102,6 +102,25 @@ def test_demo_reset_seeds_sources_on_claims(as_user):
     assert len(alice.get(f"/api/v1/workspaces/{ws}/sources").json()) == 8
 
 
+def test_demo_published_verdicts_are_signed(as_user):
+    """A published demo verdict carries a valid signature, so nothing public says « Faux » unsigned."""
+    from app.modules.signing import digest
+
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    alice.post(f"/api/v1/workspaces/{ws}/demo/reset")
+    published = [
+        i
+        for i in alice.get(f"/api/v1/workspaces/{ws}/items").json()["items"]
+        if i["status"] == "published"
+    ]
+    assert published
+    for i in published:
+        d = i["data"]
+        assert d["signed_by"] and d["signed_at"] and d["byline"]["journalist"]
+        assert d["signed_digest"] == digest(i["title"], i["body"], d)
+
+
 def test_similar_claims_warn_of_a_duplicate(as_user):
     alice = as_user("alice")
     ws = _workspace(alice)

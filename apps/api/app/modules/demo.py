@@ -10,6 +10,7 @@ from app.core import dates
 from app.core.access import AnyMember, Db
 from app.core.activity import broadcast, record
 from app.core.models import Item, Source, Workspace
+from app.modules import signing
 
 log = logging.getLogger("fanilo.demo")
 router = APIRouter(tags=["demo"])
@@ -264,8 +265,28 @@ async def reset_demo(member: AnyMember, db: Db) -> dict:
                 **({"reason": DEMO_REASONS[i]} if i in DEMO_REASONS else {}),
             },
         )
+        if status == "published" and verdict:
+            # A published demo verdict is a signed one: the public page, the seal and the carnet
+            # all rest on a signature, so the demo carries the signing journalist's byline.
+            at = (now - timedelta(minutes=max(ago - 5, 1))).isoformat()
+            who = member.user.name or member.user.email
+            item.data = {
+                **item.data,
+                "reason": item.data.get("reason") or DEMO_REASONS.get(i, ""),
+                "signed_by": member.user.id,
+                "signed_at": at,
+                "published_by": member.user.id,
+                "published_at": at,
+                "byline": {"newsroom": ws.name, "journalist": who, "signed_at": at},
+            }
         db.add(item)
         await db.flush()
+        if item.data.get("signed_by"):
+            # After the flush, so the body is the stored one (the digest covers it).
+            item.data = {
+                **item.data,
+                "signed_digest": signing.digest(item.title, item.body, item.data),
+            }
         by_ref[item.data["ref"]] = item
         await record(db, member.workspace_id, member.user.id, "item", item.id, "create")
         if i in DEMO_SOURCES:
