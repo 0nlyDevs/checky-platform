@@ -47,6 +47,7 @@ import { rubrique } from "./mg/rubrique";
 import { studio } from "./mg/studio";
 import { team } from "./mg/team";
 import { verification } from "./mg/verification";
+import { look } from "./mg/look";
 
 /** A distance in days, said the way fr.ts rounds it: « 12 andro », « 3 volana », « 2 taona ». */
 const span = (days: number) => {
@@ -942,6 +943,7 @@ export const mg: Overrides = {
   publicLayer,
   team,
   verification,
+  look,
   reach,
   offline,
   pages,

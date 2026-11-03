@@ -210,10 +210,11 @@
 }
 
 /* ---------- titles: Bricolage, one word in the italic of the landing ---------- */
+/* No margins here: they are set where a title is used (Tailwind's spacing utilities, a lower layer,
+   would lose to them). */
 .pub-display,
 .pub-title,
 .pub-h2 {
-  margin: 0;
   font-family: var(--font-display);
   font-weight: 800;
   text-wrap: balance;
@@ -245,7 +246,6 @@
 }
 .pub-lead {
   max-width: 52ch;
-  margin: 0;
   color: var(--muted-foreground);
   font-size: clamp(1.05rem, 1rem + 0.3vw, 1.25rem);
   line-height: 1.55;
@@ -259,7 +259,8 @@
 .lines > span {
   display: block;
   overflow: hidden;
-  padding-bottom: 0.1em;
+  /* room for the italic's descenders inside the mask */
+  padding-bottom: 0.16em;
   margin-bottom: -0.1em;
 }
 .lines > span > span {
@@ -313,7 +314,7 @@
 }
 .doodle-note {
   position: absolute;
-  margin: 0;
+  white-space: nowrap;
   pointer-events: none;
   color: var(--foreground);
   font-family: var(--font-quote);
@@ -411,4 +412,377 @@
   .site-legal {
     padding-inline: 40px;
   }
+}
+
+/* ---------- controls of the public pages ---------- */
+.pub-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  width: min(100%, 300px);
+  height: 48px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--input);
+  background: var(--card);
+  color: var(--foreground);
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.pub-search:focus-within {
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--foreground) 12%, transparent);
+}
+.pub-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+  outline: none;
+}
+.pub-search input::placeholder {
+  color: var(--muted-foreground);
+}
+.pub-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 999px;
+  border: 1px solid var(--input);
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 600;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    transform 0.25s var(--ease-out);
+}
+.pub-ghost-btn:hover {
+  border-color: var(--foreground);
+  background: var(--raised);
+  color: var(--foreground);
+}
+.pub-ghost-btn:active {
+  transform: scale(0.97);
+}
+.pub-ghost-btn:disabled {
+  color: var(--muted-foreground);
+}
+.pub-ghost-btn:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+/* The themed dropdown arrives from its button. */
+.pub-menu[data-state="open"] {
+  animation: pub-menu-in 0.24s var(--ease-out);
+}
+@keyframes pub-menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+/* ---------- a published verdict as a card ---------- */
+.vcard-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 700px) {
+  .vcard-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1100px) {
+  .vcard-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.vcard {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  transition:
+    border-color 0.25s,
+    transform 0.4s var(--ease-out);
+}
+.vcard:hover {
+  border-color: var(--input);
+  transform: translateY(-3px);
+  color: var(--foreground);
+}
+.vcard:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+.vcard-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+}
+.vcard-word {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+.vcard-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 20px 18px;
+}
+.vcard-claim {
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  text-wrap: pretty;
+}
+.vcard-reason {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  text-wrap: pretty;
+}
+.vcard-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 20px;
+  padding: 14px 0 16px;
+  border-top: 1px solid var(--border);
+}
+.vcard-origin {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--raised);
+  color: var(--foreground);
+}
+.vcard-go {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--foreground);
+  transition:
+    background-color 0.25s,
+    color 0.25s,
+    border-color 0.25s;
+}
+.vcard-go svg {
+  transition: transform 0.35s var(--ease-out);
+}
+.vcard:hover .vcard-go {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.vcard:hover .vcard-go svg {
+  transform: translate(2px, -2px);
+}
+
+/* ---------- /verifies: three muted reels, tilted like the landing's picks ---------- */
+.reels-stage {
+  position: relative;
+  height: 470px;
+}
+.reel {
+  position: absolute;
+  width: 34%;
+  aspect-ratio: 9 / 16;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #0a0a0b;
+  box-shadow: var(--shadow-float);
+  transition: transform 0.7s var(--ease-out);
+}
+.reel:nth-child(1) {
+  left: 2%;
+  top: 44px;
+  transform: rotate(-7deg);
+}
+.reel:nth-child(2) {
+  left: 33%;
+  top: 0;
+  z-index: 2;
+  transform: rotate(2deg);
+}
+.reel:nth-child(3) {
+  left: 64%;
+  top: 64px;
+  transform: rotate(8deg);
+}
+.reels:hover .reel:nth-child(1) {
+  transform: rotate(-10deg) translateX(-12px);
+}
+.reels:hover .reel:nth-child(3) {
+  transform: rotate(11deg) translateX(12px);
+}
+.reel video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.reel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(10, 10, 11, 0) 45%, rgba(10, 10, 11, 0.88) 100%);
+}
+.reel-badge {
+  position: absolute;
+  z-index: 1;
+  top: 12px;
+  left: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+/* Fixed paper on the darkened clip, in both themes. */
+.reel-cap {
+  position: absolute;
+  z-index: 1;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  color: #f3f2ee;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* The check field: the landing's prompt, a floating card that lights on focus. */
+.pub-prompt {
+  border-radius: 28px;
+  border: 1px solid var(--input);
+  background: var(--card);
+  box-shadow: var(--shadow-float);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s;
+}
+.pub-prompt:focus-within {
+  border-color: var(--foreground);
+  box-shadow:
+    var(--shadow-float),
+    0 0 0 4px color-mix(in srgb, var(--foreground) 10%, transparent);
+}
+
+/* A round icon action (share on…, copy), its name in a tooltip on hover and keyboard focus. */
+.pub-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid var(--input);
+  background: var(--card);
+  color: var(--foreground);
+  transition:
+    background-color 0.2s,
+    color 0.2s,
+    border-color 0.2s,
+    transform 0.3s var(--ease-out);
+}
+.pub-icon-btn svg {
+  width: 22px;
+  height: 22px;
+}
+.pub-icon-btn:hover,
+.pub-icon-btn[data-on] {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.pub-icon-btn:hover {
+  transform: translateY(-2px);
+}
+.pub-icon-btn:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+.pub-tip {
+  position: relative;
+}
+.pub-tip::after,
+.pub-tip::before {
+  position: absolute;
+  left: 50%;
+  z-index: 20;
+  opacity: 0;
+  pointer-events: none;
+  translate: -50% 4px;
+  transition:
+    opacity 0.18s,
+    translate 0.3s var(--ease-out);
+}
+.pub-tip::after {
+  content: attr(data-tip);
+  bottom: calc(100% + 10px);
+  padding: 6px 11px;
+  border-radius: 999px;
+  background: var(--tag-inverted);
+  color: var(--tag-inverted-foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.pub-tip::before {
+  content: "";
+  bottom: calc(100% + 6px);
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--tag-inverted);
+  rotate: 45deg;
+}
+.pub-tip:hover::after,
+.pub-tip:hover::before,
+.pub-tip:focus-visible::after,
+.pub-tip:focus-visible::before,
+.pub-tip:has(:focus-visible)::after,
+.pub-tip:has(:focus-visible)::before {
+  opacity: 1;
+  translate: -50% 0;
 }

@@ -5,7 +5,24 @@ import { VERDICT_META } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { fr } from "@/lib/i18n/fr";
 import { useDay, useLang, useT } from "@/lib/i18n";
-import { IconBroadcast, IconCheck, IconLink, IconShareNetwork, IconSpeakerHigh, IconStop } from "@/lib/icons";
+import {
+  IconBroadcast,
+  IconChatCircle,
+  IconCheck,
+  IconFacebookLogo,
+  IconGlobe,
+  IconLink,
+  IconNewspaper,
+  IconPrinter,
+  IconRadio,
+  IconSpeakerHigh,
+  IconStop,
+  IconTelegramLogo,
+  IconTiktokLogo,
+  IconWhatsappLogo,
+  IconXLogo,
+  type Icon,
+} from "@/lib/icons";
 import { type PublicVerdict, publicApi } from "@/lib/public-api";
 import { speak, stopSpeaking } from "@/lib/speak";
 import { cn } from "@/lib/utils";
@@ -26,7 +43,7 @@ export function VerdictWord({ verdict, className }: { verdict: Verdict; classNam
   const m = VERDICT_META[verdict];
   const Icon = m.icon;
   return (
-    <span className={cn("inline-flex flex-none items-center gap-1.5 rounded-sm px-2 py-0.5 text-sm font-bold whitespace-nowrap", m.soft, m.ink, className)}>
+    <span className={cn("inline-flex flex-none items-center gap-1.5 rounded-full px-2.5 py-1 text-sm font-bold whitespace-nowrap", m.soft, m.ink, className)}>
       <Icon className="size-3.5" aria-hidden />
       {t.verdict[verdict]}
     </span>
@@ -39,7 +56,7 @@ export function VerdictBlock({ v, children, className }: { v: PublicVerdict; chi
   const m = VERDICT_META[v.verdict];
   const Icon = m.icon;
   return (
-    <section className={cn("verdict-land rounded-md border-2 border-current p-5 md:p-7", m.soft, m.ink, className)} aria-label={t.site.pub.file.verdict}>
+    <section className={cn("verdict-land rounded-[24px] border-2 border-current p-6 md:p-8", m.soft, m.ink, className)} aria-label={t.site.pub.file.verdict}>
       <p className="flex items-center gap-3 font-display text-5xl font-extrabold tracking-tight md:text-6xl">
         <Icon className="size-10 shrink-0 md:size-12" aria-hidden />
         {t.verdict[v.verdict]}
@@ -104,24 +121,57 @@ export function ShareActions({ v, primary = false }: { v: PublicVerdict; primary
     void speak(`${v.title}. ${word}. ${v.post ?? v.reason ?? ""}`, voice, () => setReading(false));
   };
 
+  const text = encodeURIComponent(p.whatsappText(v.title, t.verdict[v.verdict], href));
+  const link = encodeURIComponent(href);
+  const more: { name: string; icon: Icon; href: string }[] = [
+    { name: "Facebook", icon: IconFacebookLogo, href: `https://www.facebook.com/sharer/sharer.php?u=${link}` },
+    { name: "Telegram", icon: IconTelegramLogo, href: `https://t.me/share/url?url=${link}&text=${text}` },
+    { name: "X", icon: IconXLogo, href: `https://x.com/intent/post?text=${text}` },
+  ];
+
   return (
-    <div className="flex flex-wrap gap-2">
-      <Button asChild variant={primary ? "action" : "outline"} size="xl">
-        <a href={`https://wa.me/?text=${encodeURIComponent(p.whatsappText(v.title, t.verdict[v.verdict], href))}`} target="_blank" rel="noreferrer">
-          <IconShareNetwork aria-hidden /> {p.whatsapp}
+    <div className="flex flex-wrap items-center gap-2">
+      <Button asChild variant={primary ? "action" : "outline"} size="xl" className="rounded-full px-6">
+        <a href={`https://wa.me/?text=${text}`} target="_blank" rel="noreferrer">
+          <IconWhatsappLogo aria-hidden /> {p.whatsapp}
         </a>
       </Button>
-      <Button variant="outline" size="xl" onClick={listen} aria-pressed={reading}>
+      <Button variant="outline" size="xl" className="rounded-full px-6" onClick={listen} aria-pressed={reading}>
         {reading ? <IconStop aria-hidden /> : <IconSpeakerHigh aria-hidden />}
         {reading ? p.stopListening : p.listen}
       </Button>
-      <Button variant="outline" size="xl" onClick={() => navigator.clipboard?.writeText(href).then(() => setCopied(true))}>
-        {copied ? <IconCheck aria-hidden /> : <IconLink aria-hidden />}
-        {copied ? p.copied : p.share}
-      </Button>
+      <span className="flex items-center gap-2">
+        {more.map(({ name, icon: Glyph, href: to }) => (
+          <a key={name} href={to} target="_blank" rel="noreferrer" className="pub-icon-btn pub-tip" data-tip={name} aria-label={name}>
+            <Glyph aria-hidden />
+          </a>
+        ))}
+        <button
+          type="button"
+          className="pub-icon-btn pub-tip"
+          data-tip={copied ? p.copied : p.share}
+          aria-label={copied ? p.copied : p.share}
+          data-on={copied || undefined}
+          onClick={() => navigator.clipboard?.writeText(href).then(() => setCopied(true))}
+        >
+          {copied ? <IconCheck aria-hidden /> : <IconLink aria-hidden />}
+        </button>
+      </span>
     </div>
   );
 }
+
+/** The channel a correction went down, as its own mark. */
+const CHANNEL_ICON: Record<string, Icon> = {
+  whatsapp: IconWhatsappLogo,
+  facebook: IconFacebookLogo,
+  tiktok: IconTiktokLogo,
+  radio: IconRadio,
+  sms: IconChatCircle,
+  press: IconNewspaper,
+  poster: IconPrinter,
+  web: IconGlobe,
+};
 
 type Stop = { channel: string; place: string; region: string | null; status: string; at: string };
 type Road = { truth: Stop[]; rumour_routes: number; truth_routes: number; covered: number; summary: string };
@@ -154,10 +204,14 @@ export function Trajet({ id, className }: { id: string; className?: string }) {
         {l.trajet}
       </h2>
       <p className="mt-0.5 text-sm text-pretty text-muted-foreground">{l.trajetLead}</p>
-      <ol className="mt-2 border-t border-foreground">
-        {road.truth.map((s, i) => (
-          <li key={`${s.channel}-${s.place}-${i}`} className="arrive flex items-start gap-3 border-b border-border py-2.5" style={{ "--i": i } as React.CSSProperties}>
-            <IconBroadcast className="mt-0.5 size-4 shrink-0" aria-hidden />
+      <ol className="mt-3 border-t border-foreground">
+        {road.truth.map((s, i) => {
+          const Glyph = CHANNEL_ICON[s.channel] ?? IconBroadcast;
+          return (
+          <li key={`${s.channel}-${s.place}-${i}`} className="arrive flex items-center gap-3 border-b border-border py-3" style={{ "--i": i } as React.CSSProperties}>
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-raised text-foreground">
+              <Glyph className="size-5" aria-hidden />
+            </span>
             <span className="min-w-0 flex-1">
               <span className="block font-bold text-pretty">
                 {l.channels[s.channel] ?? fr.publicLayer.verdict.channels[s.channel] ?? s.channel} · {s.place}
@@ -168,7 +222,8 @@ export function Trajet({ id, className }: { id: string; className?: string }) {
               </span>
             </span>
           </li>
-        ))}
+          );
+        })}
       </ol>
     </section>
   );
