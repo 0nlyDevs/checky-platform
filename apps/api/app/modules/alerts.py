@@ -401,7 +401,12 @@ def _refresh(alert: Item, members: list[dict[str, Any]], reasons: list[dict] | N
 async def _new_alert(
     db: AsyncSession, workspace_id: uuid.UUID, group: list[Variant], by: str = "system"
 ) -> Item:
-    lead = next((v for v in group if v.risk == "high"), group[0])
+    # The title reads like the desk's own: a dossier's title first, else the first high-risk report.
+    dossiers = [v for v in group if v.key.startswith("item:")]
+    lead = next(
+        (v for v in dossiers if v.risk == "high"),
+        dossiers[0] if dossiers else next((v for v in group if v.risk == "high"), group[0]),
+    )
     reasons = [r for v in group for r in v.reasons if v.risk == "high"]
     alert = Item(
         workspace_id=workspace_id,
@@ -689,7 +694,9 @@ async def split_alert(alert_id: uuid.UUID, body: SplitIn, member: AnyMember, db:
         workspace_id=member.workspace_id,
         author_id=member.user.id,
         type="alert",
-        title=_first_sentence(chosen[0]["title"]),
+        title=_first_sentence(
+            next((m for m in chosen if m["key"].startswith("item:")), chosen[0])["title"]
+        ),
         body="",
         status=alert.status,
         tags=[],

@@ -122,6 +122,8 @@ def test_variants_across_radios_and_regions_become_one_alert(as_user):
     [alert] = _alerts(alice, ws)
     assert alert["ref"] == "ALR-0001" and alert["state"] == "open"
     assert alert["level"] == "high"
+    # the alert reads like the desk's dossier, not like the first radio sentence
+    assert alert["title"].startswith(KIDNAP_FR_2.split(".")[0][:40])
     facts = alert["facts"]
     assert facts["reports"] == 3
     assert sorted(facts["stations"]) == ["Radio Boeny (démo)", "Radio Sofia (démo)"]
