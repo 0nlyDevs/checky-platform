@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DemoTag, LoadFailed, Section } from "@/components/rubrique/bits";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconArrowLeft, IconCircleNotch, IconMicrophone, IconStop } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { EvidenceLine, FlagLabel, flagOf, questionFor, type Evidence } from "./flag";

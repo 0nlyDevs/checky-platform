@@ -6,7 +6,7 @@ import useSWR from "swr";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconArrowCounterClockwise, IconCheck, IconCircleNotch, IconDownloadSimple, IconMicrophone, IconShareNetwork, IconStop, IconX } from "@/lib/icons";
 
 const v = t.dossier.voice;

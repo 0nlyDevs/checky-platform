@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconArrowLeft } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { EvidenceLine, FlagLabel, flagOf, type Evidence } from "./flag";

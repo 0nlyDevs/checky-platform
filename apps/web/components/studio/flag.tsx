@@ -1,7 +1,7 @@
 import type { ShowClaim } from "@fanilo/shared";
 import { VerdictChip } from "@/components/claims/verdict";
 import { IconCheckCircle, IconCircleDashed, IconWarning, type Icon } from "@/lib/icons";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 import type { Verdict } from "@fanilo/shared";
 

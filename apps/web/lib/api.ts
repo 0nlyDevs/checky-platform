@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { isOffline, noteAnswer } from "@/lib/offline";
 
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
