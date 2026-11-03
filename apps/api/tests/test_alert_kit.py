@@ -21,6 +21,13 @@ ACCUSING = (
 )
 
 
+@pytest.fixture(autouse=True)
+def seal_secret(monkeypatch):
+    """A radio's SMS number is sealed with SEAL_SECRET before it is queued (core/contact.py);
+    without one the send answers 503, so these tests passed only where a local .env had it."""
+    monkeypatch.setattr(get_settings(), "seal_secret", "alert-kit-test-seal-secret")
+
+
 @pytest.fixture
 def model(monkeypatch):
     """A model that tries everything the guards must catch: the accused's name, a number found
