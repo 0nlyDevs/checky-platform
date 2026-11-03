@@ -81,8 +81,11 @@ function Card({ item, verdict, reason, sources, lang, desk, verified }: { item: 
 /** F5: the shareable card (PNG) and its post text, once a journalist has confirmed the verdict. */
 export function VerdictCard({ ws, item, verdict, onShared }: { ws: string; item: Item; verdict: Verdict; onShared?: () => void }) {
   const [lang, setLang] = useState<Lang>("fr");
-  const analysisReason = ((item.data as { analysis?: { reason?: string } }).analysis?.reason ?? "").slice(0, 280);
-  const [reason, setReason] = useState(analysisReason);
+  // The card carries the explanation the journalist signed; the reading's reason is only a fallback
+  // for verdicts confirmed before signatures carried one.
+  const signedReason = typeof item.data.reason === "string" ? item.data.reason : "";
+  const analysisReason = (item.data as { analysis?: { reason?: string } }).analysis?.reason ?? "";
+  const [reason, setReason] = useState((signedReason.trim() || analysisReason).slice(0, 280));
   const posts = ((item.data as { posts?: Partial<Record<Lang, string>> }).posts ?? {}) as Partial<Record<Lang, string>>;
   const [post, setPost] = useState<string | null>(null);
   const [writing, setWriting] = useState(false);
