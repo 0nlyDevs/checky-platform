@@ -13,6 +13,7 @@ import { IconArrowLeft, IconCircleNotch, IconMicrophone, IconStop } from "@/lib/
 import { cn } from "@/lib/utils";
 import { EvidenceLine, FlagLabel, flagOf, questionFor, type Evidence } from "./flag";
 import type { ChunkResult, ClaimOut, Pack, ShowOut } from "./types";
+import { ThemedSelect } from "@/components/ui/select";
 
 const s = t.studio;
 const CHUNK_MS = 10_000;
@@ -351,21 +352,16 @@ export function ShowRoom() {
                 />
               </label>
               {show.speakers.length > 0 && (
-                <label className="mt-2 grid gap-1">
+                <div className="mt-2 grid justify-items-start gap-1">
                   <span className="text-sm font-bold">{s.live.speakers}</span>
-                  <select
+                  <ThemedSelect
+                    size="sm"
+                    label={s.live.speakers}
                     value={speaker}
-                    onChange={(e) => setSpeaker(e.target.value)}
-                    className="h-10 rounded-md border border-border bg-background px-2"
-                  >
-                    <option value="">{s.live.nobody}</option>
-                    {show.speakers.map((sp) => (
-                      <option key={sp.id} value={sp.id}>
-                        {sp.name}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    onValueChange={setSpeaker}
+                    options={[{ value: "", label: s.live.nobody }, ...show.speakers.map((sp) => ({ value: sp.id, label: sp.name }))]}
+                  />
+                </div>
               )}
               <Button variant="action" className="mt-2" onClick={addClaim} disabled={busy || typed.trim().length < 3}>
                 {busy ? s.live.adding : s.live.add}

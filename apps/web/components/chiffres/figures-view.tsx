@@ -21,6 +21,7 @@ import {
 } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n/live";
+import { ThemedSelect } from "@/components/ui/select";
 
 const registre = t.registre;
 
@@ -322,21 +323,17 @@ export function FiguresView() {
             </button>
           ))}
         </div>
-        <label className="block text-sm font-bold">
+        <div className="block text-sm font-bold">
           {f.country}
-          <select
+          <ThemedSelect
+            size="sm"
+            className="mt-1 flex"
+            label={f.country}
             value={country}
-            onChange={(e) => setCountry(e.target.value)}
-            className="mt-1 block h-10 rounded-md border border-input bg-card px-2 font-normal outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15"
-          >
-            <option value="">{f.allCountries}</option>
-            {countries.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </label>
+            onValueChange={setCountry}
+            options={[{ value: "", label: f.allCountries }, ...countries.map((c) => ({ value: c, label: c }))]}
+          />
+        </div>
         <label className="block w-full text-sm font-bold sm:w-56">
           {f.search}
           <input

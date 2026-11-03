@@ -137,7 +137,7 @@ function AttachToClaim({ ws, x }: { ws: string; x: Exchange }) {
         {t.ask.attachPick}
       </Label>
       <Select value={itemId} onValueChange={setItemId}>
-        <SelectTrigger id={`attach-${x.id}`} className="h-9 min-w-0 flex-1 basis-64 bg-card">
+        <SelectTrigger size="sm" id={`attach-${x.id}`} className="min-w-0 flex-1 basis-64">
           <SelectValue placeholder={t.ask.attachPick} />
         </SelectTrigger>
         <SelectContent>

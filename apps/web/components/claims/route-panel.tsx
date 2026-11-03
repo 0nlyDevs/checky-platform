@@ -13,12 +13,10 @@ import { api, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { IconArrowSquareOut, IconBroadcast, IconCircleNotch, IconPlus } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { ThemedSelect } from "@/components/ui/select";
 
 const tr = t.dossier.trajet;
 const CHANNELS = ["facebook", "whatsapp", "tiktok", "radio", "sms", "press", "web", "poster", "institution", "voice", "other"] as const;
-
-const selectClass =
-  "h-10 w-full rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";
 
 function region(stop: { location: Record<string, unknown> }) {
   const l = stop.location ?? {};
@@ -127,20 +125,25 @@ function AddStop({ ws, item, onAdded }: { ws: string; item: Item; onAdded: () =>
     <form onSubmit={add} className="grid gap-3 rounded-md border border-border bg-card p-4 sm:grid-cols-2">
       <div className="space-y-1.5">
         <Label htmlFor="stop-side">{tr.side}</Label>
-        <select id="stop-side" name="side" className={selectClass} defaultValue="rumour">
-          <option value="rumour">{tr.rumour}</option>
-          {published && <option value="truth">{tr.truth}</option>}
-        </select>
+        <ThemedSelect
+          id="stop-side"
+          size="sm"
+          className="flex w-full"
+          name="side"
+          defaultValue="rumour"
+          options={[{ value: "rumour", label: tr.rumour }, ...(published ? [{ value: "truth", label: tr.truth }] : [])]}
+        />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="stop-channel">{tr.channel}</Label>
-        <select id="stop-channel" name="channel" className={selectClass} defaultValue="facebook">
-          {CHANNELS.map((c) => (
-            <option key={c} value={c}>
-              {tr.channels[c]}
-            </option>
-          ))}
-        </select>
+        <ThemedSelect
+          id="stop-channel"
+          size="sm"
+          className="flex w-full"
+          name="channel"
+          defaultValue="facebook"
+          options={CHANNELS.map((c) => ({ value: c, label: tr.channels[c] }))}
+        />
       </div>
       <div className="space-y-1.5 sm:col-span-2">
         <Label htmlFor="stop-place">{tr.place}</Label>

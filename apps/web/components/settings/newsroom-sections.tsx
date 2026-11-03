@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconPlus, IconX } from "@/lib/icons";
+import { ThemedSelect } from "@/components/ui/select";
 
 const b = t.team.settings.beats;
 const pl = t.team.settings.place;
@@ -139,28 +140,30 @@ export function PlaceSection({ ws }: { ws: string }) {
               ))}
             </datalist>
           </label>
-          <label className="block">
-            <span className="text-sm font-medium">{pl.country}</span>
-            <select name="country" value={country} onChange={(e) => setCountry(e.target.value)} required className={`mt-1 ${field}`}>
-              {(countries.data ?? [{ code: "MG", name: data.settings.country }]).map((c) => (
-                <option key={c.code} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="block">
+            <span className="block text-sm font-medium">{pl.country}</span>
+            <ThemedSelect
+              size="sm"
+              className="mt-1 w-full"
+              label={pl.country}
+              name="country"
+              value={country}
+              onValueChange={setCountry}
+              options={(countries.data ?? [{ code: "MG", name: data.settings.country }]).map((c) => ({ value: c.name, label: c.name }))}
+            />
+          </div>
           {country === "Madagascar" ? (
-            <label className="block">
-              <span className="text-sm font-medium">{pl.region}</span>
-              <select name="region" defaultValue={data.settings.region ?? ""} className={`mt-1 ${field}`}>
-                <option value="">{pl.regionNone}</option>
-                {MG_REGIONS.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="block">
+              <span className="block text-sm font-medium">{pl.region}</span>
+              <ThemedSelect
+                size="sm"
+                className="mt-1 w-full"
+                label={pl.region}
+                name="region"
+                defaultValue={data.settings.region ?? ""}
+                options={[{ value: "", label: pl.regionNone }, ...MG_REGIONS.map((r) => ({ value: r, label: r }))]}
+              />
+            </div>
           ) : (
             <label className="block">
               <span className="text-sm font-medium">{pl.regionFree}</span>

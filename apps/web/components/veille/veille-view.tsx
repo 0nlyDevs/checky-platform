@@ -220,7 +220,7 @@ function DeskVeille({ ws }: { ws: string }) {
           </button>
         )}
         <Select value={beat ?? ALL} onValueChange={(x) => go({ theme: x === ALL ? null : x })}>
-          <SelectTrigger aria-label={v.beat} className="h-10 w-auto min-w-40 bg-card">
+          <SelectTrigger size="sm" aria-label={v.beat} className="w-auto min-w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -254,7 +254,7 @@ function DeskVeille({ ws }: { ws: string }) {
               </div>
               {map.data && (
                 <Select value={shown} onValueChange={(x) => go({ pays: x === map.data?.home ? null : x, region: null })}>
-                  <SelectTrigger aria-label={v.country} className="h-10 w-auto min-w-40 bg-background font-bold">
+                  <SelectTrigger size="sm" aria-label={v.country} className="w-auto min-w-40">
                     <IconGlobe className="size-4" aria-hidden />
                     <SelectValue />
                   </SelectTrigger>

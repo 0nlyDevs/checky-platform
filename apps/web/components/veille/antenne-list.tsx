@@ -12,6 +12,7 @@ import type { AntenneRow, FollowOut } from "@/components/rubrique/types";
 import { api } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
+import { ThemedSelect } from "@/components/ui/select";
 
 const a = t.rubrique.antenne;
 
@@ -108,36 +109,26 @@ export function AntenneList({
 
   const filters = (
     <div className="mb-3 flex flex-wrap items-end gap-2 text-sm">
-      <label className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1">
         <span className="text-muted-foreground">{a.filterRegion}</span>
-        <select
+        <ThemedSelect
+          size="sm"
+          label={a.filterRegion}
           value={region}
-          onChange={(e) => setRegion(e.target.value)}
-          className="rounded-md border border-border bg-card px-2 py-1.5"
-        >
-          <option value="">{a.filterAll}</option>
-          {regions.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1">
+          onValueChange={setRegion}
+          options={[{ value: "", label: a.filterAll }, ...regions.map((r) => ({ value: r, label: r }))]}
+        />
+      </div>
+      <div className="flex flex-col gap-1">
         <span className="text-muted-foreground">{a.filterStation}</span>
-        <select
+        <ThemedSelect
+          size="sm"
+          label={a.filterStation}
           value={station}
-          onChange={(e) => setStation(e.target.value)}
-          className="rounded-md border border-border bg-card px-2 py-1.5"
-        >
-          <option value="">{a.filterAll}</option>
-          {stations.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </label>
+          onValueChange={setStation}
+          options={[{ value: "", label: a.filterAll }, ...stations.map((s) => ({ value: s, label: s }))]}
+        />
+      </div>
       <label className="flex flex-col gap-1">
         <span className="text-muted-foreground">{a.filterTopic}</span>
         <input

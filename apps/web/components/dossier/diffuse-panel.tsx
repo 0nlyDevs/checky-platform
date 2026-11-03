@@ -15,6 +15,7 @@ import { IconArrowSquareOut, IconBroadcast, IconCheck, IconCircleNotch, IconCopy
 import { cn } from "@/lib/utils";
 import type { Formats } from "./types";
 import { VoiceNotePanel } from "./voice-note";
+import { ThemedSelect } from "@/components/ui/select";
 
 const f = t.dossier.diffuse;
 const CHANNELS = ["whatsapp", "facebook", "radio", "sms", "web", "press", "poster", "institution", "tiktok", "voice", "other"] as const;
@@ -334,18 +335,14 @@ export function DiffusePanel({
             >
               <div className="space-y-1.5">
                 <Label htmlFor="route-channel">{f.channel}</Label>
-                <select
+                <ThemedSelect
                   id="route-channel"
+                  size="sm"
+                  className="flex"
                   value={channel}
-                  onChange={(e) => setChannel(e.target.value)}
-                  className="h-10 rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
-                >
-                  {CHANNELS.map((c) => (
-                    <option key={c} value={c}>
-                      {t.dossier.trajet.channels[c]}
-                    </option>
-                  ))}
-                </select>
+                  onValueChange={setChannel}
+                  options={CHANNELS.map((c) => ({ value: c, label: t.dossier.trajet.channels[c] }))}
+                />
               </div>
               <div className="min-w-48 flex-1 space-y-1.5">
                 <Label htmlFor="route-place">{f.place}</Label>

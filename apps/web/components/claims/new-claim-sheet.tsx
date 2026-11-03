@@ -166,7 +166,7 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
             <div className="space-y-2">
               <Label htmlFor="claim-origin">{t.claims.form.origin}</Label>
               <Select value={origin} onValueChange={setOrigin}>
-                <SelectTrigger id="claim-origin" className="h-10 w-full">
+                <SelectTrigger size="sm" id="claim-origin" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

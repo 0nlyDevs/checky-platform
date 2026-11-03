@@ -182,7 +182,7 @@ function AlertCard({ ws, alert, others, onChanged }: { ws: string; alert: Alert;
           {others.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <Select value={target} onValueChange={setTarget}>
-                <SelectTrigger aria-label={al.mergeWith} className="h-10 w-auto max-w-full min-w-48 bg-card">
+                <SelectTrigger size="sm" aria-label={al.mergeWith} className="w-auto max-w-full min-w-48">
                   <SelectValue placeholder={al.mergeWith} />
                 </SelectTrigger>
                 <SelectContent>
