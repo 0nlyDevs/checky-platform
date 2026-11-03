@@ -61,6 +61,11 @@ export const registre = {
     askContact: (name: string, role: string) => (role ? `Joindre ${name}, ${role}` : `Joindre ${name}`),
     openSeal: "Voir le sceau",
   },
+  // How a fake names the statement it imitates (components/registre/types.ts communiqueRef).
+  ref: {
+    numbered: (number: string, issuer: string) => `le communiqué N° ${number} (${issuer})`,
+    byIssuer: (issuer: string) => `un communiqué de l'émetteur ${issuer}`,
+  },
   entry: {
     number: (n: string) => `N° ${n}`,
     issued: (d: string) => `publié le ${d}`,

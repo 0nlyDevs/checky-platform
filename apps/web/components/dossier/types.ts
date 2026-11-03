@@ -1,4 +1,5 @@
 import type { Item, Verdict } from "@fanilo/shared";
+import { dateFormat } from "@/lib/i18n/live";
 
 // Everything the crew stores on an item is optional: older dossiers, Mode sans IA and partial runs
 // leave fields out. These readers turn `item.data` into typed values without ever throwing.
@@ -408,9 +409,9 @@ export type NewsroomSettings = { id: string; name: string; slug: string; is_publ
 
 // --- dates, in French, on the reader's clock -------------------------------------------------
 
-const dayFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-const dayTimeFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
-const shortFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const dayFmt = dateFormat({ day: "numeric", month: "long", year: "numeric" });
+const dayTimeFmt = dateFormat({ day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+const shortFmt = dateFormat({ day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 function parse(iso: string | null | undefined): Date | null {
   if (!iso) return null;

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import type { NavItem } from "@/components/shell/nav";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { IconCaretDown, IconDotsThree } from "@/lib/icons";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { foldTabs } from "@/lib/priority-nav";
 
 type Tab = NavItem & { href: string };

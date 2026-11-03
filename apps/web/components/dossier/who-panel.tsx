@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconAddressBook, IconArrowSquareOut, IconCheck, IconCircleNotch, IconCopy, IconPaperPlaneTilt, IconPhone, IconSealCheck } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { type Contact, fmtShort, type Question, type Who } from "./types";

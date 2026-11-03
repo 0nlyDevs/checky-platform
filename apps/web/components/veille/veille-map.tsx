@@ -6,7 +6,7 @@ import { Map as LeafletMap } from "leaflet";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CircleMarker, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { RegionCount } from "@/components/rubrique/types";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 
 const v = t.rubrique.veille;
 

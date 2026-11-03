@@ -24,6 +24,22 @@ export const crew = {
       skipped: "Non applicable",
       no_ai: "IA coupée",
     } as Record<string, string>,
+    // The crew's names as shown (the keys are the API's agent names).
+    names: {
+      Lecteur: "Lecteur",
+      Provenance: "Provenance",
+      Registre: "Registre",
+      Chiffres: "Chiffres",
+      "Fact-checkers": "Fact-checkers",
+      Web: "Web",
+      Archives: "Archives",
+      Fiabilité: "Fiabilité",
+      Ton: "Ton",
+      Éléments: "Éléments",
+      Synthèse: "Synthèse",
+      Contradicteur: "Contradicteur",
+      Confiance: "Confiance",
+    } as Record<string, string>,
     roles: {
       Lecteur: "Relève les affirmations, les chiffres et les lieux",
       Provenance: "Date l'image, la vidéo ou la page",

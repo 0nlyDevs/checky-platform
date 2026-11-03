@@ -3,6 +3,7 @@
 import { createContext, Suspense, useContext, useMemo, useRef, useState, type RefObject } from "react";
 import { AssistantWidget } from "@/components/assistant/assistant-widget";
 import { CheckyButton } from "@/components/shell/checky-button";
+import { useLang } from "@/lib/i18n";
 
 type AssistantState = {
   open: boolean;
@@ -20,13 +21,15 @@ export function AssistantProvider({ scope, children }: { scope: "public" | "desk
   const [open, setOpen] = useState(false);
   const launcher = useRef<HTMLButtonElement>(null);
   const value = useMemo(() => ({ open, setOpen, launcher }), [open]);
+  // On the public pages nothing above remounts on a language switch: the corner does it itself.
+  const lang = useLang();
   return (
     <Ctx.Provider value={value}>
       {children}
-      <CheckyButton scope={scope} />
+      <CheckyButton key={lang} scope={scope} />
       {/* It reads the route (page, workspace): on dynamic routes that waits for the request. */}
       <Suspense fallback={null}>
-        <AssistantWidget scope={scope} />
+        <AssistantWidget key={lang} scope={scope} />
       </Suspense>
     </Ctx.Provider>
   );

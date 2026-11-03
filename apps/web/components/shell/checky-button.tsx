@@ -3,7 +3,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useAssistant } from "@/components/assistant/assistant-context";
 import { IconSparkle, IconX } from "@/lib/icons";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 
 const a = t.assistant;
 const HINT_KEY = "checky:hint-seen";

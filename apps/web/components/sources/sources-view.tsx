@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { SourcesPanel } from "@/components/sources/sources-panel";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 /** All sources, with recordings as a tab (they are sources too; the transcript lives on each one). */

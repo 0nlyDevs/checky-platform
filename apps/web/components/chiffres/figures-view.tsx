@@ -19,8 +19,10 @@ import {
   IconX,
   type Icon,
 } from "@/lib/icons";
-import { registre } from "@/lib/i18n/fr/registre";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n/live";
+
+const registre = t.registre;
 
 const f = registre.figures;
 

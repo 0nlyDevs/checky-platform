@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { postStream } from "@/lib/sse";
 import { cn } from "@/lib/utils";
 

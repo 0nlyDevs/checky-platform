@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { VERDICT_META, VerdictChip } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconArrowSquareOut, IconCalculator, IconCalendarDots, IconCircleNotch, IconFileText, IconNewspaper, IconScan, IconSealCheck, IconTextT } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { type DiffPart, fmtDay, type Research, type Review } from "./types";

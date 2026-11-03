@@ -16,7 +16,7 @@ import { useSignalToasts } from "@/components/veille/signals-panel";
 import { useMe } from "@/components/rubrique/use-me";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { BeatPicker } from "./beat-picker";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "./bits";
 import { MeteoPanel } from "./meteo-panel";

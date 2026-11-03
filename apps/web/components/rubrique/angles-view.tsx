@@ -9,7 +9,7 @@ import { IconCircleNotch, IconSparkle } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 import { Section } from "./bits";
 import type { Angle, AnglesOut, Fact, Prefs } from "./types";

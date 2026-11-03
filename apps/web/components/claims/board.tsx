@@ -28,7 +28,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 // A drop that ends over the card it started from must not also count as a click on it.
@@ -90,7 +90,7 @@ function Card({
       ref={setNodeRef}
       {...(movable ? listeners : {})}
       {...(movable ? attributes : {})}
-      aria-roledescription={movable ? "carte déplaçable" : undefined}
+      aria-roledescription={movable ? t.claims.board.movable : undefined}
       aria-describedby={movable ? "board-hint" : undefined}
       title={movable ? undefined : t.claims.board.cannotMove}
       className={cn(

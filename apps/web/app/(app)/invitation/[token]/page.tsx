@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { mutate } from "swr";
 import { IconCircleNotch } from "@/lib/icons";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 
 export default function InvitationPage() {
   const { token } = useParams<{ token: string }>();

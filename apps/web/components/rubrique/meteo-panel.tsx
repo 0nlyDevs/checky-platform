@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { IconArrowRight, IconCalendarDots } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { DemoTag, Section, type SectionTone } from "./bits";
 import type { Meteo } from "./types";
 

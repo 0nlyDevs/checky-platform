@@ -7,7 +7,7 @@ import { IconArrowCounterClockwise, IconCircleNotch, IconMicrophone, IconPaperPl
 import { useAssistant } from "@/components/assistant/assistant-context";
 import { VerdictChip } from "@/components/claims/verdict";
 import { API_URL, ApiError, api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { type PublicVerdict, myTips, publicApi, rememberTip } from "@/lib/public-api";
 import { type Lang, speak, stopSpeaking } from "@/lib/speak";
 import { postStream } from "@/lib/sse";

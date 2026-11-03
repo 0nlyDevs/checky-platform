@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DemoTag, KIND_ICON, when } from "@/components/rubrique/bits";
 import type { Alert, AlertMember, Kind } from "@/components/rubrique/types";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 import { AlertKitPanel } from "./alert-kit-panel";
 

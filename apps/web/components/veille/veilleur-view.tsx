@@ -13,7 +13,7 @@ import { DemoTag, when } from "@/components/rubrique/bits";
 import type { Clip, Prefs } from "@/components/rubrique/types";
 import { useMe } from "@/components/rubrique/use-me";
 import { api, API_URL, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const w = t.rubrique.veilleur;

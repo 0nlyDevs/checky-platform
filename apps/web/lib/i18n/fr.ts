@@ -1,12 +1,15 @@
 // Every UI string lives here so Malagasy can be added as a sibling file.
-import { plural } from "@/lib/when";
+import { plural, whenFr } from "@/lib/when";
 import { crew } from "./fr/crew";
 import { dossier } from "./fr/dossier";
 import { alertKit } from "./fr/alertKit";
 import { offline } from "./fr/offline";
+import { palette } from "./fr/palette";
+import { publication } from "./fr/publication";
 import { publicLayer } from "./fr/publicLayer";
 import { reach } from "./fr/reach";
 import { registre } from "./fr/registre";
+import { resources } from "./fr/resources";
 import { rubrique } from "./fr/rubrique";
 import { studio } from "./fr/studio";
 import { team } from "./fr/team";
@@ -137,6 +140,7 @@ export const fr = {
       label: "Tableau de vérification",
       empty: "Aucun dossier",
       dropHere: "Déposer ici",
+      movable: "carte déplaçable",
       moved: (ref: string, status: string) => `${ref} → ${status}`,
       cannotMove: "Ce dossier ne peut pas être déplacé.",
       moveTo: "Déplacer vers…",
@@ -926,6 +930,8 @@ export const fr = {
     none: "Sans verdict",
     suggested: "suggéré",
   },
+  // Relative dates and durations (lib/when.ts holds the French so its tests run without the app).
+  when: whenFr,
   common: {
     loading: "Chargement…",
     demoData: "Données de démonstration",
@@ -942,6 +948,9 @@ export const fr = {
   reach,
   offline,
   alertKit,
+  palette,
+  publication,
+  resources,
 } as const;
 
 export const t = fr;

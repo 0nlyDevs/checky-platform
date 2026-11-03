@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { SECTIONS } from "@/components/shell/nav";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 /** The strip that ties the sections of one tab together (Annuaire: contacts, documents, registry,

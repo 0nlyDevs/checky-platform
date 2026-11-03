@@ -11,7 +11,7 @@ import { type Byline, fmtWhen } from "@/components/dossier/types";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { api, ApiError } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconSparkle, IconStamp, IconWarning } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 

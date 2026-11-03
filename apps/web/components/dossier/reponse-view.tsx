@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconCheck, IconCircleNotch } from "@/lib/icons";
 import { publicApi } from "@/lib/public-api";
 import { fmtWhen } from "./types";

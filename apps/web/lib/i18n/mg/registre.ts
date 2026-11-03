@@ -60,6 +60,11 @@ export const registre: Part<typeof fr> = {
     askContact: (name: string, role: string) => (role ? `Ifandraisa amin'i ${name}, ${role}` : `Ifandraisa amin'i ${name}`),
     openSeal: "Jereo ny tombo-kase",
   },
+  // relire (mg)
+  ref: {
+    numbered: (number: string, issuer: string) => `ny fanambarana laharana ${number} (${issuer})`,
+    byIssuer: (issuer: string) => `fanambarana avy amin'ny mpamoaka ${issuer}`,
+  },
   entry: {
     number: (n: string) => `Laharana ${n}`,
     issued: (d: string) => `navoaka ny ${d}`,

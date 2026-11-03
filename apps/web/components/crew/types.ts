@@ -1,5 +1,6 @@
 import type { Verdict } from "@fanilo/shared";
 import type { MatchResult } from "@/components/registre/types";
+import { getLang, locale } from "@/lib/i18n/live";
 
 /** One crew member reporting through the `agent` event of `POST /workspaces/{ws}/crew`. */
 export type AgentEvent = {
@@ -159,13 +160,13 @@ export type CrewResult = {
   needs_text?: boolean;
 };
 
-/** A date from the API (YYYY-MM-DD or a full ISO moment) in French, or null. */
+/** A date from the API (YYYY-MM-DD or a full ISO moment) in the desk's language, or null. */
 export function frDate(value?: string | null): string | null {
   if (!value) return null;
   const d = new Date(value.length === 10 ? `${value}T00:00:00Z` : value);
   if (Number.isNaN(d.getTime())) return null;
-  const said = d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: value.length === 10 ? "UTC" : "Indian/Antananarivo" });
-  return said.replace(/^1 /, "1er "); // « 1er novembre », as the API's own dates read
+  const said = d.toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric", timeZone: value.length === 10 ? "UTC" : "Indian/Antananarivo" });
+  return getLang() === "fr" ? said.replace(/^1 /, "1er ") : said; // « 1er novembre », as the API's own dates read
 }
 
 export function hostOf(url: string): string {

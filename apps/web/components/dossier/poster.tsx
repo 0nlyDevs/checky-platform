@@ -9,7 +9,7 @@ import { VERDICT_META } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconArrowLeft, IconDownloadSimple } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { Formats } from "./types";

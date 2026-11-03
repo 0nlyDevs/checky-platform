@@ -18,11 +18,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const ALL = "all";
-const dayFmt = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+const dayFmt = dateFormat({ weekday: "long", day: "numeric", month: "long" });
 
 // The tabs follow the numbered line: still being worked on, an AI suggestion waiting, a confirmed verdict.
 const TABS = ["all", "todo", "confirm", "done"] as const;

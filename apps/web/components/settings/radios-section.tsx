@@ -6,11 +6,11 @@ import { toast } from "sonner";
 import { MG_REGIONS } from "@/components/settings/regions";
 import { Button } from "@/components/ui/button";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { IconBroadcast, IconCheck, IconCircleNotch, IconCopy, IconPlus, IconX } from "@/lib/icons";
 
 const r = t.team.settings.radios;
-const day = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+const day = dateFormat({ day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 const field =
   "mt-1 h-10 w-full rounded-md border border-input bg-background px-3 outline-none placeholder:text-muted-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15";
 

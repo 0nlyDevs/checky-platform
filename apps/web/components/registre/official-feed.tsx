@@ -3,12 +3,14 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { IconArrowSquareOut, IconCopy, IconSealCheck } from "@/lib/icons";
-import { registre } from "@/lib/i18n/fr/registre";
 import { publicApi } from "@/lib/public-api";
 import { cn } from "@/lib/utils";
 import { RegistryDiff } from "./registry-diff";
 import { communiqueRef, frenchDay, type OfficialEntry } from "./types";
 import { Tag } from "./ui";
+import { t } from "@/lib/i18n/live";
+
+const registre = t.registre;
 
 const f = registre.feed;
 const KINDS = ["all", "original", "fake_caught"] as const;

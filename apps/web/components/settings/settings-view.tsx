@@ -17,13 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 type Health = components["schemas"]["HealthOut"];
 type ServiceCheck = components["schemas"]["Check"];
 
-const timeFmt = new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+const timeFmt = dateFormat({ hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 const STATE_ICON = { up: IconCheck, down: IconWarning, not_configured: IconMinusCircle } as const;
 
@@ -206,17 +206,17 @@ function DemoSection({ ws }: { ws: string }) {
 }
 
 const INDEX = [
-  { id: "verification", label: t.settings.index.verification },
-  { id: "equipe", label: t.settings.index.team },
-  { id: "regles", label: t.settings.index.rules },
-  { id: "rubriques", label: t.settings.index.beats },
-  { id: "lieu", label: t.settings.index.place },
-  { id: "sources-officielles", label: t.settings.index.official },
-  { id: "publication", label: t.settings.index.public },
-  { id: "sms", label: t.settings.index.sms },
-  { id: "radios", label: t.settings.index.radios },
-  { id: "services", label: t.settings.index.health },
-  { id: "demo", label: t.settings.index.demo },
+  { id: "verification", get label() { return t.settings.index.verification; } },
+  { id: "equipe", get label() { return t.settings.index.team; } },
+  { id: "regles", get label() { return t.settings.index.rules; } },
+  { id: "rubriques", get label() { return t.settings.index.beats; } },
+  { id: "lieu", get label() { return t.settings.index.place; } },
+  { id: "sources-officielles", get label() { return t.settings.index.official; } },
+  { id: "publication", get label() { return t.settings.index.public; } },
+  { id: "sms", get label() { return t.settings.index.sms; } },
+  { id: "radios", get label() { return t.settings.index.radios; } },
+  { id: "services", get label() { return t.settings.index.health; } },
+  { id: "demo", get label() { return t.settings.index.demo; } },
 ] as const;
 
 /** The page's index, beside the sections from lg up: where am I, and one click to the rest. */

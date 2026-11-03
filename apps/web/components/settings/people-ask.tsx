@@ -6,11 +6,11 @@ import useSWR from "swr";
 import { MG_REGIONS } from "@/components/settings/regions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { IconArrowRight, IconChatCircle } from "@/lib/icons";
 
 const q = t.team.settings.questions;
-const day = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+const day = dateFormat({ day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 const PERIODS = [1, 7, 30] as const;
 const select =
   "mt-1 h-9 rounded-md border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15";

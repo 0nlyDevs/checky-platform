@@ -4,8 +4,10 @@ import { useParams, useRouter } from "next/navigation";
 import { Dialog } from "radix-ui";
 import { useEffect, useRef, useState } from "react";
 import { SHORTCUTS_EVENT } from "@/components/shell/command-palette";
-import { palette as p } from "@/lib/i18n/fr/palette";
 import { IconX } from "@/lib/icons";
+import { t } from "@/lib/i18n/live";
+
+const p = t.palette;
 
 /** G then a letter: where it goes, relative to /w/[ws]. */
 const GO: Record<string, string> = { d: "affirmations", s: "sources", e: "parametres#equipe", p: "parametres" };
@@ -80,7 +82,7 @@ export function Shortcuts() {
                 <dd className="flex gap-1">
                   {r.keys.map((k, i) => (
                     <span key={k} className="flex items-center gap-1">
-                      {i > 0 && <span className="text-muted-foreground" aria-hidden>puis</span>}
+                      {i > 0 && <span className="text-muted-foreground" aria-hidden>{p.then}</span>}
                       <kbd className="rounded-md border border-border px-1.5 py-0.5 text-xs">{k}</kbd>
                     </span>
                   ))}

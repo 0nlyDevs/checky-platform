@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { IconGear, IconMoon, IconSun } from "@/lib/icons";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { toggleThemeWithReveal } from "@/lib/theme-reveal";
 
 /** Flip light/dark from whatever the page shows now (the class next-themes writes). */

@@ -20,17 +20,19 @@ import {
   IconStamp,
   IconX,
 } from "@/lib/icons";
-import { registre as r } from "@/lib/i18n/fr/registre";
 import { cn } from "@/lib/utils";
 import { RegistryDiff } from "./registry-diff";
 import { fieldClass, Tag } from "./ui";
 import { type Communique, communiqueRef, frenchDay, type MatchResult, type SealKey, type SealResult } from "./types";
+import { t } from "@/lib/i18n/live";
+
+const r = t.registre;
 
 const TABS = [
-  { key: "originaux", label: r.page.tabs.originals },
-  { key: "faux", label: r.page.tabs.fakes },
-  { key: "reseau", label: r.page.tabs.network, desk: true },
-  { key: "cles", label: r.page.tabs.keys, writer: true },
+  { key: "originaux", get label() { return r.page.tabs.originals; } },
+  { key: "faux", get label() { return r.page.tabs.fakes; } },
+  { key: "reseau", get label() { return r.page.tabs.network; }, desk: true },
+  { key: "cles", get label() { return r.page.tabs.keys; }, writer: true },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 

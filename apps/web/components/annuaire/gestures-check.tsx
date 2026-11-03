@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconArrowSquareOut, IconCircleNotch, IconGlobe, IconNewspaper, IconPhone, IconStamp } from "@/lib/icons";
 
 const g = t.dossier.annuaire.check;

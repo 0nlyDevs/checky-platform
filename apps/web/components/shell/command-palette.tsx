@@ -10,9 +10,11 @@ import { useAssistant } from "@/components/assistant/assistant-context";
 import { NAV, WORKSPACE_NAV } from "@/components/shell/nav";
 import { toClaim } from "@/components/claims/verdict";
 import { fetcher } from "@/lib/api";
-import { palette as p } from "@/lib/i18n/fr/palette";
 import { IconFolderOpen, IconMagnifyingGlass, IconMoon, IconQuestion, IconScan, IconSparkle, type Icon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { t } from "@/lib/i18n/live";
+
+const p = t.palette;
 
 /** Anything can open the palette (the shell's search button included) with `openPalette()`. */
 export const PALETTE_EVENT = "checky:palette";
@@ -158,7 +160,7 @@ export function CommandPalette() {
               spellCheck={false}
               className="min-w-0 flex-1 bg-transparent py-1.5 text-[1.0625rem] outline-none placeholder:text-muted-foreground"
             />
-            <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 text-xs text-muted-foreground sm:block">Échap</kbd>
+            <kbd className="hidden rounded-md border border-border px-1.5 py-0.5 text-xs text-muted-foreground sm:block">{p.esc}</kbd>
           </div>
           <div ref={listRef} id={listId} role="listbox" aria-label={p.list} className="overflow-y-auto p-2">
             {groups.map((g) => (

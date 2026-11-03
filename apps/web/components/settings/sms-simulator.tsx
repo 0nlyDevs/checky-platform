@@ -4,13 +4,13 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconPaperPlaneTilt } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 
 const s = t.team.settings.sms;
 const DEMO_FROM = "+261 34 00 000 09";
-const time = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const time = dateFormat({ day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 
 type Sms = { id: string; direction: "in" | "out"; masked: string; text: string; status: string; created_at: string };
 type Simulated = { inbound: { action: string; reply: string; masked: string }; replies: Sms[] };

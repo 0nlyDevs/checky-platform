@@ -8,7 +8,7 @@ import { VerdictChip } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, downloadFile, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconCopy, IconDownloadSimple, IconFileText, IconPrinter, IconSealCheck, IconX } from "@/lib/icons";
 import { type Attestation, type Carnet, fmtDay, fmtWhen } from "./types";
 

@@ -11,12 +11,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 
 type Member = components["schemas"]["MemberOut"];
 type Invitation = components["schemas"]["InvitationOut"];
 
-const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+const dateFmt = dateFormat({ day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 
 function errorText(e: unknown) {
   return e instanceof ApiError && e.code === "last_member" ? t.members.lastMember : t.detail.saveFailed;

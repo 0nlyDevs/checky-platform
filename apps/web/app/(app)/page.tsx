@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RequestForm } from "@/components/verification/request-form";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 
 // The landing's "Nommez votre rédaction" dialog leaves its choice here before sign-up.
 const DRAFT = "fanilo:workspace";

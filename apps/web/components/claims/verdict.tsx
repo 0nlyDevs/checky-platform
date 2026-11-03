@@ -1,6 +1,6 @@
 import type { Item, Status, Verdict } from "@fanilo/shared";
 import { IconBroadcast, IconCheckCircle, IconCircleDashed, IconQuestion, IconShieldCheck, IconTimer, IconWarning, IconXCircle, type Icon } from "@/lib/icons";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 export const VERDICT_META: Record<
@@ -8,7 +8,7 @@ export const VERDICT_META: Record<
   { label: string; icon: Icon; fill: string; on: string; soft: string; ink: string }
 > = {
   true: {
-    label: t.verdict.true,
+    get label() { return t.verdict.true; },
     icon: IconCheckCircle,
     fill: "bg-verdict-true",
     on: "text-verdict-true-on",
@@ -16,7 +16,7 @@ export const VERDICT_META: Record<
     ink: "text-verdict-true-ink",
   },
   misleading: {
-    label: t.verdict.misleading,
+    get label() { return t.verdict.misleading; },
     icon: IconWarning,
     fill: "bg-verdict-misleading",
     on: "text-verdict-misleading-on",
@@ -24,7 +24,7 @@ export const VERDICT_META: Record<
     ink: "text-verdict-misleading-ink",
   },
   false: {
-    label: t.verdict.false,
+    get label() { return t.verdict.false; },
     icon: IconXCircle,
     fill: "bg-verdict-false",
     on: "text-verdict-false-on",
@@ -32,7 +32,7 @@ export const VERDICT_META: Record<
     ink: "text-verdict-false-ink",
   },
   unverifiable: {
-    label: t.verdict.unverifiable,
+    get label() { return t.verdict.unverifiable; },
     icon: IconQuestion,
     fill: "bg-verdict-unverifiable",
     on: "text-verdict-unverifiable-on",

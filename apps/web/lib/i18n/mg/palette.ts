@@ -28,4 +28,7 @@ export const palette: Part<typeof fr> = {
     ],
   },
   undo: "Aoka ihany",
+  undoFailed: "Tsy azo nofoanana.", // relire (mg)
+  esc: "Échap",
+  then: "avy eo", // relire (mg)
 };

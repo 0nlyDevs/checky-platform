@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { IconCheck, IconCircleNotch } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 import type { Prefs } from "./types";
 

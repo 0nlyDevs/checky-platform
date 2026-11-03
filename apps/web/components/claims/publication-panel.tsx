@@ -3,10 +3,12 @@ import { useState } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { api, fetcher } from "@/lib/api";
-import { dossier } from "@/lib/i18n/fr/dossier";
-import { publication as t } from "@/lib/i18n/fr/publication";
+import { t as messages } from "@/lib/i18n/live";
 import { IconBroadcast, IconMinusCircle, IconStamp } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+
+const dossier = messages.dossier;
+const t = messages.publication;
 
 type Settings = { settings: { ai_enabled: boolean } };
 

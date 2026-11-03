@@ -3,7 +3,7 @@
 import { IconCircleNotch, IconInfo, IconMinus, IconPlus, IconSparkle, type Icon } from "@/lib/icons";
 import { VERDICT_META } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 import { fmtDay, type Reading } from "./types";
 

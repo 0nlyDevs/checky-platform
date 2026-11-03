@@ -1,58 +1,22 @@
-"use client";
-
 import { useEffect, useSyncExternalStore } from "react";
-import { en } from "./en";
-import { fr } from "./fr";
-import { mg } from "./mg";
+import { DICTS, LANGS, LOCALES, getLang, setCurrentLang, type Lang, type Messages } from "./live";
+
+export * from "./live";
 
 /**
  * The site's language. French is the source of truth (`fr.ts`); `mg.ts` and `en.ts` override the
  * keys they know and French fills the rest. The choice lives in `localStorage` and a cookie under
  * `checky:lang`, so it survives a reload; the server always renders French, and the page switches
  * once it is in the visitor's browser.
+ *
+ * Two ways to read the strings: the `useT()` hook (re-renders on a switch), and the live `t` from
+ * `./live`, which the desk reads like a plain object and `<LangScope>` re-renders.
  */
-export type Lang = "fr" | "mg" | "en";
-export const LANGS: readonly Lang[] = ["fr", "mg", "en"];
-export const LOCALES: Record<Lang, string> = { fr: "fr-FR", mg: "mg-MG", en: "en-GB" };
-
-/** The French dictionary with every literal widened to `string`, so a translation can replace it. */
-type Widen<T> = T extends (...args: infer A) => unknown
-  ? (...args: A) => string
-  : T extends string
-    ? string
-    : T extends readonly (infer U)[]
-      ? readonly Widen<U>[]
-      : T extends object
-        ? { [K in keyof T]: Widen<T[K]> }
-        : T;
-export type Messages = Widen<typeof fr>;
-type DeepPartial<T> = T extends (...args: never[]) => unknown
-  ? T
-  : T extends readonly unknown[]
-    ? T
-    : T extends object
-      ? { [K in keyof T]?: DeepPartial<T[K]> }
-      : T;
-/** What a translation file may hold: any subset of the French keys. */
-export type Overrides = DeepPartial<Messages>;
-
-const plain = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
-
-function merge<T>(base: T, over: unknown): T {
-  if (!plain(base) || !plain(over)) return (over ?? base) as T;
-  const out: Record<string, unknown> = { ...base };
-  for (const [key, value] of Object.entries(over)) {
-    if (value === undefined) continue;
-    out[key] = plain(base[key]) && plain(value) ? merge(base[key], value) : value;
-  }
-  return out as T;
-}
-
-const DICTS: Record<Lang, Messages> = { fr, mg: merge<Messages>(fr, mg), en: merge<Messages>(fr, en) };
-
 const KEY = "checky:lang";
 const listeners = new Set<() => void>();
 const isLang = (v: unknown): v is Lang => typeof v === "string" && (LANGS as readonly string[]).includes(v);
+
+let synced = false;
 
 function read(): Lang {
   try {
@@ -65,9 +29,28 @@ function read(): Lang {
   return isLang(cookie) ? cookie : "fr";
 }
 
+/**
+ * Adopt the stored language, once, after hydration: the server and the first client render both
+ * say French, then every subscriber switches together.
+ */
+function syncLang() {
+  if (synced || typeof window === "undefined") return;
+  synced = true;
+  const stored = read();
+  if (stored !== getLang()) {
+    setCurrentLang(stored);
+    listeners.forEach((f) => f());
+  }
+}
+
 function subscribe(onChange: () => void) {
   listeners.add(onChange);
-  const onStorage = (e: StorageEvent) => e.key === KEY && onChange();
+  queueMicrotask(syncLang);
+  const onStorage = (e: StorageEvent) => {
+    if (e.key !== KEY || !isLang(e.newValue) || e.newValue === getLang()) return;
+    setCurrentLang(e.newValue);
+    listeners.forEach((f) => f());
+  };
   window.addEventListener("storage", onStorage);
   return () => {
     listeners.delete(onChange);
@@ -76,6 +59,8 @@ function subscribe(onChange: () => void) {
 }
 
 export function setLang(lang: Lang) {
+  synced = true;
+  setCurrentLang(lang);
   try {
     localStorage.setItem(KEY, lang);
   } catch {
@@ -86,7 +71,7 @@ export function setLang(lang: Lang) {
 }
 
 export function useLang(): Lang {
-  return useSyncExternalStore(subscribe, read, () => "fr");
+  return useSyncExternalStore(subscribe, getLang, () => "fr");
 }
 
 /** The strings in the visitor's language, French where a translation is missing. */
@@ -122,3 +107,4 @@ export function useMoment() {
     return `${d.toLocaleDateString(LOCALES[lang], { day: "numeric", month: "long" })} ${DICTS[lang].publicLayer.lang.at} ${time}`;
   };
 }
+

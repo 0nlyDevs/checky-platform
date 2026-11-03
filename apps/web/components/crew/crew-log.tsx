@@ -2,7 +2,7 @@
 
 import { IconCheck, IconCircleDashed, IconMinus, IconMinusCircle, IconWarning } from "@/lib/icons";
 import type { AgentEvent } from "@/components/crew/types";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const l = t.crew.live;
@@ -77,7 +77,7 @@ export function CrewLog({ agents, runs, running }: { agents: Record<string, Agen
                 >
                   <div className="flex items-center gap-2 text-sm">
                     <Mark status={status} />
-                    <span className="min-w-0 truncate font-bold">{m.name}</span>
+                    <span className="min-w-0 truncate font-bold">{l.names[m.name] ?? m.name}</span>
                     {m.llm && <span className="rounded-sm border border-dashed border-live-muted px-1 text-[0.6875rem] leading-4 font-bold">{l.model}</span>}
                     {(runs[m.name] ?? 0) > 1 && <span className="text-xs text-live-muted">{l.again}</span>}
                     <span className="ml-auto shrink-0 text-xs text-live-muted tabular">{a?.ms !== undefined ? l.seconds(a.ms) : l.status[status]}</span>

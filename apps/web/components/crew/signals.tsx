@@ -1,6 +1,6 @@
 import { IconCheck, IconMinus, IconQuestion, IconWarning } from "@/lib/icons";
 import type { Credibility, CrewResult, Framing, Risk, Tone } from "@/components/crew/types";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const k = t.crew;

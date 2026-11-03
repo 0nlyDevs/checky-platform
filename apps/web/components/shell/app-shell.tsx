@@ -29,7 +29,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { clearApiToken, fetcher } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { VerificationBanner } from "@/components/verification/status";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import type { SessionUser } from "@/lib/session";
 import { toggleThemeWithReveal } from "@/lib/theme-reveal";
 

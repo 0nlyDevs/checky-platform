@@ -5,7 +5,7 @@ import { type CrewResult, type FigureCheck, frDate, hostOf, type Provenance } fr
 import { RegistryDiff } from "@/components/registre/registry-diff";
 import { ImageTrace } from "@/components/sources/image-trace";
 import type { MatchResult } from "@/components/registre/types";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const k = t.crew;

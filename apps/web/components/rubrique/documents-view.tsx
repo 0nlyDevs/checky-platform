@@ -10,13 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { DemoTag, LoadFailed, Section } from "./bits";
 import type { DocumentRow, Prefs } from "./types";
 
 const d = t.rubrique.documents;
 const ALL = "__all";
-const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+const dateFmt = dateFormat({ day: "numeric", month: "long", year: "numeric" });
 
 function day(iso: string) {
   const v = new Date(iso.length === 10 ? `${iso}T12:00:00` : iso);

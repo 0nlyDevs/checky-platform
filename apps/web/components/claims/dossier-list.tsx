@@ -10,7 +10,7 @@ import { Avatar, type ClaimView, StatusLabel, VerdictBadge } from "@/components/
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { exact, relative } from "@/lib/when";
 
 

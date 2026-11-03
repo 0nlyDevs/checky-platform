@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { IconChatCircle, IconFolderOpen, IconNewspaper, IconPaperPlaneTilt, IconRadio, type Icon } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { formatTime } from "@/lib/time";
 import { cn } from "@/lib/utils";
 import type { Checked, Kind } from "./types";
 
 const r = t.rubrique;
-const dayFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
+const dayFmt = dateFormat({ day: "numeric", month: "short" });
 
 export const KIND_ICON: Record<Kind, Icon> = {
   item: IconFolderOpen,

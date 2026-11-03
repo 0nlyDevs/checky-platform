@@ -1,7 +1,7 @@
 import { IconArrowSquareOut } from "@/lib/icons";
 import { VERDICT_META } from "@/components/claims/verdict";
 import { type Confidence, type CrewResult, frDate } from "@/components/crew/types";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const L = t.crew.lecture;

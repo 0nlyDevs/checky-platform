@@ -7,7 +7,7 @@ import useSWR, { mutate as globalMutate } from "swr";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconLockSimple } from "@/lib/icons";
 
 export type Verification = components["schemas"]["VerificationOut"];

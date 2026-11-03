@@ -10,7 +10,7 @@ import { VerdictChip } from "@/components/claims/verdict";
 import { DemoTag, when } from "@/components/rubrique/bits";
 import type { AntenneRow, FollowOut } from "@/components/rubrique/types";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 const a = t.rubrique.antenne;

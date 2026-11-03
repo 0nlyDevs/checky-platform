@@ -1,5 +1,7 @@
 // Shapes of the registry, seal and figures API (apps/api/app/modules/registry.py, figures.py).
 
+import { getLang, locale, t } from "@/lib/i18n/live";
+
 export type DiffOp = { op: "equal" | "insert" | "delete" | "replace"; a: string; b: string };
 export type ChangedNumber = { kind: string; original: string | null; submitted: string | null };
 export type MatchStatus = "authentic" | "modified" | "not_found" | "inconsistent" | "none";
@@ -118,11 +120,11 @@ export function frenchDay(iso: string | null | undefined): string {
   const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
   if (!y || !m || !d) return iso;
   const day = new Date(Date.UTC(y, m - 1, d));
-  const text = day.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-  return d === 1 ? text.replace(/^1 /, "1er ") : text;
+  const text = day.toLocaleDateString(locale(), { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  return d === 1 && getLang() === "fr" ? text.replace(/^1 /, "1er ") : text;
 }
 
 /** « le communiqué N° 2026-118 (JIRAMA) »: the issuer in brackets reads right whatever its name. */
 export function communiqueRef(c: { issuer: string; number: string | null }): string {
-  return c.number ? `le communiqué N° ${c.number} (${c.issuer})` : `un communiqué de l'émetteur ${c.issuer}`;
+  return c.number ? t.registre.ref.numbered(c.number, c.issuer) : t.registre.ref.byIssuer(c.issuer);
 }

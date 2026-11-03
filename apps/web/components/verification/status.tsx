@@ -5,7 +5,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { RequestForm, useVerification } from "@/components/verification/request-form";
 import { fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconHourglass, IconLockSimple, IconSealCheck, IconWarning } from "@/lib/icons";
 import { relative } from "@/lib/when";
 import { cn } from "@/lib/utils";

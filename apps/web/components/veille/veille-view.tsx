@@ -18,7 +18,7 @@ import type { Alert, AntenneRow, FeedEntry, FeedOut, MapOut, Meteo, Prefs } from
 import { useMe } from "@/components/rubrique/use-me";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 import { AlertsList } from "./alerts-panel";
 import { AntenneList } from "./antenne-list";

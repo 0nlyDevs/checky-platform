@@ -7,7 +7,7 @@ import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconArrowSquareOut, IconCheck, IconCircleNotch, IconPhone, IconX } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { relative } from "@/lib/when";

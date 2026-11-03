@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { brand } from "@/lib/brand";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import type { Source } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 

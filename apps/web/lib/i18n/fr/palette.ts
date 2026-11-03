@@ -24,4 +24,7 @@ export const palette = {
     ],
   },
   undo: "Annuler",
+  undoFailed: "Impossible d'annuler.",
+  esc: "Échap",
+  then: "puis",
 } as const;

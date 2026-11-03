@@ -33,10 +33,10 @@ import { AnglesPanel } from "@/components/rubrique/angles-view";
 import type { Alert } from "@/components/rubrique/types";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
-const dayFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
+const dayFmt = dateFormat({ day: "numeric", month: "short" });
 
 const textareaClass =
   "w-full resize-none rounded-md border border-input bg-card px-3 py-2 text-base outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";

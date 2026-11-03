@@ -1,5 +1,7 @@
 import { toast } from "sonner";
-import { palette } from "@/lib/i18n/fr/palette";
+import { t } from "@/lib/i18n/live";
+
+const palette = t.palette;
 
 export const UNDO_MS = 6000;
 
@@ -19,7 +21,7 @@ export function undoable(message: string, onUndo: () => Promise<unknown> | unkno
           await onUndo();
           if (after) toast(after);
         } catch {
-          toast.error("Impossible d'annuler.");
+          toast.error(palette.undoFailed);
         }
       },
     },

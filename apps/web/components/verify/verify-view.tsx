@@ -19,7 +19,7 @@ import { useDictation } from "@/components/verify/dictation";
 import { OnAir } from "@/components/verify/on-air";
 import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { isOffline, useOnline } from "@/lib/offline";
 import { addToOutbox, removeFromOutbox, updateOutbox, type OutboxEntry, useOutbox } from "@/lib/outbox";
 import { postStream } from "@/lib/sse";

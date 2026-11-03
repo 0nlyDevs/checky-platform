@@ -36,9 +36,12 @@ import { crew } from "./mg/crew";
 import { dossier } from "./mg/dossier";
 import { alertKit } from "./mg/alertKit";
 import { offline } from "./mg/offline";
+import { palette } from "./mg/palette";
+import { publication } from "./mg/publication";
 import { publicLayer } from "./mg/publicLayer";
 import { reach } from "./mg/reach";
 import { registre } from "./mg/registre";
+import { resources } from "./mg/resources";
 import { rubrique } from "./mg/rubrique";
 import { studio } from "./mg/studio";
 import { team } from "./mg/team";
@@ -168,6 +171,7 @@ export const mg: Overrides = {
       label: "Tabilaon'ny fanamarinana",
       empty: "Tsy misy dossier",
       dropHere: "Apetraho eto",
+      movable: "karatra azo afindra", // relire (mg)
       moved: (ref: string, status: string) => `${ref} → ${status}`,
       cannotMove: "Tsy azo afindra ity dossier ity.",
       moveTo: "Afindrao any amin'ny…",
@@ -908,6 +912,21 @@ export const mg: Overrides = {
   origins: { facebook: "Facebook", whatsapp: "WhatsApp", tiktok: "TikTok", radio: "Radio", press: "Gazety", other: "Hafa" },
   status: { to_check: "Hohamarinina", in_progress: "Eo am-panaovana", verified: "Vita fanamarinana", published: "Navoaka" },
   verdict: { true: "Marina", misleading: "Mamitaka", false: "Diso", unverifiable: "Tsy voamarina", none: "Tsy misy didy", suggested: "natolotra" },
+  // relire (mg)
+  when: {
+    justNow: "izao vao teo",
+    minutesAgo: (n: number) => `${n} min lasa izay`,
+    hoursAgo: (n: number) => `${n} ora lasa izay`,
+    yesterday: "omaly",
+    at: "tamin'ny",
+    duration: (min: number) => {
+      if (min < 60) return `${min} min`;
+      const h = Math.floor(min / 60);
+      if (h >= 48) return `${Math.floor(h / 24)} andro`;
+      const rest = min % 60;
+      return rest ? `${h} ora ${String(rest).padStart(2, "0")}` : `${h} ora`;
+    },
+  },
   common: { loading: "Miandrasa…", demoData: "Angona fampisehoana" },
   crew,
   dossier,
@@ -920,4 +939,7 @@ export const mg: Overrides = {
   reach,
   offline,
   alertKit,
+  palette,
+  publication,
+  resources,
 };

@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { IconMinusCircle, IconQuestion, IconSealCheck, IconWarning, IconXCircle, type Icon } from "@/lib/icons";
-import { registre as r } from "@/lib/i18n/fr/registre";
 import { cn } from "@/lib/utils";
 import type { ChangedNumber, DiffOp, MatchStatus } from "./types";
+import { t } from "@/lib/i18n/live";
+
+const r = t.registre;
 
 // A comparison with the registry is a fact computed by code: ink icons, solid, never verdict colours.
 const STATUS_ICON: Record<MatchStatus, Icon> = {

@@ -1,6 +1,6 @@
 import { IconCheck, IconX } from "@/lib/icons";
 import type { ClaimView } from "@/components/claims/verdict";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 export const STEPS = ["claim", "evidence", "conclusion"] as const;

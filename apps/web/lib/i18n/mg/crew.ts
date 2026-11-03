@@ -23,6 +23,22 @@ export const crew: Part<typeof fr> = {
       skipped: "Tsy ilaina eto",
       no_ai: "Tsy misy IA",
     },
+    // relire (mg)
+    names: {
+      Lecteur: "Mpamaky",
+      Provenance: "Fiaviana",
+      Registre: "Rejisitra",
+      Chiffres: "Isa",
+      "Fact-checkers": "Mpanamarina",
+      Web: "Web",
+      Archives: "Tahiry",
+      Fiabilité: "Fahatokisana ny loharano",
+      Ton: "Feo",
+      Éléments: "Porofo",
+      Synthèse: "Famintinana",
+      Contradicteur: "Mpanohitra",
+      Confiance: "Hamafin'ny porofo",
+    } as Record<string, string>,
     roles: {
       Lecteur: "Manangona ireo filazana, isa ary toerana",
       Provenance: "Mamaritra ny datin'ny sary, ny horonantsary na ny pejy",

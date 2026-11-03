@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { MG_REGIONS, type NewsroomSettings, TIMEZONES, type WorkspaceDetail } from "@/components/settings/regions";
 import { Button } from "@/components/ui/button";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconPlus, IconX } from "@/lib/icons";
 
 const b = t.team.settings.beats;

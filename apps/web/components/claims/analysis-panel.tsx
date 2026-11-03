@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 
 type Evidence = {
@@ -43,9 +43,9 @@ type Analysis = {
 // Stance is not a verdict: ink icons only, never verdict colours.
 const STANCE_ICON: Record<string, Icon> = { supports: IconPlus, contradicts: IconMinus, context: IconInfo };
 
-const whenFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const whenFmt = dateFormat({ day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 // Source dates are calendar days (YYYY-MM-DD): read and shown in UTC so no time zone shifts them.
-const dayFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const dayFmt = dateFormat({ day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const STALE_DAYS = 30; // the API's dates.STALE_DAYS
 
 function dateLabel(e: Evidence) {

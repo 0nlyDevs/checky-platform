@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, ApiError, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/fr";
+import { dateFormat, t } from "@/lib/i18n/live";
 import { uploadFile, type Source } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import { ImageTrace } from "@/components/sources/image-trace";
@@ -23,7 +23,7 @@ import { EcoGate, EcoImage } from "@/components/prefs/eco";
 const KIND_ICON: Record<string, Icon> = { url: IconLink, pdf: IconFileText, image: IconImage, audio: IconWaveform, video: IconVideoCamera, text: IconTextT };
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,application/pdf,audio/*,video/mp4,video/webm,video/quicktime,video/3gpp";
 
-const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+const dateFmt = dateFormat({ day: "numeric", month: "short", year: "numeric" });
 const sizeFmt = (bytes: number) =>
   bytes < 1024 * 1024 ? `${Math.max(1, Math.round(bytes / 1024))} Ko` : `${(bytes / 1024 / 1024).toFixed(1).replace(".", ",")} Mo`;
 
