@@ -34,6 +34,7 @@
 import type { Overrides } from "./index";
 import { crew } from "./mg/crew";
 import { dossier } from "./mg/dossier";
+import { alertKit } from "./mg/alertKit";
 import { offline } from "./mg/offline";
 import { publicLayer } from "./mg/publicLayer";
 import { reach } from "./mg/reach";
@@ -918,4 +919,5 @@ export const mg: Overrides = {
   verification,
   reach,
   offline,
+  alertKit,
 };

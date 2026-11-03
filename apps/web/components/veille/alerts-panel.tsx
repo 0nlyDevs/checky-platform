@@ -11,6 +11,7 @@ import type { Alert, AlertMember, Kind } from "@/components/rubrique/types";
 import { api } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { cn } from "@/lib/utils";
+import { AlertKitPanel } from "./alert-kit-panel";
 
 const al = t.rubrique.alerts;
 
@@ -199,6 +200,7 @@ function AlertCard({ ws, alert, others, onChanged }: { ws: string; alert: Alert;
               </Button>
             </div>
           )}
+          <AlertKitPanel ws={ws} alertId={alert.id} onChanged={onChanged} />
         </div>
       )}
     </li>

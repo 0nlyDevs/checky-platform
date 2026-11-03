@@ -1,10 +1,12 @@
 // English for the public site, its navigation and the verdict words. Machine-drafted from fr.ts,
 // à relire par un locuteur. Any key missing here falls back to French (lib/i18n/index.ts).
 import type { Overrides } from "./index";
+import { alertKit } from "./en/alertKit";
 import { offline } from "./en/offline";
 import { studio } from "./en/studio";
 
 export const en: Overrides = {
+  alertKit,
   offline,
   studio,
   nav: { skip: "Skip to content" },
