@@ -6,12 +6,13 @@ import { Suspense } from "react";
 import { Wordmark } from "@/components/brand/logo";
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { ThemeFace, useThemeFlip } from "@/components/shell/preference-dock";
-import { brand } from "@/lib/brand";
 import { LANGS, setLang, useDocumentLang, useLang, useT, type Messages } from "@/lib/i18n";
 import { IconArrowRight, IconMagnifyingGlass, IconPaperPlaneTilt, IconQrCode, IconSealCheck, type Icon } from "@/lib/icons";
 import { FONT_STEPS, setFontStep, useFontStep } from "@/lib/prefs";
 import { useSlidingPill } from "@/lib/use-sliding-pill";
 import { cn } from "@/lib/utils";
+
+export { SiteFooter } from "./site-footer";
 
 type Place = { href: string; label: string; icon: Icon; match: (p: string) => boolean };
 
@@ -150,62 +151,5 @@ export function ThemeButton() {
     <button type="button" onClick={flip} className="site-round" data-ripple>
       <ThemeFace flag={false} />
     </button>
-  );
-}
-
-export function SiteFooter() {
-  const t = useT();
-  const s = t.site;
-  const c = s.footer.cols;
-  const link = "site-foot-link outline-none focus-visible:ring-2 focus-visible:ring-ring";
-  return (
-    <footer className="site-foot print:hidden">
-      <div className="site-foot-grid">
-        <div>
-          <Wordmark />
-          <p className="mt-4 max-w-[44ch] text-pretty text-muted-foreground">{s.footer.what}</p>
-          <p className="mt-3 max-w-[44ch] text-sm text-pretty text-muted-foreground">{s.footer.made}</p>
-        </div>
-        <nav aria-labelledby="foot-public">
-          <h2 id="foot-public">{c.public}</h2>
-          <ul>
-            {places(t).map((p) => (
-              <li key={p.href}>
-                <Link href={p.href} className={link}>
-                  {p.label}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <a href="/flashes" className={link}>
-                {t.publicLayer.footer.flashs}
-              </a>
-            </li>
-          </ul>
-        </nav>
-        <nav aria-labelledby="foot-newsrooms">
-          <h2 id="foot-newsrooms">{c.newsrooms}</h2>
-          <ul>
-            <li>
-              <Link href="/sign-in" className={link}>
-                {s.nav.signIn}
-              </Link>
-            </li>
-            <li>
-              <Link href="/sign-up" className={cn(link, "font-bold")}>
-                {s.home.newsroomsCta}
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </div>
-      <div className="site-ghost" aria-hidden>
-        <span>{brand.name.toUpperCase()}</span>
-      </div>
-      <div className="site-legal">
-        <span>{s.footer.fictional}</span>
-        <span>{brand.name} · Antananarivo</span>
-      </div>
-    </footer>
   );
 }

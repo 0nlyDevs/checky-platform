@@ -60,8 +60,8 @@ export function Landing() {
         <Preuve />
         <Trajet />
         <Partout />
-        <Fin />
       </main>
+      <Fin />
       <div className="grain" aria-hidden />
     </div>
   );
