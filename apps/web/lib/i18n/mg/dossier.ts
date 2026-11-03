@@ -185,6 +185,11 @@ export const dossier: Part<typeof fr> = {
     gaps: "Mbola tsy nahatratra",
     diffuseHere: "Aparitaho eto",
     count: (n: number) => `× ${n}`,
+    // relire (mg)
+    routeSummary: (rumour: number, covered: number) =>
+      !rumour
+        ? "Mbola tsy misy dingana voasoratra ho an'ny tsaho."
+        : `Nandalo toerana ${rumour} ny tsaho; ${covered ? `${covered} amin'ireo no efa nalalovan'ny marina` : "tsy mbola nisy nalalovan'ny marina"}.`,
     derived: "araka ny dossier",
     status: { seen: "hita", reported: "voasoratra", sent: "nalefa", received: "voaray", broadcast: "nampielezina" },
     channels: {

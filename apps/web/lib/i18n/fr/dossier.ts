@@ -186,6 +186,11 @@ export const dossier = {
     gaps: "Pas encore repris",
     diffuseHere: "Diffuser ici",
     count: (n: number) => `× ${n}`,
+    // The summary line under the title (same words as the API's trajet.summary).
+    routeSummary: (rumour: number, covered: number) =>
+      !rumour
+        ? "Aucune étape de la rumeur n'est encore notée."
+        : `La rumeur est passée par ${plural(rumour, "route", "routes")} ; la vérité ${covered ? `en a repris ${covered}` : "n'en a repris aucune"}.`,
     derived: "d'après le dossier",
     status: { seen: "vue", reported: "notée", sent: "envoyée", received: "reçue", broadcast: "diffusée" } as Record<string, string>,
     channels: {

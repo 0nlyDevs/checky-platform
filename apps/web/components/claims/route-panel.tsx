@@ -188,7 +188,7 @@ export function RoutePanel({ ws, item, onDiffuseHere }: { ws: string; item: Item
         <Skeleton className="h-40 w-full" />
       ) : (
         <>
-          <p className="font-medium text-pretty">{data.summary}</p>
+          <p className="font-medium text-pretty">{tr.routeSummary(data.rumour.length, data.covered)}</p>
           <div className="grid gap-6 rounded-md border border-border bg-card p-4 md:grid-cols-2 md:p-5">
             <Line title={tr.rumour} stops={data.rumour} side="rumour" empty={tr.noRumour} />
             <Line title={tr.truth} stops={data.truth} side="truth" empty={tr.noTruth} />
