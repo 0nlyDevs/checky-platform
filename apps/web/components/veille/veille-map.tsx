@@ -1,8 +1,10 @@
 "use client";
 
 import "leaflet/dist/leaflet.css";
-import { useEffect } from "react";
-import { CircleMarker, MapContainer, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { createLeafletContext, LeafletContext, type LeafletContextInterface } from "@react-leaflet/core";
+import { Map as LeafletMap } from "leaflet";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { CircleMarker, TileLayer, Tooltip, useMap } from "react-leaflet";
 import type { RegionCount } from "@/components/rubrique/types";
 import { t } from "@/lib/i18n/fr";
 
@@ -63,6 +65,45 @@ function Frame({ country, points }: { country: string; points: [number, number][
 }
 
 /**
+ * The map's container. react-leaflet's `MapContainer` removes its map when its effects are cleaned up
+ * and never builds a new one, but Next keeps a visited page alive and hidden (`<Activity>`): leaving
+ * Veille cleans the effects up, coming back runs them again on the removed map and the page crashes
+ * (« Map container is being reused », `_leaflet_pos`). Here the map survives while the page is only
+ * hidden (its node stays in the document) and is removed once the node really leaves it; coming back
+ * just re-measures it.
+ */
+function LiveMap({ children }: { children: ReactNode }) {
+  const holder = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const [context, setContext] = useState<LeafletContextInterface | null>(null);
+  useEffect(() => {
+    const node = holder.current;
+    if (!node) return;
+    let map = mapRef.current;
+    if (map) {
+      map.invalidateSize();
+    } else {
+      map = new LeafletMap(node, { minZoom: 2, maxZoom: 10, scrollWheelZoom: false, attributionControl: true });
+      map.setView(MADAGASCAR, 5);
+      mapRef.current = map;
+      setContext(createLeafletContext(map));
+    }
+    const live = map;
+    return () => {
+      // Passive cleanups run after React has detached a deleted node: still connected = only hidden.
+      if (node.isConnected) return;
+      live.remove();
+      mapRef.current = null;
+    };
+  }, []);
+  return (
+    <div ref={holder} className="h-full w-full">
+      {context && <LeafletContext value={context}>{children}</LeafletContext>}
+    </div>
+  );
+}
+
+/**
  * One circle per region, its area following what circulated there in the last 7 days, darker as
  * the share of high-risk dossiers grows. The selected region is filled and ringed in ink. Loaded
  * with `next/dynamic` and `ssr: false`: Leaflet needs the window.
@@ -70,7 +111,7 @@ function Frame({ country, points }: { country: string; points: [number, number][
 export default function VeilleMap({ regions, selected, onSelect, country = "Madagascar" }: { regions: RegionCount[]; selected: string | null; onSelect: (region: string | null) => void; country?: string }) {
   const placed = regions.filter((r) => r.lat != null && r.lng != null && r.last_7d > 0);
   return (
-    <MapContainer center={MADAGASCAR} zoom={5} minZoom={2} maxZoom={10} scrollWheelZoom={false} className="h-full w-full" attributionControl>
+    <LiveMap>
       <Frame country={country} points={placed.map((r) => [r.lat as number, r.lng as number])} />
       <TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
       {placed.map((r) => {
@@ -99,6 +140,6 @@ export default function VeilleMap({ regions, selected, onSelect, country = "Mada
           </CircleMarker>
         );
       })}
-    </MapContainer>
+    </LiveMap>
   );
 }
