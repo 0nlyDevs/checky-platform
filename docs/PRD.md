@@ -4,7 +4,7 @@
 
 ## Overview
 
-Checky (named FANILO until 2 Nov 2026; the repos keep the old name) is a verification tool for newsrooms, Madagascar first and world-ready. Every rumour gets a dossier, from its first appearance to a signed verdict: the desk tracks claims live, gathers the sources, a crew of checks states the facts at once and an AI reading whose quotes are checked against the sources is suggested, and a journalist signs the verdict before anything leaves the newsroom under its name. Published verdicts are open to the public, and Checky sends them back down the road the rumour took (WhatsApp, Facebook, radio, SMS, a printed poster).
+Checky (named FANILO until 2 Nov 2026; the repos were renamed checky-platform, checky-mobile and checky-extension on 3 Nov) is a verification tool for newsrooms, Madagascar first and world-ready. Every rumour gets a dossier, from its first appearance to a signed verdict: the desk tracks claims live, gathers the sources, a crew of checks states the facts at once and an AI reading whose quotes are checked against the sources is suggested, and a journalist signs the verdict before anything leaves the newsroom under its name. Published verdicts are open to the public, and Checky sends them back down the road the rumour took (WhatsApp, Facebook, radio, SMS, a printed poster).
 
 **Checky, the product rules (2 Nov).** Knowing is not publishing: facts (a video's first appearance, a registry diff against the original communiqué, an official figure, a fact-checker's published review) show at once and solid; the AI reading « Lecture de Checky » is dashed and reserved to the newsroom; « Signer et publier » is a byline, the public never sees the reading or a percentage. A check runs as a crew: Lecteur (one model call), then Provenance, Registre, Chiffres, Fact-checkers, Web, Archives, Fiabilité and Ton in parallel without a model, then Synthèse and Contradicteur (one call each), then a confidence score computed in code; « Mode sans IA » keeps the facts when the model is off. One kind of account: every journalist of a newsroom may do everything; partners and citizens use token links and SMS. Everyone can check; only newsrooms verified by the Checky team publish. Any country, tuned for Madagascar. Madagascar first, world-ready: structured places geocoded by OpenStreetMap, beats per newsroom, worldwide fact-checkers through Google Fact Check Tools, figures per country. Assembled from the best existing tools (NewsGuard's transparency grid, The Factual's source diversity and tone, Aletheia's cited explanations, FauxLens' per-signal image breakdown, Logically's AI plus humans, Check-It's multi-signal pipeline, Snopes/PolitiFact/FactCheck.org/AFP Factuel relayed as theirs), then one step further: the road (Le trajet), the signed and attested verdict, the registry of originals with an offline seal, the radio and SMS return path. The full product thinking is in the Claude Doc « FANILO Hackathon — The brief, decoded, and how we win » (tabs Winning idea, Functionality, Stack, Pitch).
 
@@ -278,7 +278,7 @@ Checky (2 Nov) adds the newsroom's shelves and the road back, on the same base:
 
 ### F7. Browser extension
 
-- A separate Manifest V3 extension (`0nlyDevs/fanilo-extension`), usable without an account:
+- A separate Manifest V3 extension (`0nlyDevs/checky-extension`), usable without an account:
   selected text, a public link or image → explicit confirmation → side-panel checks.
 - Anonymous text checks return related, journalist-confirmed published verdicts and external
   sources. Matches are candidates to compare with the original claim, not automatic verdicts on
@@ -461,7 +461,7 @@ One monorepo, a local Postgres for development (Docker optional), and one push t
 **Repository layout**
 
 ```
-fanilo-base/
+checky-platform/
   apps/
     web/            Next.js app, Better Auth, PWA
       app/          routes and pages

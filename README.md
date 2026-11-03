@@ -1,6 +1,6 @@
 # Checky
 
-Checky (« La torche des rédactions », named FANILO until 2 Nov 2026; the repos keep the old name) is an
+Checky (« La torche des rédactions », named FANILO until 2 Nov 2026; the repos were renamed checky-platform, checky-mobile and checky-extension on 3 Nov) is an
 app for newsrooms, Madagascar first, to verify claims, track misinformation and spot AI-generated
 content, made for the **FANILO Hackathon** (IFM + French Embassy press service, Antananarivo).
 A journalist follows a rumour from its first appearance to a signed verdict, and Checky sends the
@@ -54,11 +54,11 @@ How the pieces talk:
 - **Reading preferences:** A−/A+ and « Mode éco », per device (`apps/web/lib/prefs.ts`).
 - **In production:** web on Vercel, API on Render, database and file storage on **Neon**
   (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
-- **Phone app:** [`0nlyDevs/fanilo-mobile`](https://github.com/0nlyDevs/fanilo-mobile) (Expo,
+- **Phone app:** [`0nlyDevs/checky-mobile`](https://github.com/0nlyDevs/checky-mobile) (Expo,
   React Native). A video, photo or link shared to Checky from WhatsApp, Facebook or TikTok is
   uploaded, transcribed and checked through the same API. It signs in through Better Auth's Expo
   plugin (`apps/web/lib/auth.ts`, trusted scheme `fanilo://`).
-- **Browser extension:** [`0nlyDevs/fanilo-extension`](https://github.com/0nlyDevs/fanilo-extension)
+- **Browser extension:** [`0nlyDevs/checky-extension`](https://github.com/0nlyDevs/checky-extension)
   checks selected text and public links/images in a side panel **without an account**. Public
   routes return published verdict candidates, external sources and image provenance hints, not
   new AI verdicts or private dossiers. Connection is optional for saving into a newsroom or using
@@ -73,7 +73,7 @@ Ask the project owner (TsioryJonathan) for:
 
 | Access | Why | Needed for |
 |---|---|---|
-| GitHub org **0nlyDevs**, repo `fanilo-base` | code, CI | everything |
+| GitHub org **0nlyDevs**, repo `checky-platform` | code, CI | everything |
 | Neon org **0nlydevs**, project **fanilo** | database and file storage, credentials | deploying, migrating production, M4 files |
 | Groq / Gemini / NVIDIA API keys (or create your own free ones) | AI features | anything using AI |
 | Vercel and Render (later) | deployment | demo |
@@ -95,8 +95,8 @@ until at least one AI key is set.
 ### 2. Clone and install
 
 ```bash
-gh repo clone 0nlyDevs/fanilo-base
-cd fanilo-base
+gh repo clone 0nlyDevs/checky-platform
+cd checky-platform
 npm install                       # web + shared packages
 cd apps/api && uv sync && cd ../..  # API (creates apps/api/.venv)
 ```
@@ -365,7 +365,7 @@ Project **checky-mg** → https://checky-mg.vercel.app (the old `fanilo-mg.verce
 else), in the team *tsioryjonathan's projects*, Root Directory `apps/web`, Node 26.
 `apps/web/vercel.json` runs the server code in Frankfurt (`fra1`), next to Neon.
 
-Deploys go through Vercel's GitHub integration (Settings → Git, repo `0nlyDevs/fanilo-base`):
+Deploys go through Vercel's GitHub integration (Settings → Git, repo `0nlyDevs/checky-platform`):
 every push to `dev`, the production branch, goes live, and other branches and pull requests get
 a preview URL. It does not wait for CI. Vercel's **free plan cannot deploy a private repository
 owned by a GitHub organization** (neither from GitHub nor with the CLI), so this needs the team on
@@ -399,7 +399,7 @@ build runs `alembic upgrade head`, so the production database is migrated before
 
 First time:
 
-1. Render → **New → Blueprint**, connect GitHub (org **0nlyDevs**), pick `fanilo-base`.
+1. Render → **New → Blueprint**, connect GitHub (org **0nlyDevs**), pick `checky-platform`.
 2. Fill in the values it asks for:
    - `DATABASE_URL`: the Neon **direct** connection string (the same as `PROD_DATABASE_URL`);
    - the web app's production address (Vercel) in `AUTH_ISSUER`, `AUTH_AUDIENCE` and

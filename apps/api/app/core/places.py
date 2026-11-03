@@ -24,7 +24,7 @@ from app.core.models import Place
 log = logging.getLogger("checky.places")
 
 NOMINATIM = "https://nominatim.openstreetmap.org/search"
-UA = "Checky/0.1 (https://github.com/0nlyDevs/fanilo-base; newsroom verification tool)"
+UA = "Checky/0.1 (https://github.com/0nlyDevs/checky-platform; newsroom verification tool)"
 _transport: httpx.AsyncBaseTransport | None = None  # tests swap in a mock
 _last_call = 0.0
 _lock = asyncio.Lock()
