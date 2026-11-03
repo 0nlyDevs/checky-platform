@@ -324,6 +324,7 @@ export const en: Overrides = {
       airFailed: "Marking did not work. Try again.",
       badRadio: "This radio link is not valid; the flashes can still be read.",
       failed: "The flashes could not be loaded.",
+      audio: "Listen to the newsroom",
     },
     short: { finding: "Opening the verdict…", notFound: "No published verdict has this number.", all: "All verdicts" },
     footer: { flashs: "Today's flashes" },
