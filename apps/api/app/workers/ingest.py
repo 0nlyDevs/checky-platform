@@ -364,6 +364,9 @@ async def _fail(source_id: uuid.UUID, ws: uuid.UUID, error: str) -> None:
 @handler("ingest_file")
 async def ingest_file(ctx: JobContext) -> dict[str, Any]:
     source_id = uuid.UUID(ctx.input["source_id"])
+    # Spoken Malagasy from the radio is understood by people: `transcribe: false` keeps the
+    # recording as it is, with no machine transcript (the veilleur's sentence is the text).
+    transcribe = ctx.input.get("transcribe") is not False
     async with SessionLocal() as db:
         source = await db.get(Source, source_id)
         file = await db.get(File, source.file_id)
@@ -379,6 +382,8 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
             meta.update(await media.derive_image(raw, key))
         elif mime == "application/pdf":
             meta, title, text = await asyncio.to_thread(pdf_text, raw)
+        elif mime.startswith("audio/") and not transcribe:
+            pass
         elif mime.startswith("audio/"):
             await ctx.progress(50)
             result = await stt.transcribe(raw, filename, mime, ctx.input.get("language"))
@@ -399,7 +404,7 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
                         "could not derive keyframes for source %s", source_id, exc_info=True
                     )
             await ctx.progress(50)
-            if audio:
+            if audio and transcribe:
                 try:
                     result = await stt.transcribe(
                         audio, audio_name, audio_mime, ctx.input.get("language")

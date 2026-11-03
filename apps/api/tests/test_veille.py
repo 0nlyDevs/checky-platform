@@ -191,6 +191,39 @@ def test_a_journalist_uploads_a_recording_and_the_french_clip_takes_its_transcri
     assert {c["id"] for c in eve.get(base + "/radio-clips").json()} == {clip["id"], other["id"]}
 
 
+def test_a_malagasy_recording_is_kept_and_never_machine_transcribed(
+    as_user, fake_storage, monkeypatch
+):
+    from app.core import stt
+
+    async def refuse(*args, **kwargs):
+        raise AssertionError("a Malagasy passage must not reach speech-to-text")
+
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}"
+    up = alice.post(
+        base + "/radio-clips/upload-url",
+        json={"filename": "fanambarana.webm", "mime": "audio/webm", "size_bytes": 4},
+    ).json()
+    OBJECTS[up["upload_url"].removeprefix("https://s3.test/").removesuffix("?put")] = b"OggS"
+    sentence = "Nilaza ny mpihaino fa hisy fahatapahan-jiro eto Toamasina rahampitso."
+    clip = _clip(alice, ws, sentence, station="Fanambarana", language="mg", file_id=up["file_id"])
+    job = _db(lambda db: db.scalar(select(Job).where(Job.kind == "ingest_file")))
+    assert job.input["transcribe"] is False
+
+    async def read(key):
+        return OBJECTS[key]
+
+    monkeypatch.setattr(storage, "read", read)
+    monkeypatch.setattr(stt, "transcribe", refuse)
+    assert asyncio.run(queue.run_once())
+    source = _db(lambda db: db.get(Source, uuid.UUID(clip["source_id"])))
+    assert source.status == "ready" and source.text == ""
+    got = alice.get(f"{base}/radio-clips/{clip['id']}").json()
+    assert got["heard_text"] == sentence and got["text_from"] == "veilleur"
+
+
 def test_antenne_groups_clips_by_claim_and_follow_opens_a_dossier(as_user):
     alice = as_user("alice")
     ws = _workspace(alice)

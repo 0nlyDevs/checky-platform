@@ -530,6 +530,8 @@ async def create_clip(body: ClipIn, member: AnyMember, db: Db) -> ClipOut:
             {
                 "source_id": str(source.id),
                 "language": body.language if body.language in ("fr", "mg") else None,
+                # a Malagasy passage keeps the veilleur's sentence, never a machine transcript
+                **({"transcribe": False} if body.language == "mg" else {}),
             },
         )
     out = _clip_out(clip, source)
