@@ -1,6 +1,6 @@
 # Checky redesign: web, phone app and extension
 
-Date: 2 Nov 2026. Owner: the user (Mathieu-bot), who does the redesign of all three tools.
+Date: 2 Nov 2026. Owner: the team member who does the redesign of all three tools.
 Reference mockup: https://claude.ai/artifact/S3XTow6nzQvdSev7FAfDfT (v3). Palette source: `../checky`.
 
 ## 1. Intent
@@ -46,7 +46,7 @@ Anti-goals (failure even if it "works")
 - Feature freeze Tue 3 Nov 18:00, code freeze 20:00. The redesign must land in slices that each leave
   the app working and deployable.
 - Git: the user's global rules in all three repos. Branch from the default branch, one coherent change
-  per commit, `type: message` with no scope, subject only, author Mathieu-bot, no AI attribution;
+  per commit, `type: message` with no scope, subject only, no AI attribution;
   PR titled the same way; review comment, squash-merge, delete the branch. `fanilo-base`'s default
   branch is `dev`; `fanilo-mobile` and `fanilo-extension` use `main`.
 - `fanilo-base/CLAUDE.md` (push to `dev`, `feat(scope):`, "FANILO as the product", citron rules) is

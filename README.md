@@ -345,89 +345,10 @@ Next.js 16 is newer than most tutorials and AI training data: read
 | AI routes return 503 `ai_unavailable` | no AI key in `.env`, or every provider failed (see `app.ai_call`) |
 | `npm` warns it blocked an install script | harmless |
 
-## Web app on Vercel
+## Deployment
 
-Project **checky-mg** → https://checky-mg.vercel.app (the old `fanilo-mg.vercel.app` is gone since 3 Nov; `fanilo.vercel.app` belongs to someone
-else), in the team *tsioryjonathan's projects*, Root Directory `apps/web`, Node 26.
-`apps/web/vercel.json` runs the server code in Frankfurt (`fra1`), next to Neon.
+The web app runs on Vercel (Root Directory `apps/web`, production branch `dev`), the API on
+Render from [`render.yaml`](render.yaml) (it deploys `dev` once CI is green and migrates the
+database in its build), and the database and file storage on Neon. Account details, connection
+strings and keys are not kept in this repository: ask the team.
 
-Deploys go through Vercel's GitHub integration (Settings → Git, repo `0nlyDevs/checky-platform`):
-every push to `dev`, the production branch, goes live, and other branches and pull requests get
-a preview URL. It does not wait for CI. Vercel's **free plan cannot deploy a private repository
-owned by a GitHub organization** (neither from GitHub nor with the CLI), so this needs the team on
-Pro (on a trial since 1 Nov); back on the free plan, deploys stop. Teammates whose commits should
-deploy must be members of the Vercel team.
-
-Deploy by hand: `npx vercel@latest deploy --prod`, **from the repository root** (`.vercelignore`
-keeps `.env` files and the API out of the upload).
-
-In the project's **Settings → Environment Variables** (Production):
-
-| Variable | Value |
-|---|---|
-| `DATABASE_URL` | the Neon **direct** connection string (as `PROD_DATABASE_URL`, without quotes). Not the pooled one: `lib/auth.ts` sets `search_path` at connection start, which Neon's pooler refuses |
-| `BETTER_AUTH_SECRET` | a new one: `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | `https://checky-mg.vercel.app` |
-| `NEXT_PUBLIC_API_URL` | `https://fanilo-api.onrender.com` (built into the page: redeploy after changing it) |
-
-Before the first sign-in, in Neon's SQL editor: `DELETE FROM better_auth.jwks;`. Better Auth
-encrypts its signing key with `BETTER_AUTH_SECRET`; a key left from an older secret cannot be
-read and `/api/auth/token` fails. It makes a new one by itself; no account is lost.
-
-Preview URLs only show the pages: the API accepts calls from the production address alone
-(`CORS_ORIGINS`), and sign-in is tied to it (JWTs carry `BETTER_AUTH_URL` as issuer).
-
-## API on Render
-
-[`render.yaml`](render.yaml) describes the service: free plan, Frankfurt, Render's own Python 3.13
-(no Docker; ffmpeg comes with Render's runtime). It deploys `dev` once CI is green on it, and its
-build runs `alembic upgrade head`, so the production database is migrated before new code goes live.
-
-First time:
-
-1. Render → **New → Blueprint**, connect GitHub (org **0nlyDevs**), pick `checky-platform`.
-2. Fill in the values it asks for:
-   - `DATABASE_URL`: the Neon **direct** connection string (the same as `PROD_DATABASE_URL`);
-   - the web app's production address (Vercel) in `AUTH_ISSUER`, `AUTH_AUDIENCE` and
-     `CORS_ORIGINS`, and the same address followed by `/api/auth/jwks` in `AUTH_JWKS_URL`;
-   - `STORAGE_ENDPOINT`, `STORAGE_ACCESS_KEY_ID`, `STORAGE_SECRET_ACCESS_KEY` (bucket `uploads` is set);
-   - `GROQ_API_KEY`, `GEMINI_API_KEY`, `NVIDIA_API_KEY`.
-3. Optional keys go in the service's **Environment** tab: `CLAUDE_API_KEY`, `ELEVENLABS_API_KEY`,
-   `GOOGLE_FACTCHECK_API_KEY`.
-4. Open `<service URL>/api/v1/health`: the database, storage and AI providers should be `up`.
-
-Good to know:
-
-- A free instance sleeps after 15 minutes without a visit and takes about a minute to wake;
-  background jobs wait and resume. Open Réglages a few minutes before a demo.
-- `FORWARDED_ALLOW_IPS=*` makes the API read the visitor's address from Render's proxy; without
-  it every visitor would share one rate limit on the public routes.
-- There is deliberately no health check path: `/api/v1/health` queries Neon and every AI
-  provider, and polling it would keep the database awake.
-
-## Production database (Neon)
-
-Project **fanilo** in the Neon org **0nlydevs** (id `green-heart-84751490`, AWS Frankfurt,
-Postgres 18, free plan). Set up with `vector`, `better_auth` and `app` at the current migration.
-
-- Its connection string is `PROD_DATABASE_URL` in `.env` (ask the owner, or Neon console →
-  project → Connect, with **connection pooling off**). The app itself never reads that variable.
-- Render's build migrates production on every deploy. To migrate by hand:
-  ```bash
-  cd apps/api && DATABASE_URL="$PROD_DATABASE_URL" uv run alembic upgrade head
-  ```
-  and after a Better Auth upgrade, run the Better Auth CLI the same way.
-- The database sleeps when idle; the first request after a pause takes a few seconds. Open
-  Réglages a few minutes before a demo to wake it.
-- Neon branches give a free copy of the database (for a risky migration or a demo snapshot).
-
-## File storage (Neon Object Storage)
-
-Same Neon project, S3-compatible, private buckets: **`uploads`** (production) and
-**`uploads-dev`** (local development). The browser uploads and downloads through short-lived
-presigned URLs issued by the API (`apps/api/app/core/storage.py`); files never pass through the
-API and nothing is publicly readable.
-
-- Storage belongs to a database **branch** (here `production`): its endpoint is in the branch's
-  Connect panel, and a new Neon branch gets its own copy of the files.
-- Never put the storage secret in the web app or the browser; only the API uses it.

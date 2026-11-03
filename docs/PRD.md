@@ -68,7 +68,7 @@ The hard limits come from the hackathon rules, the free tiers we rely on, and th
 - Pitch of 3 minutes maximum on Wednesday 4 November, 8:00 to 13:00 at IFM Analakely. It must let the jury understand the need, the solution and how it works, the value for media professionals, and the potential (Article 4).
 - The jury scores relevance to the need, usability, contribution to information resilience, technical quality and functionality, development potential, and the quality of the pitch (Article 5). Its decisions are final; prizes are announced before the event.
 - Teams of exactly four; registration through the form by **28 October 2026** (Article 3). The rules end with a team sheet (team name, four names, date, acceptance).
-- Questions about the rules go to Christelle Ramanandraitsiory at the IFM (christelle.ramanandraitsiory@institutfrancais-madagascar.com).
+- Questions about the rules go to the IFM.
 - We keep ownership of our code; organizers may publicize screenshots and slides with our names (Article 6).
 - Participants are responsible for their own equipment and data (Article 8).
 
@@ -100,7 +100,7 @@ The browser talks to both services; files go straight from the browser to Neon O
 | Auth | Better Auth in Next.js, JWT plugin | FastAPI verifies tokens with the JWKS endpoint |
 | API | FastAPI (Python), Pydantic, SQLAlchemy + Alembic | OpenAPI schema generates the TypeScript client |
 | Realtime | python-socketio on FastAPI; socket.io-client in the browser | SSE for streaming AI answers |
-| Database | Postgres 18 + pgvector (Neon free, project `fanilo` in the 0nlydevs org, Frankfurt) | Better Auth tables and app tables in one database, separate schemas. Chosen over Supabase Postgres: wakes automatically instead of pausing, free branching |
+| Database | Postgres 18 + pgvector (Neon free, Frankfurt) | Better Auth tables and app tables in one database, separate schemas. Chosen over Supabase Postgres: wakes automatically instead of pausing, free branching |
 | File storage | Neon Object Storage (S3-compatible, private buckets `uploads` and `uploads-dev`, same Neon project) | Never on the API server's disk; boto3 presigned URLs; branches with the database |
 | Background jobs | Postgres job table, worker loop in the API process | No extra service to host; queued jobs survive restarts |
 | Language models | Groq `openai/gpt-oss-120b` (primary), Gemini `gemini-3.5-flash-lite` (fallback), NVIDIA NIM (third) | All called through one OpenAI-compatible gateway; models change often on free tiers, so they are set by env |

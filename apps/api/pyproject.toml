@@ -2,9 +2,6 @@
 name = "checky-api"
 version = "0.1.0"
 description = "Checky API: business logic, AI layer, realtime"
-authors = [
-    { name = "TsioryJonathan", email = "rakotoarisoajonathan0@gmail.com" }
-]
 requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.20.1",

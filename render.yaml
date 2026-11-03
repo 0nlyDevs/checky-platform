@@ -29,7 +29,7 @@ services:
       # app/core/client_ip.py reads Cloudflare's CF-Connecting-IP whenever RENDER is set.
       - key: FORWARDED_ALLOW_IPS
         value: "*"
-      # Neon project fanilo, direct (non-pooled) connection string, as PROD_DATABASE_URL in .env.
+      # Neon's direct (non-pooled) connection string.
       - key: DATABASE_URL
         sync: false
       # All four are the web app's production address (Vercel), https://checky-mg.vercel.app;
