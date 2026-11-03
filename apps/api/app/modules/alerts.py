@@ -443,6 +443,7 @@ async def group(db: AsyncSession, ws: uuid.UUID) -> dict[str, list[Item]]:
     one a journalist split out); a new group of two or more with a high danger level becomes a
     new alert. Commits; broadcasts `alert.updated` for each alert created or changed and returns
     them as {"created": […], "updated": […]}."""
+    await close_published(db, ws)
     workspace = await db.get(Workspace, ws)
     rows = await variants(db, workspace)
     links = await antenne_links(db, ws)
@@ -528,6 +529,71 @@ async def alert_index(db: AsyncSession, ws: uuid.UUID) -> dict[str, AlertRef]:
     return out
 
 
+# -------------------------------------------------------------------------------- closing
+def _linked_ids(alert: Item) -> set[uuid.UUID]:
+    out = set()
+    for m in _members(alert):
+        if m.get("item_id"):
+            try:
+                out.add(uuid.UUID(str(m["item_id"])))
+            except ValueError:
+                continue
+    return out
+
+
+async def close_published(
+    db: AsyncSession, ws: uuid.UUID, item_ids: list[uuid.UUID] | None = None
+) -> list[Item]:
+    """An alert stays open until a verdict is published on one of its dossiers: then it closes by
+    itself, naming the dossier and its verdict. `item_ids` limits the look to those dossiers (a
+    signature that just published). Commits and broadcasts when something closed."""
+    alerts = await open_alerts(db, ws)
+    wanted = set(item_ids) if item_ids is not None else None
+    linked = {a.id: _linked_ids(a) for a in alerts}
+    ids = {i for s in linked.values() for i in s if wanted is None or i in wanted}
+    if not ids:
+        return []
+    published = {
+        i.id: i
+        for i in await db.scalars(
+            select(Item).where(
+                Item.id.in_(ids), Item.workspace_id == ws, Item.status == "published"
+            )
+        )
+        if (i.data or {}).get("verdict")
+    }
+    closed = []
+    for alert in alerts:
+        hit = next((published[i] for i in linked[alert.id] if i in published), None)
+        if hit is None:
+            continue
+        d = dict(alert.data or {})
+        d.update(
+            state="closed",
+            closed={
+                "reason": "verdict",
+                "note": f"Verdict publié sur {(hit.data or {}).get('ref') or 'un dossier lié'}",
+                "item_id": str(hit.id),
+                "ref": (hit.data or {}).get("ref"),
+                "verdict": (hit.data or {}).get("verdict"),
+                "by": (hit.data or {}).get("published_by") or "system",
+                "at": datetime.now(UTC).isoformat(),
+            },
+        )
+        alert.data, alert.status = d, "closed"
+        await record(
+            db, ws, "system", "alert", alert.id, "close",
+            {"reason": "verdict", "item_id": str(hit.id)},
+        )  # fmt: skip
+        closed.append(alert)
+    if closed:
+        await db.commit()
+        for alert in closed:
+            await db.refresh(alert)
+            await broadcast(ws, "alert.updated", alert_out(alert).model_dump(mode="json"))
+    return closed
+
+
 # --------------------------------------------------------------------------------- routes
 class AlertMember(BaseModel):
     key: str
@@ -554,6 +620,17 @@ class AlertFacts(BaseModel):
     hours: int | None  # since the first report
 
 
+class KitBrief(BaseModel):
+    """Where the « Kit d'alerte » stands, for lists (the kit itself: `GET …/alerts/{id}/kit`)."""
+
+    status: Literal["draft", "approved"]
+    written_by: str
+    approved_at: datetime | None = None
+    sent_at: datetime | None = None
+    radios: int = 0
+    script_fr: str = ""
+
+
 class AlertOut(BaseModel):
     id: uuid.UUID
     ref: str | None
@@ -570,6 +647,22 @@ class AlertOut(BaseModel):
     created_at: datetime
     updated_at: datetime
     demo: bool
+    kit: KitBrief | None = None
+
+
+def kit_brief(d: dict[str, Any]) -> KitBrief | None:
+    kit = d.get("kit") if isinstance(d.get("kit"), dict) else None
+    if not kit:
+        return None
+    sent = [s for s in kit.get("sent") or [] if isinstance(s, dict)]
+    return KitBrief(
+        status="approved" if kit.get("status") == "approved" else "draft",
+        written_by=kit.get("written_by") or "template",
+        approved_at=dates.parse_moment(kit.get("approved_at")),
+        sent_at=dates.parse_moment(sent[-1].get("at")) if sent else None,
+        radios=len({r.get("id") for s in sent for r in s.get("radios") or []}),
+        script_fr=(kit.get("script") or {}).get("fr") or "",
+    )
 
 
 def alert_out(alert: Item) -> AlertOut:
@@ -602,6 +695,7 @@ def alert_out(alert: Item) -> AlertOut:
         created_at=alert.created_at,
         updated_at=alert.updated_at,
         demo=bool(d.get("demo")),
+        kit=kit_brief(d),
     )
 
 
@@ -763,3 +857,40 @@ async def merge_alert(alert_id: uuid.UUID, body: MergeIn, member: AnyMember, db:
         await db.refresh(a)
         await broadcast(member.workspace_id, "alert.updated", alert_out(a).model_dump(mode="json"))
     return alert_out(alert)
+
+
+class CloseIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    reason: str = Field(min_length=3, max_length=500)
+
+
+@router.post("/workspaces/{ws}/alerts/{alert_id}/close")
+async def close_alert(alert_id: uuid.UUID, body: CloseIn, member: AnyMember, db: Db) -> AlertOut:
+    """A journalist closes an alert before any verdict, and says why (required, kept in the
+    activity). « Diffuser » then proposes the radios the kit went to, on the linked dossiers."""
+    alert = await _get_alert(db, member, alert_id)
+    if alert.status == "closed":
+        raise ApiError(409, "already_closed", "This alert is already closed")
+    note = " ".join(body.reason.split())
+    if len(note) < 3:
+        raise ApiError(422, "reason_required", "Say why the alert is closed")
+    d = dict(alert.data or {})
+    d.update(
+        state="closed",
+        closed={
+            "reason": "journalist",
+            "note": note,
+            "by": member.user.id,
+            "at": datetime.now(UTC).isoformat(),
+        },
+    )
+    alert.data, alert.status = d, "closed"
+    await record(
+        db, member.workspace_id, member.user.id, "alert", alert.id, "close",
+        {"reason": "journalist", "note": note},
+    )  # fmt: skip
+    await db.commit()
+    await db.refresh(alert)
+    out = alert_out(alert)
+    await broadcast(member.workspace_id, "alert.updated", out.model_dump(mode="json"))
+    return out

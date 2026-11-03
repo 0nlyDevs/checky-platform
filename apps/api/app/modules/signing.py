@@ -205,11 +205,23 @@ async def _notify(db: AsyncSession, item: Item) -> None:
         await db.rollback()
 
 
+async def _close_alerts(db: AsyncSession, item: Item) -> None:
+    """A published verdict closes the open alerts this dossier belongs to (app/modules/alerts.py)."""
+    from app.modules import alerts
+
+    try:
+        await alerts.close_published(db, item.workspace_id, [item.id])
+    except Exception:  # closing an alert must never undo a signature
+        log.exception("closing alerts failed for %s", item.id)
+        await db.rollback()
+
+
 async def _done(db: AsyncSession, member: Member, item: Item, published: bool) -> ItemOut:
     await db.commit()
     await db.refresh(item)
     if published:
         await _notify(db, item)
+        await _close_alerts(db, item)
         await db.refresh(item)
     out = ItemOut.model_validate(item)
     await broadcast(member.workspace_id, "item.updated", out.model_dump(mode="json"))
