@@ -153,7 +153,8 @@ export function DiffusePanel({
   }
 
   const code = error instanceof ApiError ? error.code : null;
-  const blocked = !published ? f.notPublished : code === "private_workspace" ? f.privateNewsroom : code === "missing_reason" ? f.missingReason : error ? f.loadFailed : null;
+  const explained: Record<string, string> = { private_workspace: f.privateNewsroom, missing_reason: f.missingReason, not_verified: f.notVerified };
+  const blocked = !published ? f.notPublished : code && explained[code] ? explained[code] : error ? f.loadFailed : null;
 
   const fr: { id: string; text: string | null | undefined; meta?: string }[] = data
     ? [
@@ -180,10 +181,20 @@ export function DiffusePanel({
         <h2 id="diffuse" className="font-display text-xl font-bold">
           {f.title}
         </h2>
-        <p className="mt-0.5 max-w-[70ch] text-sm text-muted-foreground">{f.lead}</p>
+        {!blocked && <p className="mt-0.5 max-w-[70ch] text-sm text-muted-foreground">{f.lead}</p>}
       </header>
 
-      {blocked && <p className="rounded-md border border-dashed border-border px-4 py-3 text-muted-foreground">{blocked}</p>}
+      {blocked && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-border px-4 py-3">
+          <p className="text-muted-foreground">{blocked}</p>
+          {/* A failed load (not one of the explained states) can be asked again. */}
+          {published && error && !(code && explained[code]) && (
+            <Button size="sm" variant="outline" onClick={() => void mutate(key)}>
+              {t.claims.retry}
+            </Button>
+          )}
+        </div>
+      )}
       {published && isLoading && (
         <div aria-busy aria-label={f.loading} className="space-y-3">
           <Skeleton className="h-24 w-full" />
