@@ -53,7 +53,7 @@ export function PosterView() {
     <div className="mx-auto max-w-[60rem] px-4 pt-6 pb-16 lg:px-8">
       <style>{PRINT_CSS}</style>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href={`/w/${ws}/affirmations/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <Link href={`/w/${ws}/claims/${id}`} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
           <IconArrowLeft className="size-4" aria-hidden />
           {p.back}
         </Link>

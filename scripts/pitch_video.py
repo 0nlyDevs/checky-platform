@@ -404,7 +404,7 @@ def sign_in(pw, args, base: str) -> tuple[dict, str]:
     ctx = browser.new_context(viewport=SIZE)
     page = ctx.new_page()
     if args.email:
-        page.goto(base + "/connexion")
+        page.goto(base + "/sign-in")
         page.fill("#email", args.email)
         page.fill("#password", args.password)
         page.click("button[type=submit]")
@@ -412,7 +412,7 @@ def sign_in(pw, args, base: str) -> tuple[dict, str]:
         stamp = int(time.time())
         email, password = f"pitch-{stamp}@fanilo.test", f"Pitch-{stamp}-demo"
         print(f"  signing up {email} with the demo data")
-        page.goto(base + "/inscription")
+        page.goto(base + "/sign-up")
         page.fill("#name", args.name)
         page.fill("#email", email)
         page.fill("#password", password)

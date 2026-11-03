@@ -17,10 +17,10 @@ type Place = { href: string; label: string; icon: Icon; match: (p: string) => bo
 
 /** The visitor's four places: check, report, the official feed, the seal scanner. */
 const places = (t: Messages): Place[] => [
-  { href: "/verifies", label: t.site.pub.nav.check, icon: IconMagnifyingGlass, match: (p) => p.startsWith("/verifies") || p.startsWith("/v/") },
-  { href: "/signaler", label: t.site.pub.nav.report, icon: IconPaperPlaneTilt, match: (p) => p.startsWith("/signaler") || p.startsWith("/suivi") },
-  { href: "/officiel", label: t.registre.feed.title, icon: IconSealCheck, match: (p) => p.startsWith("/officiel") },
-  { href: "/scanner", label: t.offline.scanner.title, icon: IconQrCode, match: (p) => p.startsWith("/scanner") || p.startsWith("/sceau") },
+  { href: "/verdicts", label: t.site.pub.nav.check, icon: IconMagnifyingGlass, match: (p) => p.startsWith("/verdicts") || p.startsWith("/v/") },
+  { href: "/report", label: t.site.pub.nav.report, icon: IconPaperPlaneTilt, match: (p) => p.startsWith("/report") || p.startsWith("/track") },
+  { href: "/official", label: t.registre.feed.title, icon: IconSealCheck, match: (p) => p.startsWith("/official") },
+  { href: "/scanner", label: t.offline.scanner.title, icon: IconQrCode, match: (p) => p.startsWith("/scanner") || p.startsWith("/seal") },
 ];
 
 /** FR · MG · EN: the visitor's language, remembered on this device. The ink pill slides to the choice. */
@@ -81,7 +81,7 @@ function Bar({ pathname }: { pathname: string }) {
           <FontButtons />
           <ThemeButton />
           <Link
-            href="/connexion"
+            href="/sign-in"
             className="group inline-flex h-10 items-center gap-2 rounded-full bg-primary px-4 text-sm font-bold text-primary-foreground outline-none hover:bg-primary-hover hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background site-hide-sm"
           >
             {s.nav.newsroom}
@@ -177,7 +177,7 @@ export function SiteFooter() {
               </li>
             ))}
             <li>
-              <a href="/flashs" className={link}>
+              <a href="/flashes" className={link}>
                 {t.publicLayer.footer.flashs}
               </a>
             </li>
@@ -187,12 +187,12 @@ export function SiteFooter() {
           <h2 id="foot-newsrooms">{c.newsrooms}</h2>
           <ul>
             <li>
-              <Link href="/connexion" className={link}>
+              <Link href="/sign-in" className={link}>
                 {s.nav.signIn}
               </Link>
             </li>
             <li>
-              <Link href="/inscription" className={cn(link, "font-bold")}>
+              <Link href="/sign-up" className={cn(link, "font-bold")}>
                 {s.home.newsroomsCta}
               </Link>
             </li>

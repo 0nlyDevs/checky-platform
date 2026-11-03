@@ -159,7 +159,7 @@ export function ScannerView({ ws }: { ws?: string }) {
     const text = picture ? await readText(picture) : null;
     setBusy(null);
     if (ws) {
-      if (text) return router.push(`/w/${ws}/verifier?lien=${encodeURIComponent(text.slice(0, 6000))}` as never);
+      if (text) return router.push(`/w/${ws}/verify?lien=${encodeURIComponent(text.slice(0, 6000))}` as never);
       if (isOffline()) {
         await addToOutbox({ ws, photo: file, name: file.name });
         return setNote(sc.queued);
@@ -168,7 +168,7 @@ export function ScannerView({ ws }: { ws?: string }) {
       try {
         const source = await sendPhoto(ws, file, file.name);
         setNote(sc.sent);
-        router.push(`/w/${ws}/verifier?source=${source}` as never);
+        router.push(`/w/${ws}/verify?source=${source}` as never);
       } catch {
         setNote(sc.failed);
       } finally {
@@ -256,7 +256,7 @@ export function ScannerView({ ws }: { ws?: string }) {
 
         {ws && (
           <p>
-            <Link href={`/w/${ws}/verifier`} className="font-bold underline underline-offset-4">
+            <Link href={`/w/${ws}/verify`} className="font-bold underline underline-offset-4">
               {t.nav.check}
             </Link>
           </p>

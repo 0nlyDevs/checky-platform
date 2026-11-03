@@ -216,7 +216,7 @@ function RiskLine({ ws, item, nameOf, onSaved }: { ws: string; item: Item; nameO
       )}
       {alert && (
         <p className="mt-1">
-          <Link href={`/w/${ws}/veille#alerte-${alert.id}` as never} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
+          <Link href={`/w/${ws}/watch#alerte-${alert.id}` as never} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
             <IconWarning className="size-4" aria-hidden />
             {tr.inAlert(alert.ref ?? "", alert.facts.reports)}
           </Link>
@@ -303,7 +303,7 @@ export function ClaimDetail() {
     "item.deleted": ({ id: gone }: { id: string }) => {
       if (gone !== id) return;
       toast(t.detail.deleted);
-      router.replace(`/w/${ws}/affirmations`);
+      router.replace(`/w/${ws}/claims`);
     },
     "comment.created": (c: Comment) => {
       if (c.item_id !== id) return;
@@ -722,7 +722,7 @@ export function ClaimDetail() {
 function BackLink({ ws }: { ws: string }) {
   return (
     <Link
-      href={`/w/${ws}/affirmations`}
+      href={`/w/${ws}/claims`}
       className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
     >
       <IconArrowLeft className="size-4" aria-hidden />

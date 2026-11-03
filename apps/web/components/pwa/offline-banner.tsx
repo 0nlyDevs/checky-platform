@@ -46,7 +46,7 @@ export function OfflineWarmup({ ws }: { ws: string }) {
     }
     const timer = setTimeout(() => {
       const w = `/w/${ws}`;
-      void warmPages(["rubrique", "verifier", "scanner", "affirmations", "veille", "annuaire", "chiffres", "registre"].map((p) => `${w}/${p}`).concat("/scanner"));
+      void warmPages(["beat", "verify", "scanner", "claims", "watch", "directory", "figures", "registry"].map((p) => `${w}/${p}`).concat("/scanner"));
       // The same paths the pages read, so their saved answers are the ones they ask for.
       const reads = [
         "/me",

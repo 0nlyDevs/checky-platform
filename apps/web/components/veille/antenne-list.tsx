@@ -83,7 +83,7 @@ export function AntenneList({
     try {
       const out = await api<FollowOut>(`/workspaces/${ws}/radio-clips/${row.latest.id}/follow`, { method: "POST", body: JSON.stringify({ item_id: row.item_id }) });
       toast(a.followed(out.ref ?? ""), {
-        action: { label: a.open, onClick: () => router.push(`/w/${ws}/affirmations/${out.item_id}` as never) },
+        action: { label: a.open, onClick: () => router.push(`/w/${ws}/claims/${out.item_id}` as never) },
       });
       onChanged?.();
     } catch {
@@ -178,7 +178,7 @@ export function AntenneList({
               </span>
               {row.regions_24h.length > 0 && <span className="text-muted-foreground">{row.regions_24h.join(", ")}</span>}
               {row.alert && (
-                <Link href={`/w/${ws}/veille#alerte-${row.alert.id}` as never} className="inline-flex items-center gap-1 font-bold underline-offset-4 hover:underline">
+                <Link href={`/w/${ws}/watch#alerte-${row.alert.id}` as never} className="inline-flex items-center gap-1 font-bold underline-offset-4 hover:underline">
                   <IconWarning className="size-4" aria-hidden />
                   {t.rubrique.alerts.badge(row.alert.ref ?? "")}
                 </Link>
@@ -191,7 +191,7 @@ export function AntenneList({
             {(row.item_id || actions) && (
               <div className="mt-2.5 flex flex-wrap items-center gap-2">
                 {row.item_id && (
-                  <Link href={`/w/${ws}/affirmations/${row.item_id}` as never} className="text-sm font-bold underline underline-offset-4">
+                  <Link href={`/w/${ws}/claims/${row.item_id}` as never} className="text-sm font-bold underline underline-offset-4">
                     {row.ref ?? a.open}
                   </Link>
                 )}

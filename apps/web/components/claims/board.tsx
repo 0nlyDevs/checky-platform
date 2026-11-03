@@ -101,7 +101,7 @@ function Card({
       )}
     >
       <Link
-        href={`/w/${ws}/affirmations/${id}`}
+        href={`/w/${ws}/claims/${id}`}
         // The whole card opens the claim; dragging still works because dnd-kit waits for movement.
         className="absolute inset-0 rounded-md focus-visible:outline-none"
         aria-label={`${claim.ref} — ${claim.item.title}`}

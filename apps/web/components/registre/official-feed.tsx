@@ -17,7 +17,7 @@ type Kind = "all" | "original" | "fake_caught";
 
 function Entry({ e, index }: { e: OfficialEntry; index: number }) {
   async function copy() {
-    await navigator.clipboard.writeText(`${window.location.origin}/officiel#c-${e.id}`);
+    await navigator.clipboard.writeText(`${window.location.origin}/official#c-${e.id}`);
     toast.success(f.copied);
   }
   const fake = e.kind === "fake_caught";
@@ -82,7 +82,7 @@ function Entry({ e, index }: { e: OfficialEntry; index: number }) {
   );
 }
 
-/** /officiel: what the institutions published and the fakes caught imitating it, newest first. */
+/** /official: what the institutions published and the fakes caught imitating it, newest first. */
 export function OfficialFeed() {
   const [q, setQ] = useState("");
   const [kind, setKind] = useState<Kind>("all");

@@ -229,13 +229,13 @@ export function AssistantWidget({ scope = "public" }: { scope?: "public" | "desk
         });
         rememberTip({ token: res.token, ref: res.ref, title: (ac.text ?? "").split("\n")[0].slice(0, 300) });
         outcome = a.sent(res.ref);
-        link = `/suivi/${res.token}`;
+        link = `/track/${res.token}`;
       } else if (ws) {
         const res = await api<{ item_id: string; ref: string | null }>(`/workspaces/${ws}/copilot/act`, {
           method: "POST",
           body: JSON.stringify({ kind: ac.kind, item_id: ac.item_id, title: ac.title, body: ac.text, origin: ac.origin, url: ac.url, status: ac.status }),
         });
-        link = `/w/${ws}/affirmations/${res.item_id}`;
+        link = `/w/${ws}/claims/${res.item_id}`;
         if (res.ref) outcome = `${a.done} ${res.ref}.`;
       }
       patchAction(turn, ac.id, { state: "done", outcome, link });

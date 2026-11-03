@@ -1,11 +1,11 @@
 import { getSessionCookie } from "better-auth/cookies";
 import { NextResponse, type NextRequest } from "next/server";
 
-const AUTH_PAGES = ["/connexion", "/inscription"];
+const AUTH_PAGES = ["/sign-in", "/sign-up"];
 // Open to everyone, signed in or not: the landing and the public verdicts, tips and their follow-up.
 // Public pages, no account: the archive, tips and their follow-up, the official feed and seals, a
 // contact answering a newsroom, the day's flashs, the short verdict links and the QR scanner.
-const PUBLIC_PAGES = ["/accueil", "/verifies", "/signaler", "/suivi", "/officiel", "/sceau", "/reponse", "/flashs", "/v", "/scanner"];
+const PUBLIC_PAGES = ["/home", "/verdicts", "/report", "/track", "/official", "/seal", "/reply", "/flashes", "/v", "/scanner"];
 const isPublic = (path: string) => PUBLIC_PAGES.some((p) => path === p || path.startsWith(`${p}/`));
 
 // Optimistic check on the cookie only; the app layout verifies the session for real.
@@ -15,10 +15,10 @@ export function proxy(request: NextRequest) {
   const onAuthPage = AUTH_PAGES.includes(pathname);
 
   // Signed-out visitors see the landing at the root.
-  if (!signedIn && pathname === "/") return NextResponse.rewrite(new URL("/accueil", request.url));
+  if (!signedIn && pathname === "/") return NextResponse.rewrite(new URL("/home", request.url));
   if (isPublic(pathname)) return NextResponse.next();
   if (!signedIn && !onAuthPage) {
-    const url = new URL("/connexion", request.url);
+    const url = new URL("/sign-in", request.url);
     url.searchParams.set("suite", pathname + search);
     return NextResponse.redirect(url);
   }

@@ -124,7 +124,7 @@ export function VerdictPage() {
           <div className="mt-8 rounded-[20px] border border-border bg-card p-5">
             <p className="text-pretty">{p.wrong}</p>
             <Link
-              href={`/signaler?texte=${encodeURIComponent(v.title)}`}
+              href={`/report?texte=${encodeURIComponent(v.title)}`}
               className="mt-2 inline-flex items-center gap-1.5 font-bold underline underline-offset-4"
             >
               {p.wrongAction} <IconArrowRight className="size-4" aria-hidden />
@@ -208,7 +208,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-[88rem] px-4 pt-8 pb-24 lg:px-10 lg:pt-10">
       <Link
-        href="/verifies"
+        href="/verdicts"
         className="group inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-bold text-foreground outline-none hover:bg-raised hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
       >
         <IconArrowLeft className="size-4 transition-transform duration-300 group-hover:-translate-x-0.5" aria-hidden /> {p.back}

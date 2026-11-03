@@ -165,7 +165,7 @@ components:
 
 **Creative North Star: "Ink and paper"**
 
-Checky is a paper ground and one ink. Nothing on a screen is coloured unless it is a verdict: the action is ink, the navigation is an ink island with a paper pill, the live work is ink plus motion. The same world serves the newsroom desk (`/w/…`) and the public site (`/accueil`, `/verifies`, `/signaler`, `/suivi`, sign-in and sign-up), in light and dark from the same token names.
+Checky is a paper ground and one ink. Nothing on a screen is coloured unless it is a verdict: the action is ink, the navigation is an ink island with a paper pill, the live work is ink plus motion. The same world serves the newsroom desk (`/w/…`) and the public site (`/home`, `/verdicts`, `/report`, `/track`, sign-in and sign-up), in light and dark from the same token names.
 
 The organising device is the **numbered line**: 1 L'affirmation, 2 Les éléments, 3 La conclusion (`components/flow/step-line.tsx`). Quotations (the verdict quote, source quotes) are set in Cormorant Garamond italic against the Bricolage Grotesque of everything else.
 

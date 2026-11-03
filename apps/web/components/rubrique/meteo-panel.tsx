@@ -69,11 +69,11 @@ export function MeteoPanel({
           {meteo.returning.map((x) => (
             <li key={x.id} className="text-sm">
               {x.mine ? (
-                <Link href={`/w/${ws}/affirmations/${x.id}` as never} className="font-bold text-pretty hover:underline">
+                <Link href={`/w/${ws}/claims/${x.id}` as never} className="font-bold text-pretty hover:underline">
                   {x.title}
                 </Link>
               ) : x.public ? (
-                <Link href={`/verifies/${x.id}` as never} className="font-bold text-pretty hover:underline">
+                <Link href={`/verdicts/${x.id}` as never} className="font-bold text-pretty hover:underline">
                   {x.title}
                 </Link>
               ) : (

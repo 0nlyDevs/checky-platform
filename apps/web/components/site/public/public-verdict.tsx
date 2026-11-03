@@ -107,7 +107,7 @@ export function ShareActions({ v, primary = false }: { v: PublicVerdict; primary
   const [reading, setReading] = useState(false);
   useEffect(() => () => stopSpeaking(), []);
 
-  const href = typeof window === "undefined" ? `/verifies/${v.id}` : `${location.origin}/verifies/${v.id}`;
+  const href = typeof window === "undefined" ? `/verdicts/${v.id}` : `${location.origin}/verdicts/${v.id}`;
   const listen = () => {
     if (reading) {
       stopSpeaking();

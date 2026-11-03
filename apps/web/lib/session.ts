@@ -9,7 +9,7 @@ export type SessionUser = { id: string; name: string; email: string };
 export async function getCurrentUser(): Promise<SessionUser> {
   "use cache: private";
   const session = await auth.api.getSession({ headers: await headers() });
-  // Not straight to /connexion: a stale cookie would bounce between it and `/` (see the route).
+  // Not straight to /sign-in: a stale cookie would bounce between it and `/` (see the route).
   if (!session) redirect("/api/session/clear");
   const { id, name, email } = session.user;
   return { id, name, email };

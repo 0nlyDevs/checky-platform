@@ -73,7 +73,7 @@ export function FollowView() {
               <>
                 <VerdictBlock v={tip.verdict} />
                 <Link
-                  href={`/verifies/${tip.verdict.id}`}
+                  href={`/verdicts/${tip.verdict.id}`}
                   className="group mt-5 inline-flex h-12 items-center gap-2 rounded-full bg-primary px-6 font-bold text-primary-foreground outline-none hover:bg-primary-hover hover:text-primary-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
                   {t.site.pub.file.open} <IconArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" aria-hidden />

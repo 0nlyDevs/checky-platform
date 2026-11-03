@@ -137,7 +137,7 @@ export function AnalysisPanel({ ws, item, sourceCount }: { ws: string; item: Ite
                           {e.item_id && e.item_id !== item.id && (
                             <>
                               {" · "}
-                              <Link href={`/w/${ws}/affirmations/${e.item_id}`} className="underline underline-offset-2 hover:text-foreground">
+                              <Link href={`/w/${ws}/claims/${e.item_id}`} className="underline underline-offset-2 hover:text-foreground">
                                 {t.analysis.openFile}
                               </Link>
                             </>

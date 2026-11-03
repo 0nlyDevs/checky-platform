@@ -11,7 +11,7 @@ Format : 1920 × 1080, 30 images/s. Chaque scène = un carton de chapitre (1,6 s
 | 0 | Pièce 1 | « Une vidéo arrive sur WhatsApp. » | (rien : le carton parle) | 2,6 s |
 | 1 | La rumeur arrive | La grille du desk : le curseur s'arrête sur la vidéo d'Analakely, puis ouvre son dossier (heure, origine, preuves) | « Voilà la vidéo de 23 h 47 dans la grille du desk. Elle devient un dossier, avec ses preuves. » | 15 s |
 | 2 | L'IA lit, le journaliste signe | L'analyse des sources, citation par citation ; « Examiner », puis « Confirmer » ; la carte est prête | « L'IA a lu les preuves et propose un verdict. Le journaliste vérifie, et il signe. » | 20 s |
-| 3 | Le public la retrouve | `/verifies` sans compte : on colle le message reçu, l'assistant retrouve le dossier et cite le verdict | « Quelqu'un reçoit la même vidéo. Il demande si c'est vérifié : la réponse cite le dossier. » | 15 s |
+| 3 | Le public la retrouve | `/verdicts` sans compte : on colle le message reçu, l'assistant retrouve le dossier et cite le verdict | « Quelqu'un reçoit la même vidéo. Il demande si c'est vérifié : la réponse cite le dossier. » | 15 s |
 | 4 | Le matin | « Vérifié. » · adresse · équipe | (rien) | 2,6 s |
 
 Avant de filmer, le script prépare l'histoire par l'API : il retrouve la rumeur, la remet « en cours » sans verdict et lance l'analyse de l'IA ; avant la scène 3, il la publie (ce que le journaliste ferait en fin de vérification). Le verdict proposé est celui que le modèle renvoie vraiment : les sous-titres ne le nomment jamais.

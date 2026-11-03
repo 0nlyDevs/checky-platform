@@ -261,7 +261,7 @@ export function WhoPanel({ ws, itemId }: { ws: string; itemId: string }) {
         </div>
       )}
 
-      <Link href={`/w/${ws}/annuaire`} className="inline-flex items-center gap-1.5 text-sm underline decoration-border underline-offset-4 hover:decoration-foreground">
+      <Link href={`/w/${ws}/directory`} className="inline-flex items-center gap-1.5 text-sm underline decoration-border underline-offset-4 hover:decoration-foreground">
         <IconAddressBook className="size-4" aria-hidden />
         {w.annuaire}
       </Link>

@@ -2,9 +2,9 @@
  * Seals read from a QR code, checked on the device with no network (Ed25519 in WebCrypto).
  *
  * A seal QR is a public page with everything needed after `#` (the fragment never reaches a server):
- *   verdict card   {web}/verifies/{id}#<b64u(message)>.<signature>.<key_id>   message has "type":"verdict"
- *   communiqué     {web}/sceau/{cid}#<b64u(message)>.<signature>.<key_id>     message has no "type"
- *   old communiqué {web}/sceau/{cid}#<signature>                               needs the network
+ *   verdict card   {web}/verdicts/{id}#<b64u(message)>.<signature>.<key_id>   message has "type":"verdict"
+ *   communiqué     {web}/seal/{cid}#<b64u(message)>.<signature>.<key_id>     message has no "type"
+ *   old communiqué {web}/seal/{cid}#<signature>                               needs the network
  * `message` is the canonical JSON that was signed (sorted keys, no spaces, UTF-8); the fields shown
  * to compare with the paper are read back from it, so what is displayed is what was signed.
  * No imports: this file runs under `node --test` as is.
@@ -56,9 +56,10 @@ export function parseSeal(url: string, base = "https://checky.invalid"): ParsedS
   // A signed fragment copied onto an unrelated host is not a Checky QR. In the app, `base` is
   // the public site's origin; the default sentinel keeps this parser testable without a browser.
   if (base !== "https://checky.invalid" && at.origin !== new URL(base).origin) return null;
-  const path = at.pathname.match(/\/(verifies|sceau)\/([^/]+)\/?$/);
+  // Cards and communiqués printed before the English addresses carry /verifies and /sceau: both read.
+  const path = at.pathname.match(/\/(verdicts|verifies|seal|sceau)\/([^/]+)\/?$/);
   if (!path) return null;
-  const kind: SealKind = path[1] === "verifies" ? "verdict" : "communique";
+  const kind: SealKind = path[1] === "verdicts" || path[1] === "verifies" ? "verdict" : "communique";
   const id = decodeURIComponent(path[2]);
   const fragment = decodeURIComponent(at.hash.slice(1));
   if (!fragment) return null;

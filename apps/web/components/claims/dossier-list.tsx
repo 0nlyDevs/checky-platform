@@ -129,7 +129,7 @@ export function DossierList({ ws, claims, now, names }: { ws: string; claims: Cl
                 </p>
                 <div className="min-w-0">
                   <Link
-                    href={`/w/${ws}/affirmations/${c.item.id}`}
+                    href={`/w/${ws}/claims/${c.item.id}`}
                     className="block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
                   >
                     {c.item.title}

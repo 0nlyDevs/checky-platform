@@ -26,7 +26,7 @@ test("the full daily bulletin stays below 20 KB without scripts or bundles", () 
   assert.ok(new TextEncoder().encode(html).byteLength < 20_000);
   assert.doesNotMatch(html, /<script|javascript:|_next\//i);
   assert.match(html, /method="post"/);
-  assert.match(html, /flashs\/audio\?id=/);
+  assert.match(html, /flashes\/audio\?id=/);
 });
 
 test("untrusted text is escaped and unsafe links are omitted", () => {

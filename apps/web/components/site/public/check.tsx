@@ -46,7 +46,7 @@ export function CheckForm({ id = "check", className, initialText = "" }: { id?: 
   const [waiting, setWaiting] = useState(false);
   const form = useRef<HTMLFormElement>(null);
 
-  // Arriving with a text (the landing's field opens /verifies?q=…): check it once, straight away.
+  // Arriving with a text (the landing's field opens /verdicts?q=…): check it once, straight away.
   const asked0 = useRef(false);
   useEffect(() => {
     if (asked0.current || initialText.trim().length < 3) return;
@@ -172,7 +172,7 @@ function Signed({ v }: { v: SignedVerdict }) {
       </VerdictBlock>
       <Evidence v={v} />
       <ShareActions v={v} />
-      <Link href={`/verifies/${v.id}`} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
+      <Link href={`/verdicts/${v.id}`} className="inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
         {c.open} <IconArrowRight className="size-4" aria-hidden />
       </Link>
     </div>
@@ -353,7 +353,7 @@ function AskNewsroom({ text }: { text: string }) {
       {typeof state === "object" ? (
         <div role="status" className="mt-1">
           <p className="text-pretty">{a.done(state.name, state.ref)}</p>
-          <Link href={`/suivi/${state.token}`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 font-bold text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground">
+          <Link href={`/track/${state.token}`} className="mt-3 inline-flex h-11 items-center gap-2 rounded-full bg-primary px-5 font-bold text-primary-foreground hover:bg-primary-hover hover:text-primary-foreground">
             {a.follow} <IconArrowRight className="size-4" aria-hidden />
           </Link>
         </div>

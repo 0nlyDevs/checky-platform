@@ -137,7 +137,7 @@ export function OnAir({ ws }: { ws: string }) {
           item_id: made.item_id,
           url: r.url,
         }).catch(() => null);
-      router.push(`/w/${ws}/affirmations/${made.item_id}` as never);
+      router.push(`/w/${ws}/claims/${made.item_id}` as never);
     } catch {
       setError(o.trackFailed);
       setTracking(false);
@@ -231,7 +231,7 @@ export function OnAir({ ws }: { ws: string }) {
             {out.own && (
               <p className="mt-3 flex flex-wrap items-center gap-x-3 font-bold">
                 {o.ownFollows(out.own.ref ?? "")}
-                <Link href={`/w/${ws}/affirmations/${out.own.item_id}` as never} className="underline underline-offset-4">
+                <Link href={`/w/${ws}/claims/${out.own.item_id}` as never} className="underline underline-offset-4">
                   {o.openDossier} <IconArrowRight className="inline size-4" aria-hidden />
                 </Link>
               </p>

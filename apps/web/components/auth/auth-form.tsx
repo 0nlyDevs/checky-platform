@@ -133,7 +133,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       <p className="mt-8 text-sm text-muted-foreground">
         {isSignUp ? t.auth.toSignIn : t.auth.toSignUp}{" "}
         <Link
-          href={`${isSignUp ? "/connexion" : "/inscription"}${next ? `?suite=${encodeURIComponent(next)}` : ""}`}
+          href={`${isSignUp ? "/sign-in" : "/sign-up"}${next ? `?suite=${encodeURIComponent(next)}` : ""}`}
           className="font-medium text-foreground underline decoration-border hover:decoration-foreground"
         >
           {isSignUp ? t.auth.toSignInLink : t.auth.toSignUpLink}

@@ -47,7 +47,7 @@ function DocRow({ ws, doc, i }: { ws: string; doc: DocumentRow; i: number }) {
           </a>
         )}
         {doc.item_id && (
-          <Link href={`/w/${ws}/affirmations/${doc.item_id}` as never} className="font-bold underline underline-offset-4">
+          <Link href={`/w/${ws}/claims/${doc.item_id}` as never} className="font-bold underline underline-offset-4">
             {t.rubrique.circulating.open}
           </Link>
         )}

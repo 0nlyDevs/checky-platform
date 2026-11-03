@@ -33,7 +33,7 @@ Qui : {{nom}} tient cette liste et coche. Une case non cochée à 7 h 30 mercred
 
 - [ ] Réveiller l'API et la base à nouveau (`/api/v1/health`, Paramètres) : elles se rendorment après 15 minutes.
 - [ ] Paramètres → **Réinitialiser les données** de démonstration (admin).
-- [ ] Onglets ouverts dans cet ordre, rien d'autre : 1 · Google Slides en mode présentation ; 2 · l'app sur la première page de la démo ; 3 · `demo.mp4` en pause à 0:00 ; 4 · `/verifies`.
+- [ ] Onglets ouverts dans cet ordre, rien d'autre : 1 · Google Slides en mode présentation ; 2 · l'app sur la première page de la démo ; 3 · `demo.mp4` en pause à 0:00 ; 4 · `/verdicts`.
 - [ ] Mode « ne pas déranger » sur l'ordinateur et le téléphone de l'orateur. Luminosité au maximum. Chargeur branché.
 - [ ] Partage de connexion actif, Wi-Fi de la salle oublié si lent.
 - [ ] Tester la sortie vidéo du projecteur avec la slide 1 (couleurs manila et encre, pas de bord coupé) et le son si la vidéo doit en avoir.
