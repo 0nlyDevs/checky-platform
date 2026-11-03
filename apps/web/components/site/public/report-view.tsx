@@ -85,7 +85,7 @@ export function ReportView() {
       {done ? (
         <div className="verdict-land self-start rounded-md border-2 border-foreground bg-card p-6 md:p-8" role="status">
           <p className="flex items-center gap-3 font-display text-3xl font-extrabold">
-            <span className="grid size-10 place-items-center rounded-full bg-foreground text-action dark:text-background">
+            <span className="grid size-10 place-items-center rounded-full bg-foreground text-background">
               <IconCheck className="size-5" aria-hidden />
             </span>
             {r.doneTitle}

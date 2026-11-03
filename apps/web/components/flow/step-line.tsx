@@ -19,15 +19,15 @@ export function claimSteps(c: ClaimView): Record<Step, StepState> {
   return { claim: "done", evidence, conclusion };
 }
 
-/** The numbered disc: a check once done, the number otherwise; the active one breathes in citron. */
+/** The numbered disc: a check once done, the number otherwise; the active one breathes. */
 export function StepDisc({ n, state, size, className }: { n: number; state: StepState; size: "lg" | "sm"; className?: string }) {
   const big = size === "lg";
   return (
     <span
       className={cn(
         "relative z-10 grid shrink-0 place-items-center rounded-full font-display font-bold tabular",
-        big ? "size-10 text-[0.95rem]" : "size-6 text-[0.7rem]",
-        state === "done" && "bg-foreground text-action dark:text-background",
+        big ? "size-10 text-sm" : "size-6 text-[0.7rem]",
+        state === "done" && "bg-foreground text-background",
         state === "active" && "step-active bg-action text-action-foreground",
         state === "suggested" && "border-2 border-dashed border-foreground bg-card text-foreground",
         state === "waiting" && "border border-input bg-card text-muted-foreground",
@@ -79,7 +79,7 @@ export function StepLine({
           >
             {i > 0 && <span aria-hidden className={cn("absolute top-3 right-1/2 h-px w-full", states[step] === "waiting" ? "bg-border" : "bg-foreground")} />}
             <StepDisc n={i + 1} state={states[step]} size="sm" />
-            <span className={cn(labels ? "text-[0.7rem] leading-none" : "sr-only", states[step] === "waiting" ? "text-muted-foreground" : "font-bold")}>{f.short[step]}</span>
+            <span className={cn(labels ? "text-[0.7rem] leading-none" : "sr-only", states[step] === "waiting" ? "text-muted-foreground" : states[step] === "done" ? "" : "font-bold")}>{f.short[step]}</span>
             <span className="sr-only">{f.state[states[step]]}</span>
           </li>
         ))}
@@ -96,7 +96,7 @@ export function StepLine({
           <StepDisc n={i + 1} state={states[step]} size="lg" />
           <div className="min-w-0 pt-1.5">
             <p className="flex flex-wrap items-baseline gap-x-2">
-              <span className={cn("font-display text-[1.05rem] font-bold", !explain && states[step] === "waiting" && "text-muted-foreground")}>{f.steps[step]}</span>
+              <span className={cn("font-display text-lg font-bold", !explain && states[step] === "waiting" && "text-muted-foreground")}>{f.steps[step]}</span>
               {!explain && states[step] !== "waiting" && states[step] !== "done" && <span className="text-sm text-muted-foreground">{f.state[states[step]]}</span>}
             </p>
             <div className="mt-0.5 text-sm text-pretty text-muted-foreground">{notes?.[step] ?? f.notes[step]}</div>
