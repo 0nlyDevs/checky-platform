@@ -39,24 +39,30 @@ function gaps(fr: Tree, other: Tree | undefined, path = ""): string[] {
   return out;
 }
 
-async function pair(name: string) {
+async function pair(name: string, lang: "mg" | "en") {
   const fr = (await import(new URL(`./i18n/${name}.ts`, import.meta.url).href)) as Record<string, Tree>;
-  const mg = (await import(new URL(`./i18n/${name.replace(/^fr/, "mg")}.ts`, import.meta.url).href)) as Record<string, Tree>;
-  return { fr, mg };
+  const other = (await import(new URL(`./i18n/${name.replace(/^fr/, lang)}.ts`, import.meta.url).href)) as Record<string, Tree>;
+  return { fr, other };
 }
 
-test("the Malagasy dictionary gives every French key", async () => {
-  const { fr, mg } = await pair("fr");
-  assert.deepEqual(gaps(fr.fr, mg.mg), []);
-});
-
-// Parts the components import directly (palette, publication, resources) are checked file by file too.
-for (const file of readdirSync(new URL("./i18n/fr/", import.meta.url)).filter((f) => f.endsWith(".ts"))) {
-  const name = file.replace(/\.ts$/, "");
-  test(`mg/${file} gives every key of fr/${file}`, async () => {
-    const { fr, mg } = await pair(`fr/${name}`);
-    for (const [key, value] of Object.entries(fr)) {
-      if (plain(value)) assert.deepEqual(gaps(value, mg[key]), [], `export ${key}`);
-    }
+for (const [lang, language] of [
+  ["mg", "Malagasy"],
+  ["en", "English"],
+] as const) {
+  test(`the ${language} dictionary gives every French key`, async () => {
+    const { fr, other } = await pair("fr", lang);
+    assert.deepEqual(gaps(fr.fr, other[lang]), []);
   });
+
+  // Parts the components import directly (palette, publication, resources) are checked file by file too.
+  const translated = new Set(readdirSync(new URL(`./i18n/${lang}/`, import.meta.url)));
+  for (const file of readdirSync(new URL("./i18n/fr/", import.meta.url)).filter((f) => f.endsWith(".ts") && translated.has(f))) {
+    const name = file.replace(/\.ts$/, "");
+    test(`${lang}/${file} gives every key of fr/${file}`, async () => {
+      const { fr, other } = await pair(`fr/${name}`, lang);
+      for (const [key, value] of Object.entries(fr)) {
+        if (plain(value)) assert.deepEqual(gaps(value, other[key]), [], `export ${key}`);
+      }
+    });
+  }
 }
