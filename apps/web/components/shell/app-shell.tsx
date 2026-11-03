@@ -10,7 +10,7 @@ import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
 import { openPalette } from "@/components/shell/command-palette";
 import { NAV, WORKSPACE_NAV } from "@/components/shell/nav";
-import { EcoMenuItem, FontMenuRow } from "@/components/prefs/prefs-controls";
+import { EcoMenuItem, FontMenuRow, LanguageMenuRow } from "@/components/prefs/prefs-controls";
 import { PreferenceDock } from "@/components/shell/preference-dock";
 import { OfflineBanner, OfflineWarmup } from "@/components/pwa/offline-banner";
 import { clearPrivateCache } from "@/components/pwa/service-worker";
@@ -134,6 +134,8 @@ function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: s
             <IconMonitor className="size-4" aria-hidden /> {t.nav.themeSystem}
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
+        <DropdownMenuSeparator />
+        <LanguageMenuRow />
         <DropdownMenuSeparator />
         <FontMenuRow />
         <EcoMenuItem />

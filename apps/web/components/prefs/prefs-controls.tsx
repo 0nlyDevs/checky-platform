@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { DropdownMenuCheckboxItem, DropdownMenuItem, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
-import { useT } from "@/lib/i18n";
+import { LANGS, setLang, useLang, useT } from "@/lib/i18n";
 import { IconLeaf, IconMinus, IconPlus } from "@/lib/icons";
 import { DEFAULT_FONT, FONT_STEPS, setEco, setFontStep, useEco, useFontStep } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
@@ -106,5 +106,31 @@ export function FontSizeControl({ className }: { className?: string }) {
         A+
       </button>
     </div>
+  );
+}
+
+/** FR · MG · EN as a row of a dropdown menu: one tap switches the whole desk (French fills any gap). */
+export function LanguageMenuRow() {
+  const tr = useT();
+  const lang = useLang();
+  const names = tr.publicLayer.lang.names;
+  return (
+    <>
+      <DropdownMenuLabel>{tr.reach.lang.label}</DropdownMenuLabel>
+      <div role="group" aria-label={tr.reach.lang.label} className="flex items-center gap-1 px-1 pb-1">
+        {LANGS.map((code) => (
+          <DropdownMenuItem
+            key={code}
+            lang={code}
+            aria-label={names[code]}
+            aria-current={lang === code ? "true" : undefined}
+            className={cn("flex-1 justify-center font-display text-xs font-bold tracking-wide", lang === code && "bg-foreground text-background focus:bg-foreground focus:text-background")}
+            onSelect={() => setLang(code)}
+          >
+            {tr.publicLayer.lang.short[code]}
+          </DropdownMenuItem>
+        ))}
+      </div>
+    </>
   );
 }

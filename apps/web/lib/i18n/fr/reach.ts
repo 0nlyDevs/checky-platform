@@ -15,6 +15,11 @@ export const reach = {
     showVideo: "Charger la vidéo",
     showAudio: "Charger la note vocale",
   },
+  // The interface language (the desk's user menu and the preference dock).
+  lang: {
+    label: "Langue",
+    current: (name: string) => `Langue : ${name}`,
+  },
   font: {
     label: "Taille du texte",
     smaller: "Réduire le texte",

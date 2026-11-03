@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { IconGear, IconMoon, IconSun } from "@/lib/icons";
-import { t } from "@/lib/i18n/live";
+import { LANGS, setLang, t, useLang } from "@/lib/i18n";
 import { toggleThemeWithReveal } from "@/lib/theme-reveal";
 
 /** Flip light/dark from whatever the page shows now (the class next-themes writes). */
@@ -28,15 +28,27 @@ export function ThemeFace({ flag = true }: { flag?: boolean }) {
 }
 
 /**
- * Bottom-left: the preferences, one floating object (theme, then settings). Each label flags out
- * to the right on hover and focus. The language button joins when the mg/en translations run.
+ * Bottom-left: the preferences, one floating object (theme, language, then settings). Each label
+ * flags out to the right on hover and focus. The language button steps FR → MG → EN; the avatar
+ * menu offers the three at once (and is the only place on a phone).
  */
 export function PreferenceDock({ settingsHref }: { settingsHref?: string }) {
   const flip = useThemeFlip();
+  const lang = useLang();
+  const l = t.publicLayer.lang;
+  const next = LANGS[(LANGS.indexOf(lang) + 1) % LANGS.length];
   return (
     <div className="dock" role="toolbar" aria-label={t.nav.preferences} aria-orientation="vertical">
       <button type="button" className="dock-btn" data-ripple onClick={flip}>
         <ThemeFace />
+      </button>
+      <button type="button" className="dock-btn" data-ripple onClick={() => setLang(next)} aria-label={`${t.reach.lang.current(l.names[lang])} → ${l.names[next]}`}>
+        <span className="dock-icon grid place-items-center font-display text-sm font-bold" aria-hidden>
+          {l.short[lang]}
+        </span>
+        <span className="dock-flag" aria-hidden>
+          {t.reach.lang.current(l.names[lang])}
+        </span>
       </button>
       {settingsHref && (
         <>

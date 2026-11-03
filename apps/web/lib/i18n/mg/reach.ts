@@ -18,6 +18,11 @@ export const reach: Part<typeof fr> = {
     showVideo: "Ampidiro ny horonantsary",
     showAudio: "Ampidiro ilay hafatra am-peo", // relire (mg)
   },
+  // relire (mg)
+  lang: {
+    label: "Fiteny",
+    current: (name: string) => `Fiteny: ${name}`,
+  },
   font: {
     label: "Haben'ny soratra",
     smaller: "Ahelezo ny soratra",
