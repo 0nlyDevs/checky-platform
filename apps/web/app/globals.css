@@ -457,6 +457,36 @@ html:has([data-desk-bar]) {
   background: var(--raised);
   color: var(--foreground);
 }
+/* Search with its shortcut beside the glass, from 901 px on a device with a pointer that hovers. */
+.bar-kbd {
+  display: none;
+}
+@media (min-width: 901px) and (hover: hover) {
+  .bar-search {
+    display: inline-flex;
+    gap: 8px;
+    width: auto;
+    padding: 0 6px 0 11px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card);
+  }
+  .bar-kbd {
+    display: inline-flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 7px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+}
 .bar-icon:focus-visible {
   outline: 2px solid var(--foreground);
   outline-offset: 3px;
