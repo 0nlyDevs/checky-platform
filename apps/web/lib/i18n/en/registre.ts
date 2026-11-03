@@ -31,7 +31,7 @@ export const registre: NonNullable<Overrides["registre"]> = {
     addedNumber: "added, not in the original",
   },
   page: {
-    title: "Registry",
+    title: "Statements",
     lead: "Statements as their issuers published them, to compare word by word with what is going round. A registered original proves the words, not that they are true.",
     count: (n: number) => plural(n, "original", "originals"),
     tabsLabel: "Parts of the registry",

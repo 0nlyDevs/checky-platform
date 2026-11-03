@@ -75,8 +75,8 @@ function Onboarding() {
     };
     return (
       <div className="mx-auto max-w-2xl px-5 py-12 lg:py-16">
-        <p className="text-sm font-bold text-muted-foreground">{t.verification.onboarding.step}</p>
-        <h1 className="page-title mt-1 text-balance">{t.verification.onboarding.title}</h1>
+        <h1 className="page-title text-balance">{t.verification.onboarding.title}</h1>
+        <p className="mt-1 text-sm text-muted-foreground tabular">{t.verification.onboarding.step}</p>
         <p className="mt-2 max-w-prose text-muted-foreground">{t.verification.onboarding.lead}</p>
         <div className="mt-8">
           <RequestForm ws={created.id} outlet={created.name} onSent={go} onLater={go} />

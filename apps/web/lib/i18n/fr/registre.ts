@@ -32,7 +32,7 @@ export const registre = {
     addedNumber: "ajouté, absent de l'original",
   },
   page: {
-    title: "Registre",
+    title: "Communiqués",
     lead: "Les originaux des communiqués tels que leurs émetteurs les ont publiés, pour comparer mot à mot ce qui circule. Un original enregistré prouve les mots, pas qu'ils disent vrai.",
     count: (n: number) => plural(n, "original", "originaux"),
     tabsLabel: "Parties du registre",
