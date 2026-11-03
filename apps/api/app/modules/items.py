@@ -1,15 +1,18 @@
+import base64
+import binascii
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field
-from sqlalchemy import func, or_, select
+from sqlalchemy import TIMESTAMP, and_, case, cast, func, not_, or_, select, tuple_
 
 from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
 from app.core.models import Activity, Comment, Item
+from app.core.refs import next_ref
 from app.core.words import words
 
 router = APIRouter(tags=["items"])
@@ -53,6 +56,53 @@ class ItemOut(BaseModel):
 class ItemPage(BaseModel):
     items: list[ItemOut]
     total: int
+    # With `order`: the cursor of the next page (`after=`), null on the last one.
+    next: str | None = None
+    # With `tab`: how many dossiers each tab holds under the same search and assignee.
+    counts: dict[str, int] | None = None
+
+
+VERDICTS = ("true", "misleading", "false", "unverifiable")
+TABS = ("all", "todo", "confirm", "done")
+
+# When the rumour was first seen, else when the item was created. `first_seen_at` is free text in
+# the JSONB, so it is only cast when Postgres says it reads as a timestamp (never a 500).
+_seen_text = Item.data["first_seen_at"].astext
+SEEN = case(
+    (func.pg_input_is_valid(_seen_text, "timestamptz"), cast(_seen_text, TIMESTAMP(timezone=True))),
+    else_=Item.created_at,
+)
+
+
+def _tab_filter(tab: str):
+    """The dossier tabs of the numbered line, as the web reads them (components/claims/verdict.ts)."""
+    # A missing field reads as NULL in SQL: coalesce makes it a plain « no ».
+    confirmed = func.coalesce(Item.data["verdict"].astext.in_(VERDICTS), False)
+    suggested = func.coalesce(Item.data["verdict_suggested"].astext.in_(VERDICTS), False)
+    if tab == "done":
+        return confirmed
+    if tab == "confirm":
+        return and_(not_(confirmed), suggested)
+    if tab == "todo":
+        return and_(not_(confirmed), not_(suggested))
+    return None
+
+
+def _encode_cursor(seen: datetime, item_id: uuid.UUID) -> str:
+    raw = f"{seen.isoformat()}|{item_id}".encode()
+    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+def _decode_cursor(value: str) -> tuple[datetime, uuid.UUID]:
+    try:
+        raw = base64.urlsafe_b64decode(value + "=" * (-len(value) % 4)).decode()
+        seen, item_id = raw.split("|")
+        at = datetime.fromisoformat(seen)
+        if at.tzinfo is None:
+            raise ValueError
+        return at, uuid.UUID(item_id)
+    except (ValueError, UnicodeDecodeError, binascii.Error) as e:
+        raise ApiError(422, "bad_cursor", "This page cursor cannot be read") from e
 
 
 class CommentIn(BaseModel):
@@ -102,6 +152,14 @@ async def list_items(
     q: str | None = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    order: Literal["newest", "oldest"] | None = Query(
+        None, description="Sort by when the rumour was first seen and page with `after`"
+    ),
+    after: str | None = Query(None, description="The `next` cursor of the previous page"),
+    tab: Literal["all", "todo", "confirm", "done"] | None = Query(
+        None, description="Dossier tab; the answer then carries every tab's count"
+    ),
+    assignee: str | None = Query(None, description="`me`, `none` or a member's user id"),
 ) -> ItemPage:
     where = [Item.workspace_id == member.workspace_id]
     if status:
@@ -112,20 +170,85 @@ async def list_items(
         where.append(Item.type != "alert")
     if tag:
         where.append(Item.tags.contains([tag]))
-    if q:
-        like = f"%{q}%"
-        where.append(or_(Item.title.ilike(like), Item.body.ilike(like)))
+    if q and q.strip():
+        needle = q.strip().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        like = f"%{needle}%"
+        where.append(
+            or_(
+                Item.title.ilike(like, escape="\\"),
+                Item.body.ilike(like, escape="\\"),
+                Item.data["ref"].astext.ilike(like, escape="\\"),
+                func.array_to_string(Item.tags, " ").ilike(like, escape="\\"),
+            )
+        )
+    if assignee:
+        owner = Item.data["assignee_id"].astext
+        if assignee == "none":
+            where.append(owner.is_(None))
+        else:
+            where.append(owner == (member.user.id if assignee == "me" else assignee))
+
+    counts = None
+    if tab:
+        filters = {k: _tab_filter(k) for k in TABS}
+        row = (
+            await db.execute(
+                select(
+                    *(
+                        func.count().filter(f).label(k) if f is not None else func.count().label(k)
+                        for k, f in filters.items()
+                    )
+                ).where(*where)
+            )
+        ).one()
+        counts = {k: int(getattr(row, k)) for k in TABS}
+        tab_where = filters[tab]
+        if tab_where is not None:
+            where.append(tab_where)
+
     total = await db.scalar(select(func.count()).select_from(Item).where(*where))
-    rows = await db.scalars(
-        select(Item).where(*where).order_by(Item.created_at.desc()).limit(limit).offset(offset)
+
+    if order is None:
+        rows = await db.scalars(
+            select(Item).where(*where).order_by(Item.created_at.desc()).limit(limit).offset(offset)
+        )
+        return ItemPage(
+            items=[ItemOut.model_validate(i) for i in rows], total=total or 0, counts=counts
+        )
+
+    seen = SEEN.label("seen")
+    stmt = select(Item, seen).where(*where)
+    if after:
+        at, last_id = _decode_cursor(after)
+        key = tuple_(SEEN, Item.id)
+        stmt = stmt.where(
+            key < tuple_(at, last_id) if order == "newest" else key > tuple_(at, last_id)
+        )
+    if order == "newest":
+        stmt = stmt.order_by(SEEN.desc(), Item.id.desc())
+    else:
+        stmt = stmt.order_by(SEEN.asc(), Item.id.asc())
+    rows = (await db.execute(stmt.limit(limit + 1))).all()
+    more = len(rows) > limit
+    rows = rows[:limit]
+    nxt = _encode_cursor(rows[-1].seen, rows[-1].Item.id) if more and rows else None
+    return ItemPage(
+        items=[ItemOut.model_validate(r.Item) for r in rows],
+        total=total or 0,
+        next=nxt,
+        counts=counts,
     )
-    return ItemPage(items=[ItemOut.model_validate(i) for i in rows], total=total or 0)
 
 
 @router.post("/workspaces/{ws}/items", status_code=201)
 async def create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
     if "ref" in body.data:
         raise ApiError(422, "protected_fields", "References are assigned by the server")
+    if body.type == "claim":
+        # A dossier gets the newsroom's next FAN reference, allocated atomically (app/core/refs.py).
+        body = body.model_copy(
+            update={"data": {**body.data, "ref": await next_ref(db, member.workspace_id)}}
+        )
     return await _create_item(body, member, db)
 
 

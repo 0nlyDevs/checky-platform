@@ -135,6 +135,17 @@ export const fr = {
     ago: (d: string) => `il y a ${d}`,
     noFirstSeen: "Heure inconnue",
     total: (n: number) => plural(n, "dossier", "dossiers"),
+    more: {
+      label: "Suite de la liste",
+      shown: (n: number, total: number) => `${n} sur ${total}`,
+      left: (n: number) => (n === 1 ? "1 dossier de plus" : `${n} dossiers de plus`),
+      next: (n: number) => (n === 1 ? "Afficher le dernier dossier" : `Afficher les ${n} suivants`),
+      loading: "Chargement des dossiers suivants…",
+      added: (n: number) => (n === 1 ? "1 dossier de plus affiché." : `${n} dossiers de plus affichés.`),
+      all: (n: number) => (n === 1 ? "Le seul dossier est affiché" : `Les ${n} dossiers sont affichés`),
+      failed: "La suite n'a pas pu être chargée.",
+      retry: "Réessayer",
+    },
     columns: {
       ref: "Réf.",
       claim: "Rumeur",

@@ -83,8 +83,10 @@ def test_clients_cannot_poison_a_newsrooms_reference_counter(as_user):
     made = alice.post(base, json={"title": "ordinary"})
     assert made.status_code == 201
     item_id = made.json()["id"]
+    # A dossier created from the desk takes the first reference itself; the forged one took none.
+    assert made.json()["data"]["ref"] == "FAN-0001"
     assert alice.patch(f"{base}/{item_id}", json={"data": {"ref": huge}}).status_code == 422
-    assert _allocate(ws, 1) == ["FAN-0001"]
+    assert _allocate(ws, 1) == ["FAN-0002"]
 
 
 def test_existing_oversized_reference_does_not_break_allocation(as_user):

@@ -10,6 +10,7 @@ import {
   ArrowUpRight as ArrowUpRightGlyph,
   AddressBook,
   ArrowCounterClockwise,
+  ArrowDown,
   ArrowLeft,
   ArrowRight,
   ArrowSquareOut,
@@ -113,6 +114,7 @@ export const IconArrowSquareOut = duo(ArrowSquareOut);
 export const IconArrowUp = duo(ArrowUp);
 export const IconBooks = duo(Books);
 export const IconCalendarDots = duo(CalendarDots);
+export const IconArrowDown = duo(ArrowDown);
 export const IconCaretDown = duo(CaretDown);
 export const IconCaretRight = duo(CaretRight);
 export const IconCaretUp = duo(CaretUp);
