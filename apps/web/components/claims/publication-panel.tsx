@@ -49,7 +49,7 @@ export function NewsroomRules({ ws }: { ws: string }) {
     try { await api(path, { method: "PATCH", body: JSON.stringify({ settings: { ai_enabled: form.has("ai") } }) }); await mutate(); }
     catch { setError(true); } finally { setBusy(false); }
   }
-  return <section className="rounded-md border border-border p-5"><h2 className="font-semibold">{t.settings}</h2><p className="mt-1 text-sm text-muted-foreground">{t.settingsHelp}</p>{data && <form key={JSON.stringify(data.settings)} onSubmit={save} className="mt-4 space-y-3">
+  return <section className="rounded-md border border-border p-5"><h2 className="font-display text-lg font-bold">{t.settings}</h2><p className="mt-1 text-sm text-muted-foreground">{t.settingsHelp}</p>{data && <form key={JSON.stringify(data.settings)} onSubmit={save} className="mt-4 space-y-3">
 
     <label className="flex items-center gap-3"><input type="checkbox" name="ai" defaultChecked={data.settings.ai_enabled} className="size-4" />{t.aiToggle}</label>
     {error && <p role="alert">{t.failed}</p>}<Button disabled={busy}>{t.save}</Button>

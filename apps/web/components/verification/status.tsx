@@ -54,7 +54,7 @@ export function VerificationSection({ ws }: { ws: string }) {
   return (
     <section id="verification" aria-labelledby="verification-title" className="scroll-mt-24 rounded-lg border border-border bg-card p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="verification-title" className="font-semibold">
+        <h2 id="verification-title" className="font-display text-lg font-bold">
           {v.section.title}
         </h2>
         {s === "approved" ? (

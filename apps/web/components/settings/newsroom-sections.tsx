@@ -53,7 +53,7 @@ export function BeatsSection({ ws }: { ws: string }) {
 
   return (
     <section aria-labelledby="beats-title" className="rounded-lg border border-border bg-card p-5">
-      <h2 id="beats-title" className="font-semibold">
+      <h2 id="beats-title" className="font-display text-lg font-bold">
         {b.title}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{b.lead}</p>
@@ -124,7 +124,7 @@ export function PlaceSection({ ws }: { ws: string }) {
 
   return (
     <section aria-labelledby="place-title" className="rounded-lg border border-border bg-card p-5">
-      <h2 id="place-title" className="font-semibold">
+      <h2 id="place-title" className="font-display text-lg font-bold">
         {pl.title}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{pl.lead}</p>
@@ -219,7 +219,7 @@ export function OfficialSourcesSection({ ws }: { ws: string }) {
 
   return (
     <section aria-labelledby="official-title" className="rounded-lg border border-border bg-card p-5">
-      <h2 id="official-title" className="font-semibold">
+      <h2 id="official-title" className="font-display text-lg font-bold">
         {of.title} · {country}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{of.lead(country)}</p>

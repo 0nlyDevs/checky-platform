@@ -56,7 +56,7 @@ export function SmsSimulator({ ws }: { ws: string }) {
 
   return (
     <section aria-labelledby="sms-title" className="rounded-lg border border-border bg-card p-5">
-      <h2 id="sms-title" className="font-semibold">
+      <h2 id="sms-title" className="font-display text-lg font-bold">
         {s.title}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{s.lead}</p>

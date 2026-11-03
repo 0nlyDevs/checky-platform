@@ -69,7 +69,7 @@ export function RadiosSection({ ws, canEdit }: { ws: string; canEdit: boolean })
 
   return (
     <section aria-labelledby="radios-title" className="rounded-lg border border-border bg-card p-5">
-      <h2 id="radios-title" className="font-semibold">
+      <h2 id="radios-title" className="font-display text-lg font-bold">
         {r.title}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{r.lead}</p>

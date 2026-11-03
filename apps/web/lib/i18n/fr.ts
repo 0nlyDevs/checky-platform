@@ -251,7 +251,21 @@ export const fr = {
     expires: (date: string) => `Expire le ${date}`,
   },
   settings: {
-    title: "Paramètres",
+    title: "Réglages",
+    index: {
+      label: "Sections des réglages",
+      verification: "Vérification",
+      team: "Équipe",
+      rules: "Règles de la rédaction",
+      beats: "Rubriques",
+      place: "Lieu et heure",
+      official: "Sources officielles",
+      public: "Verdicts publics",
+      sms: "Ligne SMS",
+      radios: "Radios partenaires",
+      health: "État des services",
+      demo: "Démonstration",
+    },
     lead: "L'état des services dont dépend l'application, et les outils de démonstration.",
     healthTitle: "État des services",
     allUp: "Tous les services configurés répondent.",
@@ -303,7 +317,7 @@ export const fr = {
     copy: "Copier le texte",
     copied: "Texte copié",
     failed: "Le texte n'a pas pu être rédigé. Réessayez.",
-    aiDown: "Aucun modèle d'IA ne répond. Vérifiez Paramètres.",
+    aiDown: "Aucun modèle d'IA ne répond. Vérifiez les Réglages.",
     // Words printed on the card itself, in the card's language.
     words: {
       fr: {
@@ -348,7 +362,7 @@ export const fr = {
     at: (time: string) => `à ${time}`,
     errors: {
       embeddings_unavailable: "La recherche n'est pas configurée (clé d'embedding manquante).",
-      ai_unavailable: "Aucun modèle d'IA ne répond. Vérifiez Paramètres.",
+      ai_unavailable: "Aucun modèle d'IA ne répond. Vérifiez les Réglages.",
       no_answer: "L'agent n'a pas conclu dans le nombre d'étapes prévu. Reformulez la question.",
       generic: "La réponse a été interrompue. Réessayez.",
     } as Record<string, string>,
@@ -359,7 +373,7 @@ export const fr = {
     run: "Analyser avec l'IA",
     rerun: "Relancer l'analyse",
     running: "Lecture des sources…",
-    failed: "L'analyse a échoué. Vérifiez Paramètres puis réessayez.",
+    failed: "L'analyse a échoué. Vérifiez les Réglages puis réessayez.",
     noSources: "Aucune source jointe : l'IA ne lira que les autres dossiers de la rédaction qui en parlent, sinon elle répondra « invérifiable ».",
     facts: "Faits à vérifier",
     evidence: "Éléments de preuve",
@@ -458,7 +472,7 @@ export const fr = {
     claimCreated: "Dossier ouvert",
     claimBody: (title: string, time: string) => `Extraite de « ${title} » à ${time}.`,
     droppedQuotes: (n: number) => (n === 1 ? "1 citation écartée : introuvable dans la transcription." : `${n} citations écartées : introuvables dans la transcription.`),
-    extractFailed: "L'extraction a échoué. Vérifiez Paramètres puis réessayez.",
+    extractFailed: "L'extraction a échoué. Vérifiez les Réglages puis réessayez.",
     errors: {
       bad_url: "Ce lien n'est pas valide ou n'est pas accessible depuis Internet.",
       unsupported_type: "Ce type de fichier n'est pas accepté. Envoyez une image, un PDF, un fichier audio ou une vidéo.",
