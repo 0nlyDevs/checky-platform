@@ -1,70 +1,173 @@
+<div align="center">
+
+<img src="apps/web/public/logo.svg" alt="Checky" width="84" height="84">
+
 # Checky
 
-Checky (« La torche des rédactions », named FANILO until 2 Nov 2026; the repos were renamed checky-platform, checky-mobile and checky-extension on 3 Nov) is an
-app for newsrooms, Madagascar first, to verify claims, track misinformation and spot AI-generated
-content, made for the **FANILO Hackathon** (IFM + French Embassy press service, Antananarivo).
-A journalist follows a rumour from its first appearance to a signed verdict, and Checky sends the
-truth back down the same road (WhatsApp, Facebook, radio, SMS, a printed poster). The product
-rules (knowing is not publishing, facts solid and readings dashed, the crew of checks, one kind
-of account, « tout le monde peut vérifier ; seules les rédactions vérifiées publient ») are in
-[`CLAUDE.md`](CLAUDE.md).
+**« La torche des rédactions ».** Verify a rumour, show the proof, send the truth back down the same road.
 
-The hackathon problem is presented on **Mon 2 Nov 2026, 08:00**. Hand-in is **Tue 3 Nov, 20:00**
-and the pitch is on **Wed 4 Nov**. Journalists follow each rumour from its first appearance to
-a sourced, confirmed verdict in one shared workspace.
+[![CI](https://github.com/0nlyDevs/checky-platform/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/0nlyDevs/checky-platform/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-checky--mg.vercel.app-0a0a0b?logo=vercel&logoColor=white)](https://checky-mg.vercel.app)
+![Hackathon](https://img.shields.io/badge/FANILO%20Hackathon-IFM%20%C3%97%2042-c42a20)
+![Madagascar](https://img.shields.io/badge/made%20for-Madagascar-0b6b3a)
+![Languages](https://img.shields.io/badge/UI-Malagasy%20%C2%B7%20Fran%C3%A7ais%20%C2%B7%20English-1d58c4)
 
-- Product requirements: [`docs/PRD.md`](docs/PRD.md), a copy of the [PRD Claude Doc](https://claude.ai/artifact/XFypCd4WmGLBm6pMbGMwrv) (keep both in sync)
-- Design rules: [`apps/web/DESIGN.md`](apps/web/DESIGN.md) and [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md)
-- Pitch kit (deck, timed script, demo video, day-of checklist): [`docs/pitch/README.md`](docs/pitch/README.md)
-- Full technical reference (architecture, API, status, next steps): [`CLAUDE.md`](CLAUDE.md).
-  It is also what Claude Code reads, so keep it up to date when something changes.
+![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Python](https://img.shields.io/badge/Python-3.13-3776ab?logo=python&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-4169e1?logo=postgresql&logoColor=white)
+![pgvector](https://img.shields.io/badge/pgvector-RAG-336791)
+![Neon](https://img.shields.io/badge/Neon-database%20%2B%20storage-00e599?logoColor=black)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-realtime-010101?logo=socketdotio&logoColor=white)
+![Better Auth](https://img.shields.io/badge/Better%20Auth-JWT-6d28d9)
+![Groq](https://img.shields.io/badge/AI-Groq%20%C2%B7%20Gemini%20%C2%B7%20NVIDIA%20%C2%B7%20Claude-f55036)
 
-## What is in here
+**[Live demo](https://checky-mg.vercel.app)** · **[Phone app](https://github.com/0nlyDevs/checky-mobile)** · **[Browser extension](https://github.com/0nlyDevs/checky-extension)** · **[Development guide](#development-guide)**
+
+</div>
+
+---
+
+## Why Checky
+
+In Madagascar a rumour travels from a Facebook reel to WhatsApp groups, to a regional radio, to an SMS chain in a few hours, and the correction arrives nine hours later, if at all. Journalists need one tool to qualify, check and answer, in Malagasy, French and English, even with a weak connection.
+
+Checky follows a claim from its first appearance to a signed verdict, then sends the answer back along the same road: a WhatsApp card, a radio line, an SMS, a printed poster with a sealed QR code.
+
+> **Knowing is not publishing.** Checky only *suggests* a verdict (dashed outline). A journalist always reads the proof, confirms and signs (solid). Anything public only leaves a newsroom that the Checky team has verified: *everyone can check, only verified newsrooms publish.*
+
+![Vérifier: a WhatsApp rumour checked by a crew of agents](docs/img/web-verifier.jpg)
+
+## What it does
+
+| Need | What Checky gives you |
+|---|---|
+| **Check a claim** | Paste a message, a link, an image, a recording or dictate it. A crew of agents reads it, looks for the first appearance, compares it with official communiqués and figures, fact-checkers and the web, then a contradictor tries to break the conclusion. |
+| **Trust level** | A confidence level computed from the evidence found (never by the model), with the facts shown first and the AI reading dashed. « Sans IA » keeps only the facts. |
+| **Images and video** | EXIF and metadata, AI-generator traces, C2PA content credentials, reverse-search links, faces blurred by default, voice transcription (Malagasy and French). |
+| **National watch** | Map of what circulates by region, radio sentences heard on air grouped by rumour, SMS and tips, watched words, rumour weather, dangerous-rumour alerts. |
+| **Directory and figures** | Who to call and *who can prove it*, with the question ready; official documents, a registry of originals with offline seals, dated official figures. |
+| **Story angles** | Three to five angles for a topic, each resting on numbered facts. |
+| **AI assistant** | On every page: it knows the desk, answers with sources and *proposes* actions that a journalist confirms with a click (or a spoken « oui »). |
+| **Sign and send back** | Sign a verdict, then get a square or vertical card, a radio line, an SMS, a printable poster with a sealed QR code, and a PDF due-diligence record. |
+| **For everyone** | Public pages with no account: « Est-ce déjà vérifié ? », tips with a follow-up link, the official feed, today's flashes for radios (`/flashs`). |
+| **Hard conditions** | Offline queue and cache on the phone, SMS line for basic phones, A−/A+ text size and a low-bandwidth « Mode éco ». |
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/img/web-rubrique.jpg" alt="My beat and the assistant"><br><sub><b>Ma rubrique</b>: what circulates this morning, the rumour weather and the assistant.</sub></td>
+    <td width="50%"><img src="docs/img/web-veille.jpg" alt="National watch map"><br><sub><b>Veille</b>: what circulates by region, radio sentences and SMS.</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="docs/img/web-trajet.jpg" alt="The road of a rumour"><br><sub><b>Le trajet</b>: the rumour's road, and where the truth has not followed yet.</sub></td>
+    <td width="50%"><img src="docs/img/web-public.jpg" alt="Public page"><br><sub><b>Public site</b>: « Est-ce déjà vérifié ? » with no account.</sub></td>
+  </tr>
+</table>
+
+## How a check works
+
+```mermaid
+flowchart LR
+    A[Rumour<br/>text, link, image, audio] --> B[Reader<br/>extracts the claim]
+    B --> C[Fact agents in parallel<br/>origin · registry · figures<br/>fact-checkers · web · images]
+    C --> D[Contradictor<br/>attacks the conclusion]
+    D --> E[Confidence<br/>computed from evidence]
+    E --> F{Journalist<br/>reads and signs}
+    F -->|verdict + seal| G[Card · radio line<br/>SMS · poster + QR]
+```
+
+Four answers only, never a fifth: **Vrai**, **Faux**, **Trompeur**, **Invérifiable**. Each is an icon plus a word, never colour alone. A quote is kept only if it appears word for word in its source.
+
+## Architecture
+
+```mermaid
+flowchart TB
+    subgraph Clients
+        W[Web desk and public site<br/>Next.js 16]
+        M[Phone app<br/>Expo, Android]
+        X[Browser extension<br/>Manifest V3]
+    end
+    W & M & X -->|JWT or public routes| API[FastAPI<br/>REST + SSE + Socket.IO]
+    API --> DB[(PostgreSQL 18<br/>pgvector · Neon)]
+    API --> S3[(Object storage<br/>Neon S3)]
+    API --> Q[Job queue<br/>in Postgres, no Redis]
+    API --> AI[AI gateway with fallback<br/>Groq · Gemini · NVIDIA · Claude]
+    API --> EV[Evidence<br/>fact-checkers · Tavily · Wikipedia<br/>World Bank · reverse image search]
+    W -.->|sign-in| BA[Better Auth<br/>email + password, JWT]
+    BA --> DB
+```
+
+- **Login** lives in the web app (Better Auth). The browser gets a 15-minute JWT and calls the API with it; the API checks it against the web app's JWKS.
+- **One Postgres, two schemas:** `better_auth` (users, sessions) and `app` (everything else, Alembic migrations).
+- **Background jobs** run in the API process from a Postgres table claimed with `SELECT … FOR UPDATE SKIP LOCKED`. No Redis.
+- **AI gateway** (`apps/api/app/core/ai.py`) falls back from provider to provider, rotates keys when a quota is hit, and logs every call without the prompt text. Agents share one tool loop and guardrails (`apps/api/app/modules/guard.py`); see [`docs/WEB_SEARCH.md`](docs/WEB_SEARCH.md).
+- **One kind of account.** Every member of a newsroom can do everything; there are no roles.
+- **Pictures leave the desk blurred:** every upload gets a single-frame, EXIF-free copy with faces blurred (OpenCV); only that copy is shown or sent to reverse search.
+
+## Tech stack
+
+| Layer | Technologies |
+|---|---|
+| **Web frontend** | Next.js 16 (App Router, Turbopack), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, SWR, dnd-kit, Leaflet, html-to-image |
+| **Backend** | FastAPI, Python 3.13 (uv), SQLAlchemy 2 (async), Alembic, python-socketio, httpx, pydantic |
+| **Database** | PostgreSQL 18 on Neon, pgvector (768-d embeddings, HNSW) for RAG |
+| **Auth** | Better Auth (email + password, JWT EdDSA, Expo plugin for the phone app) |
+| **Files** | Neon object storage (S3-compatible), presigned uploads |
+| **AI** | Groq (gpt-oss-120b, Whisper), Gemini (chat and embeddings), NVIDIA, Claude (optional), ElevenLabs (voice), all behind one gateway |
+| **Evidence** | Google Fact Check Tools, Tavily, Wikipedia (fr/mg/en), World Bank, SerpApi / Google Lens |
+| **Media** | Pillow, OpenCV (face blur), ffmpeg, pypdf, trafilatura, C2PA |
+| **Seals** | Ed25519 signatures and QR codes (segno), checked offline |
+| **Mobile** | Expo SDK 58, React Native 0.88, Expo Router |
+| **Extension** | Manifest V3, Vite, no runtime framework |
+| **Quality** | pytest, ruff, tsc, eslint, GitHub Actions on a pgvector Postgres |
+| **Hosting** | Vercel (web), Render (API), Neon (database and storage) |
+
+## The three repositories
+
+| Repository | What it is | Stack |
+|---|---|---|
+| [**checky-platform**](https://github.com/0nlyDevs/checky-platform) (this one) | Web desk, public site and the API every client talks to | Next.js, FastAPI, PostgreSQL |
+| [**checky-mobile**](https://github.com/0nlyDevs/checky-mobile) | Android app: *Share → Checky* from WhatsApp, Facebook or TikTok, offline queue, citizen mode, seal scanner | Expo, React Native |
+| [**checky-extension**](https://github.com/0nlyDevs/checky-extension) | Right-click a text, image or link and check it in a side panel, with no account | Manifest V3, Vite |
 
 ```
-apps/web/         Next.js 16 (App Router) + Tailwind v4 + shadcn/ui + Better Auth   → UI in French
-apps/api/         FastAPI + SQLAlchemy (async) + Alembic + Socket.IO, Python 3.13     → business logic, AI
-packages/shared/  TypeScript types generated from the API (do not edit src/api.d.ts by hand)
-docs/PRD.md       What we are building and why
+apps/web/         Next.js 16 web app (UI in French, Malagasy and English)
+apps/api/         FastAPI API, AI gateway, agents, job queue, migrations
+packages/shared/  TypeScript types generated from the API (do not edit by hand)
+docs/             PRD, web search setup, image detector, pitch kit, screenshots
 ```
 
-How the pieces talk:
+## Quick start
 
-- **Login** happens in the web app (Better Auth, email + password). The browser then gets a
-  15-minute token and calls the API with it. The API checks the token against the web app.
-- **One Postgres database, two schemas:** `better_auth` (users and sessions, owned by Better
-  Auth) and `app` (everything else, owned by Alembic migrations).
-- **Background jobs** run inside the API process from a Postgres table (no Redis).
-- **Realtime** updates go over Socket.IO from the API.
-- **AI** calls go through one gateway (`apps/api/app/core/ai.py`) that falls back from Groq to
-  Gemini to NVIDIA (and Claude, once its key is set) when a provider fails. Every outside-service
-  key (AI, voice, Tavily search, fact-checks, image detection) may be a comma-separated list; a key
-  that hits its quota is set aside and the next one is used.
-- **Agents** (Vérifier's deep search, the docked assistant's desk copilot and public guide) share
-  one tool loop and one set of guardrails (`apps/api/app/modules/guard.py`); they search the web,
-  Wikipedia and fact-checkers (`apps/api/app/core/websearch.py`). Dedicated web search uses
-  Tavily when configured; keyless HTML search is best-effort and may fail on hosting IPs.
-  See [`docs/WEB_SEARCH.md`](docs/WEB_SEARCH.md) for the free-plan setup and cost guards.
-- **One kind of account.** Every member of a newsroom can do everything. Anything public (verdicts,
-  seals, SMS, radio flashes) only leaves a newsroom that the Checky team has verified
-  (`Workspace.publishes`; reviewers are the user ids in `PLATFORM_ADMINS`, page `/checky`).
-- **Pictures leave the desk blurred.** Every uploaded image and video keyframe gets a single-frame,
-  EXIF-free copy with faces blurred (OpenCV, `apps/api/app/core/media.py`); only that copy is shown
-  or sent to reverse image search. ffmpeg only reads plain video containers.
-- **Reading preferences:** A−/A+ and « Mode éco », per device (`apps/web/lib/prefs.ts`).
-- **In production:** web on Vercel, API on Render, database and file storage on **Neon**.
-- **Phone app:** [`0nlyDevs/checky-mobile`](https://github.com/0nlyDevs/checky-mobile) (Expo,
-  React Native). A video, photo or link shared to Checky from WhatsApp, Facebook or TikTok is
-  uploaded, transcribed and checked through the same API. It signs in through Better Auth's Expo
-  plugin (`apps/web/lib/auth.ts`, trusted scheme `fanilo://`).
-- **Browser extension:** [`0nlyDevs/checky-extension`](https://github.com/0nlyDevs/checky-extension)
-  checks selected text and public links/images in a side panel **without an account**. Public
-  routes return published verdict candidates, external sources and image provenance hints, not
-  new AI verdicts or private dossiers. Connection is optional for saving into a newsroom or using
-  its authenticated analysis. It never confirms or publishes a verdict. Its README covers installation.
-  Public text checks now prepare grounded queries with a bounded AI call, stream actual progress,
-  distinguish search outages from empty results, and label source passages and possible reprises.
-  The optional pixel-detector contract and evaluation gate are in [`docs/IMAGE_DETECTOR.md`](docs/IMAGE_DETECTOR.md).
+```bash
+gh repo clone 0nlyDevs/checky-platform && cd checky-platform
+npm install && (cd apps/api && uv sync)
+cp .env.example .env && cp .env apps/web/.env.local    # then fill in .env
+(cd apps/api && uv run uvicorn app.main:app --reload --port 8000)   # terminal 1
+(cd apps/web && npx next dev -p 3000)                                # terminal 2
+```
+
+Open http://localhost:3000, create an account and tick **« Données de démonstration »** to get example rumours, sources and verdicts. API docs: http://localhost:8000/docs. The full setup (databases, environment variables, first migration) is in the [development guide](#development-guide) below.
+
+## More documentation
+
+- [`docs/PRD.md`](docs/PRD.md): what we are building and why
+- [`apps/web/DESIGN.md`](apps/web/DESIGN.md) and [`apps/web/PRODUCT.md`](apps/web/PRODUCT.md): design system and product rules
+- [`docs/WEB_SEARCH.md`](docs/WEB_SEARCH.md), [`docs/IMAGE_DETECTOR.md`](docs/IMAGE_DETECTOR.md): search and image-detector setup
+- [`docs/pitch/README.md`](docs/pitch/README.md): pitch kit
+- [`CLAUDE.md`](CLAUDE.md): the full technical reference (architecture, API, status), also read by Claude Code
+- [`THIRD_PARTY.md`](THIRD_PARTY.md): licence of every library
+
+## About
+
+Built by team **OnlyDevs** (students at HEI) for the **FANILO Hackathon**, organised by **IFM** and **42** in Antananarivo, 2 to 4 November 2026. Every rumour shown as an example in the app is fictional and labelled.
+
+---
+
+# Development guide
 
 ## Set up (about 10 minutes)
 
