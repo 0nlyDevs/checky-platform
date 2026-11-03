@@ -70,7 +70,11 @@ export async function GET(request: Request) {
   } catch {
     // The page still explains the unavailable feed in the selected language.
   }
-  const labels = { ...fr.publicLayer.flashs, ...(lang === "mg" ? mg.publicLayer?.flashs : lang === "en" ? en.publicLayer?.flashs : {}) };
+  const labels = {
+    ...fr.publicLayer.flashs,
+    ...(lang === "mg" ? mg.publicLayer?.flashs : lang === "en" ? en.publicLayer?.flashs : {}),
+    hero: (lang === "mg" ? mg.look?.flashs?.hero : lang === "en" ? en.look?.flashs?.hero : undefined) ?? fr.look.flashs.hero,
+  };
   const mark = url.searchParams.get("mark");
   const html = renderFlashsHtml({ lang, labels, data, radio, token: radio ? token : null, badRadio, mark: mark === "aired" || mark === "failed" ? mark : null });
   const headers = new Headers({

@@ -434,6 +434,9 @@
   border-color: var(--foreground);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--foreground) 12%, transparent);
 }
+.pub-search-wide {
+  width: min(100%, 400px);
+}
 .pub-search input {
   flex: 1;
   min-width: 0;
@@ -984,4 +987,88 @@
   border-color: var(--primary);
   background: var(--primary);
   color: var(--primary-foreground);
+}
+
+/* ---------- /scanner: the camera as a viewfinder ---------- */
+.scan-finder {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  background: #0a0a0b;
+}
+.scan-target {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 46%;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  pointer-events: none;
+}
+.scan-target i {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f2ee;
+}
+.scan-target i:nth-child(1) {
+  left: 0;
+  top: 0;
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 16px 0 0 0;
+}
+.scan-target i:nth-child(2) {
+  right: 0;
+  top: 0;
+  border-left: 0;
+  border-bottom: 0;
+  border-radius: 0 16px 0 0;
+}
+.scan-target i:nth-child(3) {
+  left: 0;
+  bottom: 0;
+  border-right: 0;
+  border-top: 0;
+  border-radius: 0 0 0 16px;
+}
+.scan-target i:nth-child(4) {
+  right: 0;
+  bottom: 0;
+  border-left: 0;
+  border-top: 0;
+  border-radius: 0 0 16px 0;
+}
+.scan-line {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  background: #f3f2ee;
+  box-shadow: 0 0 16px 2px rgba(243, 242, 238, 0.55);
+  animation: scan-sweep 2.4s var(--ease-theme) infinite alternate;
+  pointer-events: none;
+}
+@keyframes scan-sweep {
+  from {
+    top: 10%;
+  }
+  to {
+    top: 82%;
+  }
+}
+/* Fixed paper on an ink strip over the camera, in both themes. */
+.scan-cap {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(10, 10, 11, 0.78);
+  color: #f3f2ee;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-align: center;
 }

@@ -24,6 +24,10 @@ export const look = {
     stepsLabel: "Les étapes de l'inscription",
     credits: "Vidéo : Wikimedia Commons",
   },
+  official: { hero: ["Le fil", "*officiel*"] },
+  scanner: { hero: ["Scanner", "un *sceau*"] },
+  seal: { hero: ["Vérifier", "un *sceau*"] },
+  flashs: { hero: "Flashs du *jour*" },
   verdict: {
     seal: "Rédaction vérifiée par Checky",
   },

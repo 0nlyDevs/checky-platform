@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { SealStatus, SignedFields } from "@/components/seal/seal-result";
 import { useSealCheck } from "@/components/seal/use-seal-check";
 import { CheckForm } from "@/components/site/public/check";
+import { Em, Lines } from "@/components/site/public/kit";
 import { Button } from "@/components/ui/button";
 import { useMoment, useT } from "@/lib/i18n";
 import { IconArrowRight, IconCamera, IconCircleNotch, IconImage, IconNewspaper, IconStop, IconWarning } from "@/lib/icons";
@@ -90,9 +91,16 @@ function Camera({ onCode, onDenied }: { onCode: (text: string) => void; onDenied
     };
   }, [onCode, onDenied]);
   return (
-    <div className="relative overflow-hidden rounded-md border-2 border-foreground bg-foreground">
+    <div className="scan-finder">
       <video ref={video} muted playsInline className="aspect-[4/3] w-full object-cover" aria-label={sc.aiming} />
-      <p className="absolute inset-x-0 bottom-0 bg-foreground/80 px-3 py-2 text-center text-sm font-bold text-background">{sc.aiming}</p>
+      <span className="scan-target" aria-hidden>
+        <i />
+        <i />
+        <i />
+        <i />
+      </span>
+      <span className="scan-line" aria-hidden />
+      <p className="scan-cap">{sc.aiming}</p>
     </div>
   );
 }
@@ -172,16 +180,18 @@ export function ScannerView({ ws }: { ws?: string }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-4 pt-8 pb-20 lg:px-10 lg:pt-12">
-      <h1 className="page-title">{sc.title}</h1>
-      <p className="mt-3 max-w-[62ch] text-lg text-pretty text-muted-foreground">{sc.lead}</p>
+    <div className="mx-auto max-w-3xl px-4 pt-10 pb-24 lg:px-10 lg:pt-16">
+      <Lines className="pub-display" lines={t.look.scanner.hero.map((line, i) => <Em key={i} text={line} />)} />
+      <p className="pub-lead rise mt-7 max-w-[62ch]" style={{ "--d": "0.25s" } as React.CSSProperties}>
+        {sc.lead}
+      </p>
 
       <div className="mt-8 space-y-6">
         {code ? (
           isSeal ? (
             <ScanResult url={code} onAgain={() => setCode(null)} />
           ) : (
-            <div className="space-y-3 rounded-md border border-border bg-card p-4">
+            <div className="space-y-3 rounded-[24px] border border-border bg-card p-5">
               <p className="flex items-center gap-2 font-bold">
                 <IconWarning className="size-5" aria-hidden /> {sc.notSeal}
               </p>
@@ -195,16 +205,16 @@ export function ScannerView({ ws }: { ws?: string }) {
         ) : camera ? (
           <>
             <Camera onCode={onCode} onDenied={onDenied} />
-            <Button type="button" variant="outline" onClick={() => setCamera(false)}>
+            <Button type="button" variant="outline" size="xl" className="rounded-full px-6" onClick={() => setCamera(false)}>
               <IconStop aria-hidden /> {sc.stop}
             </Button>
           </>
         ) : (
           <div className="flex flex-wrap gap-3">
-            <Button type="button" size="xl" variant="action" onClick={() => setCamera(true)}>
+            <Button type="button" size="xl" variant="action" className="rounded-full px-6" onClick={() => setCamera(true)}>
               <IconCamera aria-hidden /> {sc.start}
             </Button>
-            <Button asChild type="button" size="xl" variant="outline">
+            <Button asChild type="button" size="xl" variant="outline" className="rounded-full px-6 has-focus-visible:ring-2 has-focus-visible:ring-ring">
               <label className="cursor-pointer">
                 <IconImage aria-hidden /> {sc.pickQr}
                 <input type="file" accept="image/*" className="sr-only" data-scan="qr" onChange={(e) => void qrPhoto(e.target.files?.[0])} />
@@ -219,12 +229,12 @@ export function ScannerView({ ws }: { ws?: string }) {
           </p>
         )}
 
-        <section aria-labelledby="page-photo" className="border-t border-border pt-6">
+        <section aria-labelledby="page-photo" className="rounded-[24px] border border-border bg-card p-5 md:p-6">
           <h2 id="page-photo" className="flex items-center gap-2 font-display text-xl font-bold">
             <IconNewspaper className="size-5" aria-hidden /> {sc.pageTitle}
           </h2>
           <div className="mt-3 flex flex-wrap items-center gap-3">
-            <Button asChild variant="outline" disabled={Boolean(busy)}>
+            <Button asChild variant="outline" size="xl" className="rounded-full px-6 has-focus-visible:ring-2 has-focus-visible:ring-ring" disabled={Boolean(busy)}>
               <label className="cursor-pointer">
                 <IconCamera aria-hidden /> {sc.pickPage}
                 <input type="file" accept="image/*" capture="environment" className="sr-only" data-scan="page" onChange={(e) => void pagePhoto(e.target.files?.[0])} />
