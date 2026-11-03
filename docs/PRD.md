@@ -220,13 +220,17 @@ Checky (2 Nov) adds the newsroom's shelves and the road back, on the same base:
 | Feature | What it does | Built on |
 | --- | --- | --- |
 | C1. The crew (Vérifier) | Paste a message, a link or a file: eight fact checks race in parallel (provenance, registry, figures, fact-checkers, web, archives, source credibility, tone), then a dashed reading, a contradictor and a confidence score computed from the evidence; « Mode sans IA » keeps the facts | `graph.py`, `crew.py`, `confidence.py`, `tone.py`, `credibility.py` |
-| C2. Sign and publish | « Signer et publier » turns the verdict solid under the newsroom's byline; batch sign; « Reprendre ce verdict » from a fact-checker's review; optional double signature; carnet de diligence and an Ed25519 attestation | `signing.py`, `attest.py` |
+| C2. Sign and publish | « Signer et publier » turns the verdict solid under the newsroom's byline; batch sign; « Reprendre ce verdict » from a fact-checker's review; carnet de diligence and an Ed25519 attestation | `signing.py`, `attest.py` |
 | C3. Qui peut le prouver | The one person who can prove the missing point, with their official page and a ready question sent by WhatsApp, mail or SMS; the answer becomes a dated source | `directory.py`, `/reponse/[token]` |
 | C4. Registre and sceau | Originals registered by institutions, a quoted communiqué compared word by word (Authentique, Modifié, Introuvable, Incohérent), an Ed25519 seal verified offline from a QR, the public « Fil officiel » | `registry.py`, `seal.py`, `/sceau/[id]`, `/officiel` |
 | C5. Chiffres | Every number in a claim against the official figure, its source, date and age; World Bank refresh | `figures.py`, `numbers.py` |
-| C6. Ma rubrique, Veille, À l'antenne | A journalist's morning page by beats and places; the feed of what circulates (tips, SMS, press, radio clips) with a map; veilleurs record what a radio said; watched words; the rumour weather by season; story angles | `rubrique.py`, `veille.py`, `seasons.py` |
-| C7. Trajet and Diffuser | The rumour's stops and the truth's, the gaps, and one button to send the verdict back: card, radio line, flash, SMS, poster with QR | `trajet.py` |
+| C6. Ma rubrique, Veille, À l'antenne | A journalist's morning page by beats and places; the feed of what circulates (tips, SMS, press, radio clips) with a map; « Entendu à la radio » records what a station said in ten seconds; watched words; the rumour weather by season; story angles | `rubrique.py`, `veille.py`, `seasons.py` |
+| C7. Trajet and Diffuser | The rumour's stops and the truth's, the gaps, and one button to send the verdict back: card, radio line, flash, SMS, poster with a sealed QR; Malagasy formats go out only as the exact text a journalist reread (« Relu en malgache ») | `trajet.py` |
 | C8. Public layer and SMS | A citizen's check answers with a signed verdict, a fact-checker's review or the facts alone; « Me prévenir »; an SMS line with keywords, hashed numbers and an outbox; flashs of the day; short links | `verify_public.py`, `sms.py`, `/flashs`, `/v/[ref]` |
+| C9. Alerts | The same dangerous rumour across tips, SMS, radio and dossiers grouped into one alert (ALR-…), French and Malagasy alike; a journalist splits or merges; danger level adjustable with a logged reason | `alerts.py` |
+| C10. Est-ce bien eux ? | A pasted message's attribution, page, phone number and headline compared with the Annuaire (contact kinds, declared official numbers), the registry and Veille: facts, never a verdict | `gestures.py`, `directory.py` |
+| C11. Safe pictures | Every uploaded image and video keyframe gets a single-frame, EXIF-free, face-blurred copy; only it is shown or reverse-searched; an original is revealed on request with the look logged; « déjà vue » recall | `media.py`, `media_api.py` |
+| C12. Reading preferences | A−/A+ text size and « Mode éco » (system fonts, no motion, slower polling, images and maps on request), remembered per device | `lib/prefs.ts`, `components/prefs/` |
 
 ### F1. Claim checker
 
