@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { IconCircleNotch, IconEye, IconEyeSlash } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { clearApiToken } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
 import { t } from "@/lib/i18n/live";
 
@@ -18,7 +19,6 @@ function errorMessage(code: string | undefined): string {
 }
 
 export function AuthForm({ mode }: { mode: Mode }) {
-  const router = useRouter();
   const next = useSearchParams().get("suite");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,9 +40,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
         setError(errorMessage(error.code));
         return;
       }
-      // Only follow same-site paths.
-      router.replace(next?.startsWith("/") && !next.startsWith("//") ? next : "/");
-      router.refresh();
+      // Only follow same-site paths. A full page load, not a client navigation: the previous
+      // account's /me, newsrooms and API token stayed in memory, and a new account was sent into
+      // the last user's newsroom (a 404 and an empty Ma rubrique).
+      clearApiToken();
+      window.location.replace(next?.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch {
       setError(t.auth.errors.network);
     } finally {

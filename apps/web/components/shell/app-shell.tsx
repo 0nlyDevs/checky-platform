@@ -2,7 +2,7 @@
 
 import type { Me } from "@fanilo/shared";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import useSWR from "swr";
 import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon, IconPlus, IconSealCheck, IconSignOut, IconSun } from "@/lib/icons";
@@ -75,15 +75,14 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
 
 /** The avatar: who is signed in, the newsroom's pages (Équipe, Paramètres), the theme, sign out. */
 function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: string; team: boolean; admin?: boolean }) {
-  const router = useRouter();
   const { theme, setTheme } = useTheme();
 
   async function signOut() {
     clearApiToken();
     await clearPrivateCache();
     await authClient.signOut();
-    router.replace("/connexion");
-    router.refresh();
+    // A full page load drops everything the account left in memory (SWR's /me and newsrooms).
+    window.location.replace("/connexion");
   }
 
   return (
