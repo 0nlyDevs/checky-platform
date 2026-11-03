@@ -2345,6 +2345,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/sms/gateway": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Webhook */
+        post: operations["webhook_api_v1_public_sms_gateway_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/verification": {
         parameters: {
             query?: never;
@@ -6023,6 +6040,18 @@ export interface components {
             /** Reviewed At */
             reviewed_at?: string | null;
             request?: components["schemas"]["RequestOut"] | null;
+        };
+        /** WebhookOut */
+        WebhookOut: {
+            /**
+             * Ok
+             * @default true
+             */
+            ok: boolean;
+            /** Action */
+            action: string;
+            /** Reason */
+            reason?: string | null;
         };
         /** WhoContact */
         WhoContact: {
@@ -11109,6 +11138,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SmsOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    webhook_api_v1_public_sms_gateway_post: {
+        parameters: {
+            query?: {
+                secret?: string | null;
+            };
+            header?: {
+                "x-signature"?: string | null;
+                "x-timestamp"?: string | null;
+                "x-gateway-secret"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookOut"];
                 };
             };
             /** @description Validation Error */

@@ -118,6 +118,17 @@ class Settings(BaseSettings):
     seal_secret: str = ""
     # The Android SMS gateway (or the simulator in Paramètres) sends `X-Gateway-Secret` with it.
     sms_gateway_secret: str = ""
+    # A phone running « SMS Gateway for Android » (sms-gate.app): its send API, local server
+    # (http://<phone>:8080) or cloud (https://api.sms-gate.app/3rdparty/v1). Empty = the gateway
+    # polls GET /public/sms/outbox instead. Basic auth from the app, or a bearer token.
+    sms_gateway_url: str = ""
+    sms_gateway_user: str = ""
+    sms_gateway_password: str = ""
+    sms_gateway_token: str = ""
+    # The app's webhook signing key (Settings → Webhooks): when set, inbound webhooks must carry
+    # a valid X-Signature; otherwise they carry SMS_GATEWAY_SECRET (?secret= or the header).
+    sms_gateway_signing_key: str = ""
+    sms_gateway_sim: int = 0  # 1-3 to pick the phone's SIM, 0 = the phone's default
     # Radio streams captured for « À l'antenne »: "Station|https://stream.url|Region,…" (empty = off).
     radio_streams: str = ""
     # RSS feeds of the national press for Veille (comma list; empty = off).

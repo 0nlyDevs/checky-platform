@@ -621,8 +621,13 @@ class SmsMessage(_Row):
     phone_hash: Mapped[str] = mapped_column(String(64), index=True)
     phone_masked: Mapped[str] = mapped_column(String(60))
     text: Mapped[str] = mapped_column(String(480))
-    status: Mapped[str] = mapped_column(String(20), default="queued")  # received|queued|sent
+    # received (in) · queued → sending → sent → delivered, or failed (out) · simulated (fictional)
+    status: Mapped[str] = mapped_column(String(20), default="queued")
     sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # In: the sender's number sealed (Fernet, `contact.seal`), the one copy a push gateway needs
+    # to answer later. Out: why the gateway refused it, when it did.
+    phone_sealed: Mapped[str | None] = mapped_column(Text)
+    error: Mapped[str | None] = mapped_column(String(200))
 
 
 class Season(_Row):

@@ -1,20 +1,22 @@
 """The SMS line: a basic phone asks « est-ce vérifié ? » and receives the signed verdict.
 
-An Android SMS gateway in the newsroom (or the simulator in Paramètres) forwards each message to
-`POST /public/sms/inbound` with the header `X-Gateway-Secret`, and polls `GET /public/sms/outbox`
-for the replies to send. Keywords: `ABONNE [région]` (the verdicts of a region), `STOP`,
-`vérification 145` (the number read on air), `CHECKY <texte>` or plain text. Plain text is matched
-against the published verdicts (no AI): a match is answered at once in the sender's language;
-otherwise the message joins the claim a public newsroom already follows, or becomes a `to_check`
-tip in the best public newsroom (by region, else the first), and the sender gets the verdict once
-it is signed (`notify_signed`, called lazily by signing).
+Two ways in: a phone with a local SIM running « SMS Gateway for Android » posts its
+`sms:received` webhooks to `POST /public/sms/gateway` (`sms_gateway.py`, which also pushes the
+replies to the phone's send API through the `sms_push` job); any other gateway (or the simulator in
+Paramètres) forwards each message to `POST /public/sms/inbound` with the header `X-Gateway-Secret`
+and polls `GET /public/sms/outbox` for the replies to send. Keywords: `ABONNE [région]` (the
+verdicts of a region), `STOP`, `vérification 145` (the number read on air), `CHECKY <texte>` or
+plain text. Plain text is matched against the published verdicts (no AI): a match is answered at
+once in the sender's language; otherwise the message joins the claim a public newsroom already
+follows, or becomes a `to_check` tip in the best public newsroom (by region, else the first), and
+the sender gets the verdict once it is signed (`notify_signed`, called lazily by signing).
 
 Numbers are never stored in clear: rows carry an HMAC and a masked form (`app/core/contact.py`),
-and numbers or addresses typed inside a message are masked before it is stored. The inbound
-answer gives the gateway the hash, so the gateway keeps its own hash → number book; the outbox
-adds `to` only for a number someone left on the site (sealed in `PublicQuestion.location`). The
-block `+261 34 00 000 xx` is fictional (demo and simulator): what is written to those numbers is
-kept as `simulated` and never handed to the gateway.
+and numbers or addresses typed inside a message are masked before it is stored. The one copy
+needed to answer later is sealed (Fernet under SEAL_SECRET) on the inbound row, or in
+`PublicQuestion.location` for a number left on the site; the push job and the outbox's `to` unseal
+it at sending time. The block `+261 34 00 000 xx` is fictional (demo and simulator): what is
+written to those numbers is kept as `simulated` and never handed to the gateway.
 """
 
 import hmac
@@ -300,6 +302,8 @@ async def handle(db: Db, sender: str, text: str, at: datetime | None) -> Inbound
         text=text[:SMS_MAX],
         status="received",
         sent_at=at,
+        # a push gateway needs the number to answer: kept sealed, never for the fictional block
+        phone_sealed=None if FICTIONAL.match(number) else contact.seal(number),
     )
     db.add(inbound)
     subscriber = await db.get(SmsSubscriber, digest)
@@ -375,6 +379,7 @@ async def handle(db: Db, sender: str, text: str, at: datetime | None) -> Inbound
     inbound.workspace_id, inbound.item_id = ws_id, item_id
     _queue(db, digest, masked, reply, ws_id, item_id)
     await db.commit()
+    await _push(db, ws_id)
     if ws_id:
         if action == "received":
             from app.modules.items import _out
@@ -410,13 +415,33 @@ def _sms_out(m: SmsMessage, to: str | None = None) -> SmsOut:
 
 
 async def _reach(db: Db, phone_hash: str) -> str | None:
-    """The number itself when someone left it on the site (sealed); else the gateway's own book."""
+    """The number itself, unsealed: from the last SMS it sent, else from a number left on the
+    site; None when only the gateway's own book knows it."""
     sealed = await db.scalar(
+        select(SmsMessage.phone_sealed)
+        .where(
+            SmsMessage.phone_hash == phone_hash,
+            SmsMessage.direction == "in",
+            SmsMessage.phone_sealed.is_not(None),
+        )
+        .order_by(SmsMessage.created_at.desc())
+        .limit(1)
+    ) or await db.scalar(
         select(PublicQuestion.location["reach"].astext)
         .where(PublicQuestion.contact_hash == phone_hash, PublicQuestion.location.has_key("reach"))
         .limit(1)
     )
     return contact.unseal(sealed)
+
+
+async def _push(db: Db, ws_id: uuid.UUID | None) -> None:
+    """Wake the push sender when a phone gateway is configured; never blocks a reply."""
+    try:
+        from app.modules.sms_gateway import push_soon
+
+        await push_soon(db, ws_id)
+    except Exception:
+        log.exception("sms: could not queue the push to the gateway")
 
 
 @router.get("/public/sms/outbox", dependencies=[Depends(gateway)])
@@ -499,6 +524,8 @@ async def notify_signed(db, item: Item) -> int:
                 done.add(sub.phone_hash)
                 queued += 1
     await db.commit()
+    if queued:
+        await _push(db, ws.id)
     return queued
 
 

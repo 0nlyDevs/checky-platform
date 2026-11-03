@@ -37,6 +37,7 @@ from app.modules import (
     rubrique,
     signing,
     sms,
+    sms_gateway,
     sources,
     trajet,
     translate,
@@ -105,6 +106,7 @@ api.include_router(translate.router, prefix="/api/v1")
 api.include_router(veille.router, prefix="/api/v1")
 api.include_router(verify_public.router, prefix="/api/v1")
 api.include_router(sms.router, prefix="/api/v1")
+api.include_router(sms_gateway.router, prefix="/api/v1")
 api.include_router(verification.router, prefix="/api/v1")
 api.include_router(official.router, prefix="/api/v1")
 api.include_router(alerts.router, prefix="/api/v1")

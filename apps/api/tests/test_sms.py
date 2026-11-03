@@ -75,7 +75,8 @@ def test_a_published_verdict_comes_back_in_the_senders_language(as_user):
     # the gateway takes the replies once, then they are sent
     box = TestClient(app).get("/api/v1/public/sms/outbox", headers=GW).json()
     assert [m["text"][:4] for m in box] == ["Faux", "Diso"]
-    assert box[0]["masked"] == "+261 32 •• ••• 91" and box[0]["to"] is None
+    # the number is kept sealed from its SMS, so any gateway can answer it later
+    assert box[0]["masked"] == "+261 32 •• ••• 91" and box[0]["to"] == "+261329999991"
     assert TestClient(app).get("/api/v1/public/sms/outbox", headers=GW).json() == []
 
 
