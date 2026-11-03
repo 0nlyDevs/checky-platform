@@ -42,7 +42,8 @@ TABLES = (
     "app.activity, app.comment, app.item, app.invitation, app.membership, app.workspace, "
     "app.place, app.contact, app.contact_request, app.communique, app.seal_key, app.figure, "
     "app.signal, app.route, app.radio_clip, app.radio_partner, app.public_question, "
-    "app.member_pref, app.sms_subscriber, app.sms_message, app.season, app.newsroom_request, app.official_source"
+    "app.journalist_profile, app.member_pref, app.sms_subscriber, app.sms_message, app.season, "
+    "app.newsroom_request, app.official_source"
 )
 
 

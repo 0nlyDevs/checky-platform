@@ -90,6 +90,7 @@ import {
   WifiSlash,
   X,
   XCircle,
+  UploadSimple,
 } from "@phosphor-icons/react/ssr";
 import type { IconProps } from "@phosphor-icons/react";
 type PhosphorIcon = React.ComponentType<IconProps>;
@@ -118,6 +119,7 @@ export const IconCaretUp = duo(CaretUp);
 export const IconCaretUpDown = duo(CaretUpDown);
 export const IconChatCircle = duo(ChatCircle);
 export const IconCheck = duo(Check);
+export const IconUploadSimple = duo(UploadSimple);
 export const IconCheckCircle = duo(CheckCircle);
 export const IconCircleDashed = duo(CircleDashed);
 export const IconCircleNotch = duo(CircleNotch);

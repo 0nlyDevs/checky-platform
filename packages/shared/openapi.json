@@ -53,6 +53,170 @@
         ]
       }
     },
+    "/api/v1/me/press-card/upload-url": {
+      "post": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Card Upload Url",
+        "operationId": "card_upload_url_api_v1_me_press_card_upload_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CardUploadIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CardUploadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/me/profile": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "My Profile",
+        "operationId": "my_profile_api_v1_me_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalistProfileOut"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Save Profile",
+        "operationId": "save_profile_api_v1_me_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JournalistProfileIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalistProfileOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/platform/profiles/{user_id}": {
+      "get": {
+        "tags": [
+          "profile"
+        ],
+        "summary": "Platform Profile",
+        "description": "The Checky team reads a journalist's profile and card; anyone else gets a 404.",
+        "operationId": "platform_profile_api_v1_platform_profiles__user_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JournalistProfileOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces": {
       "post": {
         "tags": [
@@ -13677,6 +13841,63 @@
         ],
         "title": "CallOut"
       },
+      "CardUploadIn": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Filename"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Size Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "mime",
+          "size_bytes"
+        ],
+        "title": "CardUploadIn"
+      },
+      "CardUploadOut": {
+        "properties": {
+          "card_key": {
+            "type": "string",
+            "title": "Card Key"
+          },
+          "upload_url": {
+            "type": "string",
+            "title": "Upload Url"
+          },
+          "headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Headers"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "card_key",
+          "upload_url",
+          "headers",
+          "expires_in"
+        ],
+        "title": "CardUploadOut"
+      },
       "CarnetEntry": {
         "properties": {
           "at": {
@@ -18063,6 +18284,98 @@
         },
         "type": "object",
         "title": "ItemPatch"
+      },
+      "JournalistProfileIn": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "outlet": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 2,
+            "title": "Outlet"
+          },
+          "card_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Number"
+          },
+          "card_key": {
+            "type": "string",
+            "maxLength": 400,
+            "minLength": 1,
+            "title": "Card Key"
+          },
+          "card_filename": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Card Filename"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone",
+          "outlet",
+          "card_key",
+          "card_filename"
+        ],
+        "title": "JournalistProfileIn"
+      },
+      "JournalistProfileOut": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          },
+          "outlet": {
+            "type": "string",
+            "title": "Outlet"
+          },
+          "card_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Number"
+          },
+          "card_filename": {
+            "type": "string",
+            "title": "Card Filename"
+          },
+          "card_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Card Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone",
+          "outlet",
+          "card_number",
+          "card_filename"
+        ],
+        "title": "JournalistProfileOut"
       },
       "KeepIn": {
         "properties": {

@@ -34,6 +34,7 @@ from app.modules import (
     media_api,
     official,
     onair,
+    profile,
     public,
     quotes,
     rag,
@@ -85,6 +86,7 @@ api.add_middleware(ClientAddress)
 install_error_handlers(api)
 api.include_router(health.router, prefix="/api/v1", tags=["health"])
 api.include_router(me.router, prefix="/api/v1")
+api.include_router(profile.router, prefix="/api/v1")
 api.include_router(workspaces.router, prefix="/api/v1")
 api.include_router(items.router, prefix="/api/v1")
 api.include_router(jobs.router, prefix="/api/v1")
