@@ -4226,6 +4226,10 @@ export interface components {
             diff?: {
                 [key: string]: unknown;
             }[];
+            /** Level */
+            level?: string | null;
+            /** Signals */
+            signals?: components["schemas"]["ToneSignal"][];
         };
         /** FakeIn */
         FakeIn: {
@@ -6526,6 +6530,16 @@ export interface components {
             received_at: string;
             newsroom: components["schemas"]["NewsroomOut"];
             verdict: components["schemas"]["VerdictOut"] | null;
+        };
+        /** ToneSignal */
+        ToneSignal: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "urgency" | "share" | "emotive" | "hidden" | "caps" | "exclamations" | "emoji";
+            /** Quote */
+            quote: string;
         };
         /** TrajetOut */
         TrajetOut: {

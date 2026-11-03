@@ -51,6 +51,20 @@ export const publicLayer: Part<typeof fr> = {
       noNeed: "Tsy mila manamafy izany ny mpanao gazety malagasy.",
     },
     facts: {
+      alert: {
+        title: "Izay tokony hampitandrina anao",
+        lead: "Fomba fiteny mahazatra amin'ny tsaho, hita teny tsirairay ao amin'ny hafatra, tsy nisy IA. Tsy milaza izy ireo raha marina na tsia.",
+        level: { sensationnaliste: "Feo manaitra", "marqué": "Feo mafy" },
+        kinds: {
+          urgency: "Maika",
+          share: "Antso hizara",
+          emotive: "Teny mampientanentana",
+          hidden: "Sivana lazaina",
+          caps: "Soratra lehibe daholo",
+          exclamations: "Marika fiantsoana",
+          emoji: "Emoji fanairana",
+        },
+      },
       title: "Izay fantatra",
       noVerdict: "Mbola tsy misy didy nosoniavina.",
       following: (when: string, name: string | null) => `Miasa amin'izany ${name ? `ny ${name}` : "ny mpanao gazety iray"} hatramin'ny ${when}.`,

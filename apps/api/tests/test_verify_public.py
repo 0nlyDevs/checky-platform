@@ -206,6 +206,26 @@ def test_the_crews_fact_agents_answer_when_they_are_there(monkeypatch):
     assert "analysis" not in out["facts"] and out["followed_since"] is None
 
 
+def test_the_tone_fact_lists_each_warning_sign_with_its_quote():
+    out = (
+        TestClient(app)
+        .post(
+            "/api/v1/public/verify",
+            json={
+                "text": "URGENT URGENT : coupure totale demain, partagez avant que ce soit supprimé !!!"
+            },
+        )
+        .json()
+    )
+    tone = next(f for f in out["known"] if f["kind"] == "tone")
+    assert tone["level"] == "sensationnaliste" and tone["source"] == "Lexique du ton (sans IA)"
+    kinds = {s["kind"] for s in tone["signals"]}
+    assert {"urgency", "share"} <= kinds
+    # every quote is copied from the message, nothing is invented
+    text = "URGENT URGENT : coupure totale demain, partagez avant que ce soit supprimé !!!".lower()
+    assert all(s["quote"].lower() in text for s in tone["signals"])
+
+
 def test_nothing_known_says_so_and_reports_the_search_outage(monkeypatch):
     async def down(query, k=6):
         raise websearch.SearchUnavailable("ConnectError")

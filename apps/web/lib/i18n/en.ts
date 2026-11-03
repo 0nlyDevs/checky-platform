@@ -243,6 +243,20 @@ export const en: Overrides = {
         noNeed: "No Malagasy newsroom needs to confirm it.",
       },
       facts: {
+        alert: {
+          title: "What should alert you",
+          lead: "Turns of phrase typical of rumours, found word for word in the message, without AI. They don't say whether it is true.",
+          level: { sensationnaliste: "Sensational tone", "marqué": "Loaded tone" },
+          kinds: {
+            urgency: "Urgency",
+            share: "Call to share",
+            emotive: "Emotionally charged words",
+            hidden: "Claimed censorship",
+            caps: "Written in capitals",
+            exclamations: "Exclamation marks",
+            emoji: "Alarm emoji",
+          },
+        },
         title: "What is known",
         noVerdict: "No signed verdict yet.",
         following: (when: string, name: string | null) => `${name ?? "A newsroom"} has been on it since ${when}.`,
