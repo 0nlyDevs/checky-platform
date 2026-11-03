@@ -27,7 +27,7 @@ from app.core.activity import broadcast, record
 from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.models import Item, Route, Workspace
-from app.modules.items import _get_item
+from app.modules.items import _get_item, _out
 
 router = APIRouter(tags=["trajet"])
 
@@ -1063,7 +1063,7 @@ async def mark_relu(item_id: uuid.UUID, body: ReluIn, member: AnyMember, db: Db)
         await _mark_relu(db, member, item, texts)
         await db.commit()
         await db.refresh(item)
-        await broadcast(member.workspace_id, "item.updated", {"id": str(item.id)})
+        await broadcast(member.workspace_id, "item.updated", _out(item))
     return ReluState(relu_mg=relu_of(item, texts))
 
 
@@ -1089,7 +1089,8 @@ async def clear_relu(item_id: uuid.UUID, member: AnyMember, db: Db) -> ReluState
             {"carnet": "Relecture en malgache retirée : les formats malgaches sont verrouillés"},
         )
         await db.commit()
-        await broadcast(member.workspace_id, "item.updated", {"id": str(item.id)})
+        await db.refresh(item)
+        await broadcast(member.workspace_id, "item.updated", _out(item))
     return ReluState(relu_mg=None)
 
 

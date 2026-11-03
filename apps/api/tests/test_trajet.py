@@ -467,3 +467,23 @@ def test_a_public_tip_is_the_rumours_first_stop(as_user, client):
         ("whatsapp", "Signalement du public", False)
     ]
     assert out["rumour"][0]["location"]["region"] == "Atsinanana"
+
+
+def test_reread_broadcasts_the_whole_dossier_to_open_pages(as_user, model, monkeypatch):
+    sent: list[tuple[str, dict]] = []
+
+    async def capture(ws, event, data):
+        sent.append((event, data))
+
+    monkeypatch.setattr(trajet, "broadcast", capture)
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    item = _published(alice, ws)
+    base = f"/api/v1/workspaces/{ws}/items/{item}"
+    shown = alice.get(base + "/diffusion").json()
+    alice.post(base + "/relu-mg", json={"mg_hash": shown["mg_hash"]})
+    alice.delete(base + "/relu-mg")
+    # Open dossier pages replace their copy with the payload: it must be the full item.
+    updates = [d for e, d in sent if e == "item.updated"]
+    assert len(updates) == 2
+    assert all(d["id"] == item and "first_seen_at" in d["data"] for d in updates)
