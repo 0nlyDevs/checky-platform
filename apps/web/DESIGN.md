@@ -221,9 +221,11 @@ No third face. Monospace only for `kbd` hints and IDs.
 ### Hierarchy
 - **Display** (800, clamp(2.5rem…4.6rem), 0.95, −0.04em): the public home headline.
 - **Page title** (`.page-title`: 800, clamp(2rem…2.9rem), 1, −0.03em): every H1. Meta goes under it.
+- **Lead section** (800, 1.5rem on phones, 1.875rem from `sm`): the one section a page exists for (`Section tone="lead"`, « Ce qui circule ce matin »). At most one per page.
 - **Verdict** (800, 1.875-2.25rem, up to 3rem on the Vérifier result).
 - **Title** (700, 1.125-1.25rem); **Body** (400, 1rem/1.5); **Label** (600, 0.875rem, sentence case).
 - Numbers in tables and scores use tabular figures (`time` and `.tabular`).
+- **Bold is for titles.** Refs (FAN-0142), times, units and links in a row's meta are regular or medium; a row has one bold line, its title.
 
 ### Named Rules
 **The Sentence-Case Rule.** No uppercase tracked eyebrow or kicker above a heading.
@@ -241,7 +243,9 @@ No third face. Monospace only for `kbd` hints and IDs.
 
 - **Buttons:** fully round, 40 px (44 on touch). Primary = ink; secondary = control border; quiet = text. One primary per screen. Hover on ink = slightly lighter ink with the label unchanged.
 - **Verdict chip / badge:** wash + ink, icon + word. AI suggestion = dashed 2 px border in the verdict ink on its wash; signed = solid.
-- **Numbered line:** waiting = outlined disc, active = ink disc with a gentle pulse, done = ink disc. Suggested = dashed ring, failed = verdict-false ring.
+- **Numbered line:** waiting = outlined disc, active = ink disc with a gentle pulse, done = ink disc with a paper check. Suggested = dashed ring, failed = verdict-false ring. In `mini`, only the step that needs someone (active, suggested) has a bold name; a list that already explains the steps passes `labels={false}`.
+- **Sections** (`components/rubrique/bits.tsx`): `tone` `lead` (large heading, no rule), `main` (heading on the ink rule, the default) and `aside` (smaller heading on a hairline, for a context column). Separate groups with space (40 px on phones, 56 px from `sm`) before reaching for a rule or a card; one ink rule under the page header, never two in a row.
+- **Page frame:** every desk page is `mx-auto max-w-[90rem] px-4 lg:px-8`, so the title stays put across section tabs; a page that reads narrower limits its children (`*:max-w-4xl`), left-aligned, never its frame. A long settings-like page gets a sticky index (Réglages).
 - **Highlighter** (`.signal-mark`): a phrase Checky flagged, underlined 2 px in the text colour, 3 px below.
 - **Chips and tags:** pale wash + ink of the same hue; `Officielle` / `Public` are inverted ink.
 - **Live panel / assistant:** the `live` set (ink in light, raised in dark); the voice toggle and send button invert to `live-foreground` on `live`.
