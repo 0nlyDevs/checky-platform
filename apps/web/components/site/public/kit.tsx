@@ -1,10 +1,7 @@
 "use client";
 
-import { Select as SelectPrimitive } from "radix-ui";
 import { type CSSProperties, type ReactNode, useSyncExternalStore } from "react";
 import {
-  IconCaretDown,
-  IconCheck,
   IconFacebookLogo,
   IconGlobe,
   IconNewspaper,
@@ -75,79 +72,7 @@ export function DoodleNote({ children, className, style }: { children: ReactNode
   );
 }
 
-export type Option = { value: string; label: string; hint?: string };
-
-/**
- * The themed dropdown: a round button whose caret sits right after its label, and a floating menu
- * (18 px, the one shadow) with 44 px options and a check on the choice. Radix Select underneath:
- * keyboard, typeahead and screen readers as a native select.
- */
-export function ThemedSelect({
-  value,
-  onValueChange,
-  options,
-  label,
-  icon: Glyph,
-  className,
-  id,
-}: {
-  value: string;
-  onValueChange: (v: string) => void;
-  options: Option[];
-  label: string;
-  icon?: Icon;
-  className?: string;
-  id?: string;
-}) {
-  // Radix refuses an empty value on an item: the empty choice travels as « __all ».
-  const wire = (v: string) => (v === "" ? "__all" : v);
-  return (
-    <SelectPrimitive.Root value={wire(value)} onValueChange={(v) => onValueChange(v === "__all" ? "" : v)}>
-      <SelectPrimitive.Trigger
-        id={id}
-        aria-label={label}
-        className={cn(
-          "group inline-flex h-12 max-w-full items-center gap-2 rounded-full border border-input bg-card pr-4 pl-5 text-left font-medium text-foreground outline-none transition-colors hover:border-foreground hover:bg-card hover:text-foreground focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background data-[state=open]:border-foreground",
-          className,
-        )}
-      >
-        {Glyph && <Glyph className="size-5 shrink-0" aria-hidden />}
-        <span className="min-w-0 truncate">
-          <SelectPrimitive.Value />
-        </span>
-        <SelectPrimitive.Icon asChild>
-          <IconCaretDown className="size-4 shrink-0 transition-transform duration-300 group-data-[state=open]:rotate-180" aria-hidden />
-        </SelectPrimitive.Icon>
-      </SelectPrimitive.Trigger>
-      <SelectPrimitive.Portal>
-        <SelectPrimitive.Content
-          position="popper"
-          sideOffset={8}
-          align="start"
-          className="pub-menu z-50 max-h-(--radix-select-content-available-height) min-w-(--radix-select-trigger-width) overflow-y-auto rounded-[18px] border border-border bg-popover p-1.5 text-popover-foreground shadow-(--shadow-float)"
-        >
-          <SelectPrimitive.Viewport>
-            {options.map((o) => (
-              <SelectPrimitive.Item
-                key={o.value || "__all"}
-                value={wire(o.value)}
-                className="relative flex min-h-11 cursor-pointer items-center gap-3 rounded-xl py-2 pr-10 pl-3 text-[0.9375rem] text-foreground outline-none select-none data-[highlighted]:bg-raised data-[highlighted]:text-foreground data-[state=checked]:bg-active data-[state=checked]:font-semibold data-[state=checked]:text-foreground"
-              >
-                <span className="min-w-0">
-                  <SelectPrimitive.ItemText>{o.label}</SelectPrimitive.ItemText>
-                  {o.hint && <span className="block text-sm font-normal text-muted-foreground">{o.hint}</span>}
-                </span>
-                <SelectPrimitive.ItemIndicator className="absolute right-3 inline-flex">
-                  <IconCheck className="size-4" aria-hidden />
-                </SelectPrimitive.ItemIndicator>
-              </SelectPrimitive.Item>
-            ))}
-          </SelectPrimitive.Viewport>
-        </SelectPrimitive.Content>
-      </SelectPrimitive.Portal>
-    </SelectPrimitive.Root>
-  );
-}
+export { type Option, ThemedSelect } from "@/components/ui/select";
 
 /**
  * A choice between a few values on the segmented switch: the ink pill slides to the choice and
