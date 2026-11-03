@@ -480,16 +480,21 @@ async def flashs(db: Db, newsroom: str | None = None) -> FlashsOut:
 async def short_verdict(ref: str, db: Db) -> VerdictOut:
     """`/v/145` → the newest public verdict whose reference ends with that number (FAN-0145)."""
     m = re.search(r"(\d{1,8})$", ref.strip())
-    if m is None:
+    found = await by_number(db, int(m[1])) if m else None
+    if found is None:
         raise ApiError(404, "not_found", "Verdict not found")
-    wanted = int(m[1])
+    return found
+
+
+async def by_number(db: Db, wanted: int) -> VerdictOut | None:
+    """The newest public verdict said on air as « vérification 145 » (FAN-0145), or None."""
     for item, ws in (
         await db.execute(_published().order_by(Item.updated_at.desc()).limit(2000))
     ).all():
         found = re.search(r"(\d+)$", (item.data or {}).get("ref") or "")
         if found and int(found[1]) == wanted:
             return await _verdict(db, item, ws)
-    raise ApiError(404, "not_found", "Verdict not found")
+    return None
 
 
 # --- a partner radio's token link (no account): who it is, for the flashes page it reads on air

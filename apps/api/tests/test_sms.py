@@ -136,6 +136,20 @@ def test_subscribe_stop_help_and_the_daily_limit():
     assert r.status_code == 429 and r.json()["error"]["code"] == "too_many_sms"
 
 
+def test_the_number_read_on_air_is_answered_by_sms(as_user):
+    alice = as_user("alice")
+    ws = _newsroom(alice)
+    item = _claim(alice, ws, CLAIM, reason="Quatre heures.", ref="FAN-0142")
+    url = f"/api/v1/workspaces/{ws}/sms/simulate"
+    for text in ("vérification 142", "Fanamarinana 142", "CHECKY V142", "142"):
+        out = alice.post(url, json={"text": text}).json()["inbound"]
+        assert out["action"] == "verdict" and out["verdict_id"] == item, text
+        assert "(vérification 142)" in out["reply"] or "(fanamarinana 142)" in out["reply"]
+    unknown = alice.post(url, json={"text": "vérification 999"}).json()["inbound"]
+    assert unknown["action"] == "unknown_number" and "999" in unknown["reply"]
+    assert alice.get(f"/api/v1/workspaces/{ws}/items").json()["total"] == 1  # no tip from it
+
+
 def _publish(c, ws, item):
     r = c.patch(f"/api/v1/workspaces/{ws}/items/{item}", json={"status": "published"})
     assert r.status_code == 200, r.text

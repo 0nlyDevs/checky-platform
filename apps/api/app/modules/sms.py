@@ -3,11 +3,11 @@
 An Android SMS gateway in the newsroom (or the simulator in Paramètres) forwards each message to
 `POST /public/sms/inbound` with the header `X-Gateway-Secret`, and polls `GET /public/sms/outbox`
 for the replies to send. Keywords: `ABONNE [région]` (the verdicts of a region), `STOP`,
-`CHECKY <texte>` or plain text. Plain text is matched against the published verdicts (no AI): a
-match is answered at once in the sender's language; otherwise the message joins the claim a public
-newsroom already follows, or becomes a `to_check` tip in the best public newsroom (by region, else
-the first), and the sender gets the verdict once it is signed (`notify_signed`, called lazily by
-signing).
+`vérification 145` (the number read on air), `CHECKY <texte>` or plain text. Plain text is matched
+against the published verdicts (no AI): a match is answered at once in the sender's language;
+otherwise the message joins the claim a public newsroom already follows, or becomes a `to_check`
+tip in the best public newsroom (by region, else the first), and the sender gets the verdict once
+it is signed (`notify_signed`, called lazily by signing).
 
 Numbers are never stored in clear: rows carry an HMAC and a masked form (`app/core/contact.py`),
 and numbers or addresses typed inside a message are masked before it is stored. The inbound
@@ -86,6 +86,8 @@ REPLIES = {
         "help": "Envoyez le message reçu pour savoir s'il a été vérifié. ABONNE <région> pour "
         "les alertes, STOP pour arrêter.",
         "where": " pour {region}",
+        "unknown_number": "Aucune vérification publiée sous le numéro {n}. Envoyez le message "
+        "reçu pour le faire vérifier.",
     },
     # à relire par un locuteur
     "mg": {
@@ -99,11 +101,18 @@ REPLIES = {
         "help": "Alefaso ilay hafatra voarainao raha te hahafantatra raha voamarina izy. "
         "ABONNE <faritra> ho an'ny fampitandremana, STOP raha hijanona.",
         "where": " ho an'i {region}",
+        "unknown_number": "Tsy misy fanamarinana navoaka amin'ny laharana {n}. Alefaso ilay "
+        "hafatra voarainao mba hojerena.",
     },
 }
 SUBSCRIBE = ("ABONNE", "ABONNER", "MANARAKA")
 UNSUBSCRIBE = ("STOP", "AJANONY", "ARRET", "ARRÊT")
 ASK = ("CHECKY", "FANILO", "VERIFIER", "VÉRIFIER")
+# « vérification 145 », « fanamarinana 145 », « V145 » or the bare number: the one read on air.
+BY_NUMBER = re.compile(
+    r"^(?:v[ée]rification|fanamarinana|verif|v)?\s*(?:n[°o]\.?\s*)?#?\s*(\d{1,6})\s*[.!?]?$",
+    re.IGNORECASE,
+)
 HELP = ("AIDE", "HELP", "?", "FANAMPIANA")
 
 
@@ -155,7 +164,9 @@ class InboundIn(BaseModel):
 
 
 class InboundOut(BaseModel):
-    action: Literal["verdict", "received", "followed", "subscribed", "stopped", "help"]
+    action: Literal[
+        "verdict", "received", "followed", "subscribed", "stopped", "help", "unknown_number"
+    ]
     reply: str
     language: Literal["fr", "mg"]
     phone_hash: str  # the gateway keeps hash → number to deliver later replies
@@ -324,8 +335,15 @@ async def handle(db: Db, sender: str, text: str, at: datetime | None) -> Inbound
                 if subscriber and subscriber.region
                 else {}
             )
-            found = await public.best_published(db, text, k=1)
-            if found:
+            asked_number = BY_NUMBER.match(text)
+            if asked_number:
+                by_number = await public.by_number(db, int(asked_number[1]))
+                found = [(1.0, by_number)] if by_number else []
+            else:
+                found = await public.best_published(db, text, k=1)
+            if asked_number and not found:
+                action, reply = "unknown_number", say["unknown_number"].format(n=asked_number[1])
+            elif found:
                 verdict = found[0][1]
                 item = await db.get(Item, verdict.id)
                 action, reply = "verdict", verdict_line(verdict, lang)

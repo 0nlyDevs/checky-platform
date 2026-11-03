@@ -4237,7 +4237,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "verdict" | "received" | "followed" | "subscribed" | "stopped" | "help";
+            action: "verdict" | "received" | "followed" | "subscribed" | "stopped" | "help" | "unknown_number";
             /** Reply */
             reply: string;
             /**

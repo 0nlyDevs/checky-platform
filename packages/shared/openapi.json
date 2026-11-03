@@ -14505,7 +14505,8 @@
               "followed",
               "subscribed",
               "stopped",
-              "help"
+              "help",
+              "unknown_number"
             ],
             "title": "Action"
           },
