@@ -26,6 +26,7 @@ import { postStream } from "@/lib/sse";
 import { sendPhoto } from "@/components/scanner/read-image";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const v = t.verify;
 const c = t.linkCheck;
@@ -286,23 +287,13 @@ export function VerifyView() {
     <div className="@container mx-auto max-w-[88rem] px-4 pt-6 pb-16 lg:px-10 lg:pt-10">
       <div ref={columns} className="grid gap-10 @5xl:grid-cols-[minmax(0,1fr)_19rem] @5xl:gap-12">
         <div className="min-w-0">
-          <div role="tablist" aria-label={v.modes.label} className="mb-6 inline-flex rounded-md border border-border bg-card p-1">
-            {(["message", "onAir", "sources"] as const).map((m) => (
-              <button
-                key={m}
-                role="tab"
-                type="button"
-                aria-selected={mode === m}
-                onClick={() => setMode(m)}
-                className={cn(
-                  "rounded-[3px] px-3.5 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring",
-                  mode === m ? "bg-foreground font-bold text-background" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {v.modes[m]}
-              </button>
-            ))}
-          </div>
+          <PillTabs
+            className="mb-6"
+            label={v.modes.label}
+            value={mode}
+            onChange={setMode}
+            items={(["message", "onAir", "sources"] as const).map((m) => ({ value: m, label: v.modes[m] }))}
+          />
 
           {mode === "onAir" ? (
             <OnAir ws={ws} />

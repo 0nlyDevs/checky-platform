@@ -15,6 +15,7 @@ import { useMe } from "@/components/rubrique/use-me";
 import { api, API_URL, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const w = t.rubrique.veilleur;
 const MAX_SECONDS = 60;
@@ -456,20 +457,15 @@ export function VeilleurView({ ws, desk }: { ws: string; desk: boolean }) {
           </div>
           <fieldset>
             <legend className="font-bold">{w.language}</legend>
-            <div role="radiogroup" className="mt-1.5 grid grid-cols-2 rounded-full border border-input bg-card p-1">
-              {(["mg", "fr"] as const).map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  role="radio"
-                  aria-checked={lang === l}
-                  onClick={() => chooseLang(l)}
-                  className={cn("h-10 rounded-full font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring", lang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-raised hover:text-foreground")}
-                >
-                  {w.languages[l]}
-                </button>
-              ))}
-            </div>
+            <PillTabs
+              kind="radio"
+              fill
+              className="mt-1.5 flex"
+              label={w.language}
+              value={lang}
+              onChange={chooseLang}
+              items={(["mg", "fr"] as const).map((l) => ({ value: l, label: w.languages[l] }))}
+            />
           </fieldset>
           <p id="heard-at-hint" className="text-sm text-muted-foreground sm:col-span-2">
             {w.timeHint}

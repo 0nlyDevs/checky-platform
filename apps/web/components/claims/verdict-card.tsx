@@ -17,6 +17,7 @@ import { brand } from "@/lib/brand";
 import { t } from "@/lib/i18n/live";
 import type { Source } from "@/lib/upload";
 import { cn } from "@/lib/utils";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 type Lang = "fr" | "mg";
 /** The square card, the 9:16 story, and for a doctored communiqué the fake above the original. */
@@ -411,37 +412,22 @@ export function VerdictCard({ ws, item, verdict, onShared }: { ws: string; item:
   }
 
   const props: CardProps = { item, verdict, reason, sources: sources ?? [], lang, desk, verified, seal: seal ?? null, qr };
-  const chip = (on: boolean) =>
-    cn("h-9 rounded-md border px-3 text-sm font-medium", on ? "border-transparent bg-primary text-primary-foreground" : "border-border bg-card hover:bg-accent");
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={t.card.format}>
-          {formats.map((f) => (
-            <button key={f} type="button" role="radio" aria-checked={format === f} onClick={() => setFormat(f)} className={chip(format === f)}>
-              {t.card.formats[f]}
-            </button>
-          ))}
-        </div>
-        <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={t.card.language}>
-          {(["fr", "mg"] as const).map((l) => (
-            <button
-              key={l}
-              type="button"
-              role="radio"
-              aria-checked={lang === l}
-              onClick={() => {
-                setLang(l);
-                setPost(null);
-                setCopied(false);
-              }}
-              className={chip(lang === l)}
-            >
-              {t.card.languages[l]}
-            </button>
-          ))}
-        </div>
+        <PillTabs kind="radio" label={t.card.format} value={format} onChange={setFormat} items={formats.map((f) => ({ value: f, label: t.card.formats[f] }))} />
+        <PillTabs
+          kind="radio"
+          label={t.card.language}
+          value={lang}
+          onChange={(l) => {
+            setLang(l);
+            setPost(null);
+            setCopied(false);
+          }}
+          items={(["fr", "mg"] as const).map((l) => ({ value: l, label: t.card.languages[l] }))}
+        />
       </div>
       <p className="text-sm text-muted-foreground">{seal ? t.card.sealed : item.status === "published" ? t.card.unsealed : t.card.notPublished}</p>
 

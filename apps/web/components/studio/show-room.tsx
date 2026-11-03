@@ -15,6 +15,7 @@ import { EvidenceLine, FlagLabel, flagOf, questionFor, type Evidence } from "./f
 import type { ChunkResult, ClaimOut, Pack, ShowOut } from "./types";
 import { ThemedSelect } from "@/components/ui/select";
 import { useStickyColumns } from "@/hooks/use-sticky-columns";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const s = t.studio;
 const CHUNK_MS = 10_000;
@@ -302,28 +303,17 @@ export function ShowRoom() {
       )}
 
       {show.status !== "draft" && (
-        <div role="tablist" aria-label={s.list.title} className="mt-6 flex gap-1 border-b border-border">
-          {(
-            [
-              ["live", s.live.flags],
-              ["debate", s.debate.title],
-              ["bilan", s.bilan.title],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={tab === key}
-              onClick={() => setTab(key)}
-              className={cn(
-                "-mb-px border-b-2 px-3 py-2 text-sm font-bold whitespace-nowrap",
-                tab === key ? "border-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <PillTabs
+          className="mt-6"
+          label={s.list.title}
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "live", label: s.live.flags },
+            { value: "debate", label: s.debate.title },
+            { value: "bilan", label: s.bilan.title },
+          ]}
+        />
       )}
 
       {show.status !== "draft" && tab === "live" && (

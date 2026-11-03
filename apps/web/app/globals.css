@@ -1441,3 +1441,101 @@ html[data-eco]::view-transition-new(*) { animation: none !important; }
   font-size: 0.875rem;
 }
 
+/* ---------- the segmented switch (FR · MG · EN, choices): an ink pill slides under the choice ---------- */
+.seg {
+  position: relative;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+.seg-pill {
+  position: absolute;
+  z-index: 0;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: 0;
+  border-radius: 999px;
+  background: var(--foreground);
+  opacity: 0;
+  transition:
+    transform 0.5s var(--ease-out),
+    width 0.5s var(--ease-out);
+}
+.seg-item {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 32px;
+  min-width: 38px;
+  padding: 0 10px;
+  border-radius: 999px;
+  color: var(--foreground);
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.seg-item[data-lit],
+.seg:not([data-pill]) .seg-item[data-current] {
+  color: var(--background);
+}
+.seg:not([data-pill]) .seg-item[data-current] {
+  background: var(--foreground);
+}
+.seg-item:focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+.seg-item[data-lit]:focus-visible {
+  outline-offset: -4px;
+  outline-color: var(--background);
+}
+.seg-lg .seg-item {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.seg-lg .seg-item svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+.seg-fill {
+  display: flex;
+}
+.seg-fill .seg-item {
+  flex: 1 1 0;
+}
+.seg-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+/* A count inside an item: a paper tag on the ink pill, a grey one beside it. */
+.seg-count {
+  border-radius: 6px;
+  padding: 0 6px;
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.seg-count[data-alert] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.seg-item[data-lit] .seg-count,
+.seg:not([data-pill]) .seg-item[data-current] .seg-count {
+  background: var(--background);
+  color: var(--foreground);
+}

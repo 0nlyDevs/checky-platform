@@ -10,8 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { IconArrowSquareOut, IconCheck, IconCircleNotch, IconPhone, IconX } from "@/lib/icons";
-import { cn } from "@/lib/utils";
 import { relative } from "@/lib/when";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 type Row = components["schemas"]["AdminRequestOut"];
 const r = t.verification.review;
@@ -148,23 +148,7 @@ export function ReviewView() {
     <div className="mx-auto max-w-3xl px-4 pt-6 pb-16 lg:px-8 lg:pt-8">
       <h1 className="page-title">{r.title}</h1>
       <p className="mt-2 max-w-prose text-pretty text-muted-foreground">{r.lead}</p>
-      <div role="tablist" className="mt-6 flex gap-5 border-b border-border">
-        {TABS.map((k) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            aria-selected={tab === k}
-            onClick={() => setTab(k)}
-            className={cn(
-              "-mb-px border-b-2 pb-2 font-bold outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              tab === k ? "border-foreground text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {r.tabs[k]}
-          </button>
-        ))}
-      </div>
+      <PillTabs className="mt-6" label={r.title} value={tab} onChange={setTab} items={TABS.map((k) => ({ value: k, label: r.tabs[k] }))} />
       <div className="mt-6">
         {!rows.data ? (
           <Skeleton className="h-56 w-full" />

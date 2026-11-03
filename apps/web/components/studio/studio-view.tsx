@@ -12,6 +12,7 @@ import { t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconMicrophone, IconPlus } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { ShowBrief, Speaker } from "./types";
+import { PillTabs } from "@/components/ui/pill-tabs";
 
 const s = t.studio;
 
@@ -126,22 +127,15 @@ function NewShow({ ws, onCreated }: { ws: string; onCreated: (id: string) => voi
         </fieldset>
         <fieldset className="grid gap-2">
           <legend className="text-sm font-bold">{f.language}</legend>
-          <div className="flex gap-2">
-            {(["fr", "mg"] as const).map((l) => (
-              <button
-                key={l}
-                type="button"
-                aria-pressed={language === l}
-                onClick={() => setLanguage(l)}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-sm",
-                  language === l ? "border-foreground bg-foreground text-background" : "border-border",
-                )}
-              >
-                {f.languages[l]}
-              </button>
-            ))}
-          </div>
+          <PillTabs
+            kind="radio"
+            size="sm"
+            className="self-start"
+            label={f.language}
+            value={language}
+            onChange={setLanguage}
+            items={(["fr", "mg"] as const).map((l) => ({ value: l, label: f.languages[l] }))}
+          />
           <p className="text-sm text-muted-foreground">{language === "mg" ? f.mgNote : f.frNote}</p>
         </fieldset>
         <fieldset className="grid gap-2">
