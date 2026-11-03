@@ -80,6 +80,12 @@ export const en: Overrides = {
         confirmed: "Verdict confirmed by the newsroom",
         wrong: "Seen another version of this rumour?",
         wrongAction: "Report it",
+        seal: {
+          valid: (name: string) => `Genuine card: ${name}'s seal matches this verdict.`,
+          old: "Genuine card, but from an earlier version: the newsroom has updated this verdict. Trust this page.",
+          revoked: "This card's seal uses a key the newsroom has withdrawn. Trust this page.",
+          invalid: "This card does not carry a valid seal from the newsroom: it may have been altered. Trust this page.",
+        },
       },
       report: {
         title: "Report a rumour",
