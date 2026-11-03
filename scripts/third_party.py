@@ -32,6 +32,9 @@ SERVICES = [
     ("Google Fonts: Anton (Vernon Adams), self-hosted (pitch deck and video)", "SIL Open Font License 1.1", "https://fonts.google.com/specimen/Anton"),
     ("Google Fonts: Special Elite (Astigmatic), self-hosted (pitch deck and video)", "Apache License 2.0", "https://fonts.google.com/specimen/Special+Elite"),
     ("Photographs of Antananarivo, Wikimedia Commons, halftoned (pitch deck)", "CC BY-SA 4.0, CC BY-SA 2.0, CC0", "apps/web/public/site/credits.json"),
+    ("Video clips, Wikimedia Commons, muted re-encoded excerpts (landing)", "CC BY-SA 4.0, CC BY-SA 3.0, CC BY 2.0, CC0, public domain", "apps/web/public/site/landing/videos/CREDITS.md"),
+    ("Google Fonts: JetBrains Mono (landing)", "SIL Open Font License 1.1", "https://fonts.google.com/specimen/JetBrains+Mono"),
+    ("Partner logos: Institut français de Madagascar, 42 Antananarivo (landing)", "Trademarks of their owners, shown as hackathon partners", "apps/web/public/site/landing/sponsors"),
 ]
 
 

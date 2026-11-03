@@ -1,5 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { CheckForm } from "@/components/site/public/check";
 import { VerdictList } from "@/components/site/public/verdicts";
 import { useT } from "@/lib/i18n";
@@ -18,7 +20,9 @@ export function VerifiesView() {
           </h1>
           <p className="mt-4 max-w-[52ch] text-lg leading-relaxed text-pretty text-muted-foreground">{c.lead}</p>
         </div>
-        <CheckForm />
+        <Suspense fallback={<CheckForm />}>
+          <CheckFromLink />
+        </Suspense>
       </div>
       <section className="mt-16" aria-labelledby="archive-title">
         <h2 id="archive-title" className="font-display text-2xl font-extrabold tracking-tight">
@@ -30,4 +34,10 @@ export function VerifiesView() {
       </section>
     </div>
   );
+}
+
+/** The landing's field opens this page with `?q=`: the check starts with that text. */
+function CheckFromLink() {
+  const q = useSearchParams().get("q") ?? "";
+  return <CheckForm key={q} initialText={q.slice(0, 6000)} />;
 }

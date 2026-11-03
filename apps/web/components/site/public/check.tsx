@@ -46,6 +46,14 @@ export function CheckForm({ id = "check", className, initialText = "" }: { id?: 
   const [waiting, setWaiting] = useState(false);
   const form = useRef<HTMLFormElement>(null);
 
+  // Arriving with a text (the landing's field opens /verifies?q=…): check it once, straight away.
+  const asked0 = useRef(false);
+  useEffect(() => {
+    if (asked0.current || initialText.trim().length < 3) return;
+    asked0.current = true;
+    form.current?.requestSubmit();
+  }, [initialText]);
+
   // Asked with no network: it runs by itself when the network returns.
   useEffect(() => {
     if (!waiting) return;
