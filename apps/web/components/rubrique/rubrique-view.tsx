@@ -16,13 +16,15 @@ import { useSignalToasts } from "@/components/veille/signals-panel";
 import { useMe } from "@/components/rubrique/use-me";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, fetcher } from "@/lib/api";
-import { t } from "@/lib/i18n/live";
+import { dateFormat, getLang, t } from "@/lib/i18n/live";
 import { BeatPicker } from "./beat-picker";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "./bits";
 import { MeteoPanel } from "./meteo-panel";
 import type { Alert, AngleCard, AntenneRow, Circulating, ContactCard, FigureCard, Rubrique } from "./types";
 
 const r = t.rubrique;
+// The API says the day in French (« mardi 3 novembre 2026 »); other languages format `today` themselves.
+const todayFmt = dateFormat({ weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 /** Where a line of « Ce qui circule » leads: the dossier, the article, or the Veille. */
 function target(ws: string, c: Circulating): { href: string; external: boolean } {
@@ -358,7 +360,7 @@ export function RubriqueView() {
         <div className="min-w-0">
           <h1 className="page-title">{r.page.title}</h1>
           <p className="mt-2 text-muted-foreground first-letter:uppercase">
-            {data?.today_label ?? " "}
+            {data ? (getLang() === "fr" ? data.today_label : todayFmt.format(new Date(`${data.today.slice(0, 10)}T12:00:00Z`))) : " "}
             {data && (
               <>
                 {" · "}
