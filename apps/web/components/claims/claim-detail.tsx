@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useStickyColumn } from "@/hooks/use-sticky-column";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { SourcesPanel } from "@/components/sources/sources-panel";
 import { AnglesPanel } from "@/components/rubrique/angles-view";
@@ -265,8 +265,8 @@ function RiskLine({ ws, item, nameOf, onSaved }: { ws: string; item: Item; nameO
 }
 
 export function ClaimDetail() {
+  const columns = useStickyColumns<HTMLDivElement>();
   const { ws, id } = useParams<{ ws: string; id: string }>();
-  const column = useStickyColumn<HTMLElement>();
   const router = useRouter();
   const base = `/workspaces/${ws}/items/${id}`;
   const { data: item, error, mutate } = useSWR<Item>(base, fetcher);
@@ -468,7 +468,7 @@ export function ClaimDetail() {
     <div className="mx-auto max-w-[90rem] px-4 pt-6 pb-12 lg:px-8 lg:pt-8">
       <BackLink ws={ws} />
 
-      <div className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12">
+      <div ref={columns} className="mt-6 grid gap-10 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-12">
         {/* The dossier follows the numbered line: what is claimed, what is known, the signed conclusion. */}
         <div className="min-w-0">
           <Step n={1} state={steps.claim} next={steps.evidence}>
@@ -560,7 +560,7 @@ export function ClaimDetail() {
           </Step>
         </div>
 
-        <aside ref={column} className="space-y-8 min-[1101px]:sticky min-[1101px]:self-start">
+        <aside className="space-y-8">
           <WhoPanel ws={ws} itemId={id} />
           <Section id="details" title={t.detail.details}>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2.5 text-sm">

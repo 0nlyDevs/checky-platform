@@ -24,6 +24,7 @@ import { AlertsList } from "./alerts-panel";
 import { AntenneList } from "./antenne-list";
 import { SignalsPanel, useSignalToasts } from "./signals-panel";
 import { VeilleurView } from "./veilleur-view";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 
 const v = t.rubrique.veille;
 const KINDS = ["all", "tip", "sms", "clip", "press"] as const;
@@ -96,6 +97,7 @@ function FeedRow({ ws, e, i }: { ws: string; e: FeedEntry; i: number }) {
 }
 
 function DeskVeille({ ws }: { ws: string }) {
+  const columns = useStickyColumns<HTMLDivElement>();
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -236,7 +238,7 @@ function DeskVeille({ ws }: { ws: string }) {
 
       {feed.data && !feed.data.feeds_configured && <p className="mx-4 mb-5 text-sm text-muted-foreground lg:mx-0">{v.noFeeds}</p>}
 
-      <div className="grid gap-x-10 gap-y-10 px-4 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_24rem]">
+      <div ref={columns} className="grid gap-x-10 gap-y-10 px-4 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_24rem]">
         <div className="min-w-0 space-y-8">
           {/* Alerts first: a dangerous rumour coming back through several channels. */}
           {alerts.data && alerts.data.length > 0 && (

@@ -13,6 +13,7 @@ import { fetcher } from "@/lib/api";
 import { dateFormat, t } from "@/lib/i18n/live";
 import { DemoTag, LoadFailed, Section } from "./bits";
 import type { DocumentRow, Prefs } from "./types";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 
 const d = t.rubrique.documents;
 const ALL = "__all";
@@ -61,6 +62,7 @@ function DocRow({ ws, doc, i }: { ws: string; doc: DocumentRow; i: number }) {
  * first, filtered by beat or words, with « Interroger les documents » (the sources RAG) beside them.
  */
 export function DocumentsView() {
+  const columns = useStickyColumns<HTMLDivElement>();
   const { ws } = useParams<{ ws: string }>();
   const [q, setQ] = useState("");
   const [topic, setTopic] = useState(ALL);
@@ -84,7 +86,7 @@ export function DocumentsView() {
         </Link>
       </header>
 
-      <div className="mt-6 grid gap-x-10 gap-y-10 @5xl:grid-cols-[minmax(0,1fr)_28rem]">
+      <div ref={columns} className="mt-6 grid gap-x-10 gap-y-10 @5xl:grid-cols-[minmax(0,1fr)_28rem]">
         <div className="min-w-0">
           <div className="flex flex-wrap gap-2">
             <div className="relative min-w-0 flex-1 basis-56">

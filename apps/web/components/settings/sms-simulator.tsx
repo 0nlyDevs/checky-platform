@@ -7,6 +7,7 @@ import { api, ApiError, fetcher } from "@/lib/api";
 import { dateFormat, t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconPaperPlaneTilt } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 
 const s = t.team.settings.sms;
 const DEMO_FROM = "+261 34 00 000 09";
@@ -22,6 +23,7 @@ type Bubble = { id: string; mine: boolean; text: string; note?: string };
  * to fictional numbers are stored as `simulated` and never handed to the gateway.
  */
 export function SmsSimulator({ ws }: { ws: string }) {
+  const columns = useStickyColumns<HTMLDivElement>();
   const [from, setFrom] = useState(DEMO_FROM);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -60,7 +62,7 @@ export function SmsSimulator({ ws }: { ws: string }) {
         {s.title}
       </h2>
       <p className="mt-1 max-w-prose text-sm text-muted-foreground">{s.lead}</p>
-      <div className="mt-5 grid gap-8 md:grid-cols-[18rem_minmax(0,1fr)]">
+      <div ref={columns} className="mt-5 grid gap-8 md:grid-cols-[18rem_minmax(0,1fr)]">
         {/* A plain phone: the screen holds the conversation, the keypad is the form. */}
         <div className="mx-auto w-full max-w-[18rem] rounded-[2rem] border-4 border-foreground bg-background p-3" aria-label={s.phone} role="group">
           <div className="mx-auto mb-2 h-1.5 w-14 rounded-full bg-foreground" aria-hidden />

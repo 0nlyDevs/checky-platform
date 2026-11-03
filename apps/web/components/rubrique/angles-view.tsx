@@ -13,6 +13,7 @@ import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";
 import { Section } from "./bits";
 import type { Angle, AnglesOut, Fact, Prefs } from "./types";
+import { useStickyColumns } from "@/hooks/use-sticky-columns";
 
 const g = t.rubrique.angles;
 
@@ -104,6 +105,7 @@ function AngleItem({ ws, angle, model, itemId, i }: { ws: string; angle: Angle; 
  * screen's one primary button (the Angles page); inside another screen it stays secondary.
  */
 export function AnglesPanel({ ws, itemId, initialTopic = "", primary = false }: { ws: string; itemId?: string; initialTopic?: string; primary?: boolean }) {
+  const columns = useStickyColumns<HTMLDivElement>();
   const [topic, setTopic] = useState(initialTopic);
   const [busy, setBusy] = useState(false);
   const [out, setOut] = useState<AnglesOut | null>(null);
@@ -171,7 +173,7 @@ export function AnglesPanel({ ws, itemId, initialTopic = "", primary = false }: 
       )}
 
       {out && (
-        <div className="mt-8 grid gap-x-10 gap-y-8 @4xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div ref={columns} className="mt-8 grid gap-x-10 gap-y-8 @4xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="min-w-0">
             {out.facts.length === 0 ? (
               <p className="rounded-md border border-dashed border-border p-5 font-bold">{g.noFacts}</p>
