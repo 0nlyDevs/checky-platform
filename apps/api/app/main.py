@@ -45,6 +45,7 @@ from app.modules import (
     veille,
     verification,
     verify_public,
+    voicenote,
     workspaces,
 )
 from app.realtime.server import sio
@@ -72,6 +73,8 @@ api.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # The PDFs' file names (carnet-FAN-0142.pdf) are read by the desk across origins.
+    expose_headers=["Content-Disposition"],
 )
 # Added last so it runs first: every limiter reads the address it sets.
 api.add_middleware(ClientAddress)
@@ -113,6 +116,7 @@ api.include_router(verification.router, prefix="/api/v1")
 api.include_router(official.router, prefix="/api/v1")
 api.include_router(alerts.router, prefix="/api/v1")
 api.include_router(gestures.router, prefix="/api/v1")
+api.include_router(voicenote.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
 app = socketio.ASGIApp(sio, other_asgi_app=api)

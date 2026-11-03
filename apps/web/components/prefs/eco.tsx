@@ -25,7 +25,7 @@ export function EcoProvider({ children }: { children: React.ReactNode }) {
   return <SWRConfig value={{ use: [ecoPolling] }}>{children}</SWRConfig>;
 }
 
-type Kind = "image" | "map" | "video";
+type Kind = "image" | "map" | "video" | "audio";
 
 /**
  * Something heavy (a map, a video, a photo) that waits for a tap in Mode éco. Outside Mode éco it
@@ -37,10 +37,11 @@ export function EcoGate({ kind, className, children }: { kind: Kind; className?:
   const r = useT().reach.eco;
   const [shown, setShown] = useState(false);
   if (!eco || shown) return <>{children}</>;
-  const [note, action] = kind === "map" ? [r.mapHidden, r.showMap] : kind === "video" ? [r.imageHidden, r.showVideo] : [r.imageHidden, r.showImage];
+  const [note, action] =
+    kind === "map" ? [r.mapHidden, r.showMap] : kind === "video" ? [r.imageHidden, r.showVideo] : kind === "audio" ? [r.imageHidden, r.showAudio] : [r.imageHidden, r.showImage];
   return (
     <div className={cn("eco-hold", className)}>
-      {kind !== "video" && <span>{note}</span>}
+      {kind !== "video" && kind !== "audio" && <span>{note}</span>}
       <Button type="button" variant="outline" size="sm" onClick={() => setShown(true)}>
         {kind === "image" && <IconImage className="size-4" aria-hidden />}
         {action}

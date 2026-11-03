@@ -1136,7 +1136,13 @@ async def diffuse(item_id: uuid.UUID, body: DiffuseIn, member: AnyMember, db: Db
         await _mark_relu(db, member, item, texts)
     attested = attested_texts(item, texts)
     wanted = list(dict.fromkeys(body.formats))
-    kept = [f for f in wanted if f not in MG_FORMATS or f in attested]
+    # The journalist's voice note goes out only when the dossier has one.
+    has_voice = bool((item.data or {}).get("voice_note"))
+    kept = [
+        f
+        for f in wanted
+        if (f not in MG_FORMATS or f in attested) and (f != "voice_note" or has_voice)
+    ]
     dropped = [f for f in wanted if f not in kept]
     sent_mg = {f: attested[f] for f in kept if f in MG_FORMATS}
     sent_hash = mg_hash(attested) if sent_mg else None

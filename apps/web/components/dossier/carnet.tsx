@@ -7,9 +7,9 @@ import { toast } from "sonner";
 import { VerdictChip } from "@/components/claims/verdict";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ApiError, fetcher } from "@/lib/api";
+import { ApiError, downloadFile, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
-import { IconCopy, IconDownloadSimple, IconFileText, IconSealCheck, IconX } from "@/lib/icons";
+import { IconCircleNotch, IconCopy, IconDownloadSimple, IconFileText, IconPrinter, IconSealCheck, IconX } from "@/lib/icons";
 import { type Attestation, type Carnet, fmtDay, fmtWhen } from "./types";
 
 const c = t.dossier.carnet;
@@ -24,8 +24,31 @@ const PRINT_CSS = `
   .no-print { display: none !important; }
 }`;
 
-/** A full-page sheet over the dossier, made to be read on screen or printed. */
-function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+/** « Enregistrer en PDF »: the server draws the A4 (`carnet-FAN-0142.pdf`), the same on every device. */
+function PdfButton({ path, name, disabled }: { path: string; name: string; disabled?: boolean }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button
+      disabled={busy || disabled}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          await downloadFile(path, name);
+        } catch {
+          toast.error(c.pdfFailed);
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconDownloadSimple aria-hidden />}
+      {busy ? c.pdfBusy : c.pdf}
+    </Button>
+  );
+}
+
+/** A full-page sheet over the dossier, made to be read on screen, saved as a PDF or printed. */
+function Sheet({ title, onClose, pdf, children }: { title: string; onClose: () => void; pdf: React.ReactNode; children: React.ReactNode }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
     window.addEventListener("keydown", onKey);
@@ -35,8 +58,9 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
     <div role="dialog" aria-modal aria-label={title} className="print-sheet fixed inset-0 z-50 overflow-y-auto bg-background">
       <style>{PRINT_CSS}</style>
       <div className="no-print sticky top-0 z-10 flex justify-end gap-2 border-b border-border bg-background px-4 py-3 lg:px-8">
-        <Button onClick={() => window.print()}>
-          <IconDownloadSimple aria-hidden />
+        {pdf}
+        <Button variant="outline" onClick={() => window.print()}>
+          <IconPrinter aria-hidden />
           {c.print}
         </Button>
         <Button variant="ghost" onClick={onClose} autoFocus>
@@ -51,8 +75,9 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
 
 function CarnetSheet({ ws, item, onClose }: { ws: string; item: Item; onClose: () => void }) {
   const { data, error } = useSWR<Carnet>(`/workspaces/${ws}/items/${item.id}/carnet`, fetcher);
+  const ref = (item.data as { ref?: string }).ref ?? "dossier";
   return (
-    <Sheet title={c.title} onClose={onClose}>
+    <Sheet title={c.title} onClose={onClose} pdf={<PdfButton path={`/workspaces/${ws}/items/${item.id}/carnet.pdf`} name={`carnet-${ref}.pdf`} />}>
       {error && <p>{c.failed}</p>}
       {!data && !error && <Skeleton className="h-64 w-full" />}
       {data && (
@@ -135,8 +160,13 @@ function CarnetSheet({ ws, item, onClose }: { ws: string; item: Item; onClose: (
 function AttestationSheet({ ws, item, onClose }: { ws: string; item: Item; onClose: () => void }) {
   const { data, error } = useSWR<Attestation>(`/workspaces/${ws}/items/${item.id}/attestation`, fetcher, { revalidateOnFocus: false });
   const code = error instanceof ApiError ? error.code : null;
+  const ref = (item.data as { ref?: string }).ref ?? "dossier";
   return (
-    <Sheet title={c.attestation} onClose={onClose}>
+    <Sheet
+      title={c.attestation}
+      onClose={onClose}
+      pdf={<PdfButton path={`/workspaces/${ws}/items/${item.id}/attestation.pdf`} name={`attestation-${ref}.pdf`} disabled={!data} />}
+    >
       {error && <p>{code === "not_signed" ? c.notSigned : code === "attestation_unavailable" ? c.unavailable : c.failed}</p>}
       {!data && !error && <Skeleton className="h-64 w-full" />}
       {data && (

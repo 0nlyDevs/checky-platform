@@ -13,6 +13,7 @@ export const reach = {
     showMap: "Afficher la carte",
     mapHidden: "Carte masquée en mode éco",
     showVideo: "Charger la vidéo",
+    showAudio: "Charger la note vocale",
   },
   font: {
     label: "Taille du texte",

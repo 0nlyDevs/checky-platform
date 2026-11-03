@@ -309,6 +309,18 @@ export const fr = {
     reasonPlaceholder: "Pourquoi ce verdict, en une ou deux phrases.",
     chars: (n: number) => `${n} / 280 caractères`,
     download: "Télécharger l'image",
+    format: "Format de la carte",
+    formats: { square: "Carte 1080 × 1080", story: "Statut 9:16", communique: "Communiqué falsifié" },
+    downloadAs: {
+      square: "Télécharger la carte",
+      story: "Télécharger le statut",
+      communique: "Télécharger la carte du communiqué",
+    },
+    fileSuffix: { square: "carte", story: "statut", communique: "communique" },
+    sealed: "Chaque format porte le QR scellé de la rédaction : une fausse carte « Checky dit » échoue au scan.",
+    unsealed: "Le sceau n'est pas disponible : la carte part sans QR. Vérifiez que la rédaction publie ses verdicts.",
+    notPublished: "Publiez le verdict signé pour que la carte porte son QR scellé.",
+    qrAlt: "QR du sceau de la rédaction : ouvre la page publique du verdict et vérifie la carte",
     exportFailed: "L'image n'a pas pu être créée. Réessayez.",
     postTitle: "Texte de la publication",
     postEmpty: "Pas encore de texte. L'IA peut en proposer un à partir du verdict, de l'explication et des sources.",
@@ -327,6 +339,14 @@ export const fr = {
         by: (desk: string) => `Vérifié par ${desk}`,
         verified: "Rédaction vérifiée par Checky",
         verdicts: { true: "Vrai", misleading: "Trompeur", false: "Faux", unverifiable: "Invérifiable" },
+        number: (n: number) => `vérification ${n}`,
+        scan: "Scannez pour vérifier la carte",
+        communique: {
+          band: "Communiqué vérifié",
+          title: "Ce communiqué est falsifié — voici l'original",
+          fake: "Ce qui circule (falsifié)",
+          original: "L'original enregistré",
+        },
       },
       mg: {
         checked: "Fanamarinana",
@@ -336,6 +356,15 @@ export const fr = {
         // Needs a native speaker's check, like the other Malagasy card labels.
         verified: "Voamarin'i Checky",
         verdicts: { true: "Marina", misleading: "Mamitaka", false: "Diso", unverifiable: "Tsy voamarina" },
+        // relire (mg): the same number as app/core/seal.py check_label ("fanamarinana 145").
+        number: (n: number) => `fanamarinana ${n}`,
+        scan: "Skaneo hanamarinana ity karatra ity", // relire (mg)
+        communique: {
+          band: "Fanambarana nohamarinina", // relire (mg)
+          title: "Sandoka ity fanambarana ity — ity ny dika voalohany", // relire (mg)
+          fake: "Ilay miely (sandoka)", // relire (mg)
+          original: "Ny dika voalohany ao amin'ny rejisitra", // relire (mg)
+        },
       },
     },
   },
@@ -562,6 +591,9 @@ export const fr = {
         copied: "Lien copié",
         listen: "Écouter",
         stopListening: "Arrêter",
+        newsroomVoice: "Écouter la rédaction",
+        newsroomVoiceLead: (s: number | null) => `Le démenti dit par un journaliste de la rédaction, avec sa propre voix${s ? ` (${s} s)` : ""}.`,
+        number: (n: number) => `vérification ${n}`,
         whatsapp: "Partager sur WhatsApp",
         whatsappText: (title: string, verdict: string, url: string) => `« ${title} » : ${verdict}. Vérifié par une rédaction, sources à l'appui : ${url}`,
         post: "Le texte publié par la rédaction",

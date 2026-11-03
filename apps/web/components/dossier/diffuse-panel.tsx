@@ -11,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
-import { IconArrowSquareOut, IconBroadcast, IconCheck, IconCircleNotch, IconCopy, IconPlus, IconX } from "@/lib/icons";
+import { IconArrowSquareOut, IconBroadcast, IconCheck, IconCircleNotch, IconCopy, IconImage, IconPlus, IconX } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import type { Formats } from "./types";
+import { VoiceNotePanel } from "./voice-note";
 
 const f = t.dossier.diffuse;
 const CHANNELS = ["whatsapp", "facebook", "radio", "sms", "web", "press", "poster", "institution", "tiktok", "voice", "other"] as const;
@@ -91,11 +92,14 @@ export function DiffusePanel({
   item,
   routes,
   onRoutes,
+  onOpenCard,
 }: {
   ws: string;
   item: Item;
   routes: RouteDraft[];
   onRoutes: (routes: RouteDraft[]) => void;
+  /** Opens the card section below (square card, 9:16 story, communiqué card). */
+  onOpenCard?: () => void;
 }) {
   const published = item.status === "published";
   const key = published ? `/workspaces/${ws}/items/${item.id}/diffusion` : null;
@@ -239,6 +243,25 @@ export function DiffusePanel({
                 <p className="text-sm text-muted-foreground">{reread ? f.mgReviewedBy(data.relu_mg.name) : f.mgStale(data.relu_mg.name)}</p>
               )}
             </div>
+          )}
+
+          <div className="grid gap-3 md:grid-cols-2">
+            <div className="rounded-md border border-border bg-card p-4">
+              <h3 className="font-bold">{f.cardTitle}</h3>
+              <p className="mt-0.5 text-sm text-muted-foreground">{f.cardLead}</p>
+              {data.check_label && <p className="mt-1 font-display font-bold tabular">{data.check_label}</p>}
+              <Button size="sm" variant="outline" className="mt-3" onClick={onOpenCard} disabled={!onOpenCard}>
+                <IconImage aria-hidden />
+                {f.cardOpen}
+              </Button>
+            </div>
+            <VoiceNotePanel ws={ws} item={item} onSent={() => tick("voice_note")(true)} />
+          </div>
+          {ticked.has("voice_note") && (
+            <label htmlFor="fmt-voice_note" className="inline-flex items-center gap-2 text-sm">
+              <input id="fmt-voice_note" type="checkbox" checked onChange={(e) => tick("voice_note")(e.target.checked)} className="size-4 accent-foreground" />
+              {f.voiceTicked}
+            </label>
           )}
 
           <div className="grid gap-4 rounded-md border border-border bg-card p-4 md:grid-cols-2">

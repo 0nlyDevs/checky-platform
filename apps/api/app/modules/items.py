@@ -190,7 +190,8 @@ async def update_item(item_id: uuid.UUID, body: ItemPatch, member: AnyMember, db
     item = await _get_item(db, member, item_id)
     from app.modules.signing import SIGNATURE_FIELDS, publication_guard
 
-    if body.data is not None and (SIGNATURE_FIELDS | {"ref"}) & body.data.keys():
+    # The voice note is attached through its own route, which checks the file (never transcribed).
+    if body.data is not None and (SIGNATURE_FIELDS | {"ref", "voice_note"}) & body.data.keys():
         raise ApiError(422, "protected_fields", "Signature fields and references are server-owned")
     changes = body.model_dump(exclude_unset=True)
     status = body.status or item.status

@@ -48,3 +48,22 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 /** SWR fetcher: the key is the API path. */
 export const fetcher = <T,>(path: string) => api<T>(path);
+
+/** A file the API makes (a PDF): fetched with the JWT, then saved under the name the API gives. */
+export async function downloadFile(path: string, fallbackName: string): Promise<string> {
+  const res = await fetch(`${API_URL}/api/v1${path}`, { headers: { Authorization: `Bearer ${await getApiToken()}` } });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new ApiError(res.status, body?.error?.code ?? "http_error", body?.error?.message ?? res.statusText);
+  }
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  return name;
+}

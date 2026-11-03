@@ -1,5 +1,6 @@
 "use client";
 
+import { EcoGate } from "@/components/prefs/eco";
 import { VerifiedBadge } from "@/components/verification/status";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -7,7 +8,7 @@ import { useEffect, useState } from "react";
 import { StepLine } from "@/components/flow/step-line";
 import { Evidence, ShareActions, type SignedVerdict, Trajet, VerdictBlock } from "@/components/site/public/public-verdict";
 import { useDay, useT } from "@/lib/i18n";
-import { IconArrowLeft, IconArrowRight, IconSealCheck, IconWarning, IconXCircle } from "@/lib/icons";
+import { IconArrowLeft, IconArrowRight, IconSealCheck, IconSpeakerHigh, IconWarning, IconXCircle } from "@/lib/icons";
 import { publicApi } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
@@ -18,7 +19,7 @@ export function VerdictPage() {
   const t = useT();
   const p = t.site.pub.file;
   const day = useDay();
-  const [v, setV] = useState<SignedVerdict | null | "missing">(null);
+  const [v, setV] = useState<(SignedVerdict & { voice_note?: VoiceNote | null }) | null | "missing">(null);
 
   useEffect(() => {
     publicApi<SignedVerdict>(`/verdicts/${id}`).then(setV).catch(() => setV("missing"));
@@ -44,7 +45,7 @@ export function VerdictPage() {
       <h1 className="mt-6 max-w-[30ch] font-display text-[1.7rem] leading-[1.1] font-extrabold tracking-tight text-pretty md:mt-8 md:text-[2.6rem]">«&nbsp;{tidy(v.title)}&nbsp;»</h1>
       <p className="mt-2 text-sm text-muted-foreground">
         {t.publicLayer.check.signed.by(v.newsroom.name, day(v.signed_at ?? v.published_at))}
-        {v.ref && <span className="tabular"> · {v.ref}</span>}
+        {checkNumber(v.ref) !== null ? <span className="tabular"> · {p.number(checkNumber(v.ref)!)}</span> : v.ref && <span className="tabular"> · {v.ref}</span>}
       </p>
       <VerifiedBadge className="mt-1" />
       <CardSeal id={v.id} newsroom={v.newsroom.name} />
@@ -55,6 +56,7 @@ export function VerdictPage() {
           <div className="mt-4">
             <ShareActions v={v} primary />
           </div>
+          {v.voice_note && <NewsroomVoice note={v.voice_note} />}
 
           {(v.confidence || !!v.evidence?.length) && (
             <section className="mt-10">
@@ -113,6 +115,34 @@ export function VerdictPage() {
         </aside>
       </div>
     </Shell>
+  );
+}
+
+type VoiceNote = { url: string; mime: string; seconds: number | null; language: string };
+
+/** « vérification 145 » from FAN-0145: the number said on air, typed in an SMS, printed on the card. */
+function checkNumber(ref: string | null | undefined): number | null {
+  const m = /(\d{1,8})$/.exec(ref ?? "");
+  return m ? Number(m[1]) : null;
+}
+
+/** « Écouter la rédaction »: the journalist's own voice note (never a machine voice, never a
+ *  transcript). In Mode éco it waits for a tap. */
+function NewsroomVoice({ note }: { note: VoiceNote }) {
+  const p = useT().site.pub.file;
+  return (
+    <section className="mt-6 max-w-xl rounded-md border border-border bg-card p-4" aria-labelledby="newsroom-voice">
+      <h2 id="newsroom-voice" className="flex items-center gap-2 font-display text-lg font-bold">
+        <IconSpeakerHigh className="size-5" aria-hidden />
+        {p.newsroomVoice}
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">{p.newsroomVoiceLead(note.seconds ? Math.round(note.seconds) : null)}</p>
+      <EcoGate kind="audio" className="mt-3">
+        <audio controls preload="none" src={note.url} className="mt-3 w-full" aria-label={p.newsroomVoice} lang={note.language}>
+          <track kind="captions" />
+        </audio>
+      </EcoGate>
+    </section>
   );
 }
 

@@ -666,7 +666,20 @@ export function ClaimDetail() {
             document.getElementById("diffuser")?.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
         />
-        <DiffusePanel ws={ws} item={item} routes={routes} onRoutes={setRoutes} />
+        <DiffusePanel
+          ws={ws}
+          item={item}
+          routes={routes}
+          onRoutes={setRoutes}
+          onOpenCard={
+            claim.verdict
+              ? () => {
+                  setCardOpen(true);
+                  requestAnimationFrame(() => document.getElementById("card")?.scrollIntoView({ behavior: "smooth", block: "start" }));
+                }
+              : undefined
+          }
+        />
 
         {claim.verdict && (
           <section aria-labelledby="card" className="space-y-3">

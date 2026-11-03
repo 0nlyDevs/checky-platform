@@ -6551,6 +6551,116 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/items/{item_id}/carnet.pdf": {
+      "get": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Carnet Pdf",
+        "description": "« Exporter le carnet »: the carnet as an A4 PDF, `carnet-FAN-0142.pdf`.",
+        "operationId": "carnet_pdf_api_v1_workspaces__ws__items__item_id__carnet_pdf_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/attestation.pdf": {
+      "get": {
+        "tags": [
+          "signing"
+        ],
+        "summary": "Attestation Pdf",
+        "description": "The attestation on one A4 page, its signed text attached inside the PDF.",
+        "operationId": "attestation_pdf_api_v1_workspaces__ws__items__item_id__attestation_pdf_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/public/attestations/verify": {
       "post": {
         "tags": [
@@ -7325,64 +7435,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RadioDiffuseOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{ws}/translate": {
-      "post": {
-        "tags": [
-          "translate"
-        ],
-        "summary": "Translate",
-        "operationId": "translate_api_v1_workspaces__ws__translate_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "ws",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Ws"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/TranslateIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TranslateOut"
                 }
               }
             }
@@ -8677,220 +8729,6 @@
         }
       }
     },
-    "/api/v1/public/sms/gateway": {
-      "post": {
-        "tags": [
-          "sms"
-        ],
-        "summary": "Webhook",
-        "operationId": "webhook_api_v1_public_sms_gateway_post",
-        "parameters": [
-          {
-            "name": "secret",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Secret"
-            }
-          },
-          {
-            "name": "x-signature",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Signature"
-            }
-          },
-          {
-            "name": "x-timestamp",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Timestamp"
-            }
-          },
-          {
-            "name": "x-gateway-secret",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Gateway-Secret"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/WebhookOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{ws}/avant-antenne": {
-      "post": {
-        "tags": [
-          "onair"
-        ],
-        "summary": "Before Air",
-        "operationId": "before_air_api_v1_workspaces__ws__avant_antenne_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "ws",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Ws"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OnAirIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/OnAirOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{ws}/avant-antenne/fact-checks": {
-      "post": {
-        "tags": [
-          "onair"
-        ],
-        "summary": "Fact Checks",
-        "description": "The fact-checkers' reviews of this claim, in their own words (never mapped onto ours).",
-        "operationId": "fact_checks_api_v1_workspaces__ws__avant_antenne_fact_checks_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "ws",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Ws"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/OnAirIn"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ReviewsOut"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/workspaces/{ws}/verification": {
       "get": {
         "tags": [
@@ -9886,6 +9724,180 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/voice-note": {
+      "put": {
+        "tags": [
+          "voice-note"
+        ],
+        "summary": "Attach Voice Note",
+        "description": "Attach the recorded démenti to a signed dossier (replacing an earlier one). The file was\nuploaded through `files/upload-url` and is NOT completed as a source: nothing transcribes it.",
+        "operationId": "attach_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VoiceNoteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "voice-note"
+        ],
+        "summary": "Read Voice Note",
+        "operationId": "read_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VoiceNoteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "voice-note"
+        ],
+        "summary": "Remove Voice Note",
+        "operationId": "remove_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -14719,8 +14731,7 @@
               "followed",
               "subscribed",
               "stopped",
-              "help",
-              "unknown_number"
+              "help"
             ],
             "title": "Action"
           },
@@ -15632,191 +15643,6 @@
         ],
         "title": "OfficialPage"
       },
-      "OnAirIn": {
-        "properties": {
-          "text": {
-            "type": "string",
-            "maxLength": 2000,
-            "minLength": 3,
-            "title": "Text"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "title": "OnAirIn"
-      },
-      "OnAirOut": {
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "signed",
-              "followed",
-              "new"
-            ],
-            "title": "Status"
-          },
-          "signed": {
-            "items": {
-              "$ref": "#/components/schemas/OnAirVerdict"
-            },
-            "type": "array",
-            "title": "Signed"
-          },
-          "own": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/OwnClaim"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "followed_by": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Followed By"
-          },
-          "careful_line": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Careful Line"
-          }
-        },
-        "type": "object",
-        "required": [
-          "status",
-          "signed"
-        ],
-        "title": "OnAirOut"
-      },
-      "OnAirVerdict": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "ref": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ref"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "verdict": {
-            "type": "string",
-            "title": "Verdict"
-          },
-          "newsroom": {
-            "type": "string",
-            "title": "Newsroom"
-          },
-          "own": {
-            "type": "boolean",
-            "title": "Own"
-          },
-          "published_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Published At"
-          },
-          "signed_at": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signed At"
-          },
-          "check_label": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Check Label"
-          },
-          "link": {
-            "type": "string",
-            "title": "Link"
-          },
-          "radio_line": {
-            "type": "string",
-            "title": "Radio Line"
-          },
-          "radio_line_mg": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Radio Line Mg"
-          },
-          "mg_status": {
-            "type": "string",
-            "enum": [
-              "relu",
-              "not_reread"
-            ],
-            "title": "Mg Status"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "ref",
-          "title",
-          "verdict",
-          "newsroom",
-          "own",
-          "published_at",
-          "signed_at",
-          "check_label",
-          "link",
-          "radio_line",
-          "radio_line_mg",
-          "mg_status",
-          "score"
-        ],
-        "title": "OnAirVerdict"
-      },
       "OriginalIn": {
         "properties": {
           "issuer": {
@@ -15961,42 +15787,6 @@
           "title"
         ],
         "title": "OriginalRef"
-      },
-      "OwnClaim": {
-        "properties": {
-          "item_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Item Id"
-          },
-          "ref": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ref"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          }
-        },
-        "type": "object",
-        "required": [
-          "item_id",
-          "ref",
-          "title",
-          "status"
-        ],
-        "title": "OwnClaim"
       },
       "Passage": {
         "properties": {
@@ -16978,6 +16768,41 @@
           "published_url"
         ],
         "title": "PublicVerdictSealOut"
+      },
+      "PublicVoiceNote": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime"
+          },
+          "seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seconds"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url",
+          "mime",
+          "seconds",
+          "language"
+        ],
+        "title": "PublicVoiceNote"
       },
       "QuestionGroup": {
         "properties": {
@@ -18171,31 +17996,6 @@
           "title"
         ],
         "title": "ReviewOut"
-      },
-      "ReviewsOut": {
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "done",
-              "unavailable"
-            ],
-            "title": "Status"
-          },
-          "reviews": {
-            "items": {
-              "$ref": "#/components/schemas/ReviewOut"
-            },
-            "type": "array",
-            "title": "Reviews"
-          }
-        },
-        "type": "object",
-        "required": [
-          "status",
-          "reviews"
-        ],
-        "title": "ReviewsOut"
       },
       "RevokedKeyOut": {
         "properties": {
@@ -19610,57 +19410,6 @@
         ],
         "title": "TranscriptOut"
       },
-      "TranslateIn": {
-        "properties": {
-          "text": {
-            "type": "string",
-            "maxLength": 4000,
-            "minLength": 1,
-            "title": "Text"
-          },
-          "to": {
-            "type": "string",
-            "enum": [
-              "fr",
-              "mg"
-            ],
-            "title": "To"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text",
-          "to"
-        ],
-        "title": "TranslateIn"
-      },
-      "TranslateOut": {
-        "properties": {
-          "text": {
-            "type": "string",
-            "title": "Text"
-          },
-          "to": {
-            "type": "string",
-            "enum": [
-              "fr",
-              "mg"
-            ],
-            "title": "To"
-          },
-          "reread_needed": {
-            "type": "boolean",
-            "title": "Reread Needed"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text",
-          "to",
-          "reread_needed"
-        ],
-        "title": "TranslateOut"
-      },
       "Turn": {
         "properties": {
           "role": {
@@ -19931,6 +19680,27 @@
               }
             ],
             "title": "Signed At"
+          },
+          "check_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Check Label"
+          },
+          "voice_note": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PublicVoiceNote"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -20091,34 +19861,99 @@
         ],
         "title": "VerificationOut"
       },
-      "WebhookOut": {
+      "VoiceNoteIn": {
         "properties": {
-          "ok": {
-            "type": "boolean",
-            "title": "Ok",
-            "default": true
-          },
-          "action": {
+          "file_id": {
             "type": "string",
-            "title": "Action"
+            "format": "uuid",
+            "title": "File Id"
           },
-          "reason": {
+          "seconds": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "number",
+                "maximum": 30.0,
+                "exclusiveMinimum": 0.0
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Reason"
+            "title": "Seconds"
+          },
+          "language": {
+            "type": "string",
+            "enum": [
+              "mg",
+              "fr"
+            ],
+            "title": "Language",
+            "default": "mg"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "file_id"
+        ],
+        "title": "VoiceNoteIn"
+      },
+      "VoiceNoteOut": {
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "mime": {
+            "type": "string",
+            "title": "Mime"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "seconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Seconds"
+          },
+          "language": {
+            "type": "string",
+            "title": "Language"
+          },
+          "by": {
+            "type": "string",
+            "title": "By"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
           }
         },
         "type": "object",
         "required": [
-          "action"
+          "file_id",
+          "url",
+          "mime",
+          "size_bytes",
+          "seconds",
+          "language",
+          "by",
+          "at"
         ],
-        "title": "WebhookOut"
+        "title": "VoiceNoteOut"
       },
       "WhoContact": {
         "properties": {

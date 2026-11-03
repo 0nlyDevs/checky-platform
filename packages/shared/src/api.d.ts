@@ -1740,6 +1740,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/items/{item_id}/carnet.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Carnet Pdf
+         * @description « Exporter le carnet »: the carnet as an A4 PDF, `carnet-FAN-0142.pdf`.
+         */
+        get: operations["carnet_pdf_api_v1_workspaces__ws__items__item_id__carnet_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/attestation.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Attestation Pdf
+         * @description The attestation on one A4 page, its signed text attached inside the PDF.
+         */
+        get: operations["attestation_pdf_api_v1_workspaces__ws__items__item_id__attestation_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/attestations/verify": {
         parameters: {
             query?: never;
@@ -1960,23 +2000,6 @@ export interface paths {
          *     stop for that station becomes `broadcast`.
          */
         post: operations["radio_diffused_api_v1_public_radios__token__diffuse_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{ws}/translate": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Translate */
-        post: operations["translate_api_v1_workspaces__ws__translate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2345,60 +2368,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/public/sms/gateway": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Webhook */
-        post: operations["webhook_api_v1_public_sms_gateway_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{ws}/avant-antenne": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Before Air */
-        post: operations["before_air_api_v1_workspaces__ws__avant_antenne_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/workspaces/{ws}/avant-antenne/fact-checks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Fact Checks
-         * @description The fact-checkers' reviews of this claim, in their own words (never mapped onto ours).
-         */
-        post: operations["fact_checks_api_v1_workspaces__ws__avant_antenne_fact_checks_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/workspaces/{ws}/verification": {
         parameters: {
             query?: never;
@@ -2666,6 +2635,29 @@ export interface paths {
          */
         post: operations["check_gestures_api_v1_workspaces__ws__gestures_post"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/voice-note": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Voice Note */
+        get: operations["read_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_get"];
+        /**
+         * Attach Voice Note
+         * @description Attach the recorded démenti to a signed dossier (replacing an earlier one). The file was
+         *     uploaded through `files/upload-url` and is NOT completed as a source: nothing transcribes it.
+         */
+        put: operations["attach_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_put"];
+        post?: never;
+        /** Remove Voice Note */
+        delete: operations["remove_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -4291,7 +4283,7 @@ export interface components {
              * Action
              * @enum {string}
              */
-            action: "verdict" | "received" | "followed" | "subscribed" | "stopped" | "help" | "unknown_number";
+            action: "verdict" | "received" | "followed" | "subscribed" | "stopped" | "help";
             /** Reply */
             reply: string;
             /**
@@ -4640,66 +4632,6 @@ export interface components {
             /** Total */
             total: number;
         };
-        /** OnAirIn */
-        OnAirIn: {
-            /** Text */
-            text: string;
-        };
-        /** OnAirOut */
-        OnAirOut: {
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "signed" | "followed" | "new";
-            /** Signed */
-            signed: components["schemas"]["OnAirVerdict"][];
-            own?: components["schemas"]["OwnClaim"] | null;
-            /** Followed By */
-            followed_by?: string | null;
-            /** Careful Line */
-            careful_line?: string | null;
-        };
-        /** OnAirVerdict */
-        OnAirVerdict: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Ref */
-            ref: string | null;
-            /** Title */
-            title: string;
-            /** Verdict */
-            verdict: string;
-            /** Newsroom */
-            newsroom: string;
-            /** Own */
-            own: boolean;
-            /**
-             * Published At
-             * Format: date-time
-             */
-            published_at: string;
-            /** Signed At */
-            signed_at: string | null;
-            /** Check Label */
-            check_label: string | null;
-            /** Link */
-            link: string;
-            /** Radio Line */
-            radio_line: string;
-            /** Radio Line Mg */
-            radio_line_mg: string | null;
-            /**
-             * Mg Status
-             * @enum {string}
-             */
-            mg_status: "relu" | "not_reread";
-            /** Score */
-            score: number;
-        };
         /** OriginalIn */
         OriginalIn: {
             /** Issuer */
@@ -4739,20 +4671,6 @@ export interface components {
             issued_on: string | null;
             /** Title */
             title: string;
-        };
-        /** OwnClaim */
-        OwnClaim: {
-            /**
-             * Item Id
-             * Format: uuid
-             */
-            item_id: string;
-            /** Ref */
-            ref: string | null;
-            /** Title */
-            title: string;
-            /** Status */
-            status: string;
         };
         /** Passage */
         Passage: {
@@ -5107,6 +5025,17 @@ export interface components {
             };
             /** Published Url */
             published_url: string;
+        };
+        /** PublicVoiceNote */
+        PublicVoiceNote: {
+            /** Url */
+            url: string;
+            /** Mime */
+            mime: string;
+            /** Seconds */
+            seconds: number | null;
+            /** Language */
+            language: string;
         };
         /** QuestionGroup */
         QuestionGroup: {
@@ -5470,16 +5399,6 @@ export interface components {
             date: string | null;
             /** Title */
             title: string;
-        };
-        /** ReviewsOut */
-        ReviewsOut: {
-            /**
-             * Status
-             * @enum {string}
-             */
-            status: "done" | "unavailable";
-            /** Reviews */
-            reviews: components["schemas"]["ReviewOut"][];
         };
         /** RevokedKeyOut */
         RevokedKeyOut: {
@@ -6003,28 +5922,6 @@ export interface components {
                 [key: string]: unknown;
             } | null;
         };
-        /** TranslateIn */
-        TranslateIn: {
-            /** Text */
-            text: string;
-            /**
-             * To
-             * @enum {string}
-             */
-            to: "fr" | "mg";
-        };
-        /** TranslateOut */
-        TranslateOut: {
-            /** Text */
-            text: string;
-            /**
-             * To
-             * @enum {string}
-             */
-            to: "fr" | "mg";
-            /** Reread Needed */
-            reread_needed: boolean;
-        };
         /** Turn */
         Turn: {
             /**
@@ -6115,6 +6012,9 @@ export interface components {
             evidence?: components["schemas"]["EvidenceOut"][];
             /** Signed At */
             signed_at?: string | null;
+            /** Check Label */
+            check_label?: string | null;
+            voice_note?: components["schemas"]["PublicVoiceNote"] | null;
         };
         /** VerdictPage */
         VerdictPage: {
@@ -6162,17 +6062,46 @@ export interface components {
             reviewed_at?: string | null;
             request?: components["schemas"]["RequestOut"] | null;
         };
-        /** WebhookOut */
-        WebhookOut: {
+        /** VoiceNoteIn */
+        VoiceNoteIn: {
             /**
-             * Ok
-             * @default true
+             * File Id
+             * Format: uuid
              */
-            ok: boolean;
-            /** Action */
-            action: string;
-            /** Reason */
-            reason?: string | null;
+            file_id: string;
+            /** Seconds */
+            seconds?: number | null;
+            /**
+             * Language
+             * @default mg
+             * @enum {string}
+             */
+            language: "mg" | "fr";
+        };
+        /** VoiceNoteOut */
+        VoiceNoteOut: {
+            /**
+             * File Id
+             * Format: uuid
+             */
+            file_id: string;
+            /** Url */
+            url: string;
+            /** Mime */
+            mime: string;
+            /** Size Bytes */
+            size_bytes: number;
+            /** Seconds */
+            seconds: number | null;
+            /** Language */
+            language: string;
+            /** By */
+            by: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
         };
         /** WhoContact */
         WhoContact: {
@@ -10071,6 +10000,70 @@ export interface operations {
             };
         };
     };
+    carnet_pdf_api_v1_workspaces__ws__items__item_id__carnet_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attestation_pdf_api_v1_workspaces__ws__items__item_id__attestation_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     verify_attestation_api_v1_public_attestations_verify_post: {
         parameters: {
             query?: never;
@@ -10523,41 +10516,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RadioDiffuseOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    translate_api_v1_workspaces__ws__translate_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ws: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["TranslateIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["TranslateOut"];
                 };
             };
             /** @description Validation Error */
@@ -11272,111 +11230,6 @@ export interface operations {
             };
         };
     };
-    webhook_api_v1_public_sms_gateway_post: {
-        parameters: {
-            query?: {
-                secret?: string | null;
-            };
-            header?: {
-                "x-signature"?: string | null;
-                "x-timestamp"?: string | null;
-                "x-gateway-secret"?: string | null;
-            };
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["WebhookOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    before_air_api_v1_workspaces__ws__avant_antenne_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ws: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OnAirIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["OnAirOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    fact_checks_api_v1_workspaces__ws__avant_antenne_fact_checks_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                ws: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OnAirIn"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ReviewsOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     get_verification_api_v1_workspaces__ws__verification_get: {
         parameters: {
             query?: never;
@@ -11920,6 +11773,104 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GestureOut"][];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    attach_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoiceNoteIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VoiceNoteOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_voice_note_api_v1_workspaces__ws__items__item_id__voice_note_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

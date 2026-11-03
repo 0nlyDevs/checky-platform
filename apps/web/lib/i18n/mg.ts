@@ -343,6 +343,19 @@ export const mg: Overrides = {
     reasonPlaceholder: "Nahoana io didy io, amin'ny fehezanteny iray na roa.",
     chars: (n: number) => `${n} / 280 litera`,
     download: "Alaivo ny sary",
+    format: "Endriky ny karatra", // relire (mg)
+    formats: { square: "Karatra 1080 × 1080", story: "Sata 9:16", communique: "Fanambarana sandoka" }, // relire (mg)
+    downloadAs: {
+      square: "Alaivo ny karatra", // relire (mg)
+      story: "Alaivo ny sata", // relire (mg)
+      communique: "Alaivo ny karatry ny fanambarana", // relire (mg)
+    },
+    // File names stay as in French: they travel between desks.
+    fileSuffix: { square: "carte", story: "statut", communique: "communique" },
+    sealed: "Samy mitondra ny QR misy tombo-kasen'ny rédaction ny endrika tsirairay: tsy mandalo ny skaner ny karatra sandoka « Checky milaza ».", // relire (mg)
+    unsealed: "Tsy misy ny tombo-kase: tsy misy QR ny karatra. Jereo raha mamoaka ny didiny ny rédaction.", // relire (mg)
+    notPublished: "Avoahy ny didy nosoniavina mba hitondran'ny karatra ny QR misy tombo-kase.", // relire (mg)
+    qrAlt: "QR misy tombo-kasen'ny rédaction: manokatra ny pejin'ny didy ho an'ny besinimaro ary manamarina ny karatra", // relire (mg)
     exportFailed: "Tsy voaforona ny sary. Andramo indray.",
     postTitle: "Soratra hamoahana",
     postEmpty: "Mbola tsy misy soratra. Afaka manolotra iray ny IA avy amin'ny didy, ny fanazavana ary ny loharano.",
@@ -577,6 +590,9 @@ export const mg: Overrides = {
         copied: "Voadika ny rohy",
         listen: "Henoy",
         stopListening: "Ajanony",
+        newsroomVoice: "Henoy ny mpanao gazety", // relire (mg)
+        newsroomVoiceLead: (s: number | null) => `Ny fandavana notenenin'ny mpanao gazety iray, tamin'ny feony manokana${s ? ` (${s} s)` : ""}.`, // relire (mg)
+        number: (n: number) => `fanamarinana ${n}`, // relire (mg)
         whatsapp: "Zarao amin'ny WhatsApp",
         whatsappText: (title: string, verdict: string, url: string) => `« ${title} »: ${verdict}. Nohamarinin'ny mpanao gazety, misy loharano: ${url}`,
         post: "Ny lahatsoratra navoakan'ny mpanao gazety",

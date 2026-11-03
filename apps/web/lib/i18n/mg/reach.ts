@@ -16,6 +16,7 @@ export const reach: Part<typeof fr> = {
     showMap: "Asehoy ny sarintany",
     mapHidden: "Nafenina ny sarintany amin'ny fomba mitsitsy",
     showVideo: "Ampidiro ny horonantsary",
+    showAudio: "Ampidiro ilay hafatra am-peo", // relire (mg)
   },
   font: {
     label: "Haben'ny soratra",

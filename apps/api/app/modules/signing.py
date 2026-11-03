@@ -24,7 +24,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Literal
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -700,14 +700,10 @@ def _summary(p: dict) -> str:
     )
 
 
-@router.get("/workspaces/{ws}/items/{item_id}/attestation")
-async def attestation(item_id: uuid.UUID, member: AnyMember, db: Db) -> AttestationOut:
-    """« Attestation de vérification »: the carnet's summary signed with the server's key, so a
-    partner, a court or a reader can check that this newsroom did this work on this version."""
+async def attestation_of(db: AsyncSession, item: Item) -> AttestationOut:
+    """The carnet's summary signed with the server's key (see `attestation`)."""
     from app.core import attest
-    from app.modules.items import _get_item
 
-    item = await _get_item(db, member, item_id)
     data = item.data or {}
     if not data.get("signed_by") or data.get("verdict") not in VERDICTS:
         raise ApiError(409, "not_signed", "Sign the verdict before issuing an attestation")
@@ -755,6 +751,58 @@ async def attestation(item_id: uuid.UUID, member: AnyMember, db: Db) -> Attestat
         public_key=signed["public_key"],
         issued_at=payload["issued_at"],
     )
+
+
+@router.get("/workspaces/{ws}/items/{item_id}/attestation")
+async def attestation(item_id: uuid.UUID, member: AnyMember, db: Db) -> AttestationOut:
+    """« Attestation de vérification »: the carnet's summary signed with the server's key, so a
+    partner, a court or a reader can check that this newsroom did this work on this version."""
+    from app.modules.items import _get_item
+
+    return await attestation_of(db, await _get_item(db, member, item_id))
+
+
+def _pdf(body: bytes, name: str) -> Response:
+    return Response(
+        body,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{name}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@router.get(
+    "/workspaces/{ws}/items/{item_id}/carnet.pdf",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+async def carnet_pdf(item_id: uuid.UUID, member: AnyMember, db: Db) -> Response:
+    """« Exporter le carnet »: the carnet as an A4 PDF, `carnet-FAN-0142.pdf`."""
+    from app.core import pdf
+    from app.modules.items import _get_item
+
+    item = await _get_item(db, member, item_id)
+    book = await carnet_of(db, item)
+    signed = (item.data or {}).get("signed_by") and book.verdict in VERDICT_WORDS
+    body = pdf.carnet_pdf(book, VERDICT_WORDS[book.verdict] if signed else None)
+    return _pdf(body, pdf.file_name("carnet", book.ref))
+
+
+@router.get(
+    "/workspaces/{ws}/items/{item_id}/attestation.pdf",
+    response_class=Response,
+    responses={200: {"content": {"application/pdf": {}}}},
+)
+async def attestation_pdf(item_id: uuid.UUID, member: AnyMember, db: Db) -> Response:
+    """The attestation on one A4 page, its signed text attached inside the PDF."""
+    from app.core import pdf
+    from app.modules.items import _get_item
+
+    item = await _get_item(db, member, item_id)
+    att = await attestation_of(db, item)
+    return _pdf(pdf.attestation_pdf(att), pdf.file_name("attestation", att.payload.get("ref")))
 
 
 class VerifyIn(BaseModel):

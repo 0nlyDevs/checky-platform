@@ -314,7 +314,13 @@ export type Formats = {
     date: string | null;
     qr_url: string;
     short_link: string | null;
+    number?: number | null;
+    /** « vérification 145 »: the same number on the card, the radio line, the SMS and /v/145. */
+    check_label?: string | null;
+    sealed?: boolean;
   };
+  number?: number | null;
+  check_label?: string | null;
   mg: Record<string, string> | null;
   written_by: "ai" | "template";
   gaps: Gap[];

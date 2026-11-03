@@ -16,7 +16,7 @@ from fastapi import APIRouter, Request, Response
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import select
 
-from app.core import ai, dates, keys, stt
+from app.core import ai, dates, keys, seal, stt
 from app.core.access import Db
 from app.core.activity import broadcast, record
 from app.core.config import get_settings
@@ -25,6 +25,7 @@ from app.core.http import shared as shared_http
 from app.core.models import Item, RadioPartner, Source, Workspace
 from app.core.places import fold
 from app.core.words import words
+from app.modules.voicenote import PublicVoiceNote, public_voice_note
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -58,6 +59,10 @@ class VerdictOut(BaseModel):
     confidence: Literal["eleve", "moyen", "faible"] | None = None
     evidence: list[EvidenceOut] = Field(default_factory=list)
     signed_at: str | None = None
+    # « vérification 145 »: the number said on air and typed in an SMS, the same on every format.
+    check_label: str | None = None
+    # « Écouter la rédaction »: the journalist's own voice note (verdict page only, never in lists).
+    voice_note: PublicVoiceNote | None = None
 
 
 class VerdictPage(BaseModel):
@@ -195,6 +200,7 @@ async def _verdict(db: Db, item: Item, ws: Workspace) -> VerdictOut:
         confidence=confidence_level(d),
         evidence=evidence,
         signed_at=d.get("signed_at") if isinstance(d.get("signed_at"), str) else None,
+        check_label=seal.check_label(d.get("ref")),
     )
 
 
@@ -291,7 +297,9 @@ async def get_verdict(item_id: uuid.UUID, db: Db) -> VerdictOut:
     row = (await db.execute(_published().where(Item.id == item_id))).first()
     if row is None:
         raise ApiError(404, "not_found", "Verdict not found")
-    return await _verdict(db, *row)
+    out = await _verdict(db, *row)
+    out.voice_note = await public_voice_note(db, row[0])
+    return out
 
 
 # --- "is it already checked?": word overlap on accent-free text (no AI verdict is ever made here)

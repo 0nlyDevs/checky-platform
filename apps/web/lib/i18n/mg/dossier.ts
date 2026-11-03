@@ -232,6 +232,7 @@ export const dossier: Part<typeof fr> = {
       radio_line_mg: "Fehezanteny radio",
       sms_mg: "SMS",
       text_mg: "WhatsApp sy Facebook",
+      voice_note: "Hafatra am-peo (WhatsApp)", // relire (mg)
     },
     chars: (n: number) => `Litera ${n} / 160`,
     words: (n: number) => `Teny ${n}`,
@@ -246,6 +247,10 @@ export const dossier: Part<typeof fr> = {
     mgLocked: "Vakio indray alohan'ny handikana",
     poster: "Peta-drindrina hatonta",
     posterLead: "Pejy A4 misy ny didy sy kaody QR mankany amin'ny pejy ho an'ny besinimaro.",
+    cardTitle: "Karatra sy sata", // relire (mg)
+    cardLead: "Ny karatra 1080 × 1080 sy ny sata 9:16 ho an'ny WhatsApp sy Facebook, amin'ny teny frantsay sy malagasy, samy manana ny QR misy tombo-kase.", // relire (mg)
+    cardOpen: "Omano ny karatra", // relire (mg)
+    voiceTicked: "Lasa ny hafatra am-peo: isaina miaraka amin'ireo toerana voasoratra", // relire (mg)
     posterOpen: "Sokafy ny peta-drindrina",
     permalink: "Pejy ho an'ny besinimaro",
     short: "Rohy fohy",
@@ -263,6 +268,30 @@ export const dossier: Part<typeof fr> = {
     loading: "Manomana ireo endrika…",
     remove: "Esory",
   },
+  voice: {
+    title: "Hafatra am-peon'ny rédaction", // relire (mg)
+    lead: "Ny fandavana amin'ny teny malagasy, 30 segondra, amin'ny feonao manokana: ho an'ireo vondrona mihaino kokoa noho ny mamaky. Tsy adikan'ny milina an-tsoratra mihitsy.", // relire (mg)
+    record: (max: number) => `Raketo (${max} segondra farafahabetsany)`, // relire (mg)
+    stop: "Ajanony", // relire (mg)
+    elapsed: (s: number, max: number) => `${s} / ${max} s`,
+    listen: "Henoy indray ny voarakitra", // relire (mg)
+    takeLength: (s: number) => `${s} segondra voarakitra. Henoy indray alohan'ny hitahirizana.`, // relire (mg)
+    keep: "Tehirizo",
+    redo: "Avereno", // relire (mg)
+    saving: "Mitahiry…",
+    saved: "Voatahiry ny hafatra am-peo: henoina ao amin'ny pejy ho an'ny besinimaro izy.", // relire (mg)
+    player: "Hafatra am-peon'ny rédaction", // relire (mg)
+    kept: (s: number | null) => (s ? `Voatahiry ny hafatra am-peo · ${s} s · henoina ao amin'ny pejy ho an'ny besinimaro` : "Voatahiry ny hafatra am-peo · henoina ao amin'ny pejy ho an'ny besinimaro"), // relire (mg)
+    share: "Zarao amin'ny WhatsApp", // relire (mg)
+    shareTitle: (ref: string) => `Fandavana ${ref}`, // relire (mg)
+    download: "Alaivo", // relire (mg)
+    again: "Raketo indray", // relire (mg)
+    remove: "Esory",
+    micDenied: "Tsy azo ampiasaina ny mikrô. Avelao ao amin'ny navigateur.", // relire (mg)
+    noMic: "Tsy mahay mandrakitra ity navigateur ity: ampiasao finday na Chrome.", // relire (mg)
+    notSigned: "Asio sonia aloha ny didy.", // relire (mg)
+    failed: "Tsy voatahiry ny hafatra am-peo. Andramo indray.", // relire (mg)
+  },
   carnet: {
     title: "Kahien'ny fanamarinana",
     lead: "Izay rehetra natao tamin'ity dossier ity, misy daty: famakiana, loharano, fanontaniana, valiny, sonia, fampielezana.",
@@ -270,6 +299,9 @@ export const dossier: Part<typeof fr> = {
     attestation: "Fanamarinana fa voamarina",
     print: "Atonta",
     close: "Hidio",
+    pdf: "Tehirizo ho PDF", // relire (mg)
+    pdfBusy: "Manomana ny PDF…", // relire (mg)
+    pdfFailed: "Tsy voaforona ny PDF. Andramo indray.", // relire (mg)
     generated: (when: string) => `Kahie natao ny ${when}`,
     entries: "Filaharan'ny fotoana",
     sources: "Loharano ao amin'ny dossier",

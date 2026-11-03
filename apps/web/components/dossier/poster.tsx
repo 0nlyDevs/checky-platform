@@ -95,6 +95,7 @@ export function PosterView() {
           <footer className="mt-auto flex items-end justify-between gap-[5%] border-t-2 border-[#0a0a0b] pt-[4%]">
             <div className="min-w-0">
               <p className="text-[clamp(0.85rem,2.2vw,1.2rem)] font-bold text-pretty">{p.scan}</p>
+              {poster.check_label && <p className="mt-[3%] font-display text-[clamp(1.1rem,3.2vw,1.9rem)] leading-none font-extrabold tabular">{poster.check_label}</p>}
               {poster.short_link && <p className="mt-[3%] font-display text-[clamp(1rem,2.8vw,1.6rem)] font-extrabold break-all">{poster.short_link.replace(/^https?:\/\//, "")}</p>}
               {poster.date && <p className="mt-[2%] text-[clamp(0.75rem,1.8vw,1rem)]">{poster.date}</p>}
             </div>
