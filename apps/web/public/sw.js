@@ -2,7 +2,7 @@
  *
  * Registered by components/pwa/service-worker.tsx in production builds only (or with
  * NEXT_PUBLIC_SW=1), as /sw.js?v=<build>&api=<API origin>. What it keeps:
- *   shell   (per build) the public seal pages (/scanner, /sceau/_, /verifies/_, /verifies, /officiel),
+ *   shell   (per build) the public seal pages (/scanner, /seal/_, /verdicts/_, /verdicts, /official),
  *           the desk pages the app asks it to warm, and the JS/CSS/fonts those pages load
  *   static  /_next/static/* (hashed, immutable): cache first
  *   pages   every page opened: network first, the saved copy offline
@@ -22,7 +22,7 @@ const DATA = "checky-data";
 const KEEP = [SHELL, STATIC, PAGES, DATA];
 
 // Public pages that must open with no network; `_` stands for any id (the page reads its address).
-const PRECACHE = ["/scanner", "/sceau/_", "/verifies/_", "/verifies", "/officiel"];
+const PRECACHE = ["/scanner", "/seal/_", "/verdicts/_", "/verdicts", "/official"];
 const ASSETS = ["/manifest.webmanifest", "/logo.svg", "/icon.svg", "/icons/icon-192.png"];
 
 // API reads kept for offline use (paths after /api/v1).
@@ -33,7 +33,26 @@ const DATA_ROUTES = [
   /^\/public\/(seal-keys|verdicts|registry|sceau|newsrooms|countries|flashs)(\/|$)/,
 ];
 // Pages never kept: signing in and out, invitations.
-const NO_PAGE = /^\/(connexion|inscription|invitation|api)(\/|$)/;
+const NO_PAGE = /^\/(sign-in|sign-up|connexion|inscription|invitation|api)(\/|$)/;
+// French page paths before the English ones (next.config.ts redirects them online): an old QR
+// scanned with no network is sent to the new address, whose cached copy then opens.
+const MOVED = [
+  ["/accueil", "/home"], ["/verifies", "/verdicts"], ["/signaler", "/report"], ["/suivi", "/track"],
+  ["/officiel", "/official"], ["/sceau", "/seal"], ["/reponse", "/reply"], ["/flashs", "/flashes"],
+  ["/connexion", "/sign-in"], ["/inscription", "/sign-up"],
+];
+
+/** The English address of an old French path, or null. */
+function moved(url) {
+  for (const [from, to] of MOVED) {
+    if (url.pathname === from || url.pathname.startsWith(`${from}/`)) {
+      const next = new URL(url.href);
+      next.pathname = to + url.pathname.slice(from.length);
+      return next.href;
+    }
+  }
+  return null;
+}
 
 const OFFLINE_HTML = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hors connexion · Checky</title>
 <style>body{font:18px/1.5 system-ui,sans-serif;margin:0;padding:48px 16px;background:#f3f2ee;color:#0a0a0b}main{max-width:36rem;margin:auto}a{color:inherit;font-weight:700}@media (prefers-color-scheme:dark){body{background:#0a0a0b;color:#f3f2ee}}</style></head>
@@ -110,6 +129,8 @@ async function cacheFirst(request, cacheName) {
 }
 
 async function page(request, url) {
+  const renamed = moved(url);
+  if (renamed) return Response.redirect(renamed, 308);
   try {
     const response = await fetch(request);
     if (response.ok && !response.redirected && response.type === "basic" && !NO_PAGE.test(url.pathname)) {
@@ -121,7 +142,7 @@ async function page(request, url) {
     const hit = (await caches.match(key)) || (await caches.match(url.pathname, { ignoreSearch: true }));
     if (hit) return hit;
     // A seal page opened from a QR: the shared copy reads the id from the address.
-    const shared = url.pathname.startsWith("/sceau/") ? "/sceau/_" : /^\/verifies\/[^/]+$/.test(url.pathname) ? "/verifies/_" : null;
+    const shared = url.pathname.startsWith("/seal/") ? "/seal/_" : /^\/verdicts\/[^/]+$/.test(url.pathname) ? "/verdicts/_" : null;
     if (shared) {
       const copy = await caches.match(shared);
       if (copy) return copy;

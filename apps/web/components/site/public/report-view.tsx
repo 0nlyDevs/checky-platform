@@ -73,7 +73,7 @@ export function ReportView() {
             <ul className="mt-3 border-t border-foreground">
               {mine.map((m) => (
                 <li key={m.token}>
-                  <Link href={`/suivi/${m.token}`} className="group flex items-baseline gap-3 border-b border-border py-3">
+                  <Link href={`/track/${m.token}`} className="group flex items-baseline gap-3 border-b border-border py-3">
                     <span className="font-display font-bold tabular">{m.ref}</span>
                     <span className="min-w-0 truncate group-hover:underline">{m.title}</span>
                     <IconArrowRight className="ml-auto size-4 shrink-0 self-center text-muted-foreground" aria-hidden />
@@ -96,7 +96,7 @@ export function ReportView() {
           <p className="mt-4 text-lg leading-relaxed text-pretty">{r.done(done.ref)}</p>
           {done.newsroom && <p className="mt-2 text-pretty">{(r.routed[done.routed] ?? r.routed.chosen)(done.newsroom.name)}</p>}
           <Button asChild variant="action" size="xl" className="group mt-6 rounded-full px-6">
-            <Link href={`/suivi/${done.token}`}>
+            <Link href={`/track/${done.token}`}>
               {r.follow} <IconArrowRight className="transition-transform duration-300 group-hover:translate-x-1" aria-hidden />
             </Link>
           </Button>

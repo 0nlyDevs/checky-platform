@@ -102,7 +102,7 @@ export function PeopleAsk({ ws }: { ws: string }) {
                 </p>
               </div>
               {g.item_id && (
-                <Link href={`/w/${ws}/affirmations/${g.item_id}`} className="inline-flex items-center gap-1.5 self-center text-sm font-bold underline underline-offset-4">
+                <Link href={`/w/${ws}/claims/${g.item_id}`} className="inline-flex items-center gap-1.5 self-center text-sm font-bold underline underline-offset-4">
                   {q.open(g.item_ref)} <IconArrowRight className="size-4" aria-hidden />
                 </Link>
               )}

@@ -481,7 +481,7 @@ function ComparePanel({ ws, onRecorded }: { ws: string; onRecorded: () => void }
               (result.contacts?.length ? (
                 result.contacts.map((p) => (
                   <Button key={p.id} variant="outline" asChild>
-                    <Link href={`/w/${ws}/annuaire?q=${encodeURIComponent(p.name)}`}>
+                    <Link href={`/w/${ws}/directory?q=${encodeURIComponent(p.name)}`}>
                       <IconAddressBook aria-hidden />
                       {r.compare.askContact(p.name, p.role)}
                     </Link>
@@ -489,7 +489,7 @@ function ComparePanel({ ws, onRecorded }: { ws: string; onRecorded: () => void }
                 ))
               ) : (
                 <Button variant="outline" asChild>
-                  <Link href={`/w/${ws}/annuaire?q=${encodeURIComponent(result.issuer)}`}>
+                  <Link href={`/w/${ws}/directory?q=${encodeURIComponent(result.issuer)}`}>
                     <IconAddressBook aria-hidden />
                     {r.compare.askIssuer(result.issuer)}
                   </Link>
@@ -551,7 +551,7 @@ export function RegistryView() {
         {tabs.map((x) => (
           <Link
             key={x.key}
-            href={`/w/${ws}/registre${x.key === "originaux" ? "" : `?onglet=${x.key}`}`}
+            href={`/w/${ws}/registry${x.key === "originaux" ? "" : `?onglet=${x.key}`}`}
             aria-current={x.key === tab ? "page" : undefined}
             className={cn(
               "-mb-px shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors duration-150",

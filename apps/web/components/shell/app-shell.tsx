@@ -55,7 +55,7 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
         <DropdownMenuLabel>{t.nav.workspace}</DropdownMenuLabel>
         {me?.memberships.map((m) => (
           <DropdownMenuItem key={m.workspace_id} asChild>
-            <Link href={`/w/${m.workspace_id}/rubrique`}>
+            <Link href={`/w/${m.workspace_id}/beat`}>
               <span className="flex-1 truncate">{m.name}</span>
               {m.workspace_id === current && <IconCheck className="size-4" aria-hidden />}
             </Link>
@@ -82,7 +82,7 @@ function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: s
     await clearPrivateCache();
     await authClient.signOut();
     // A full page load drops everything the account left in memory (SWR's /me and newsrooms).
-    window.location.replace("/connexion");
+    window.location.replace("/sign-in");
   }
 
   return (
@@ -190,7 +190,7 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
           {children}
         </main>
 
-        <PreferenceDock settingsHref={ws ? `/w/${ws}/parametres` : undefined} />
+        <PreferenceDock settingsHref={ws ? `/w/${ws}/settings` : undefined} />
         <TabBar ws={ws} items={items} />
       </div>
     </AssistantProvider>

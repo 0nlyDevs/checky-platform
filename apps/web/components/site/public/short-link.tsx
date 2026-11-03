@@ -18,7 +18,7 @@ export function ShortLink() {
   useEffect(() => {
     let live = true;
     publicApi<{ id: string }>(`/v/${encodeURIComponent(ref)}`)
-      .then((v) => live && router.replace(`/verifies/${v.id}`))
+      .then((v) => live && router.replace(`/verdicts/${v.id}`))
       .catch(() => live && setMissing(true));
     return () => {
       live = false;
@@ -30,7 +30,7 @@ export function ShortLink() {
       {missing ? (
         <>
           <p className="text-xl">{s.notFound}</p>
-          <Link href="/verifies" className="mt-4 inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
+          <Link href="/verdicts" className="mt-4 inline-flex items-center gap-1.5 font-bold underline underline-offset-4">
             {s.all} <IconArrowRight className="size-4" aria-hidden />
           </Link>
         </>

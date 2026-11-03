@@ -280,7 +280,7 @@ export function DiffusePanel({
               <h3 className="font-bold">{f.poster}</h3>
               <p className="mt-0.5 text-sm text-muted-foreground">{f.posterLead}</p>
               <Button asChild size="sm" variant="outline" className="mt-3">
-                <Link href={`/w/${ws}/affirmations/${item.id}/affiche`} target="_blank">
+                <Link href={`/w/${ws}/claims/${item.id}/poster`} target="_blank">
                   <IconArrowSquareOut aria-hidden />
                   {f.posterOpen}
                 </Link>

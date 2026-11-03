@@ -618,7 +618,7 @@
   transform: translate(2px, -2px);
 }
 
-/* ---------- /verifies: three muted reels, tilted like the landing's picks ---------- */
+/* ---------- /verdicts: three muted reels, tilted like the landing's picks ---------- */
 .reels-stage {
   position: relative;
   height: 470px;
@@ -806,7 +806,7 @@
   color: var(--foreground);
 }
 
-/* ---------- /connexion, /inscription: a newsroom on video beside the form ---------- */
+/* ---------- /sign-in, /sign-up: a newsroom on video beside the form ---------- */
 .auth-doors {
   display: grid;
   min-height: 100dvh;

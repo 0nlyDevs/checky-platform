@@ -88,7 +88,7 @@ function useHref(): string | null {
   );
 }
 
-/** /sceau/[id]: checks the issuer's signature on a communiqué from the QR alone, on this device and
+/** /seal/[id]: checks the issuer's signature on a communiqué from the QR alone, on this device and
  *  with no network (the issuers' keys are kept here); online, also against the registry. The id is
  *  read from the address, not the route: offline the page may come from the service worker's copy. */
 export function SealCheck() {
@@ -163,7 +163,7 @@ export function SealCheck() {
         <Link href="/scanner" className="pub-ghost-btn">
           {t.offline.scanner.again}
         </Link>
-        <Link href="/officiel" className="pub-ghost-btn">
+        <Link href="/official" className="pub-ghost-btn">
           {c.feed}
         </Link>
       </p>

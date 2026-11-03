@@ -134,7 +134,7 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
                       <div className="flex items-baseline justify-between gap-3">
                         <span className="font-display text-base font-semibold tracking-wide tabular">{c.ref}</span>
                         <Link
-                          href={`/w/${ws}/affirmations/${item.id}`}
+                          href={`/w/${ws}/claims/${item.id}`}
                           onClick={() => setOpen(false)}
                           className="text-sm font-medium underline underline-offset-2"
                         >

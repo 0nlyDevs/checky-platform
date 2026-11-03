@@ -280,7 +280,7 @@ export function FactsPanel({
                   {p.verdict && <VerdictChip verdict={p.verdict} />}
                   <span className="w-full text-sm text-muted-foreground">
                     {p.id ? (
-                      <a href={`/verifies/${p.id}`} target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-4 hover:decoration-foreground">
+                      <a href={`/verdicts/${p.id}`} target="_blank" rel="noreferrer" className="underline decoration-border underline-offset-4 hover:decoration-foreground">
                         {p.title}
                       </a>
                     ) : (

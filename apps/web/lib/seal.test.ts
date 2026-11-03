@@ -66,3 +66,25 @@ test("old signature-only communiqué QRs and other links are told apart", () => 
   const verdict = b64u('{"id":"v1","type":"verdict"}');
   assert.equal(parseSeal(`https://checky.mg/sceau/c1#${verdict}.sig.k`), null);
 });
+
+test("the English addresses read like the French ones printed before them", async () => {
+  const { key, sign } = await issuer("communique");
+  const keys: SealKeys = { keys: [key], revoked: [] };
+  const seal = parseSeal(`https://checky.mg/seal/c1#${b64u(COMMUNIQUE)}.${await sign(COMMUNIQUE)}.k_test`);
+  assert.ok(seal && seal.form === "full" && seal.kind === "communique");
+  assert.equal((await checkSeal(seal, keys)).status, "authentic");
+
+  const verdictKey = await issuer("verdict");
+  const message = '{"digest":"d","id":"v1","ref":"FAN-0145","signed_at":"2026-11-02T05:15Z","title":"T","type":"verdict","verdict":"false"}';
+  const fragment = `${b64u(message)}.${await verdictKey.sign(message)}.k_test`;
+  const verdict = parseSeal(`https://checky.mg/verdicts/v1#${fragment}`);
+  assert.ok(verdict && verdict.form === "full" && verdict.kind === "verdict");
+  assert.equal((await checkSeal(verdict, { keys: [verdictKey.key], revoked: [] })).status, "authentic");
+  const elsewhere = parseSeal(`https://checky.mg/verdicts/v2#${fragment}`);
+  assert.ok(elsewhere && elsewhere.form === "full");
+  assert.equal((await checkSeal(elsewhere, { keys: [verdictKey.key], revoked: [] })).status, "mismatch");
+
+  assert.deepEqual(parseSeal("https://checky.mg/seal/c1#c2lnbmF0dXJl"), { form: "signature", kind: "communique", id: "c1", signature: "c2lnbmF0dXJl" });
+  assert.equal(parseSeal("https://checky.mg/verdicts/v1"), null);
+  assert.equal(parseSeal(`https://checky.mg/seal/c1#${b64u('{"id":"v1","type":"verdict"}')}.sig.k`), null);
+});

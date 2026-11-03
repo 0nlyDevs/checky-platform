@@ -142,7 +142,7 @@ function PictureMemory({ ws, source }: { ws: string; source: Source }) {
   return (
     <ul className="space-y-1 text-sm">
       {data.map((m) => {
-        const href = m.own && m.item_id ? `/w/${ws}/affirmations/${m.item_id}` : m.verdict_id ? `/verifies/${m.verdict_id}` : null;
+        const href = m.own && m.item_id ? `/w/${ws}/claims/${m.item_id}` : m.verdict_id ? `/verdicts/${m.verdict_id}` : null;
         return (
           <li key={m.source_id} className="flex items-start gap-1.5 font-medium">
             <IconCalendarDots className="mt-0.5 size-3.5 shrink-0" aria-hidden />

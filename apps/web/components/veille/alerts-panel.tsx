@@ -53,7 +53,7 @@ function MemberRow({ ws, m, picked, onPick }: { ws: string; m: AlertMember; pick
   const kind = (m.kind in KIND_ICON ? m.kind : "item") as Kind;
   const Icon = KIND_ICON[kind];
   const title = m.item_id ? (
-    <Link href={`/w/${ws}/affirmations/${m.item_id}` as never} className="font-bold text-pretty underline-offset-4 hover:underline">
+    <Link href={`/w/${ws}/claims/${m.item_id}` as never} className="font-bold text-pretty underline-offset-4 hover:underline">
       {m.title}
     </Link>
   ) : m.url ? (
@@ -230,7 +230,7 @@ export function AlertsList({ ws, alerts, actions = false, limit, onChanged }: { 
               {a.ref && <span className="font-display font-bold tabular">{a.ref}</span>}
               <AlertLevel level={a.level} adjusted={Boolean(a.override)} />
             </p>
-            <Link href={`/w/${ws}/veille#alerte-${a.id}` as never} className="mt-1.5 block font-bold text-pretty underline-offset-4 hover:underline">
+            <Link href={`/w/${ws}/watch#alerte-${a.id}` as never} className="mt-1.5 block font-bold text-pretty underline-offset-4 hover:underline">
               {a.title}
             </Link>
             <Facts alert={a} />

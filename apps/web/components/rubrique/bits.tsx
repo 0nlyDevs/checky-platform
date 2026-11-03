@@ -91,7 +91,7 @@ export function CheckedLine({ checked, ws }: { checked: Checked; ws: string }) {
     </>
   );
   return checked.mine ? (
-    <Link href={`/w/${ws}/affirmations/${checked.id}` as never} className="relative z-10 inline-flex flex-wrap items-center gap-2 text-sm hover:underline">
+    <Link href={`/w/${ws}/claims/${checked.id}` as never} className="relative z-10 inline-flex flex-wrap items-center gap-2 text-sm hover:underline">
       {body}
     </Link>
   ) : (

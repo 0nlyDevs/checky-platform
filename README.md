@@ -198,7 +198,7 @@ the journalist opens manually. Radio numbers are masked in the desk's SMS list, 
 WhatsApp link in the kit response hides the number and expires after ten minutes. A journalist
 may close an alert only with a reason; a published verdict on a linked case also closes it.
 
-`/flashs` serves today's signed verdicts as a printable, script-free HTML page under 20 KB,
+`/flashes` serves today's signed verdicts as a printable, script-free HTML page under 20 KB,
 with French and Malagasy radio lines and an English interface option. A partner radio's link
 keeps its one-tap « Diffusé » form; a recorded newsroom voice note is linked when available.
 The line uses the same verification number as the card, SMS and short link. No operator SMS or
@@ -326,8 +326,8 @@ The browser follows it with Socket.IO events `job.progress` / `job.done` / `job.
      a confirmed verdict is solid;
    - status icons never use verdict colours;
    - reuse the numbered line (`components/flow/step-line.tsx`) wherever a rumour's progress shows.
-6. The public, no-account pages live in `apps/web/app/(site)/` (`/`, `/verifies`, `/signaler`,
-   `/suivi/[token]`, API `/api/v1/public/*`, only for newsrooms that opted in). Every rumour shown as
+6. The public, no-account pages live in `apps/web/app/(site)/` (`/`, `/verdicts`, `/report`,
+   `/track/[token]`, API `/api/v1/public/*`, only for newsrooms that opted in). Every rumour shown as
    an example on them is fictional and labelled.
 
 Next.js 16 is newer than most tutorials and AI training data: read

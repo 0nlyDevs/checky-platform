@@ -10,7 +10,7 @@ import { t } from "@/lib/i18n/live";
 const p = t.palette;
 
 /** G then a letter: where it goes, relative to /w/[ws]. */
-const GO: Record<string, string> = { d: "affirmations", s: "sources", e: "parametres#equipe", p: "parametres" };
+const GO: Record<string, string> = { d: "claims", s: "sources", e: "settings#equipe", p: "settings" };
 const G_WINDOW_MS = 1200;
 
 const typing = (el: EventTarget | null) => {
@@ -52,7 +52,7 @@ export function Shortcuts() {
         pendingG.current = Date.now();
       } else if (key === "v" && ws) {
         e.preventDefault();
-        router.push(`/w/${ws}/verifier`);
+        router.push(`/w/${ws}/verify`);
         // the field exists once the page has rendered
         let tries = 0;
         const focus = setInterval(() => {

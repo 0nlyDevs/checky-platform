@@ -86,9 +86,9 @@ export function CommandPalette() {
       // a stale answer (for the previous letters) is not offered while the next one is on its way
       for (const item of query.trim() === debounced && !isValidating ? (found?.items ?? []) : []) {
         const claim = toClaim(item as Item);
-        list.push({ id: `claim-${item.id}`, group: "claims", icon: IconFolderOpen, label: item.title, hint: claim.ref, run: go(`/w/${ws}/affirmations/${item.id}`) });
+        list.push({ id: `claim-${item.id}`, group: "claims", icon: IconFolderOpen, label: item.title, hint: claim.ref, run: go(`/w/${ws}/claims/${item.id}`) });
       }
-      list.push({ id: "act-check", group: "actions", icon: IconScan, label: p.actions.check, keys: ["V"], run: go(`/w/${ws}/verifier`) });
+      list.push({ id: "act-check", group: "actions", icon: IconScan, label: p.actions.check, keys: ["V"], run: go(`/w/${ws}/verify`) });
     }
     list.push(
       { id: "act-ask", group: "actions", icon: IconSparkle, label: p.actions.ask, run: () => openAssistant(true) },

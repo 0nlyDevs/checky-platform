@@ -26,7 +26,7 @@ export function AuthDoors({ children }: { children: React.ReactNode }) {
       <section className="auth-panel">
         <div className="auth-top">
           <Link
-            href="/verifies"
+            href="/verdicts"
             className="group inline-flex h-10 items-center gap-2 rounded-full px-1 text-sm font-bold text-foreground outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring"
           >
             <IconArrowLeft className="size-4 transition-transform duration-300 group-hover:-translate-x-0.5" aria-hidden />
@@ -50,7 +50,7 @@ export function AuthDoors({ children }: { children: React.ReactNode }) {
 }
 
 function LitSide() {
-  return <Side up={usePathname().startsWith("/inscription")} />;
+  return <Side up={usePathname().startsWith("/sign-up")} />;
 }
 
 /** The clip and the promise: the radio studio to sign in, a newsroom on air to sign up. */
@@ -108,13 +108,13 @@ function LitDoors() {
 /** Se connecter · Créer un compte, the ink pill under the open door; `?suite=` follows across. */
 function Doors({ path, suite }: { path: string; suite: string | null }) {
   const t = useT();
-  const up = path.startsWith("/inscription");
+  const up = path.startsWith("/sign-up");
   const current = path ? (up ? 1 : 0) : -1;
   const { host, pill, handlers } = useSlidingPill<HTMLElement>(current);
   const q = suite ? `?suite=${encodeURIComponent(suite)}` : "";
   const doors = [
-    { href: `/connexion${q}`, label: t.auth.signIn },
-    { href: `/inscription${q}`, label: t.auth.toSignUpLink },
+    { href: `/sign-in${q}`, label: t.auth.signIn },
+    { href: `/sign-up${q}`, label: t.auth.toSignUpLink },
   ];
   return (
     <nav ref={host} aria-label={t.look.auth.doors} className="seg seg-lg seg-fill" {...handlers}>

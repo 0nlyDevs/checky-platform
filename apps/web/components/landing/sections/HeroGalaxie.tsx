@@ -27,7 +27,7 @@ function webglAvailable() {
 /**
  * The field in the middle of the hero: the public « Est-ce déjà vérifié ? ».
  * While it is empty and unfocused, real rumours type themselves in and each
- * one "sent" stirs the galaxy; what the visitor types opens /verifies with
+ * one "sent" stirs the galaxy; what the visitor types opens /verdicts with
  * their text, where the check runs at once.
  */
 function PromptBar({ live, onSend }: { live: boolean; onSend: () => void }) {

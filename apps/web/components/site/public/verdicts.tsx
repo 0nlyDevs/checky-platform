@@ -25,7 +25,7 @@ export function VerdictCard({ v, index = 0 }: { v: PublicVerdict; index?: number
   const where = v.origin ? ((t.origins as Record<string, string>)[v.origin] ?? null) : null;
   return (
     <li className="arrive flex" style={{ "--i": index } as React.CSSProperties}>
-      <Link href={`/verifies/${v.id}`} className="vcard group">
+      <Link href={`/verdicts/${v.id}`} className="vcard group">
         <span className={cn("vcard-head", m.soft, m.ink)}>
           <span className="vcard-word">
             <Mark className="size-6 shrink-0" aria-hidden />

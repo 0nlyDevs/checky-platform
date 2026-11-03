@@ -36,7 +36,7 @@
       "caption": "La vidéo entre dans la grille du desk : son heure, son origine, depuis quand elle circule.",
       "steps": [
         {
-          "goto": "/w/{ws}/affirmations",
+          "goto": "/w/{ws}/claims",
           "ready": "text=FAN-",
           "settle": 800
         },
@@ -69,7 +69,7 @@
       "caption": "L'IA a lu les preuves et propose un verdict, citation par citation. Le journaliste vérifie, puis signe.",
       "steps": [
         {
-          "goto": "/w/{ws}/affirmations/{claim}",
+          "goto": "/w/{ws}/claims/{claim}",
           "ready": "text=Ce que disent les sources",
           "settle": 800
         },
@@ -116,7 +116,7 @@
       ],
       "steps": [
         {
-          "goto": "/verifies",
+          "goto": "/verdicts",
           "ready": "textarea",
           "settle": 800
         },

@@ -71,7 +71,7 @@ function Onboarding() {
   if (created) {
     const go = () => {
       void globalMutate("/me");
-      router.replace(`/w/${created.id}/rubrique`);
+      router.replace(`/w/${created.id}/beat`);
     };
     return (
       <div className="mx-auto max-w-2xl px-5 py-12 lg:py-16">
@@ -130,7 +130,7 @@ function Home() {
   const first = me?.memberships[0];
 
   useEffect(() => {
-    if (first && !wantsNew) router.replace(`/w/${first.workspace_id}/rubrique`);
+    if (first && !wantsNew) router.replace(`/w/${first.workspace_id}/beat`);
   }, [first, wantsNew, router]);
 
   if (error) {

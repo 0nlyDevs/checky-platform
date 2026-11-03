@@ -71,7 +71,7 @@ export function renderFlashsHtml(input: {
   const query = new URLSearchParams(token ? { radio: token } : {});
   const menu = (Object.keys(LANG_NAMES) as FlashLang[]).map((choice) => {
     query.set("lang", choice);
-    return `<a href="/flashs?${escapeHtml(query.toString())}" lang="${choice}"${choice === lang ? ' aria-current="page"' : ""}>${LANG_NAMES[choice]}</a>`;
+    return `<a href="/flashes?${escapeHtml(query.toString())}" lang="${choice}"${choice === lang ? ' aria-current="page"' : ""}>${LANG_NAMES[choice]}</a>`;
   }).join("");
   const date = data?.date && /^\d{4}-\d{2}-\d{2}$/.test(data.date)
     ? new Date(`${data.date}T12:00:00Z`).toLocaleDateString(LOCALES[lang], { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })
@@ -82,8 +82,8 @@ export function renderFlashsHtml(input: {
     const url = safeLink(line.link);
     const link = url ? `<a href="${escapeHtml(url)}" rel="noreferrer">${escapeHtml(line.ref ?? url)}</a>` : "";
     const audio = line.has_audio && /^[0-9a-f-]{36}$/i.test(line.id)
-      ? `<a href="/flashs/audio?id=${encodeURIComponent(line.id)}">${escapeHtml(l.audio)}</a>` : "";
-    const action = token && radio ? `<form method="post" action="/flashs?${escapeHtml(new URLSearchParams({ radio: token, lang }).toString())}"><input type="hidden" name="item_id" value="${escapeHtml(line.id)}"><button type="submit">${escapeHtml(l.markAired)}</button></form>` : "";
+      ? `<a href="/flashes/audio?id=${encodeURIComponent(line.id)}">${escapeHtml(l.audio)}</a>` : "";
+    const action = token && radio ? `<form method="post" action="/flashes?${escapeHtml(new URLSearchParams({ radio: token, lang }).toString())}"><input type="hidden" name="item_id" value="${escapeHtml(line.id)}"><button type="submit">${escapeHtml(l.markAired)}</button></form>` : "";
     return `<li><p lang="${lang === "mg" ? "mg" : "fr"}">${escapeHtml(spoken)}</p><p>${[link, audio].filter(Boolean).join(" · ")}</p>${action}</li>`;
   }).join("");
   const radioName = radio ? `${radio.name}${radio.frequency ? ` ${radio.frequency}` : ""}` : "";

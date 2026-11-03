@@ -17,7 +17,7 @@ import { Fin } from "./sections/Fin";
 import "./styles/global.css";
 
 /**
- * The public landing (`/accueil`, shown at `/` to signed-out visitors): the
+ * The public landing (`/home`, shown at `/` to signed-out visitors): the
  * galaxy hero, then the rumour's road chapter by chapter, with the section
  * ruler on the right. Every style is scoped under `.landing`.
  */

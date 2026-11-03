@@ -252,7 +252,7 @@ export function VerifyView() {
       const links = [result.url, ...picked].filter((u, i, all): u is string => !!u && all.indexOf(u) === i);
       // one by one: the API checks each link before queueing it
       for (const link of links) await act({ kind: "attach_link", item_id: made.item_id, url: link }).catch(() => null);
-      router.push(`/w/${ws}/affirmations/${made.item_id}` as never);
+      router.push(`/w/${ws}/claims/${made.item_id}` as never);
     } catch {
       setError(c.trackFailed);
       setTracking(false);
@@ -541,7 +541,7 @@ function Board({
       {result?.tracked && (
         <p className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border bg-card px-4 py-3">
           <span>{c.tracked(result.tracked.ref ?? "")}</span>
-          <Link href={`/w/${ws}/affirmations/${result.tracked.item_id}` as never} className="font-bold underline underline-offset-4">
+          <Link href={`/w/${ws}/claims/${result.tracked.item_id}` as never} className="font-bold underline underline-offset-4">
             {c.open} <IconArrowRight className="inline size-4" aria-hidden />
           </Link>
         </p>
@@ -583,7 +583,7 @@ function Board({
             <IconAddressBook className="size-4 shrink-0" aria-hidden />
             <span className="font-bold">{k.contact}</span>
             <span className="text-muted-foreground">{k.contactHelp}</span>
-            <Link href={`/w/${ws}/annuaire` as never} className="font-bold underline underline-offset-4">
+            <Link href={`/w/${ws}/directory` as never} className="font-bold underline underline-offset-4">
               {k.openDirectory}
             </Link>
           </p>
@@ -682,7 +682,7 @@ function DeskColumn({ ws }: { ws: string }) {
       <section>
         <h2 className="flex items-baseline justify-between gap-3 font-display text-lg font-bold">
           {v.open}
-          <Link href={`/w/${ws}/affirmations` as never} className="font-sans text-sm font-normal underline underline-offset-4">
+          <Link href={`/w/${ws}/claims` as never} className="font-sans text-sm font-normal underline underline-offset-4">
             {v.allDossiers}
           </Link>
         </h2>
@@ -690,7 +690,7 @@ function DeskColumn({ ws }: { ws: string }) {
         <ul className="mt-3 space-y-2">
           {open.map((x) => (
             <li key={x.item.id}>
-              <Link href={`/w/${ws}/affirmations/${x.item.id}` as never} className="block rounded-md border border-border bg-card p-3 transition-colors hover:border-foreground">
+              <Link href={`/w/${ws}/claims/${x.item.id}` as never} className="block rounded-md border border-border bg-card p-3 transition-colors hover:border-foreground">
                 <span className="font-display text-xs font-bold text-muted-foreground tabular">{x.ref}</span>
                 <span className="mt-0.5 line-clamp-2 block font-bold text-pretty">{x.item.title}</span>
                 <StepLine variant="mini" states={claimSteps(x)} className="mt-2.5" />
@@ -705,7 +705,7 @@ function DeskColumn({ ws }: { ws: string }) {
           <ul className="mt-3 divide-y divide-border border-y border-border">
             {recent.map((x) => (
               <li key={x.item.id}>
-                <Link href={`/w/${ws}/affirmations/${x.item.id}` as never} className="block py-3 hover:underline">
+                <Link href={`/w/${ws}/claims/${x.item.id}` as never} className="block py-3 hover:underline">
                   <span className="line-clamp-2 text-pretty">{x.item.title}</span>
                   <VerdictChip verdict={x.verdict!} className="mt-1.5" />
                 </Link>

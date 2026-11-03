@@ -65,7 +65,7 @@ export function ResourceView({ kind }: { kind: Kind }) {
       {kind === "contacts" && <><p>{[row.role, row.institution].filter(Boolean).join(" · ")}</p><p className="text-sm text-muted-foreground">{t.unknown}</p><div className="flex flex-wrap gap-4">{row.phone && <a href={`tel:${row.phone.replace(/[^+0-9]/g, "")}`} className="underline">{t.call} · {row.phone}</a>}{row.email && <a href={`mailto:${row.email}`} className="underline">{t.email}</a>}<SafeLink url={row.website}>{t.source}</SafeLink></div></>}
       {kind === "registry" && <><p>{row.issuer}</p><details><summary className="cursor-pointer">{t.fields.text}</summary><p className="mt-2 whitespace-pre-wrap text-sm">{row.text}</p></details><SafeLink url={row.url}>{t.source}</SafeLink></>}
       {kind === "figures" && <><p className="text-2xl font-semibold tabular-nums">{row.value} {row.unit}</p><p>{[row.country, row.as_of, row.source_name].filter(Boolean).join(" · ")}</p><SafeLink url={row.source_url}>{t.source}</SafeLink></>}
-      {kind === "radio" && <><p className="whitespace-pre-wrap">{row.heard_text}</p><p className="text-sm text-muted-foreground">{row.language} · {row.recorded_at && new Date(row.recorded_at).toLocaleString(locale())}</p><Link className="font-semibold underline" href={`/w/${ws}/verifier?lien=${encodeURIComponent(row.heard_text || "")}`}>{t.check}</Link></>}
+      {kind === "radio" && <><p className="whitespace-pre-wrap">{row.heard_text}</p><p className="text-sm text-muted-foreground">{row.language} · {row.recorded_at && new Date(row.recorded_at).toLocaleString(locale())}</p><Link className="font-semibold underline" href={`/w/${ws}/verify?lien=${encodeURIComponent(row.heard_text || "")}`}>{t.check}</Link></>}
     </li>)}</ul>
   </main>;
 }

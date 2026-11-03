@@ -22,7 +22,7 @@ export default function InvitationPage() {
     api<Workspace>(`/invitations/${encodeURIComponent(token)}/accept`, { method: "POST" })
       .then(async (ws) => {
         await mutate("/me");
-        router.replace(`/w/${ws.id}/affirmations`);
+        router.replace(`/w/${ws.id}/claims`);
       })
       .catch(() => setFailed(true));
   }, [token, router]);

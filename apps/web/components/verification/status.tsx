@@ -38,7 +38,7 @@ export function VerificationBanner({ ws }: { ws: string }) {
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 text-sm lg:px-8">
         <Icon className="size-4 shrink-0" aria-hidden />
         <span className="min-w-0 flex-1">{text}</span>
-        <Link href={`/w/${ws}/parametres#verification` as never} className="font-bold underline underline-offset-4">
+        <Link href={`/w/${ws}/settings#verification` as never} className="font-bold underline underline-offset-4">
           {action}
         </Link>
       </div>

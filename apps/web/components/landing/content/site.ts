@@ -1,11 +1,11 @@
 /** Where the landing leads: pages of this app, and the Android build. */
 export const ROUTES = {
-  signIn: "/connexion",
-  signUp: "/inscription",
-  verified: "/verifies",
-  report: "/signaler",
+  signIn: "/sign-in",
+  signUp: "/sign-up",
+  verified: "/verdicts",
+  report: "/report",
   /** « Est-ce déjà vérifié ? » with the visitor's text, checked as soon as the page opens. */
-  check: (text: string) => `/verifies?q=${encodeURIComponent(text)}`,
+  check: (text: string) => `/verdicts?q=${encodeURIComponent(text)}`,
   /** Preview APK of the phone app (EAS build, profile `preview`). */
   android: "https://expo.dev/artifacts/eas/oR4NkynNFr1zEdrw2DaLCgjHVVnmnSNb7cRhdX8lpcQ.apk",
 };

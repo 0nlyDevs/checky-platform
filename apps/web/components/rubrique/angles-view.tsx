@@ -32,7 +32,7 @@ function FactLine({ ws, fact }: { ws: string; fact: Fact }) {
     <>
       <span className="font-display font-bold tabular">[{fact.n}]</span> {!said && <span className="font-bold">{kind} · </span>}
       {fact.item_id ? (
-        <Link href={`/w/${ws}/affirmations/${fact.item_id}` as never} className="text-pretty underline-offset-2 hover:underline">
+        <Link href={`/w/${ws}/claims/${fact.item_id}` as never} className="text-pretty underline-offset-2 hover:underline">
           {fact.label}
         </Link>
       ) : (

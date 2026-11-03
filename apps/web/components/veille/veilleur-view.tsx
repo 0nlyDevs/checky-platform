@@ -404,7 +404,7 @@ export function VeilleurView({ ws, desk }: { ws: string; desk: boolean }) {
   return (
     <div className="mx-auto max-w-xl px-4 pt-6 pb-16 lg:pt-8">
       {desk && (
-        <Link href={`/w/${ws}/veille` as never} className="mb-4 inline-flex items-center gap-1.5 text-sm font-bold underline underline-offset-4">
+        <Link href={`/w/${ws}/watch` as never} className="mb-4 inline-flex items-center gap-1.5 text-sm font-bold underline underline-offset-4">
           <IconArrowLeft className="size-4" aria-hidden />
           {w.deskLink}
         </Link>

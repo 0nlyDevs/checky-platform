@@ -133,7 +133,7 @@ export const registre = {
     saved: "Original enregistré.",
     invalid: "Vérifiez les champs : le texte doit compter au moins 20 caractères et la date ne peut pas être future.",
   },
-  // The public page that checks a seal (/sceau/[id]).
+  // The public page that checks a seal (/seal/[id]).
   check: {
     title: "Vérifier un sceau",
     loading: "Vérification du sceau…",
@@ -170,7 +170,7 @@ export const registre = {
     demo: "Exemple fictif (démo)",
     feed: "Voir le fil officiel",
   },
-  // The public page « Fil officiel » (/officiel).
+  // The public page « Fil officiel » (/official).
   feed: {
     title: "Fil officiel",
     lead: "Ce que les institutions ont réellement publié, et les faux repérés qui les imitent, enregistrés par les rédactions. Un original prouve les mots, pas qu'ils disent vrai.",

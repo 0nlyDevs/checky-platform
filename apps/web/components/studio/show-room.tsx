@@ -460,7 +460,7 @@ export function ShowRoom() {
                         )}
                         {c.item_id ? (
                           <Link
-                            href={`/w/${ws}/affirmations/${c.item_id}` as never}
+                            href={`/w/${ws}/claims/${c.item_id}` as never}
                             className="text-sm font-bold underline underline-offset-4"
                           >
                             {s.bilan.openDossier(c.ref ?? "")}

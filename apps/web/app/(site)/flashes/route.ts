@@ -106,7 +106,7 @@ export async function POST(request: Request) {
   } catch {
     // The presenter can retry from the same text-only page.
   }
-  const next = new URL("/flashs", url.origin);
+  const next = new URL("/flashes", url.origin);
   next.searchParams.set("radio", token);
   next.searchParams.set("lang", language(request, url));
   next.searchParams.set("mark", mark);

@@ -28,9 +28,9 @@ const todayFmt = dateFormat({ weekday: "long", day: "numeric", month: "long", ye
 
 /** Where a line of « Ce qui circule » leads: the dossier, the article, or the Veille. */
 function target(ws: string, c: Circulating): { href: string; external: boolean } {
-  if (c.item_id) return { href: `/w/${ws}/affirmations/${c.item_id}`, external: false };
+  if (c.item_id) return { href: `/w/${ws}/claims/${c.item_id}`, external: false };
   if (c.kind === "press" && c.url) return { href: c.url, external: true };
-  return { href: `/w/${ws}/veille?type=${c.kind}`, external: false };
+  return { href: `/w/${ws}/watch?type=${c.kind}`, external: false };
 }
 
 /** What else Checky gathered about the rumour of a row: its alert, or what the radio said. */
@@ -108,7 +108,7 @@ function CirculatingRow({ ws, c, i, echo }: { ws: string; c: Circulating; i: num
           </p>
           {alert ? (
             <Link
-              href={`/w/${ws}/veille#alerte-${alert.id}` as never}
+              href={`/w/${ws}/watch#alerte-${alert.id}` as never}
               className="relative z-10 mt-2 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm hover:underline"
             >
               <span className="font-medium">{r.circulating.alert}</span>
@@ -119,7 +119,7 @@ function CirculatingRow({ ws, c, i, echo }: { ws: string; c: Circulating; i: num
             antenne &&
             c.kind !== "clip" && (
               <Link
-                href={`/w/${ws}/veille?type=clip` as never}
+                href={`/w/${ws}/watch?type=clip` as never}
                 className="relative z-10 mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline"
               >
                 <IconRadio className="size-4" aria-hidden />
@@ -151,7 +151,7 @@ function DossierShort({ ws, items, empty }: { ws: string; items: Item[]; empty: 
         const c = toClaim(item);
         return (
           <li key={item.id} className="relative">
-            <Link href={`/w/${ws}/affirmations/${item.id}` as never} className="block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring">
+            <Link href={`/w/${ws}/claims/${item.id}` as never} className="block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring">
               {item.title}
             </Link>
             <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
@@ -242,7 +242,7 @@ function Angles({ ws, angles }: { ws: string; angles: AngleCard[] }) {
         >
           <p className="text-sm text-muted-foreground">
             {a.kind === "kept" && a.item_id ? (
-              <Link href={`/w/${ws}/affirmations/${a.item_id}` as never} className="relative z-10 font-bold text-foreground underline underline-offset-4">
+              <Link href={`/w/${ws}/claims/${a.item_id}` as never} className="relative z-10 font-bold text-foreground underline underline-offset-4">
                 {r.anglesBox.kept(a.ref ?? "")}
               </Link>
             ) : (
@@ -400,7 +400,7 @@ export function RubriqueView() {
             {r.page.brief}
           </Button>
           <Button asChild variant="action" size="xl">
-            <Link href={`/w/${ws}/verifier` as never}>
+            <Link href={`/w/${ws}/verify` as never}>
               <IconScan aria-hidden />
               {r.page.verify}
             </Link>
@@ -469,7 +469,7 @@ export function RubriqueView() {
                   title={t.rubrique.alerts.title}
                   lead={r.alerts.leadRubrique}
                   action={
-                    <Link href={`/w/${ws}/veille#alertes` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
+                    <Link href={`/w/${ws}/watch#alertes` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
                       {t.rubrique.alerts.all}
                     </Link>
                   }
@@ -485,7 +485,7 @@ export function RubriqueView() {
                   title={r.antenne.title}
                   lead={r.antenne.leadRubrique}
                   action={
-                    <Link href={`/w/${ws}/veille?type=clip` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
+                    <Link href={`/w/${ws}/watch?type=clip` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
                       {r.antenne.all}
                     </Link>
                   }

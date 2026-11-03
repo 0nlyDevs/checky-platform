@@ -42,7 +42,7 @@ function qs(params: Record<string, string | null | undefined>) {
 function FeedRow({ ws, e, i }: { ws: string; e: FeedEntry; i: number }) {
   const linkClass = "font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset";
   const title = e.item_id ? (
-    <Link href={`/w/${ws}/affirmations/${e.item_id}` as never} className={linkClass}>
+    <Link href={`/w/${ws}/claims/${e.item_id}` as never} className={linkClass}>
       {e.title}
     </Link>
   ) : e.url ? (

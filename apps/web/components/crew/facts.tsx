@@ -183,7 +183,7 @@ export function Facts({ r, ws }: { r: CrewResult; ws: string }) {
               <p className="mt-1 text-pretty">{x.title}</p>
               <p className="mt-0.5 text-muted-foreground">
                 {frDate(x.published_at)} ·{" "}
-                <Link href={`/verifies/${x.id}` as never} className="font-bold text-foreground underline underline-offset-4">
+                <Link href={`/verdicts/${x.id}` as never} className="font-bold text-foreground underline underline-offset-4">
                   {k.published.open}
                 </Link>
               </p>
@@ -233,7 +233,7 @@ export function Facts({ r, ws }: { r: CrewResult; ws: string }) {
                 {x.item_id && (
                   <>
                     {" · "}
-                    <Link href={`/w/${ws}/affirmations/${x.item_id}` as never} className="font-bold text-foreground underline underline-offset-4">
+                    <Link href={`/w/${ws}/claims/${x.item_id}` as never} className="font-bold text-foreground underline underline-offset-4">
                       {k.archives.open}
                     </Link>
                   </>
