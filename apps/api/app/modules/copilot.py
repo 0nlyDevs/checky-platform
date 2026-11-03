@@ -389,6 +389,8 @@ COPILOT_TOOLS: Tools = {
 async def copilot(body: GuideIn, member: AnyMember) -> AsyncIterable[ServerSentEvent]:
     ctx = DeskContext(member.workspace_id, page=body.page)
     context = ""
+    # `affirmations` is the web page path before the English rename; the website redirects it, so only
+    # an old client still sends it. Drop it once no app or extension older than 3 Nov is in use.
     if m := re.search(r"/(?:claims|affirmations)/([0-9a-f-]{36})", body.page):
         ctx.page_claim = uuid.UUID(m[1])
         if item := await _claim(ctx, None):
