@@ -1,0 +1,55 @@
+/* Shared by React pages and the script-free /flashes bulletin. All rules stay scoped. */
+.public-footer {
+  --pf-ink: #0a0a0b;
+  --pf-paper: #f3f2ee;
+  --pf-muted: #a6a5a0;
+  --pf-line: rgb(243 242 238 / 0.18);
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  padding-top: clamp(100px, 18vh, 200px);
+  background: var(--pf-ink);
+  color: var(--pf-paper);
+  color-scheme: dark;
+  font-family: var(--font-bricolage, Arial), sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: left;
+}
+.public-footer, .public-footer * { box-sizing: border-box; }
+.public-footer a { color: inherit; text-decoration: none; }
+.public-footer a:focus-visible { outline: 2px solid var(--pf-paper); outline-offset: 5px; border-radius: 6px; }
+.public-footer .pf-content { padding-inline: clamp(20px, 6vw, 96px); }
+.public-footer .pf-title { margin: 0; padding-bottom: 0.12em; font-size: clamp(2.6rem, 7vw, 7.4rem); font-weight: 800; line-height: 0.95; letter-spacing: -0.035em; text-wrap: balance; }
+.public-footer .pf-title em { font-family: var(--font-cormorant, Georgia), serif; font-weight: 500; font-size: 1.08em; line-height: 1.1; }
+.public-footer .pf-intro { max-width: 44ch; margin: 28px 0 0; font-size: clamp(1.05rem, 1.35vw, 1.3rem); line-height: 1.5; color: var(--pf-muted); text-wrap: pretty; }
+.public-footer .pf-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 20px 28px; margin-top: 40px; }
+.public-footer .pf-button { display: inline-flex; justify-content: center; align-items: center; gap: 12px; min-height: 52px; padding: 12px 26px; border: 1px solid rgb(243 242 238 / 0.28); border-radius: 999px; color: var(--pf-paper); font-size: 0.95rem; font-weight: 600; line-height: 1.35; text-align: center; text-wrap: balance; transition: background 0.2s, color 0.2s; }
+.public-footer .pf-button:hover { background: #232327; color: var(--pf-paper); }
+.public-footer .pf-button:active { transform: translateY(1px); }
+.public-footer .pf-primary { border-color: var(--pf-paper); background: var(--pf-paper); color: var(--pf-ink); }
+.public-footer .pf-primary:hover { border-color: #fff; background: #fff; color: var(--pf-ink); }
+.public-footer .pf-primary span { font-size: 1.25em; }
+.public-footer .pf-grid { display: grid; gap: 28px; margin-top: clamp(80px, 14vh, 160px); padding: clamp(60px, 10vh, 120px) 0 40px; border-top: 1px solid var(--pf-line); }
+.public-footer .pf-brand { font-size: 1.3rem; font-weight: 800; letter-spacing: -0.05em; }
+.public-footer .pf-grid p { max-width: 30ch; margin: 12px 0 0; color: var(--pf-muted); font-size: 0.95rem; }
+.public-footer .pf-grid nav { display: block; border: 0; border-radius: 0; background: none; padding: 0; }
+.public-footer .pf-grid h3 { margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--pf-muted); }
+.public-footer .pf-grid ul { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+.public-footer .pf-grid li { margin: 0; padding: 0; border: 0; border-radius: 0; background: none; }
+.public-footer .pf-grid li a { display: inline-block; padding: 2px 0; border-radius: 0; color: var(--pf-muted); font-size: 1rem; font-weight: 400; line-height: 1.5; }
+.public-footer .pf-grid li a:hover { color: var(--pf-paper); text-decoration: underline; text-underline-offset: 4px; }
+.public-footer .pf-legal { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px 24px; padding: 24px 0; color: var(--pf-muted); font-size: 0.72rem; }
+.public-footer .pf-legal a:hover { color: var(--pf-paper); text-decoration: underline; text-underline-offset: 4px; }
+.public-footer .pf-disclaimer { margin: 0; padding-bottom: 24px; font-size: 0.75rem; color: var(--pf-muted); }
+.public-footer .pf-wordmark { position: relative; width: 100%; overflow: hidden; margin-top: clamp(28px, 5vw, 80px); padding-top: clamp(20px, 4vw, 64px); pointer-events: none; user-select: none; }
+.public-footer .pf-wordmark svg { display: block; width: 100%; height: auto; overflow: visible; transform: translateY(14%); }
+.public-footer .pf-wordmark::after { content: ""; position: absolute; inset: 65% 0 0; -webkit-backdrop-filter: blur(clamp(1px, 0.2vw, 3px)); backdrop-filter: blur(clamp(1px, 0.2vw, 3px)); -webkit-mask-image: linear-gradient(to bottom, transparent, #000 80%); mask-image: linear-gradient(to bottom, transparent, #000 80%); }
+.public-footer .pf-wordmark text { font-family: var(--font-bricolage, Arial), sans-serif; font-weight: 800; font-size: 290px; letter-spacing: -0.06em; fill: #fff; filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.4)) drop-shadow(0 0 24px rgb(255 255 255 / 0.18)); }
+.public-footer .pf-wordmark .pf-bloom { fill: url(#public-footer-glow); filter: drop-shadow(0 12px 14px rgb(255 255 255 / 0.95)) drop-shadow(0 22px 38px rgb(255 255 255 / 0.65)) drop-shadow(0 30px 72px rgb(255 255 255 / 0.35)); }
+@media (min-width: 768px) { .public-footer .pf-grid { grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .landing .public-footer .pf-content { padding-right: calc(clamp(20px, 6vw, 96px) + var(--rail-w, 0px)); } }
+@media (max-width: 767px) { .public-footer .pf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 20px; } .public-footer .pf-grid > div { grid-column: 1 / -1; } .public-footer .pf-grid li a { font-size: 0.9rem; } }
+@media (max-width: 420px) { .public-footer .pf-actions { align-items: stretch; flex-direction: column; } .public-footer .pf-button { width: 100%; padding-inline: 18px; } }
+@media (prefers-reduced-motion: reduce) { .public-footer .pf-button { transition: none; } }
+@media print { .public-footer { display: none; } }

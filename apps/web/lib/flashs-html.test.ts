@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { renderFlashsHtml, type FlashData, type FlashLabels } from "./flashs-html.ts";
+import { loadTestMessages } from "./test-i18n-loader.ts";
+
+const { fr } = await loadTestMessages();
 
 const labels: FlashLabels = {
   title: "Flashs du jour", lead: "Verdicts signés", date: (date) => `Verdicts du ${date}`,
@@ -22,16 +25,17 @@ test("the full daily bulletin stays below 20 KB without scripts or bundles", () 
       has_audio: true,
     })),
   };
-  const html = renderFlashsHtml({ lang: "fr", labels, data, radio: { name: "Radio Démo", frequency: "101 FM", newsroom: data.newsroom! }, token: "a_valid_token_123", badRadio: false, mark: null });
+  const html = renderFlashsHtml({ lang: "fr", labels, data, radio: { name: "Radio Démo", frequency: "101 FM", newsroom: data.newsroom! }, token: "a_valid_token_123", badRadio: false, mark: null, footer: fr });
   assert.ok(new TextEncoder().encode(html).byteLength < 20_000);
   assert.doesNotMatch(html, /<script|javascript:|_next\//i);
   assert.match(html, /method="post"/);
   assert.match(html, /flashes\/audio\?id=/);
+  assert.match(html, /class="public-footer"/);
 });
 
 test("untrusted text is escaped and unsafe links are omitted", () => {
   const html = renderFlashsHtml({
-    lang: "fr", labels, radio: null, token: null, badRadio: false, mark: null,
+    lang: "fr", labels, radio: null, token: null, badRadio: false, mark: null, footer: fr,
     data: { date: "2026-11-03", newsroom: null, items: [{ id: "00000000-0000-0000-0000-000000000001", ref: null, link: "javascript:alert(1)", fr: "<script>alert('x')</script>", mg: "", has_audio: false }] },
   });
   assert.doesNotMatch(html, /<script|href="javascript:/i);

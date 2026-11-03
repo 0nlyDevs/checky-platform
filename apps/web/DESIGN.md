@@ -176,6 +176,15 @@ The organising device is the **numbered line**: 1 L'affirmation, 2 Les élément
 - Verdicts always icon + word on their own four-token family; AI suggestion dashed, confirmed solid.
 - Shadows only on what floats (menus, dialogs, toasts); depth elsewhere is tone and hairline.
 
+### Shared public footer
+
+The landing, every public page, sign-in and sign-up use `components/site/site-footer.tsx`.
+Its escaped markup lives in `lib/public-footer.ts`, shared with the script-free `/flashes`
+bulletin. `public/site/public-footer.css` is the single scoped stylesheet. The footer
+keeps the landing's ink background in both themes; its full-width white wordmark is
+the last element, slightly cropped with a lower bloom and progressive blur. Section
+links point to `/home#…` so they also work away from the landing. It is hidden in print.
+
 ## Colors
 
 ### Neutrals (light / dark)

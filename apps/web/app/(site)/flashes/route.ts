@@ -1,6 +1,7 @@
 import { en } from "@/lib/i18n/en";
 import { fr } from "@/lib/i18n/fr";
 import { mg } from "@/lib/i18n/mg";
+import { messages } from "@/lib/i18n/live";
 import { renderFlashsHtml, type FlashData, type FlashLang, type FlashLine, type Radio } from "@/lib/flashs-html";
 
 const API = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"}/api/v1/public`;
@@ -76,7 +77,7 @@ export async function GET(request: Request) {
     hero: (lang === "mg" ? mg.look?.flashs?.hero : lang === "en" ? en.look?.flashs?.hero : undefined) ?? fr.look.flashs.hero,
   };
   const mark = url.searchParams.get("mark");
-  const html = renderFlashsHtml({ lang, labels, data, radio, token: radio ? token : null, badRadio, mark: mark === "aired" || mark === "failed" ? mark : null });
+  const html = renderFlashsHtml({ lang, labels, data, radio, token: radio ? token : null, badRadio, mark: mark === "aired" || mark === "failed" ? mark : null, footer: messages(lang) });
   const headers = new Headers({
     "Content-Type": "text/html; charset=utf-8",
     "Cache-Control": "no-store",

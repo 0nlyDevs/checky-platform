@@ -1,4 +1,7 @@
 /** A small, script-free public page for a partner radio's daily bulletin. */
+import { publicFooterHtml, PUBLIC_FOOTER_STYLESHEET } from "./public-footer.ts";
+import type { Messages } from "./i18n/live";
+
 export type FlashLine = {
   id: string;
   ref: string | null;
@@ -66,6 +69,7 @@ export function renderFlashsHtml(input: {
   token: string | null;
   badRadio: boolean;
   mark: "aired" | "failed" | null;
+  footer: Messages;
 }): string {
   const { lang, labels: l, data, radio, token, badRadio, mark } = input;
   const query = new URLSearchParams(token ? { radio: token } : {});
@@ -87,5 +91,5 @@ export function renderFlashsHtml(input: {
     return `<li><p lang="${lang === "mg" ? "mg" : "fr"}">${escapeHtml(spoken)}</p><p>${[link, audio].filter(Boolean).join(" · ")}</p>${action}</li>`;
   }).join("");
   const radioName = radio ? `${radio.name}${radio.frequency ? ` ${radio.frequency}` : ""}` : "";
-  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${escapeHtml(l.title)} · Checky</title><style>${CSS}</style></head><body><main><header><strong>Checky</strong><nav class="screen" aria-label="${escapeHtml(l.language)}">${menu}</nav></header><h1>${escapeHtml(l.hero ?? l.title).replace(/\*([^*]+)\*/, "<em>$1</em>")}</h1>${radio ? `<p><strong>${escapeHtml(l.radio(radioName))}</strong> · ${escapeHtml(radio.newsroom.name)}</p>` : ""}<p class="muted">${escapeHtml(radio ? l.radioLead : l.lead)}</p>${badRadio ? `<p role="alert">${escapeHtml(l.badRadio)}</p>` : ""}${mark === "failed" ? `<p role="alert">${escapeHtml(l.airFailed)}</p>` : ""}${mark === "aired" ? `<p role="status">${escapeHtml(l.aired)}</p>` : ""}${lang === "mg" ? `<p class="muted">${escapeHtml(l.mgNote)}</p>` : ""}${heading}${data ? data.items.length ? `<ol>${lines}</ol>` : `<p>${escapeHtml(l.empty)}</p>` : `<p role="alert">${escapeHtml(l.failed)}</p>`}</main></body></html>`;
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>${escapeHtml(l.title)} · Checky</title><style>${CSS}</style><link rel="stylesheet" href="${PUBLIC_FOOTER_STYLESHEET}"></head><body><main><header><strong>Checky</strong><nav class="screen" aria-label="${escapeHtml(l.language)}">${menu}</nav></header><h1>${escapeHtml(l.hero ?? l.title).replace(/\*([^*]+)\*/, "<em>$1</em>")}</h1>${radio ? `<p><strong>${escapeHtml(l.radio(radioName))}</strong> · ${escapeHtml(radio.newsroom.name)}</p>` : ""}<p class="muted">${escapeHtml(radio ? l.radioLead : l.lead)}</p>${badRadio ? `<p role="alert">${escapeHtml(l.badRadio)}</p>` : ""}${mark === "failed" ? `<p role="alert">${escapeHtml(l.airFailed)}</p>` : ""}${mark === "aired" ? `<p role="status">${escapeHtml(l.aired)}</p>` : ""}${lang === "mg" ? `<p class="muted">${escapeHtml(l.mgNote)}</p>` : ""}${heading}${data ? data.items.length ? `<ol>${lines}</ol>` : `<p>${escapeHtml(l.empty)}</p>` : `<p role="alert">${escapeHtml(l.failed)}</p>`}</main>${publicFooterHtml(input.footer)}</body></html>`;
 }
