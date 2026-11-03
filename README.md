@@ -225,6 +225,7 @@ npx next typegen && npx tsc --noEmit && npx eslint .
 | change a table in `apps/api/app/core/models.py` | `cd apps/api && uv run alembic revision --autogenerate -m "what changed"` then `uv run alembic upgrade head` | the new file in `alembic/versions/` |
 | add a page in `apps/web/app` | `npx next typegen` | nothing extra |
 | auto-format Python | `cd apps/api && uv run ruff format .` | |
+| need realistic newsrooms to show | `cd apps/api && uv run python scripts/seed_newsrooms.py --web http://localhost:3000` (web and API running; `--reset` rebuilds them; see the script's header) | nothing: the passwords go to `~/checky-seed-accounts.txt` |
 
 ## Git workflow
 
