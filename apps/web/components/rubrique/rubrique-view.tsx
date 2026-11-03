@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item } from "@fanilo/shared";
+import type { Item } from "@checky/shared";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";

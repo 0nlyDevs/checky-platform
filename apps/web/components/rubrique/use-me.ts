@@ -1,6 +1,6 @@
 "use client";
 
-import type { Me } from "@fanilo/shared";
+import type { Me } from "@checky/shared";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api";
 

@@ -1,6 +1,6 @@
 # Optional image pixel detector
 
-FANILO's image endpoint works without an external detector: it checks file metadata and generator
+Checky's image endpoint works without an external detector: it checks file metadata and generator
 markers and offers reverse-search links. It does not infer authenticity from their absence, and
 detecting a Content Credentials structure does not verify its signature.
 
@@ -20,7 +20,7 @@ operational gate, not an automatic certification or evidence that an evaluation 
 Anonymous image checks also require `PUBLIC_IMAGE_DETECTOR_ENABLED=true`; validating a private
 detector does not automatically expose its costs or data processing to anonymous visitors.
 
-When enabled, FANILO sends:
+When enabled, Checky sends:
 
 - `POST` to the configured URL; HTTPS required, except HTTP on localhost for local development.
 - `Content-Type`: the actual raster image MIME type detected by Pillow.
@@ -38,7 +38,7 @@ The service must respond within 20 seconds, without redirecting, with at most 16
 is fake. Operational cutoffs: ≥0.9 flags a possible generation signal; ≤0.1 finds no signal;
 everything between is inconclusive. The score itself is not exposed as a confidence percentage.
 Invalid replies, redirects, timeouts and service errors leave the pixel result unavailable;
-FANILO still returns the metadata with appropriate uncertainty.
+Checky still returns the metadata with appropriate uncertainty.
 
 ## Evaluate before enabling
 

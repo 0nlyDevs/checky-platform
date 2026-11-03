@@ -1,6 +1,6 @@
 "use client";
 
-import type { ItemPage, Verdict } from "@fanilo/shared";
+import type { ItemPage, Verdict } from "@checky/shared";
 import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";

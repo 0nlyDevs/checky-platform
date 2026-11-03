@@ -1,6 +1,6 @@
 "use client";
 
-import type { Me } from "@fanilo/shared";
+import type { Me } from "@checky/shared";
 import Link from "next/link";
 import useSWR from "swr";
 import { RequestForm, useVerification } from "@/components/verification/request-form";

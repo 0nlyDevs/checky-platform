@@ -1,4 +1,4 @@
-import type { Verdict } from "@fanilo/shared";
+import type { Verdict } from "@checky/shared";
 import type { MatchResult } from "@/components/registre/types";
 import { getLang, locale } from "@/lib/i18n/live";
 

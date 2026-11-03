@@ -1,6 +1,6 @@
 // What the Studio routes return (app/modules/studio.py). Kept beside the screens that read them.
 import type { FlagKind } from "./flag";
-import type { Verdict } from "@fanilo/shared";
+import type { Verdict } from "@checky/shared";
 
 export type Speaker = { id: string; name: string; camp: string | null };
 

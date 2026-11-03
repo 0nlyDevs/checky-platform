@@ -1,9 +1,9 @@
 "use client";
 
-import type { Me } from "@fanilo/shared";
+import type { Me } from "@checky/shared";
 import useSWR from "swr";
 import { fetcher } from "@/lib/api";
-import type { components } from "@fanilo/shared";
+import type { components } from "@checky/shared";
 
 type Member = components["schemas"]["MemberOut"];
 

@@ -35,7 +35,7 @@ from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.models import AiCacheEntry, AiCall
 
-log = logging.getLogger("fanilo.ai")
+log = logging.getLogger("checky.ai")
 
 # name -> (OpenAI-compatible base URL, default model)
 PROVIDERS: dict[str, tuple[str, str]] = {

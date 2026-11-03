@@ -1,4 +1,4 @@
-import type { Item, Status, Verdict } from "@fanilo/shared";
+import type { Item, Status, Verdict } from "@checky/shared";
 import { IconBroadcast, IconCheckCircle, IconCircleDashed, IconQuestion, IconShieldCheck, IconTimer, IconWarning, IconXCircle, type Icon } from "@/lib/icons";
 import { t } from "@/lib/i18n/live";
 import { cn } from "@/lib/utils";

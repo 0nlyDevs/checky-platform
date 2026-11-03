@@ -16,7 +16,7 @@ Checky (named FANILO until 2 Nov 2026; the repos keep the old name) is a verific
 
 ## Goals and success criteria
 
-FANILO succeeds if a newsroom can take a rumour from its first appearance to a sourced, signed verdict in one shared tool, from a phone, and if the demo never fails in front of the jury.
+Checky succeeds if a newsroom can take a rumour from its first appearance to a sourced, signed verdict in one shared tool, from a phone, and if the demo never fails in front of the jury.
 
 **Goals**
 
@@ -46,7 +46,7 @@ FANILO succeeds if a newsroom can take a rumour from its first appearance to a s
 
 ## Users
 
-FANILO serves the newsroom that verifies information, and the public that wants to know whether a rumour is already checked.
+Checky serves the newsroom that verifies information, and the public that wants to know whether a rumour is already checked.
 
 | Persona | Who | What they need |
 | --- | --- | --- |
@@ -112,7 +112,7 @@ The browser talks to both services; files go straight from the browser to Neon O
 
 ## Functional requirements
 
-The requirements below describe how FANILO handles newsroom access, claims, sources and verification.
+The requirements below describe how Checky handles newsroom access, claims, sources and verification.
 
 ### M1. Authentication
 
@@ -265,7 +265,7 @@ Checky (2 Nov) adds the newsroom's shelves and the road back, on the same base:
 
 ### F6. Vérifier un message ou un lien
 
-- This is the desk's home, « Vérifier »: a pasted or dictated message works as well as a link, and FANILO's work shows live on the numbered line (the phrases that should worry lit one after another, a log of what it reads and searches, the sources arriving, then the suggested conclusion).
+- This is the desk's home, « Vérifier »: a pasted or dictated message works as well as a link, and Checky's work shows live on the numbered line (the phrases that should worry lit one after another, a log of what it reads and searches, the sources arriving, then the suggested conclusion).
 - Paste a post, article or image link (or the post's text when the link needs an account, as on Facebook and TikTok) and get in one pass: what it claims, the warning signs in how it is written (each with its quote), what fact-checkers, the web and Wikipedia already say, and a suggested verdict resting only on those results, each quote checked.
 - Nothing is written until the journalist follows it in the desk, with the sources they tick; the journalist still confirms the verdict on the claim.
 - No detector of AI-written text is reliable, so text only gets hints, never an "AI probability".
@@ -325,7 +325,7 @@ The UI looks like civic signage for rumours, « Le signal clair »: calm, clear 
 - Four verdict colours used everywhere the same way (`true` green, `misleading` ochre, `false` rust, `unverifiable` grey), each with fill / on / soft / ink tokens at 4.5:1 contrast, always with an icon and a word, never colour alone. An AI suggestion is a dashed outline; a confirmed verdict is solid. Workflow status uses ink icons only.
 - Typography: Archivo for titles, numbers, refs and verdict words; Atkinson Hyperlegible Next for everything read.
 - Icons: one set only (lucide, which ships with shadcn/ui). shadcn/ui components themed once with the tokens.
-- Signature: the numbered line every rumour travels, 01 L'affirmation, 02 Les éléments, 03 La conclusion. It runs live while FANILO checks a message, sits on every dossier, runs down a dossier's page, and explains a published verdict and a tip's follow-up.
+- Signature: the numbered line every rumour travels, 01 L'affirmation, 02 Les éléments, 03 La conclusion. It runs live while Checky checks a message, sits on every dossier, runs down a dossier's page, and explains a published verdict and a tip's follow-up.
 - The assistant never covers the page: on a computer it is docked on the right and the page makes room; on a phone it is a sheet over the lower part. It opens from the navigation, not from a floating button.
 
 **Navigation**
@@ -335,11 +335,11 @@ The UI looks like civic signage for rumours, « Le signal clair »: calm, clear 
 
 **Public features**
 
-Ordinary people can use FANILO without an account, in the same world as the desk:
+Ordinary people can use Checky without an account, in the same world as the desk:
 - « Est-ce déjà vérifié ? » (`/verifies`): a public AI assistant. Ask a question or paste a message received on WhatsApp or Facebook, in French or Malagasy; it answers only from verdicts published by newsrooms, citing them [n] with links to each file. With nothing published on the subject it makes no AI call and invites a tip. It never makes up a verdict.
 - The archive of published verdicts, searchable, each with its reason, sources and a shareable page that can be listened to and shared on WhatsApp.
 - « Signaler une rumeur » (`/signaler`): send a message or link to a newsroom; it lands in its « à vérifier » list, tagged « signalement », live. No personal data is asked; a follow-up link (`/suivi/…`) shows the steps and the verdict once published.
-- The assistant sits on every page (docked beside it on a computer) and is an agent for the site itself, not only for checking facts. For visitors it answers from published verdicts, explains FANILO, prepares a tip (shown as an editable draft, sent only when the visitor presses Envoyer), says where their own tips stand and opens the right page. Inside a workspace it is the desk's copilot: what has circulated longest, the night in brief, claims without sources, answers from the sources, and proposed changes (new claim, attach a link, run the analysis, move a status, open a claim) that run only after the journalist confirms, with their own rights. It never confirms a verdict and never publishes. Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
+- The assistant sits on every page (docked beside it on a computer) and is an agent for the site itself, not only for checking facts. For visitors it answers from published verdicts, explains Checky, prepares a tip (shown as an editable draft, sent only when the visitor presses Envoyer), says where their own tips stand and opens the right page. Inside a workspace it is the desk's copilot: what has circulated longest, the night in brief, claims without sources, answers from the sources, and proposed changes (new claim, attach a link, run the analysis, move a status, open a claim) that run only after the journalist confirms, with their own rights. It never confirms a verdict and never publishes. Questions can be dictated in French or Malagasy (Groq Whisper), and in voice mode the question is sent as soon as it is spoken and the answer is read aloud.
 - Each newsroom opts in (« Publier nos verdicts » in Réglages) and must be verified by the Checky team; the demo reset opts the demo newsroom in, verification stays the Checky team's.
 - Any country: search covers every newsroom with the visitor's country first; a tip with no newsroom chosen goes to the newsroom where the rumour circulates, else the nearest, and the visitor is told which.
 

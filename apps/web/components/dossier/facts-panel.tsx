@@ -1,7 +1,7 @@
 "use client";
 
-import type { Item, Verdict } from "@fanilo/shared";
-import { VERDICTS } from "@fanilo/shared";
+import type { Item, Verdict } from "@checky/shared";
+import { VERDICTS } from "@checky/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { VERDICT_META, VerdictChip } from "@/components/claims/verdict";

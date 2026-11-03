@@ -472,7 +472,7 @@ def main() -> None:
         warm_up(browser, state, base, api, spec["scenes"])
 
         clips: list[Path] = []
-        foot = spec.get("footer", "FANILO · démo")
+        foot = spec.get("footer", "Checky · démo")
         clock = 0.0
 
         def still_card(name: str, card: dict, default_tab: str, seconds: float) -> Path:

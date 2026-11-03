@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  transpilePackages: ["@fanilo/shared"],
+  transpilePackages: ["@checky/shared"],
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

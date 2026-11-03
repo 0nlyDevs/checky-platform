@@ -44,7 +44,7 @@ Qui : {{nom}} tient cette liste et coche. Une case non cochée à 7 h 30 mercred
 - Le chrono démarre à la première phrase. Le clavier avance les slides ; l'orateur ne touche à rien.
 - Démo en direct seulement si la slide 1 s'est affichée sans attente et que Paramètres était vert 20 minutes avant. Sinon, vidéo commentée. On ne « tente » pas.
 - Si quelque chose casse en direct : « Je vous le montre sur la vidéo », et le clavier lance `demo.mp4`. Pas d'excuse, pas de rechargement.
-- Finir sur la slide « FANILO » et rester dessus pour les questions.
+- Finir sur la slide « Checky » et rester dessus pour les questions.
 
 ### Après
 

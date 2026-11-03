@@ -55,7 +55,7 @@ How the pieces talk:
 - **In production:** web on Vercel, API on Render, database and file storage on **Neon**
   (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
 - **Phone app:** [`0nlyDevs/fanilo-mobile`](https://github.com/0nlyDevs/fanilo-mobile) (Expo,
-  React Native). A video, photo or link shared to FANILO from WhatsApp, Facebook or TikTok is
+  React Native). A video, photo or link shared to Checky from WhatsApp, Facebook or TikTok is
   uploaded, transcribed and checked through the same API. It signs in through Better Auth's Expo
   plugin (`apps/web/lib/auth.ts`, trusted scheme `fanilo://`).
 - **Browser extension:** [`0nlyDevs/fanilo-extension`](https://github.com/0nlyDevs/fanilo-extension)

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item } from "@fanilo/shared";
+import type { Item } from "@checky/shared";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";

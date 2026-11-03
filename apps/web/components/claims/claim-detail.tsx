@@ -1,7 +1,7 @@
 "use client";
 
-import type { Activity, Comment, Item, ItemPatch, Status, Verdict } from "@fanilo/shared";
-import { STATUSES } from "@fanilo/shared";
+import type { Activity, Comment, Item, ItemPatch, Status, Verdict } from "@checky/shared";
+import { STATUSES } from "@checky/shared";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";

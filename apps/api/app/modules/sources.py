@@ -24,7 +24,7 @@ from app.core.models import File, Item, Source, Transcript
 from app.workers import ingest
 from app.workers.queue import enqueue
 
-log = logging.getLogger("fanilo.sources")
+log = logging.getLogger("checky.sources")
 router = APIRouter(tags=["sources"])
 
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024

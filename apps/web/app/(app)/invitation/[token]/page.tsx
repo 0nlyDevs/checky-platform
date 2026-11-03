@@ -1,6 +1,6 @@
 "use client";
 
-import type { Workspace } from "@fanilo/shared";
+import type { Workspace } from "@checky/shared";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";

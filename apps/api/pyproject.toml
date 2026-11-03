@@ -1,7 +1,7 @@
 [project]
-name = "fanilo-api"
+name = "checky-api"
 version = "0.1.0"
-description = "FANILO base API: business logic, AI layer, realtime"
+description = "Checky API: business logic, AI layer, realtime"
 authors = [
     { name = "TsioryJonathan", email = "rakotoarisoajonathan0@gmail.com" }
 ]

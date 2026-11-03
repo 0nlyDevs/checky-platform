@@ -1,7 +1,7 @@
 "use client";
 
-import type { Item, Verdict } from "@fanilo/shared";
-import { VERDICTS } from "@fanilo/shared";
+import type { Item, Verdict } from "@checky/shared";
+import { VERDICTS } from "@checky/shared";
 import { AlertDialog } from "radix-ui";
 import { useRef, useState } from "react";
 import { toast } from "sonner";

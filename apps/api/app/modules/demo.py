@@ -12,7 +12,7 @@ from app.core.activity import broadcast, record
 from app.core.models import Item, Source, Workspace
 from app.modules import signing
 
-log = logging.getLogger("fanilo.demo")
+log = logging.getLogger("checky.demo")
 router = APIRouter(tags=["demo"])
 
 # (minutes ago first seen, title, status, verdict, suggested verdict, origin, source count, tags)

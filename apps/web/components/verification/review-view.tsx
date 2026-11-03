@@ -1,6 +1,6 @@
 "use client";
 
-import type { components, Me } from "@fanilo/shared";
+import type { components, Me } from "@checky/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { notFound } from "next/navigation";

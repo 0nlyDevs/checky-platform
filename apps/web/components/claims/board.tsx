@@ -1,7 +1,7 @@
 "use client";
 
-import type { Status } from "@fanilo/shared";
-import { STATUSES } from "@fanilo/shared";
+import type { Status } from "@checky/shared";
+import { STATUSES } from "@checky/shared";
 import {
   DndContext,
   type DragEndEvent,

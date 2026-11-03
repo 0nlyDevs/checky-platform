@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item } from "@fanilo/shared";
+import type { Item } from "@checky/shared";
 import Link from "next/link";
 import { useState } from "react";
 import { IconCalendarDots, IconCircleNotch, IconInfo, IconMinus, IconPlus, IconSparkle, type Icon } from "@/lib/icons";

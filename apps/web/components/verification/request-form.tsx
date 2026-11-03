@@ -1,6 +1,6 @@
 "use client";
 
-import type { components } from "@fanilo/shared";
+import type { components } from "@checky/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import useSWR, { mutate as globalMutate } from "swr";

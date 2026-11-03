@@ -14,7 +14,7 @@ export const auth = betterAuth({
     options: "-c search_path=better_auth",
   }),
   emailAndPassword: { enabled: true },
-  // The FANILO phone app (scheme `fanilo`); Expo's dev client also signs in from `exp://` in development.
+  // The Checky phone app (scheme `fanilo`); Expo's dev client also signs in from `exp://` in development.
   trustedOrigins: ["fanilo://", ...(process.env.NODE_ENV === "production" ? [] : ["exp://**"])],
   plugins: [
     // FastAPI verifies these against /api/auth/jwks; issuer and audience must match its AUTH_* env.
