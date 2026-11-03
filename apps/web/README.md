@@ -1,4 +1,4 @@
-# FANILO web
+# Checky web
 
 The Next.js app (UI in French). Setup, commands and recipes are in the
 [root README](../../README.md); design rules in [DESIGN.md](DESIGN.md).

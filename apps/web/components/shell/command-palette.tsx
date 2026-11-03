@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item, ItemPage } from "@fanilo/shared";
+import type { Item, ItemPage } from "@checky/shared";
 import { useParams, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { Dialog } from "radix-ui";

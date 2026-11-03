@@ -1,6 +1,6 @@
 {
   "_": "The demo video: one rumour followed from its arrival to the public. Each scene = a chapter card (chapter, title, caption), then steps played in the real app. setup (once, after sign-in) and before (per scene) prepare the demo through the API: find (a claim by title words, kept as {as}), patch (a claim, with a body), analyze (runs the AI analysis and waits), wait_indexed (waits for the sources to be searchable). Steps: goto (path, {ws} and found names are replaced; ready: a selector to wait for, clicking « Réessayer » if the page failed to load), click / hover (Playwright selector), type ([selector, text]), press (key), scroll (pixels), wait (ms), wait_for (selector, timeout ms), optional: true to skip a step whose element is missing. hold = ms kept on screen at the end. The rumour (Analakely, fictional) is the demo data's: swap it for the real story's. Film with: uv run --with playwright python -I scripts/pitch_video.py",
-  "footer": "FANILO · démo · exemple fictif",
+  "footer": "Checky · démo · exemple fictif",
   "setup": [
     {
       "wait_indexed": "Analakely"
@@ -147,7 +147,7 @@
   "end": {
     "tab": "Le matin",
     "title": "Vérifié.",
-    "caption": "FANILO · {{adresse de l'app}} · 0nlyDevs",
+    "caption": "Checky · {{adresse de l'app}} · 0nlyDevs",
     "seconds": 2.6
   }
 }

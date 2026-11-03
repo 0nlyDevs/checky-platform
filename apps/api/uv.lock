@@ -380,6 +380,75 @@ wheels = [
 ]
 
 [[package]]
+name = "checky-api"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "alembic" },
+    { name = "anthropic" },
+    { name = "asyncpg" },
+    { name = "boto3" },
+    { name = "c2pa-python" },
+    { name = "cryptography" },
+    { name = "fastapi" },
+    { name = "feedparser" },
+    { name = "fpdf2" },
+    { name = "httpx" },
+    { name = "opencv-python-headless" },
+    { name = "pgvector" },
+    { name = "phonenumbers" },
+    { name = "pillow" },
+    { name = "pydantic-settings" },
+    { name = "pyjwt", extra = ["crypto"] },
+    { name = "pypdf" },
+    { name = "python-socketio" },
+    { name = "segno" },
+    { name = "sqlalchemy", extra = ["asyncio"] },
+    { name = "trafilatura" },
+    { name = "uvicorn", extra = ["standard"] },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "alembic", specifier = ">=1.20.1" },
+    { name = "anthropic", specifier = ">=2.3.0" },
+    { name = "asyncpg", specifier = ">=0.32.0" },
+    { name = "boto3", specifier = ">=1.43.118" },
+    { name = "c2pa-python", specifier = "==0.38.1" },
+    { name = "cryptography", specifier = ">=50.0.2" },
+    { name = "fastapi", specifier = ">=0.162.0" },
+    { name = "feedparser", specifier = ">=6.0.14" },
+    { name = "fpdf2", specifier = ">=2.9.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "opencv-python-headless", specifier = ">=4.14.0.94,<5" },
+    { name = "pgvector", specifier = ">=0.5.1" },
+    { name = "phonenumbers", specifier = ">=9.0.42" },
+    { name = "pillow", specifier = ">=13.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.16.1" },
+    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.15.1" },
+    { name = "pypdf", specifier = ">=6.21.2" },
+    { name = "python-socketio", specifier = ">=5.17.0" },
+    { name = "segno", specifier = ">=1.6.6" },
+    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.1.6" },
+    { name = "trafilatura", specifier = ">=2.3.1" },
+    { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pytest-asyncio", specifier = ">=1.4.0" },
+    { name = "ruff", specifier = ">=0.17.2" },
+]
+
+[[package]]
 name = "click"
 version = "8.5.0"
 source = { registry = "https://pypi.org/simple" }
@@ -496,75 +565,6 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/e0/4d/f332313098c1de1b2d2ff91cf2674415cc7cddab2ca1b01ae29774bd5fdf/docstring_parser-0.18.0.tar.gz", hash = "sha256:292510982205c12b1248696f44959db3cdd1740237a968ea1e2e7a900eeb2015", size = 29341, upload-time = "2026-04-14T04:09:19.867Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/5f/ed01f9a3cdffbd5a008556fc7b2a08ddb1cc6ace7effa7340604b1d16699/docstring_parser-0.18.0-py3-none-any.whl", hash = "sha256:b3fcbed555c47d8479be0796ef7e19c2670d428d72e96da63f3a40122860374b", size = 22484, upload-time = "2026-04-14T04:09:18.638Z" },
-]
-
-[[package]]
-name = "fanilo-api"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "alembic" },
-    { name = "anthropic" },
-    { name = "asyncpg" },
-    { name = "boto3" },
-    { name = "c2pa-python" },
-    { name = "cryptography" },
-    { name = "fastapi" },
-    { name = "feedparser" },
-    { name = "fpdf2" },
-    { name = "httpx" },
-    { name = "opencv-python-headless" },
-    { name = "pgvector" },
-    { name = "phonenumbers" },
-    { name = "pillow" },
-    { name = "pydantic-settings" },
-    { name = "pyjwt", extra = ["crypto"] },
-    { name = "pypdf" },
-    { name = "python-socketio" },
-    { name = "segno" },
-    { name = "sqlalchemy", extra = ["asyncio"] },
-    { name = "trafilatura" },
-    { name = "uvicorn", extra = ["standard"] },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-asyncio" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "alembic", specifier = ">=1.20.1" },
-    { name = "anthropic", specifier = ">=2.3.0" },
-    { name = "asyncpg", specifier = ">=0.32.0" },
-    { name = "boto3", specifier = ">=1.43.118" },
-    { name = "c2pa-python", specifier = "==0.38.1" },
-    { name = "cryptography", specifier = ">=50.0.2" },
-    { name = "fastapi", specifier = ">=0.162.0" },
-    { name = "feedparser", specifier = ">=6.0.14" },
-    { name = "fpdf2", specifier = ">=2.9.0" },
-    { name = "httpx", specifier = ">=0.28.1" },
-    { name = "opencv-python-headless", specifier = ">=4.14.0.94,<5" },
-    { name = "pgvector", specifier = ">=0.5.1" },
-    { name = "phonenumbers", specifier = ">=9.0.42" },
-    { name = "pillow", specifier = ">=13.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.16.1" },
-    { name = "pyjwt", extras = ["crypto"], specifier = ">=2.15.1" },
-    { name = "pypdf", specifier = ">=6.21.2" },
-    { name = "python-socketio", specifier = ">=5.17.0" },
-    { name = "segno", specifier = ">=1.6.6" },
-    { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.1.6" },
-    { name = "trafilatura", specifier = ">=2.3.1" },
-    { name = "uvicorn", extras = ["standard"], specifier = ">=0.54.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pytest", specifier = ">=9.1.1" },
-    { name = "pytest-asyncio", specifier = ">=1.4.0" },
-    { name = "ruff", specifier = ">=0.17.2" },
 ]
 
 [[package]]

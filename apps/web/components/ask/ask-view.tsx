@@ -1,6 +1,6 @@
 "use client";
 
-import type { components } from "@fanilo/shared";
+import type { components } from "@checky/shared";
 import { useParams } from "next/navigation";
 import { Fragment, useRef, useState } from "react";
 import { IconArrowSquareOut, IconArrowUp, IconCircleNotch, IconFileText, IconImage, IconLink, IconPaperclip, IconRobot, IconTextT, IconWaveform, type Icon } from "@/lib/icons";

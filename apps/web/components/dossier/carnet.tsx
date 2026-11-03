@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item } from "@fanilo/shared";
+import type { Item } from "@checky/shared";
 import { useEffect, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";

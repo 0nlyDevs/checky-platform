@@ -26,7 +26,7 @@ const PIECES = path.join(__dirname, "..", "..", "..", "apps", "web", "public", "
 
 // The dossier palette (apps/web/.impeccable/surfaces/app-site-accueil-page-tsx.md).
 const THEME = {
-  name: "FANILO dossier",
+  name: "Checky dossier",
   headFontFace: "Anton",
   bodyFontFace: "Public Sans",
   colors: {

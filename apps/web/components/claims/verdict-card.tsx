@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item, Me, Verdict } from "@fanilo/shared";
+import type { Item, Me, Verdict } from "@checky/shared";
 import { toPng } from "html-to-image";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState } from "react";

@@ -1,4 +1,4 @@
-import type { Item, Verdict } from "@fanilo/shared";
+import type { Item, Verdict } from "@checky/shared";
 import { dateFormat } from "@/lib/i18n/live";
 
 // Everything the crew stores on an item is optional: older dossiers, Mode sans IA and partial runs

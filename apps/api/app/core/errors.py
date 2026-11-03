@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware import Middleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-log = logging.getLogger("fanilo.errors")
+log = logging.getLogger("checky.errors")
 
 
 class ApiError(HTTPException):

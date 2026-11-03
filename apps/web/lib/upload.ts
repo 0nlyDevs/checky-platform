@@ -1,4 +1,4 @@
-import type { components } from "@fanilo/shared";
+import type { components } from "@checky/shared";
 import { api } from "@/lib/api";
 
 type UploadOut = components["schemas"]["UploadOut"];

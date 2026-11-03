@@ -1,6 +1,6 @@
 "use client";
 
-import type { Me } from "@fanilo/shared";
+import type { Me } from "@checky/shared";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTheme } from "next-themes";

@@ -32,7 +32,7 @@ from app.core.errors import ApiError
 from app.core.models import Item, Source
 from app.workers.queue import JobContext, enqueue, handler, job_payload
 
-log = logging.getLogger("fanilo.checker")
+log = logging.getLogger("checky.checker")
 router = APIRouter(tags=["checker"])
 
 VERDICTS = ("true", "misleading", "false", "unverifiable")

@@ -33,7 +33,7 @@ from app.core.db import SessionLocal
 from app.core.models import Job
 from app.realtime.server import emit
 
-log = logging.getLogger("fanilo.jobs")
+log = logging.getLogger("checky.jobs")
 
 POLL_SECONDS = 2.0
 SWEEP_SECONDS = 60.0

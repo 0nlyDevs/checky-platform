@@ -1,6 +1,6 @@
 "use client";
 
-import type { Verdict } from "@fanilo/shared";
+import type { Verdict } from "@checky/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

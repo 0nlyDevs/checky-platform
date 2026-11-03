@@ -1,4 +1,4 @@
-import type { Item, Verdict } from "@fanilo/shared";
+import type { Item, Verdict } from "@checky/shared";
 
 // Shapes of the rubrique and veille routes (apps/api/app/modules/{rubrique,veille}.py), kept here
 // until packages/shared is regenerated with them.

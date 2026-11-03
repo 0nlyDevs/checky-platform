@@ -15,7 +15,7 @@ from app.core import http
 from app.core.config import get_settings
 from app.core.errors import ApiError
 
-log = logging.getLogger("fanilo.auth")
+log = logging.getLogger("checky.auth")
 _bearer = HTTPBearer(auto_error=False)
 
 

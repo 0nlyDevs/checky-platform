@@ -1,6 +1,6 @@
 "use client";
 
-import type { Me, Workspace } from "@fanilo/shared";
+import type { Me, Workspace } from "@checky/shared";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { toast } from "sonner";

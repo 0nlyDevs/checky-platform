@@ -1,5 +1,5 @@
 {
-  "name": "fanilo-base",
+  "name": "checky",
   "private": true,
   "packageManager": "npm@12.2.1",
   "workspaces": [
@@ -10,7 +10,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "lint": "turbo run lint",
-    "gen:api": "npm run gen:api -w @fanilo/shared",
+    "gen:api": "npm run gen:api -w @checky/shared",
     "third-party": "uv run --project apps/api python scripts/third_party.py"
   },
   "devDependencies": {

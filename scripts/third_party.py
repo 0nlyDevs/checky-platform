@@ -47,7 +47,7 @@ def npm_direct() -> dict[str, set[str]]:
         where = "root" if where == "." else where
         for section in ("dependencies", "devDependencies"):
             for name in data.get(section, {}):
-                if not name.startswith("@fanilo/"):
+                if not name.startswith("@checky/"):
                     used.setdefault(name, set()).add(where)
     return used
 

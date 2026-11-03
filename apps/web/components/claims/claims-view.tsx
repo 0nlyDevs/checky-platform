@@ -1,6 +1,6 @@
 "use client";
 
-import type { Item, ItemPage, Status } from "@fanilo/shared";
+import type { Item, ItemPage, Status } from "@checky/shared";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
