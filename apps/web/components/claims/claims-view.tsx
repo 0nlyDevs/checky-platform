@@ -4,6 +4,7 @@ import type { Item, ItemPage, Status } from "@checky/shared";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import useSWR from "swr";
+import useSWRInfinite from "swr/infinite";
 import { IconArrowRight, IconColumns, IconFolderOpen, IconMagnifyingGlass, IconRows, IconWifiSlash } from "@/lib/icons";
 import { toast } from "sonner";
 import { undoable } from "@/lib/undo";
@@ -19,6 +20,7 @@ import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { dateFormat, t } from "@/lib/i18n/live";
+import { LoadMore } from "@/components/ui/load-more";
 import { PillTabs } from "@/components/ui/pill-tabs";
 
 const ALL = "all";
@@ -27,8 +29,6 @@ const dayFmt = dateFormat({ weekday: "long", day: "numeric", month: "long" });
 // The tabs follow the numbered line: still being worked on, an AI suggestion waiting, a confirmed verdict.
 const TABS = ["all", "todo", "confirm", "done"] as const;
 type Tab = (typeof TABS)[number];
-const inTab = (c: ClaimView, tab: Tab) =>
-  tab === "all" || (tab === "done" ? !!c.verdict : tab === "confirm" ? !c.verdict && !!c.suggested : !c.verdict && !c.suggested);
 
 /** Ticks every 30 s so "il y a…" keeps up. */
 function useNow() {
@@ -38,6 +38,21 @@ function useNow() {
     return () => clearInterval(id);
   }, []);
   return now;
+}
+
+// One page of the list. Waiting dossiers come oldest first (the rumour circulating longest without
+// an answer leads); checked ones and « Tous » newest first.
+const PAGE = 30;
+const ORDER: Record<Tab, "newest" | "oldest"> = { all: "newest", todo: "oldest", confirm: "oldest", done: "newest" };
+
+/** The search as typed, settled after a short pause so each keystroke does not query the server. */
+function useSettled(value: string, ms = 250) {
+  const [settled, setSettled] = useState(value);
+  useEffect(() => {
+    const id = setTimeout(() => setSettled(value), ms);
+    return () => clearTimeout(id);
+  }, [value, ms]);
+  return settled;
 }
 
 function Empty({ title, lead, action }: { title: string; lead: string; action?: React.ReactNode }) {
@@ -53,11 +68,9 @@ function Empty({ title, lead, action }: { title: string; lead: string; action?: 
 
 export function ClaimsView() {
   const { ws } = useParams<{ ws: string }>();
-  // Press articles read by the Veille job are items too (type "press"); the dossiers list shows claims.
-  const key = `/workspaces/${ws}/items?limit=200&type=claim`;
-  const { data, error, isLoading, mutate } = useSWR<ItemPage>(key, fetcher);
   const now = useNow();
   const [q, setQ] = useState("");
+  const search = useSettled(q.trim());
   const [assignee, setAssignee] = useState<string>(ALL);
   const { me, members, names } = useWorkspace(ws);
   const router = useRouter();
@@ -73,51 +86,83 @@ export function ClaimsView() {
     router.replace(qs.size ? `${pathname}?${qs}` : pathname, { scroll: false });
   };
 
-  const all = useMemo(
-    () =>
-      (data?.items ?? [])
-        .map(toClaim)
-        .sort((a, b) => (b.firstSeen ?? new Date(b.item.created_at)).getTime() - (a.firstSeen ?? new Date(a.item.created_at)).getTime()),
-    [data],
+  // The board's columns are the statuses: it shows every dossier at once (up to 200), as before.
+  // Press articles read by the Veille job are items too (type "press"); the dossiers list shows claims.
+  const boardKey = view === "board" ? `/workspaces/${ws}/items?limit=200&type=claim` : null;
+  const board = useSWR<ItemPage>(boardKey, fetcher);
+
+  // The list: pages of 30 from the server, in the tab's order, with every tab's count.
+  const listQuery = useMemo(() => {
+    const qs = new URLSearchParams({ type: "claim", limit: String(PAGE), tab, order: ORDER[tab] });
+    if (search) qs.set("q", search);
+    if (assignee !== ALL) qs.set("assignee", assignee);
+    return `/workspaces/${ws}/items?${qs}`;
+  }, [ws, tab, search, assignee]);
+  const pages = useSWRInfinite<ItemPage>(
+    (index, previous: ItemPage | null) =>
+      view !== "list" ? null : index === 0 ? listQuery : previous?.next ? `${listQuery}&after=${encodeURIComponent(previous.next)}` : null,
+    fetcher,
+    { revalidateFirstPage: false },
   );
-  const matching = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    return all.filter(
-      (c) =>
-        (assignee === ALL || (assignee === "me" && c.assigneeId === me?.id) || (assignee === "none" && !c.assigneeId) || c.assigneeId === assignee) &&
-        (!needle || `${c.ref} ${c.item.title} ${c.item.tags.join(" ")}`.toLowerCase().includes(needle)),
-    );
-  }, [all, q, assignee, me?.id]);
-  // The board's columns are the statuses, so the tabs only sort the list.
-  const claims = useMemo(() => (view === "board" ? matching : matching.filter((c) => inTab(c, tab))), [matching, tab, view]);
-  const counts = useMemo(() => Object.fromEntries(TABS.map((k) => [k, matching.filter((c) => inTab(c, k)).length])) as Record<Tab, number>, [matching]);
-  const hasDemo = all.some((c) => (c.item.data as { demo?: boolean }).demo);
+  const first = pages.data?.[0];
+  const last = pages.data?.[pages.data.length - 1];
+  const loadingMore = pages.isValidating && pages.size > (pages.data?.length ?? 0);
+
+  const filtering = Boolean(search) || assignee !== ALL;
+  const boardClaims = useMemo(() => {
+    const needle = search.toLowerCase();
+    return (board.data?.items ?? [])
+      .map(toClaim)
+      .filter(
+        (c) =>
+          (assignee === ALL || (assignee === "me" && c.assigneeId === me?.id) || (assignee === "none" && !c.assigneeId) || c.assigneeId === assignee) &&
+          (!needle || `${c.ref} ${c.item.title} ${c.item.tags.join(" ")}`.toLowerCase().includes(needle)),
+      )
+      .sort((a, b) => (b.firstSeen ?? new Date(b.item.created_at)).getTime() - (a.firstSeen ?? new Date(a.item.created_at)).getTime());
+  }, [board.data, search, assignee, me?.id]);
+  const listClaims = useMemo(() => (pages.data ?? []).flatMap((p) => p.items).map(toClaim), [pages.data]);
+  const claims = view === "board" ? boardClaims : listClaims;
+  const counts: Record<Tab, number> = first?.counts ? (first.counts as Record<Tab, number>) : { all: 0, todo: 0, confirm: 0, done: 0 };
+  const data = view === "board" ? board.data : first;
+  const error = view === "board" ? board.error : pages.error && !pages.data ? pages.error : undefined;
+  const isLoading = view === "board" ? board.isLoading : pages.isLoading;
+  const nothingAtAll = view === "board" ? (board.data?.items.length ?? 0) === 0 : counts.all === 0 && !filtering;
+  const hasDemo = claims.some((c) => (c.item.data as { demo?: boolean }).demo);
+  const reload = useCallback(() => {
+    void pages.mutate();
+    void board.mutate();
+  }, [pages, board]);
 
   const upsert = useCallback(
-    (item: Item) =>
-      mutate(
+    (item: Item) => {
+      // The list is in the server's order and counts: it reloads its pages.
+      void pages.mutate();
+      return board.mutate(
         (page) => {
           if (!page) return page;
           const rest = page.items.filter((i) => i.id !== item.id);
           const isNew = rest.length === page.items.length;
-          return { items: [item, ...rest], total: page.total + (isNew ? 1 : 0) };
+          return { ...page, items: [item, ...rest], total: page.total + (isNew ? 1 : 0) };
         },
         { revalidate: false },
-      ),
-    [mutate],
+      );
+    },
+    [pages, board],
   );
 
   const { online } = useWorkspaceSocket(ws, {
     "item.created": (item: Item) => {
-      const known = data?.items.some((i) => i.id === item.id);
+      if (item.type !== "claim") return;
+      const known = claims.some((c) => c.item.id === item.id);
       upsert(item);
       if (!known) toast(t.claims.liveNew(toClaim(item).ref), { description: item.title });
     },
-    "item.updated": (item: Item) => upsert(item),
-    "item.deleted": ({ id }: { id: string }) =>
-      mutate((page) => page && { items: page.items.filter((i) => i.id !== id), total: page.total - 1 }, { revalidate: false }),
-    "demo.reset": () => mutate(),
-    reconnected: () => mutate(),
+    "item.updated": (item: Item) => {
+      if (item.type === "claim") upsert(item);
+    },
+    "item.deleted": () => reload(),
+    "demo.reset": () => reload(),
+    reconnected: () => reload(),
   });
 
   const canMove = useCallback(
@@ -156,7 +201,7 @@ export function ClaimsView() {
           <h1 className="page-title">{t.claims.title}</h1>
           <p className="mt-1.5 text-muted-foreground first-letter:uppercase">
             {dayFmt.format(now)}
-            {data && <span className="tabular"> · {t.claims.total(data.total)}</span>}
+            {data && <span className="tabular"> · {t.claims.total(view === "board" ? data.total : counts.all)}</span>}
             {hasDemo && (
               <span className="ml-2 inline-block rounded-sm border border-border px-1.5 py-px align-[0.1em] text-xs whitespace-nowrap">{t.common.demoData}</span>
             )}
@@ -232,7 +277,7 @@ export function ClaimsView() {
           title={t.claims.errorTitle}
           lead={error.message}
           action={
-            <Button variant="outline" onClick={() => mutate()}>
+            <Button variant="outline" onClick={reload}>
               {t.claims.retry}
             </Button>
           }
@@ -243,7 +288,7 @@ export function ClaimsView() {
             <Skeleton key={i} className="h-20 w-full" />
           ))}
         </div>
-      ) : all.length === 0 ? (
+      ) : nothingAtAll ? (
         <Empty title={t.claims.emptyTitle} lead={t.claims.emptyLead} />
       ) : claims.length === 0 ? (
         <Empty
@@ -258,7 +303,19 @@ export function ClaimsView() {
       ) : view === "board" ? (
         <Board ws={ws} claims={claims} now={now} names={names} canMove={canMove} onMove={move} />
       ) : (
-        <DossierList ws={ws} claims={claims} now={now} names={names} />
+        <>
+          <DossierList ws={ws} claims={claims} now={now} names={names} />
+          <LoadMore
+            shown={claims.length}
+            total={last?.total ?? 0}
+            pageSize={PAGE}
+            hasMore={Boolean(last?.next)}
+            loading={loadingMore}
+            failed={Boolean(pages.error)}
+            onMore={() => void pages.setSize((n) => n + 1)}
+            words={t.claims.more}
+          />
+        </>
       )}
     </div>
   );

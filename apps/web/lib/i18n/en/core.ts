@@ -121,6 +121,17 @@ export const core: Overrides = {
     ago: (d: string) => `${d} ago`,
     noFirstSeen: "Time unknown",
     total: (n: number) => plural(n, "case", "cases"),
+    more: {
+      label: "Rest of the list",
+      shown: (n: number, total: number) => `${n} of ${total}`,
+      left: (n: number) => (n === 1 ? "1 more case" : `${n} more cases`),
+      next: (n: number) => (n === 1 ? "Show the last case" : `Show the next ${n}`),
+      loading: "Loading the next cases…",
+      added: (n: number) => (n === 1 ? "1 more case shown." : `${n} more cases shown.`),
+      all: (n: number) => (n === 1 ? "The only case is shown" : `All ${n} cases are shown`),
+      failed: "The rest could not be loaded.",
+      retry: "Try again",
+    },
     columns: {
       ref: "Ref.",
       claim: "Rumour",

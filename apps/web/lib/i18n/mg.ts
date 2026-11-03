@@ -167,6 +167,17 @@ export const mg: Overrides = {
     ago: (d: string) => `${d} lasa izay`,
     noFirstSeen: "Tsy fantatra ny ora",
     total: (n: number) => `${n} dossier`,
+    more: {
+      label: "Tohin'ny lisitra",
+      shown: (n: number, total: number) => `${n} amin'ny ${total}`,
+      left: (n: number) => `Dossier ${n} hafa koa`,
+      next: (n: number) => `Asehoy ireo ${n} manaraka`,
+      loading: "Mitondra ireo dossier manaraka…",
+      added: (n: number) => `Dossier ${n} hafa naseho.`,
+      all: (n: number) => `Naseho daholo ireo dossier ${n}`,
+      failed: "Tsy tonga ny tohiny.",
+      retry: "Andramo indray",
+    },
     columns: {
       ref: "Laharana",
       claim: "Tsaho",
