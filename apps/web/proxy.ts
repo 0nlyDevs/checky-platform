@@ -4,8 +4,8 @@ import { NextResponse, type NextRequest } from "next/server";
 const AUTH_PAGES = ["/connexion", "/inscription"];
 // Open to everyone, signed in or not: the landing and the public verdicts, tips and their follow-up.
 // Public pages, no account: the archive, tips and their follow-up, the official feed and seals, a
-// contact answering a newsroom, the day's flashs and the short verdict links.
-const PUBLIC_PAGES = ["/accueil", "/verifies", "/signaler", "/suivi", "/officiel", "/sceau", "/reponse", "/flashs", "/v"];
+// contact answering a newsroom, the day's flashs, the short verdict links and the QR scanner.
+const PUBLIC_PAGES = ["/accueil", "/verifies", "/signaler", "/suivi", "/officiel", "/sceau", "/reponse", "/flashs", "/v", "/scanner"];
 const isPublic = (path: string) => PUBLIC_PAGES.some((p) => path === p || path.startsWith(`${p}/`));
 
 // Optimistic check on the cookie only; the app layout verifies the session for real.
@@ -30,5 +30,5 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Skip API routes, Next internals and static files.
-  matcher: ["/((?!api|_next/static|_next/image|icons/|site/|icon.svg|apple-icon.png|logo.svg|manifest.webmanifest).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|icons/|site/|icon.svg|apple-icon.png|logo.svg|manifest.webmanifest|sw.js).*)"],
 };

@@ -12,6 +12,8 @@ import { openPalette } from "@/components/shell/command-palette";
 import { NAV, WORKSPACE_NAV } from "@/components/shell/nav";
 import { EcoMenuItem, FontMenuRow } from "@/components/prefs/prefs-controls";
 import { PreferenceDock } from "@/components/shell/preference-dock";
+import { OfflineBanner, OfflineWarmup } from "@/components/pwa/offline-banner";
+import { clearPrivateCache } from "@/components/pwa/service-worker";
 import { TabBar, TabIsland } from "@/components/shell/tab-island";
 import {
   DropdownMenu,
@@ -78,6 +80,7 @@ function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: s
 
   async function signOut() {
     clearApiToken();
+    await clearPrivateCache();
     await authClient.signOut();
     router.replace("/connexion");
     router.refresh();
@@ -178,6 +181,8 @@ export function AppShell({ user, children }: { user: SessionUser; children: Reac
             <UserMenu user={user} ws={ws} team admin={Boolean(me?.platform_admin)} />
           </div>
         </header>
+        <OfflineBanner scope="desk" />
+        {ws && <OfflineWarmup ws={ws} />}
         {ws && <VerificationBanner ws={ws} />}
 
         <main id="contenu" tabIndex={-1} className="desk-main outline-none">

@@ -15,6 +15,8 @@ import {
   Books,
   Broadcast,
   Calculator,
+  Camera,
+  QrCode,
   CalendarDots,
   CaretDown,
   CaretRight,
@@ -141,6 +143,8 @@ export const IconBroadcast = duo(Broadcast);
 export const IconRobot = duo(Robot);
 export const IconRows = duo(Rows);
 export const IconScan = duo(Scan);
+export const IconCamera = duo(Camera);
+export const IconQrCode = duo(QrCode);
 export const IconSealCheck = duo(SealCheck);
 export const IconShareNetwork = duo(ShareNetwork);
 export const IconShieldCheck = duo(ShieldCheck);

@@ -2,12 +2,13 @@
 
 import { VerifiedBadge } from "@/components/verification/status";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Evidence, ShareActions, type SignedVerdict, VerdictBlock } from "@/components/site/public/public-verdict";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
 import { useDay, useLang, useMoment, useT } from "@/lib/i18n";
 import { IconArrowRight, IconArrowSquareOut, IconCircleNotch, IconInfo, IconPaperPlaneTilt, IconSealCheck } from "@/lib/icons";
+import { isOffline } from "@/lib/offline";
 import { publicApi, rememberTip, visitorCountry } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
@@ -33,20 +34,38 @@ const LONE_URL = /^https?:\/\/\S+$/i;
  * machine verdict and no percentage ever reach this page: only a newsroom's signed verdict, a
  * fact-checker's own words, or facts with their source and date.
  */
-export function CheckForm({ id = "check", className }: { id?: string; className?: string }) {
+export function CheckForm({ id = "check", className, initialText = "" }: { id?: string; className?: string; initialText?: string }) {
   const t = useT();
   const c = t.publicLayer.check;
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText);
   const [asked, setAsked] = useState("");
   const [result, setResult] = useState<Verify | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const form = useRef<HTMLFormElement>(null);
+
+  // Asked with no network: it runs by itself when the network returns.
+  useEffect(() => {
+    if (!waiting) return;
+    const go = () => {
+      setWaiting(false);
+      form.current?.requestSubmit();
+    };
+    window.addEventListener("online", go);
+    return () => window.removeEventListener("online", go);
+  }, [waiting]);
 
   async function check(e: React.FormEvent) {
     e.preventDefault();
     const value = text.trim();
     // The action stays lit; an empty field just gets the focus back.
     if (value.length < 3) return document.getElementById(`${id}-text`)?.focus();
+    if (isOffline()) {
+      setWaiting(true);
+      setResult(null);
+      return setNote(t.offline.outbox.queued);
+    }
     setBusy(true);
     setNote(null);
     setResult(null);
@@ -64,7 +83,7 @@ export function CheckForm({ id = "check", className }: { id?: string; className?
 
   return (
     <div className={className}>
-      <form onSubmit={check} aria-labelledby={`${id}-title`}>
+      <form ref={form} onSubmit={check} aria-labelledby={`${id}-title`}>
         <label htmlFor={`${id}-text`} className="sr-only">
           {c.label}
         </label>

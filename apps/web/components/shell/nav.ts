@@ -15,7 +15,7 @@ export type NavItem = {
 // consult (contacts, official documents, registered communiqués, official figures).
 export const NAV: NavItem[] = [
   { label: t.nav.rubrique, short: t.nav.rubriqueShort, icon: IconNewspaper, path: "rubrique", also: ["angles"] },
-  { label: t.nav.check, icon: IconScan, path: "verifier", also: ["analyser"] },
+  { label: t.nav.check, icon: IconScan, path: "verifier", also: ["analyser", "scanner"] },
   { label: t.nav.claims, icon: IconFolderOpen, path: "affirmations", also: ["sources", "transcriptions"] },
   { label: t.nav.veille, icon: IconRadio, path: "veille" },
   { label: t.nav.annuaire, icon: IconAddressBook, path: "annuaire", also: ["documents", "registre", "chiffres"] },

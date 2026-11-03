@@ -5,16 +5,18 @@ import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { Wordmark } from "@/components/brand/logo";
 import { FontSizeControl } from "@/components/prefs/prefs-controls";
+import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { ThemeFace, useThemeFlip } from "@/components/shell/preference-dock";
 import { brand } from "@/lib/brand";
 import { LANGS, setLang, useDocumentLang, useLang, useT, type Messages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const links = (s: Messages["site"]) =>
+const links = (s: Messages["site"], scan: string) =>
   [
     { href: "/", label: s.pub.nav.check, match: (p: string) => p === "/" || p === "/accueil" },
     { href: "/verifies", label: s.pub.nav.verified, match: (p: string) => p.startsWith("/verifies") || p.startsWith("/v/") },
     { href: "/signaler", label: s.pub.nav.report, match: (p: string) => p.startsWith("/signaler") || p.startsWith("/suivi") },
+    { href: "/scanner", label: scan, match: (p: string) => p.startsWith("/scanner") || p.startsWith("/sceau") },
   ] as const;
 
 /** FR · MG · EN: the visitor's language, remembered on this device. French fills any gap. */
@@ -60,8 +62,9 @@ function LitBar() {
 }
 
 function Bar({ pathname }: { pathname: string }) {
-  const s = useT().site;
-  const LINKS = links(s);
+  const t = useT();
+  const s = t.site;
+  const LINKS = links(s, t.offline.scanner.title);
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background print:hidden">
       <div className="mx-auto flex max-w-[88rem] flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3 sm:gap-x-6 lg:px-10">
@@ -100,7 +103,7 @@ function Bar({ pathname }: { pathname: string }) {
       </div>
       {/* On a phone the three places stay one tap away, under the bar. */}
       <nav aria-label={s.nav.label} className="border-t border-border md:hidden">
-        <ul className="grid grid-cols-3">
+        <ul className="grid grid-cols-4">
           {LINKS.map((l) => {
             const active = l.match(pathname);
             return (
@@ -120,6 +123,7 @@ function Bar({ pathname }: { pathname: string }) {
           })}
         </ul>
       </nav>
+      <OfflineBanner scope="site" />
     </header>
   );
 }
@@ -137,7 +141,7 @@ function ThemeButton() {
 export function SiteFooter() {
   const t = useT();
   const s = t.site;
-  const LINKS = links(s);
+  const LINKS = links(s, t.offline.scanner.title);
   return (
     <footer className="border-t border-border print:hidden">
       <div className="mx-auto grid max-w-[88rem] gap-8 px-4 pt-10 pb-28 md:grid-cols-[minmax(0,1.4fr)_repeat(2,minmax(0,1fr))] lg:px-10">

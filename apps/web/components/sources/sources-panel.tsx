@@ -18,7 +18,7 @@ import { t } from "@/lib/i18n/fr";
 import { uploadFile, type Source } from "@/lib/upload";
 import { cn } from "@/lib/utils";
 import { ImageTrace } from "@/components/sources/image-trace";
-import { EcoImage } from "@/components/prefs/eco";
+import { EcoGate, EcoImage } from "@/components/prefs/eco";
 
 const KIND_ICON: Record<string, Icon> = { url: IconLink, pdf: IconFileText, image: IconImage, audio: IconWaveform, video: IconVideoCamera, text: IconTextT };
 const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,image/heic,application/pdf,audio/*,video/mp4,video/webm,video/quicktime,video/3gpp";
@@ -336,7 +336,10 @@ function AudioFacts({ ws, source }: { ws: string; source: Source }) {
     <div className="mt-2 space-y-2">
       {source.file?.download_url &&
         (source.kind === "video" ? (
-          <video ref={(el) => { audio.current = el; }} controls preload="metadata" src={source.file.download_url} className="max-h-72 w-full max-w-md rounded-md bg-foreground" />
+          // Mode éco: the video waits for a tap (even its metadata costs data on a 2G link).
+          <EcoGate kind="video" className="h-32 w-full max-w-md">
+            <video ref={(el) => { audio.current = el; }} controls preload="metadata" src={source.file.download_url} className="max-h-72 w-full max-w-md rounded-md bg-foreground" />
+          </EcoGate>
         ) : (
           <audio ref={(el) => { audio.current = el; }} controls preload="none" src={source.file.download_url} className="h-9 w-full max-w-md" />
         ))}

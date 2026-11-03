@@ -4,27 +4,45 @@ import { EcoGate } from "@/components/prefs/eco";
 import { VerifiedBadge } from "@/components/verification/status";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { StepLine } from "@/components/flow/step-line";
 import { Evidence, ShareActions, type SignedVerdict, Trajet, VerdictBlock } from "@/components/site/public/public-verdict";
 import { useDay, useT } from "@/lib/i18n";
-import { IconArrowLeft, IconArrowRight, IconSealCheck, IconSpeakerHigh, IconWarning, IconXCircle } from "@/lib/icons";
+import { IconArrowLeft, IconArrowRight, IconQuestion, IconSealCheck, IconSpeakerHigh, IconWarning, IconXCircle } from "@/lib/icons";
+import { SealStatus, SignedFields } from "@/components/seal/seal-result";
+import { type SealOutcome, useSealCheck } from "@/components/seal/use-seal-check";
 import { publicApi } from "@/lib/public-api";
 import { tidy } from "@/lib/typo";
 
 /** One published verdict, at its own shareable address: the answer first, why, the evidence with
  *  its dates, where the correction went, then share. */
 export function VerdictPage() {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id: string }>();
+  // Offline this page may be the service worker's copy of another verdict's page: the address says which.
+  const href = usePageHref();
+  const id = (href && new URL(href).pathname.split("/").filter(Boolean)[1]) || params.id;
   const t = useT();
   const p = t.site.pub.file;
   const day = useDay();
   const [v, setV] = useState<(SignedVerdict & { voice_note?: VoiceNote | null }) | null | "missing">(null);
+  const sealed = useSealCheck(href && new URL(href).hash ? href : null);
 
   useEffect(() => {
+    if (!href) return;
     publicApi<SignedVerdict>(`/verdicts/${id}`).then(setV).catch(() => setV("missing"));
-  }, [id]);
+  }, [id, href]);
 
+  if (v === "missing" && sealed.phase === "done")
+    return (
+      <Shell>
+        <p className="mt-8 max-w-[70ch] text-lg text-pretty">{t.offline.seal.offlineVerdict}</p>
+        <h1 className="mt-4 font-display text-2xl font-extrabold tracking-tight">{t.offline.seal.verdictTitle}</h1>
+        <SealStatus check={sealed.check} className="mt-4" />
+        <div className="mt-6">
+          <SignedFields check={sealed.check} />
+        </div>
+      </Shell>
+    );
   if (v === "missing")
     return (
       <Shell>
@@ -48,7 +66,7 @@ export function VerdictPage() {
         {checkNumber(v.ref) !== null ? <span className="tabular"> · {p.number(checkNumber(v.ref)!)}</span> : v.ref && <span className="tabular"> · {v.ref}</span>}
       </p>
       <VerifiedBadge className="mt-1" />
-      <CardSeal id={v.id} newsroom={v.newsroom.name} />
+      <CardSeal outcome={sealed} newsroom={v.newsroom.name} />
 
       <div className="mt-6 grid gap-10 md:mt-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="min-w-0">
@@ -146,49 +164,39 @@ function NewsroomVoice({ note }: { note: VoiceNote }) {
   );
 }
 
-type SealCheck = { valid: boolean; revoked: boolean; current: boolean };
-const NOT_A_SEAL: SealCheck = { valid: false, revoked: false, current: false };
+/** The page's address with its fragment, known only in the browser. */
+function usePageHref(): string | null {
+  return useSyncExternalStore(
+    (onChange) => {
+      window.addEventListener("hashchange", onChange);
+      return () => window.removeEventListener("hashchange", onChange);
+    },
+    () => window.location.href,
+    () => null,
+  );
+}
 
 /** The QR of a printed card carries the newsroom's seal after `#` (message.signature.key_id). The
- *  fragment never reaches a server by itself: the page sends it to be checked against this verdict,
- *  then says in one line whether the card in hand is genuine and current. Nothing without a seal. */
-function CardSeal({ id, newsroom }: { id: string; newsroom: string }) {
-  const s = useT().site.pub.file.seal;
-  const [check, setCheck] = useState<SealCheck | null>(null);
-
-  useEffect(() => {
-    const parts = window.location.hash.slice(1).split(".");
-    if (parts.length !== 3) return;
-    const [packed, signature, key_id] = parts;
-    let live = true;
-    Promise.resolve()
-      .then(() => {
-        const b64 = packed.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - (packed.length % 4)) % 4);
-        return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)));
-      })
-      .then(
-        (message) =>
-          publicApi<SealCheck>(`/sceau/v/${id}/verify`, { method: "POST", body: JSON.stringify({ message, signature, key_id }) }).catch(
-            () => null,
-          ),
-        () => NOT_A_SEAL,
-      )
-      .then((out) => live && setCheck(out));
-    return () => {
-      live = false;
-    };
-  }, [id]);
-
-  if (!check) return null;
-  const [Glyph, text] = !check.valid
-    ? [IconXCircle, s.invalid]
-    : check.revoked
+ *  fragment never reaches a server by itself: it is checked on this device with the kept keys (no
+ *  network needed), then, online, against this verdict, and the page says in one line whether the
+ *  card in hand is genuine and current. Nothing without a seal. */
+function CardSeal({ outcome, newsroom }: { outcome: SealOutcome; newsroom: string }) {
+  const t = useT();
+  const s = t.site.pub.file.seal;
+  if (outcome.phase !== "done") return null;
+  const { check, record } = outcome;
+  const [Glyph, text] =
+    check.status === "revoked"
       ? [IconWarning, s.revoked]
-      : check.current
-        ? [IconSealCheck, s.valid(newsroom)]
-        : [IconWarning, s.old];
+      : check.status === "mismatch" || (record && !record.same)
+        ? [IconXCircle, s.invalid]
+        : check.status === "authentic"
+          ? record && record.current === false
+            ? [IconWarning, s.old]
+            : [IconSealCheck, s.valid(newsroom)]
+          : [IconQuestion, t.offline.seal.unknownLead];
   return (
-    <p role="status" className="mt-3 flex max-w-[70ch] items-start gap-2 rounded-md border border-foreground bg-card px-3 py-2 font-bold text-pretty">
+    <p role="status" data-seal={check.status} className="mt-3 flex max-w-[70ch] items-start gap-2 rounded-md border border-foreground bg-card px-3 py-2 font-bold text-pretty">
       <Glyph className="mt-0.5 size-5 shrink-0" aria-hidden />
       {text}
     </p>

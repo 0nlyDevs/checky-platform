@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import useSWR from "swr";
-import { IconAddressBook, IconArrowCounterClockwise, IconArrowRight, IconArrowSquareOut, IconCalendarDots, IconCircleNotch, IconMicrophone, IconStop } from "@/lib/icons";
+import { IconAddressBook, IconArrowCounterClockwise, IconArrowRight, IconArrowSquareOut, IconCalendarDots, IconCircleNotch, IconMicrophone, IconQrCode, IconStop, IconTray } from "@/lib/icons";
 import { AskView } from "@/components/ask/ask-view";
 import { toClaim, VERDICT_META, VerdictChip } from "@/components/claims/verdict";
 import { CrewLog } from "@/components/crew/crew-log";
@@ -20,12 +20,17 @@ import { OnAir } from "@/components/verify/on-air";
 import { useStickyColumn } from "@/hooks/use-sticky-column";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
+import { isOffline, useOnline } from "@/lib/offline";
+import { addToOutbox, removeFromOutbox, updateOutbox, type OutboxEntry, useOutbox } from "@/lib/outbox";
 import { postStream } from "@/lib/sse";
+import { sendPhoto } from "@/components/scanner/read-image";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const v = t.verify;
 const c = t.linkCheck;
 const k = t.crew;
+const o = t.offline.outbox;
 type StepKey = "read" | "claims" | "search" | "verdict";
 type Run = { status: "waiting" | "running" | "done" | "failed"; summary: string };
 type Result = CrewResult;
@@ -130,14 +135,26 @@ export function VerifyView() {
   const [claim, setClaim] = useState(0);
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [tracking, setTracking] = useState(false);
+  const [queued, setQueued] = useState<string | null>(null);
   const started = useRef(false);
   const dictation = useDictation((said) => setInput((prev) => (prev.trim() ? `${prev.trim()} ${said}` : said)));
 
-  async function run() {
-    const body = split(input);
-    if (running) return;
+  async function run(given?: { url: string | null; text: string | null; source_id?: string }) {
+    const body: { url: string | null; text: string | null; source_id?: string } = given ?? split(input);
+    if (running) return false;
     // The action stays lit; an empty field just gets the focus back.
-    if (!body.url && !body.text) return document.getElementById("verify-input")?.focus();
+    if (!body.url && !body.text && !body.source_id) {
+      document.getElementById("verify-input")?.focus();
+      return false;
+    }
+    // No network: kept in « À envoyer », run when the network returns.
+    if (isOffline()) {
+      await addToOutbox({ ws, text: input.trim() }).catch(() => null);
+      setInput("");
+      setQueued(o.queued);
+      return false;
+    }
+    setQueued(null);
     setSent(body);
     setRunning(true);
     setSteps(fresh());
@@ -145,6 +162,7 @@ export function VerifyView() {
     setRuns({});
     setResult(null);
     setError(null);
+    let success = false;
     try {
       await postStream(`/workspaces/${ws}/crew`, { ...body, ai_enabled: aiEnabled }, (event, data) => {
         if (event === "agent") {
@@ -155,12 +173,14 @@ export function VerifyView() {
           const d = data as { key: StepKey; status: Run["status"]; summary: string };
           setSteps((all) => ({ ...all, [d.key]: { status: d.status, summary: d.summary } }));
         } else if (event === "result") {
+          success = true;
           const r = data as Result;
           setResult(r);
           setClaim(0);
           const cited = new Set((r.analysis?.evidence ?? []).map((e) => e.n ?? e.result));
           setPicked(new Set((r.results ?? []).filter((x) => x.url && (x.kind === "fact-check" || cited.has(x.n))).map((x) => x.url)));
         } else if (event === "error") {
+          success = false;
           setError((data as { code?: string }).code === "ai_unavailable" ? c.busy : c.failed);
         }
       });
@@ -169,15 +189,52 @@ export function VerifyView() {
     } finally {
       setRunning(false);
     }
+    return success;
   }
 
-  // Opened with ?lien=… (by the copilot or an old « Analyser » link): run at once.
+  // Opened with ?lien=… (by the copilot, the scanner or an old « Analyser » link) or ?source=… (a
+  // photo the scanner sent): run at once.
   useEffect(() => {
-    if (started.current || !params.get("lien")) return;
+    if (started.current) return;
+    const source = params.get("source");
+    if (!params.get("lien") && !source) return;
     started.current = true;
-    void run();
+    void Promise.resolve().then(() => run(source ? { url: null, text: null, source_id: source } : undefined));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // « À envoyer »: when the network returns, the oldest waiting check runs by itself.
+  const online = useOnline();
+  const outbox = useOutbox(ws);
+  async function send(entry: OutboxEntry) {
+    if (running || isOffline()) return;
+    if (entry.text) {
+      setInput(entry.text);
+      if (await run(split(entry.text))) await removeFromOutbox(entry.id);
+      return;
+    }
+    if (entry.photo || entry.sourceId) {
+      setQueued(t.offline.scanner.sending);
+      try {
+        const source = entry.sourceId ?? await sendPhoto(ws, entry.photo!, entry.name);
+        if (!entry.sourceId) await updateOutbox({ ...entry, photo: undefined, sourceId: source });
+        setQueued(null);
+        if (await run({ url: null, text: null, source_id: source })) await removeFromOutbox(entry.id);
+      } catch {
+        setQueued(t.offline.scanner.failed);
+      }
+    }
+  }
+  const next = outbox[0];
+  useEffect(() => {
+    if (!online || !next || running) return;
+    const timer = setTimeout(() => {
+      toast(o.running);
+      void send(next);
+    }, 800);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, next?.id]);
 
   async function track() {
     if (!result) return;
@@ -300,7 +357,18 @@ export function VerifyView() {
                 </div>
               </form>
 
+              {queued && (
+                <p role="status" className="mt-3 max-w-4xl font-bold text-pretty">
+                  {queued}
+                </p>
+              )}
+              {outbox.length > 0 && <Outbox entries={outbox} online={online} onRun={(e) => void send(e)} />}
               <div className="mt-3 max-w-4xl">
+                <Link href={`/w/${ws}/scanner`} className="mb-2 inline-flex items-center gap-1.5 text-sm font-bold underline underline-offset-4">
+                  <IconQrCode className="size-4" aria-hidden /> {t.offline.scanner.fromDesk}
+                </Link>
+              </div>
+              <div className="mt-1 max-w-4xl">
                 <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-bold">
                   <input type="checkbox" checked={!aiEnabled} disabled={running || !newsroomAi} onChange={(e) => setNoAi(e.target.checked)} className="size-4 accent-[var(--foreground)]" />
                   {k.noAi.label}
@@ -338,6 +406,35 @@ export function VerifyView() {
         <DeskColumn ws={ws} />
       </div>
     </div>
+  );
+}
+
+/** « À envoyer »: what was asked with no network, oldest first; each runs when the network returns. */
+function Outbox({ entries, online, onRun }: { entries: OutboxEntry[]; online: boolean; onRun: (e: OutboxEntry) => void }) {
+  return (
+    <section aria-labelledby="outbox-title" className="mt-4 max-w-4xl rounded-md border border-dashed border-foreground bg-card p-4">
+      <h2 id="outbox-title" className="flex items-center gap-2 font-bold">
+        <IconTray className="size-5" aria-hidden /> {o.title} · {o.count(entries.length)}
+      </h2>
+      <ul className="mt-2 divide-y divide-border">
+        {entries.map((e) => (
+          <li key={e.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
+            <span className="min-w-0 flex-1 truncate">{e.text ?? `${o.photo} · ${e.name ?? ""}`}</span>
+            <span className="text-sm text-muted-foreground tabular">{new Date(e.at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+            {online ? (
+              <Button type="button" size="sm" variant="outline" onClick={() => onRun(e)}>
+                {o.run}
+              </Button>
+            ) : (
+              <span className="text-sm">{o.waiting}</span>
+            )}
+            <Button type="button" size="sm" variant="ghost" onClick={() => void removeFromOutbox(e.id)}>
+              {o.remove}
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

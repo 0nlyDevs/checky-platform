@@ -1,4 +1,5 @@
 import { API_URL, ApiError } from "@/lib/api";
+import { noteAnswer } from "@/lib/offline";
 
 /** The public API (no account): published verdicts, matches, tips and their follow-up. */
 export async function publicApi<T>(path: string, init: RequestInit = {}): Promise<T> {
@@ -6,6 +7,7 @@ export async function publicApi<T>(path: string, init: RequestInit = {}): Promis
     ...init,
     headers: { ...init.headers, ...(init.body ? { "Content-Type": "application/json" } : {}) },
   });
+  if (!init.method || init.method === "GET") noteAnswer(`/public${path}`, res);
   if (!res.ok) {
     const body = await res.json().catch(() => null);
     throw new ApiError(res.status, body?.error?.code ?? "error", body?.error?.message ?? res.statusText);
