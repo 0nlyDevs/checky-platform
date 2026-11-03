@@ -1966,6 +1966,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/translate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Translate */
+        post: operations["translate_api_v1_workspaces__ws__translate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/signals": {
         parameters: {
             query?: never;
@@ -5847,6 +5864,28 @@ export interface components {
             highlights?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** TranslateIn */
+        TranslateIn: {
+            /** Text */
+            text: string;
+            /**
+             * To
+             * @enum {string}
+             */
+            to: "fr" | "mg";
+        };
+        /** TranslateOut */
+        TranslateOut: {
+            /** Text */
+            text: string;
+            /**
+             * To
+             * @enum {string}
+             */
+            to: "fr" | "mg";
+            /** Reread Needed */
+            reread_needed: boolean;
         };
         /** Turn */
         Turn: {
@@ -10334,6 +10373,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RadioDiffuseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    translate_api_v1_workspaces__ws__translate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TranslateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TranslateOut"];
                 };
             };
             /** @description Validation Error */

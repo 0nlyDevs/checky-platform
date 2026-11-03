@@ -7342,6 +7342,64 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/translate": {
+      "post": {
+        "tags": [
+          "translate"
+        ],
+        "summary": "Translate",
+        "operationId": "translate_api_v1_workspaces__ws__translate_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/signals": {
       "get": {
         "tags": [
@@ -19090,6 +19148,57 @@
           "segments"
         ],
         "title": "TranscriptOut"
+      },
+      "TranslateIn": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Text"
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg"
+            ],
+            "title": "To"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "to"
+        ],
+        "title": "TranslateIn"
+      },
+      "TranslateOut": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "to": {
+            "type": "string",
+            "enum": [
+              "fr",
+              "mg"
+            ],
+            "title": "To"
+          },
+          "reread_needed": {
+            "type": "boolean",
+            "title": "Reread Needed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "to",
+          "reread_needed"
+        ],
+        "title": "TranslateOut"
       },
       "Turn": {
         "properties": {
