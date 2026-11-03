@@ -367,6 +367,33 @@ def test_a_video_is_transcribed_from_its_soundtrack(as_user, whisper, monkeypatc
     assert r.status_code == 202
 
 
+def test_a_video_whose_transcription_fails_stays_ready_with_its_frames(
+    as_user, whisper, monkeypatch
+):
+    _, replies = whisper
+    replies.extend([httpx.Response(401, json={"error": {"message": "Invalid API Key"}})] * 4)
+
+    async def fake_video(raw, mime):
+        return {"duration_s": 4.0}, b"fake-mp3", "audio.mp3", "audio/mpeg"
+
+    async def frames(raw, duration, ffmpeg, container=None):
+        return [{"at_s": 0, "jpeg": b"\xff\xd8frame0", "dhash": "0" * 16, "flat": False}]
+
+    monkeypatch.setattr(ingest, "video_meta_and_audio", fake_video)
+    monkeypatch.setattr(ingest.media, "sample_frames", frames)
+    monkeypatch.setattr(ingest.media, "blur_faces", lambda raw: (b"re-encoded", 0))
+    monkeypatch.setattr(ingest.shutil, "which", lambda name: "/usr/bin/ffmpeg")
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    made = _upload(alice, ws, "clip.mp4", "video/mp4", b"fake-video").json()
+    asyncio.run(queue.run_once())
+    src = alice.get(f"/api/v1/workspaces/{ws}/sources/{made['id']}").json()
+    assert src["status"] == "ready" and src["error"].startswith("Transcription failed")
+    assert len(src["file"]["keyframes"]) == 1
+    r = alice.post(f"/api/v1/workspaces/{ws}/sources/{made['id']}/transcribe", json={})
+    assert r.status_code == 202
+
+
 def test_video_keyframes_are_stored_with_their_blurred_copy_and_reverse_search(
     as_user, whisper, monkeypatch
 ):

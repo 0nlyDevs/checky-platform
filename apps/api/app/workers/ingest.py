@@ -373,6 +373,7 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
         await ctx.progress(40)
         meta: dict[str, Any] = {}
         title, text = "", ""
+        stt_error: str | None = None
         if mime.startswith("image/"):
             meta = await asyncio.to_thread(image_meta, raw)
             meta.update(await media.derive_image(raw, key))
@@ -399,15 +400,21 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
                     )
             await ctx.progress(50)
             if audio:
-                result = await stt.transcribe(
-                    audio, audio_name, audio_mime, ctx.input.get("language")
-                )
-                text = result["text"]
-                meta.update(
-                    duration_s=meta.get("duration_s") or result["duration_s"],
-                    language=result["language"],
-                )
-                await _save_transcript(source_id, result)
+                try:
+                    result = await stt.transcribe(
+                        audio, audio_name, audio_mime, ctx.input.get("language")
+                    )
+                except Exception as e:
+                    # The video, its metadata and keyframes stay usable; « Transcrire » retries.
+                    log.warning("could not transcribe video source %s", source_id, exc_info=True)
+                    stt_error = f"Transcription failed: {type(e).__name__}: {e}"[:500]
+                else:
+                    text = result["text"]
+                    meta.update(
+                        duration_s=meta.get("duration_s") or result["duration_s"],
+                        language=result["language"],
+                    )
+                    await _save_transcript(source_id, result)
         async with SessionLocal() as db:
             await db.execute(
                 update(File)
@@ -418,7 +425,7 @@ async def ingest_file(ctx: JobContext) -> dict[str, Any]:
     except Exception as e:
         await _fail(source_id, ctx.workspace_id, f"{type(e).__name__}: {e}")
         raise
-    values: dict[str, Any] = {"status": "ready", "text": text, "error": None}
+    values: dict[str, Any] = {"status": "ready", "text": text, "error": stt_error}
     if title:
         values["title"] = title[:500]
     if meta.get("created_at"):
