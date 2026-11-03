@@ -82,6 +82,8 @@ export const fr = {
     more: "Plus",
     moreLabel: "Autres sections",
     account: "Votre compte",
+    roleAdmin: "Admin Checky",
+    roleJournalist: "Journaliste",
     preferences: "Préférences",
     search: "Rechercher partout (Ctrl K)",
     toDark: "Thème sombre",

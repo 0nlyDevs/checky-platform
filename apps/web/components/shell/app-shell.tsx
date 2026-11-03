@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useTheme } from "next-themes";
 import useSWR from "swr";
-import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon, IconPlus, IconSealCheck, IconSignOut, IconSun } from "@/lib/icons";
+import { IconCaretUpDown, IconCheck, IconMagnifyingGlass, IconMonitor, IconMoon, IconNewspaper, IconPlus, IconSealCheck, IconShieldCheck, IconSignOut, IconSun } from "@/lib/icons";
 import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { Wordmark } from "@/components/brand/logo";
 import { openPalette } from "@/components/shell/command-palette";
@@ -74,6 +74,20 @@ function WorkspaceSwitcher({ me, current }: { me?: Me; current?: string }) {
 }
 
 /** The avatar: who is signed in, the newsroom's pages (Équipe, Paramètres), the theme, sign out. */
+// What this account is: one of its newsroom's journalists, or the Checky team that reviews newsrooms.
+function AccountKind({ admin }: { admin: boolean }) {
+  const Icon = admin ? IconShieldCheck : IconNewspaper;
+  return (
+    <span
+      className={`mt-2 inline-flex items-center gap-1.5 rounded-[6px] border px-2 py-0.5 text-xs font-bold ${
+        admin ? "border-tag-inverted bg-tag-inverted text-tag-inverted-foreground" : "border-border text-foreground"
+      }`}
+    >
+      <Icon className="size-3.5" aria-hidden /> {admin ? t.nav.roleAdmin : t.nav.roleJournalist}
+    </span>
+  );
+}
+
 function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: string; team: boolean; admin?: boolean }) {
   const { theme, setTheme } = useTheme();
 
@@ -87,13 +101,14 @@ function UserMenu({ user, ws, team, admin = false }: { user: SessionUser; ws?: s
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="bar-avatar" data-ripple aria-label={`${t.nav.account}${t.common.colon} ${user.name}`}>
+      <DropdownMenuTrigger className="bar-avatar" data-ripple aria-label={`${t.nav.account}${t.common.colon} ${user.name}, ${admin ? t.nav.roleAdmin : t.nav.roleJournalist}`}>
         {initials(user.name)}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-60">
         <DropdownMenuLabel className="font-normal">
           <span className="block truncate font-bold text-foreground">{user.name}</span>
           <span className="block truncate text-muted-foreground">{user.email}</span>
+          <AccountKind admin={admin} />
         </DropdownMenuLabel>
         {ws && team && (
           <>
