@@ -18,31 +18,41 @@ import { cn } from "@/lib/utils";
 const s = t.dossier.sign;
 
 /**
- * A verdict as the dossier states it: icon and word in Bricolage Grotesque, on its soft ground. Dashed while it
- * is only a suggestion; solid, with the newsroom's and the journalist's names, once signed.
+ * A verdict as the dossier states it: icon and word in Bricolage Grotesque. Dashed while it is only a
+ * suggestion; an outline on the card while the journalist has picked it but not signed it; solid on its
+ * soft ground, with the newsroom's and the journalist's names, once signed.
  */
 export function VerdictBlock({
   verdict,
   suggested,
+  unsigned = false,
   byline,
   children,
 }: {
   verdict: Verdict;
   suggested: boolean;
+  /** Picked by the journalist, not signed yet: nothing vouches for it so far. */
+  unsigned?: boolean;
   byline?: Byline | null;
   children?: React.ReactNode;
 }) {
   const m = VERDICT_META[verdict];
   const Icon = m.icon;
   return (
-    <div className={cn("verdict-land rounded-md border-2 border-current p-4 md:p-5", suggested ? "border-dashed bg-card" : m.soft, m.ink)}>
+    <div className={cn("verdict-land rounded-md border-2 border-current p-4 md:p-5", suggested ? "border-dashed bg-card" : unsigned ? "bg-card" : m.soft, m.ink)}>
       <p className="flex items-center gap-2.5 font-display text-3xl font-extrabold tracking-tight md:text-4xl">
         <Icon className="size-8 shrink-0" aria-hidden />
         {m.label}
       </p>
       <p className="mt-1.5 flex items-center gap-1.5 text-sm font-bold">
         {suggested ? <IconSparkle className="size-3.5" aria-hidden /> : <IconStamp className="size-3.5" aria-hidden />}
-        {suggested ? t.verify.suggestedBy : byline ? s.signedBy(byline.journalist, byline.newsroom, fmtWhen(byline.signedAt) ?? "") : t.site.pub.file.confirmed}
+        {suggested
+          ? t.verify.suggestedBy
+          : unsigned
+            ? s.unsigned
+            : byline
+              ? s.signedBy(byline.journalist, byline.newsroom, fmtWhen(byline.signedAt) ?? "")
+              : t.site.pub.file.confirmed}
       </p>
       {children}
     </div>
@@ -197,7 +207,7 @@ export function VerdictDecision({
       <p className="max-w-[70ch] text-pretty text-muted-foreground">{s.lead}</p>
 
       {choice && !picking ? (
-        <VerdictBlock verdict={choice} suggested={choice === suggested && !signedVerdict}>
+        <VerdictBlock verdict={choice} suggested={choice === suggested && !signedVerdict} unsigned={choice !== signedVerdict} byline={choice === signedVerdict ? byline : null}>
           {canSign && (
             <button
               type="button"

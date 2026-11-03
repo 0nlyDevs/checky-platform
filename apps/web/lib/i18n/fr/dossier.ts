@@ -124,6 +124,7 @@ export const dossier = {
     signPublish: "Signer et publier",
     signing: "Signature…",
     signedBy: (name: string, newsroom: string, when: string) => `Signé par ${name} · ${newsroom} · ${when}`,
+    unsigned: "Votre choix, pas encore signé",
     publishedNote: "Publié au nom de la rédaction.",
     privateNote: "Signé. Les verdicts de la rédaction ne sont pas encore publics (Réglages).",
         change: "Signer un autre verdict",
