@@ -11,6 +11,7 @@ dependencies = [
     "anthropic>=2.3.0",
     "asyncpg>=0.32.0",
     "boto3>=1.43.118",
+    "c2pa-python==0.38.1",
     "cryptography>=50.0.2",
     "fastapi>=0.162.0",
     "feedparser>=6.0.14",

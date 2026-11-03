@@ -52,6 +52,18 @@ function exifDate(v: string) {
   return m ? dateFmt.format(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))) : v;
 }
 
+type Credentials = { state?: string; signer?: string | null; signed_at?: string | null } | null;
+
+/** What the verified Content Credentials say, or the plain note when the manifest is only present. */
+function credentialsText(c: Credentials | undefined) {
+  const signer = c?.signer ?? "?";
+  const when = c?.signed_at ? pubDate(c.signed_at) : null;
+  if (c?.state === "trusted") return t.sources.credentialsTrusted(signer, when);
+  if (c?.state === "valid") return t.sources.credentialsValid(signer, when);
+  if (c?.state === "invalid") return t.sources.credentialsInvalid;
+  return t.sources.contentCredentials;
+}
+
 type Shown = components["schemas"]["PictureOut"];
 type MemoryMatch = components["schemas"]["MemoryMatch"];
 
@@ -150,7 +162,7 @@ function PictureMemory({ ws, source }: { ws: string; source: Source }) {
 }
 
 function ImageFacts({ ws, source }: { ws: string; source: Source }) {
-  const meta = (source.file?.meta ?? {}) as { exif?: Record<string, unknown>; ai_markers?: string[]; content_credentials?: boolean };
+  const meta = (source.file?.meta ?? {}) as { exif?: Record<string, unknown>; ai_markers?: string[]; content_credentials?: boolean; credentials?: Credentials };
   const exif = meta.exif ?? {};
   const camera = [exif.Make, exif.Model].filter(Boolean).join(" ");
   const date = (exif.DateTimeOriginal ?? exif.DateTime) as string | undefined;
@@ -182,7 +194,7 @@ function ImageFacts({ ws, source }: { ws: string; source: Source }) {
       {meta.content_credentials && (
         <p className="flex items-start gap-1.5">
           <IconSealCheck className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          {t.sources.contentCredentials}
+          {credentialsText(meta.credentials)}
         </p>
       )}
       {source.duplicates > 0 && (

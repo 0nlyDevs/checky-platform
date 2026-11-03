@@ -471,6 +471,10 @@ export const mg: Overrides = {
     exifCamera: (camera: string) => `Fitaovana naka azy: ${camera}`,
     aiMarkers: (names: string) => `Misy dian'ny mpamorona sary IA ao amin'ny rakitra: ${names}. Famantarana matanjaka, hamafisina amin'ny toe-javatra manodidina.`,
     contentCredentials: "Misy mari-pamantarana votoaty (C2PA) ilay rakitra: azo vakiana ao amin'ny contentcredentials.org/verify ny niaviany sy ny fanovana natao taminy.",
+    // relire (mg)
+    credentialsTrusted: (signer: string, when: string | null) => `Nosoniavin'i ${signer}${when ? `, tamin'ny ${when}` : ""}: voamarina ny mari-pamantarana votoaty (C2PA), fantatra ny mpanao sonia.`,
+    credentialsValid: (signer: string, when: string | null) => `Tsy simba ny mari-pamantarana votoaty (C2PA), nosoniavin'i ${signer}${when ? `, tamin'ny ${when}` : ""}: tsy niova ny rakitra hatramin'ny nanaovana sonia, nefa tsy ao amin'ny lisitry ny mpanao sonia azo itokisana ilay mpanao sonia.`,
+    credentialsInvalid: "Tsy mety ny mari-pamantarana votoaty (C2PA): tsy mifanaraka amin'ny nosoniavina intsony ilay rakitra, novana taorian'ny sonia.",
     exifDate: (date: string) => `Nalaina ny ${date}`,
     exifGps: "Misy toerana GPS ao amin'ny rakitra",
     duplicates: (n: number) => (n === 1 ? "Efa misy indray mandeha hafa ao amin'ny rédaction" : `Efa misy in-${n} hafa ao amin'ny rédaction`),

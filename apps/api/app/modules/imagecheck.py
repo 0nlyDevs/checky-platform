@@ -44,7 +44,6 @@ FILE_BODY = {
 LIMITATIONS = [
     "metadata_can_be_removed_or_forged",
     "absence_of_markers_does_not_prove_authenticity",
-    "content_credentials_signature_not_verified",
     "pixel_detector_is_probabilistic",
     "image_origin_is_not_claim_truth",
 ]
@@ -78,12 +77,27 @@ class DetectorOut(BaseModel):
     score: float | None = None
 
 
+class CredentialsOut(BaseModel):
+    """Content Credentials whose signature and hashes were checked (`core/content_credentials.py`)."""
+
+    state: Literal["trusted", "valid", "invalid"]
+    signer: str | None = None
+    issuer: str | None = None
+    signed_at: str | None = None
+    generator: str | None = None
+    software: list[str] = []
+    ai: bool = False
+    edited: bool = False
+    problems: list[str] = []
+
+
 class ImageFacts(BaseModel):
     width: int
     height: int
     format: str
     ai_markers: list[str]
     content_credentials: bool
+    credentials: CredentialsOut | None = None
     # Deliberately exclude GPS, authors and other personal EXIF fields from the response.
     exif: dict[str, str]
 
@@ -339,5 +353,10 @@ async def examine(raw: bytes, *, url: str | None, allow_detector: bool = True) -
         reverse_search=[SearchLink(**link) for link in reverse_search(url)]
         if url
         else manual_reverse_search(),
-        limitations=LIMITATIONS,
+        limitations=LIMITATIONS
+        + (
+            ["content_credentials_signature_not_verified"]
+            if facts.content_credentials and not facts.credentials
+            else []
+        ),
     )

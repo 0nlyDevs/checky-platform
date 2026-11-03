@@ -25,7 +25,7 @@ from urllib.parse import urljoin, urlparse
 import httpx
 from sqlalchemy import update
 
-from app.core import dates, media, storage, stt
+from app.core import content_credentials, dates, media, storage, stt
 from app.core.config import get_settings
 from app.core.db import SessionLocal
 from app.core.models import File, Source, Transcript
@@ -206,7 +206,14 @@ def ai_signals(raw: bytes, texts: list[str]) -> dict[str, Any]:
         hay = whole if anywhere else meta_text
         if re.search(rf"(?<![a-z]){re.escape(marker)}(?![a-z])", hay) and label not in found:
             found.append(label)
-    return {"ai_markers": found, "content_credentials": any(m in blob for m in C2PA_MARKERS)}
+    signals: dict[str, Any] = {
+        "ai_markers": found,
+        "content_credentials": any(m in blob for m in C2PA_MARKERS),
+    }
+    if signals["content_credentials"]:
+        # The markers only say a manifest is there: have its signature and hashes checked.
+        signals["credentials"] = content_credentials.read(raw)
+    return signals
 
 
 def image_meta(raw: bytes) -> dict[str, Any]:

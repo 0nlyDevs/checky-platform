@@ -15707,6 +15707,95 @@
         ],
         "title": "CountryOut"
       },
+      "CredentialsOut": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "trusted",
+              "valid",
+              "invalid"
+            ],
+            "title": "State"
+          },
+          "signer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer"
+          },
+          "issuer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At"
+          },
+          "generator": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generator"
+          },
+          "software": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Software",
+            "default": []
+          },
+          "ai": {
+            "type": "boolean",
+            "title": "Ai",
+            "default": false
+          },
+          "edited": {
+            "type": "boolean",
+            "title": "Edited",
+            "default": false
+          },
+          "problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Problems",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "title": "CredentialsOut",
+        "description": "Content Credentials whose signature and hashes were checked (`core/content_credentials.py`)."
+      },
       "CrewIn": {
         "properties": {
           "url": {
@@ -17543,6 +17632,16 @@
           "content_credentials": {
             "type": "boolean",
             "title": "Content Credentials"
+          },
+          "credentials": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CredentialsOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "exif": {
             "additionalProperties": {

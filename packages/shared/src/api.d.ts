@@ -4381,6 +4381,45 @@ export interface components {
             /** Name */
             name: string;
         };
+        /**
+         * CredentialsOut
+         * @description Content Credentials whose signature and hashes were checked (`core/content_credentials.py`).
+         */
+        CredentialsOut: {
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "trusted" | "valid" | "invalid";
+            /** Signer */
+            signer?: string | null;
+            /** Issuer */
+            issuer?: string | null;
+            /** Signed At */
+            signed_at?: string | null;
+            /** Generator */
+            generator?: string | null;
+            /**
+             * Software
+             * @default []
+             */
+            software: string[];
+            /**
+             * Ai
+             * @default false
+             */
+            ai: boolean;
+            /**
+             * Edited
+             * @default false
+             */
+            edited: boolean;
+            /**
+             * Problems
+             * @default []
+             */
+            problems: string[];
+        };
         /** CrewIn */
         CrewIn: {
             /** Url */
@@ -4987,6 +5026,7 @@ export interface components {
             ai_markers: string[];
             /** Content Credentials */
             content_credentials: boolean;
+            credentials?: components["schemas"]["CredentialsOut"] | null;
             /** Exif */
             exif: {
                 [key: string]: string;

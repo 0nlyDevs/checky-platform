@@ -301,6 +301,61 @@ async def _read_link(url: str) -> tuple[dict[str, Any], str | None]:
     }, html
 
 
+def _credential_signals(credentials: dict[str, Any]) -> list[dict[str, str]]:
+    """What verified Content Credentials let a journalist say, in plain words."""
+    signer = credentials.get("signer") or "un signataire inconnu"
+    day = dates.parse(credentials.get("signed_at"))
+    when = f", le {dates.fr(day)}" if day else ""
+    out: list[dict[str, str]] = []
+    state = credentials.get("state")
+    if state == "trusted":
+        out.append(
+            {
+                "kind": "content_credentials_verified",
+                "detail": f"Signée par {signer}{when} : identifiants de contenu (C2PA) "
+                "vérifiés, signataire reconnu",
+            }
+        )
+    elif state == "valid":
+        out.append(
+            {
+                "kind": "content_credentials_valid",
+                "detail": f"Identifiants de contenu (C2PA) intacts, signés par {signer}{when} : "
+                "le fichier n'a pas changé depuis, mais ce signataire n'est pas sur la liste "
+                "de confiance C2PA",
+            }
+        )
+    else:
+        out.append(
+            {
+                "kind": "content_credentials_invalid",
+                "detail": "Identifiants de contenu (C2PA) invalides : le fichier ne correspond "
+                "plus à ce qui a été signé, il a été modifié après la signature",
+            }
+        )
+    if state in ("trusted", "valid"):
+        if credentials.get("ai"):
+            out.append(
+                {
+                    "kind": "ai_marker",
+                    "detail": "Les identifiants déclarent un contenu généré par une IA",
+                }
+            )
+        if credentials.get("edited"):
+            out.append(
+                {
+                    "kind": "content_credentials_edited",
+                    "detail": "Les identifiants indiquent des retouches depuis la création"
+                    + (
+                        f" ({', '.join(credentials['software'])})"
+                        if credentials.get("software")
+                        else ""
+                    ),
+                }
+            )
+    return out
+
+
 async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | None:
     """When a picture, a video or a page first appears, from its own metadata.
 
@@ -336,12 +391,15 @@ async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | Non
                 "detail": f"Trace d'un générateur d'IA dans le fichier : {marker}",
             }
         )
-    if meta.get("content_credentials"):
+    credentials = meta.get("credentials")
+    if credentials:
+        signals += _credential_signals(credentials)
+    elif meta.get("content_credentials"):
         signals.append(
             {
                 "kind": "content_credentials",
-                "detail": "Identifiants de contenu (C2PA) : origine et retouches lisibles sur "
-                "contentcredentials.org/verify",
+                "detail": "Identifiants de contenu (C2PA) présents, signature non vérifiée : "
+                "à ouvrir sur contentcredentials.org/verify",
             }
         )
     exif = meta.get("exif") or {}
@@ -356,6 +414,12 @@ async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | Non
     ):
         if day := dates.parse(value):
             found.append((day, basis))
+    if (
+        credentials
+        and credentials.get("state") == "trusted"
+        and (day := dates.parse(credentials.get("signed_at")))
+    ):
+        found.append((day, "credentials"))
     if not (signals or found or reverse):
         return None
     first = min(found) if found else None
