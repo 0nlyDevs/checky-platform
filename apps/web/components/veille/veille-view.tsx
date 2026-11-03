@@ -58,7 +58,7 @@ function FeedRow({ ws, e, i }: { ws: string; e: FeedEntry; i: number }) {
     <li className="arrive relative border-b border-border" style={{ "--i": Math.min(i, 12) } as React.CSSProperties}>
       <div className="grid gap-x-5 gap-y-1.5 py-3.5 transition-colors hover:bg-card sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:px-2">
         <p className="flex items-baseline gap-3 sm:block">
-          <time dateTime={e.at} className="block font-display font-bold tabular">
+          <time dateTime={e.at} className="block text-sm font-medium tabular">
             {when(e.at)}
           </time>
           <KindLabel kind={e.kind} className="font-normal text-muted-foreground sm:mt-0.5" />
@@ -67,7 +67,7 @@ function FeedRow({ ws, e, i }: { ws: string; e: FeedEntry; i: number }) {
           {title}
           {excerpt && <p className="mt-0.5 line-clamp-2 text-sm text-pretty text-muted-foreground">{excerpt}</p>}
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            {e.ref && <span className="font-display font-bold text-foreground tabular">{v.tracked(e.ref)}</span>}
+            {e.ref && <span className="font-medium text-foreground tabular">{v.tracked(e.ref)}</span>}
             {e.place?.name && (
               <span className="inline-flex items-center gap-1">
                 <IconMapPin className="size-3.5" aria-hidden />
