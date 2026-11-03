@@ -2,6 +2,7 @@ import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { AuthAside } from "@/components/auth/auth-aside";
 import { LangScope } from "@/components/prefs/lang-scope";
 import { SiteHeader } from "@/components/site/site-chrome";
+import "@/components/site/site.css";
 
 // The doors into the desk: the form on its card, and beside it what the newsroom does there.
 export default function AuthLayout({ children }: LayoutProps<"/">) {

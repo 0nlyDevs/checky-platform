@@ -664,6 +664,7 @@ export const mg: Overrides = {
       lead: "Ny tsahon'ny alina, ny loharanony ary ny didy, zaraina amin'ny ekipanareo.",
     },
     footer: {
+      cols: { public: "Tsy mila kaonty", newsrooms: "Ho an'ny mpanao gazety" },
       what: "Manampy ny mpanao gazety eto Madagasikara i Checky hanamarina ny tsaho alohan'ny hielezany, ary mamoaka ny didiny ho an'ny rehetra.",
       made: "Checky, teraka tamin'ny Hackathon FANILO · Institut français de Madagascar sy ny Masoivohon'i Frantsa · novambra 2026.",
       fictional: "Noforonina avokoa ireo tsaho omena ho ohatra eto amin'ity tranonkala ity.",

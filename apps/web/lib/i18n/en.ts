@@ -177,6 +177,7 @@ export const en: Overrides = {
       lead: "The night's rumours, their sources and their verdicts, shared with your team.",
     },
     footer: {
+      cols: { public: "No account needed", newsrooms: "Newsrooms" },
       what: "Checky helps Madagascar's newsrooms check rumours before they spread, and publishes their verdicts for everyone.",
       made: "Checky, born at the FANILO Hackathon · Institut français de Madagascar and the French Embassy · November 2026.",
       fictional: "The rumours used as examples on this site are fictional.",
