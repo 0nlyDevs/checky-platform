@@ -67,20 +67,6 @@ How the pieces talk:
   distinguish search outages from empty results, and label source passages and possible reprises.
   The optional pixel-detector contract and evaluation gate are in [`docs/IMAGE_DETECTOR.md`](docs/IMAGE_DETECTOR.md).
 
-## Access you need
-
-Ask the project owner (TsioryJonathan) for:
-
-| Access | Why | Needed for |
-|---|---|---|
-| GitHub org **0nlyDevs**, repo `checky-platform` | code, CI | everything |
-| Neon org **0nlydevs**, project **fanilo** | database and file storage, credentials | deploying, migrating production, M4 files |
-| Groq / Gemini / NVIDIA API keys (or create your own free ones) | AI features | anything using AI |
-| Vercel and Render (later) | deployment | demo |
-
-You can run the whole app locally with only GitHub access. AI features answer with an error
-until at least one AI key is set.
-
 ## Set up (about 10 minutes)
 
 ### 1. Install the tools
