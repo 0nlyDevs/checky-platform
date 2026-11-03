@@ -50,6 +50,20 @@ export const publicLayer = {
       noNeed: "Aucune rédaction malgache n'a besoin de le confirmer.",
     },
     facts: {
+      alert: {
+        title: "Ce qui doit vous alerter",
+        lead: "Des tournures typiques des rumeurs, repérées mot à mot dans le message, sans IA. Elles ne disent pas si c'est vrai.",
+        level: { sensationnaliste: "Ton sensationnaliste", "marqué": "Ton marqué" } as Record<string, string>,
+        kinds: {
+          urgency: "Urgence",
+          share: "Appel à partager",
+          emotive: "Mots chargés d'émotion",
+          hidden: "Prétendue censure",
+          caps: "Écrit en majuscules",
+          exclamations: "Points d'exclamation",
+          emoji: "Émoji d'alarme",
+        } as Record<string, string>,
+      },
       title: "Ce que l'on sait",
       noVerdict: "Pas encore de verdict signé.",
       following: (when: string, name: string | null) => `${name ?? "Une rédaction"} s'en occupe depuis ${when}.`,

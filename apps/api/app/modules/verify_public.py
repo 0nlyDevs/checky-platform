@@ -130,6 +130,15 @@ class ReviewOut(BaseModel):
     title: str
 
 
+ToneKind = Literal["urgency", "share", "emotive", "hidden", "caps", "exclamations", "emoji"]
+TONE_KINDS = set(ToneKind.__args__)
+
+
+class ToneSignal(BaseModel):
+    kind: ToneKind
+    quote: str
+
+
 class FactOut(BaseModel):
     kind: Literal["registry", "figure", "provenance", "tone", "credibility"]
     text: str
@@ -138,6 +147,10 @@ class FactOut(BaseModel):
     url: str | None = None
     # registry: the word diff against the original ({op: equal|insert|delete|replace, a, b})
     diff: list[dict[str, Any]] = Field(default_factory=list)
+    # tone: « Ce qui doit vous alerter », each sign with its verbatim quote, found by the tone
+    # lexicon in code (no model), so clients can name the kinds in the visitor's language
+    level: str | None = None
+    signals: list[ToneSignal] = Field(default_factory=list)
 
 
 class VerifyOut(BaseModel):
@@ -440,12 +453,21 @@ def _tone_fact(t: dict[str, Any]) -> FactOut | None:
     level = t.get("level")
     if level not in ("sensationnaliste", "marqué"):
         return None
-    quotes = [s.get("quote") for s in t.get("signals") or [] if isinstance(s, dict)]
-    quoted = ", ".join(f"« {q} »" for q in quotes[:4] if q)
+    signals = [
+        ToneSignal(kind=s["kind"], quote=s["quote"])
+        for s in t.get("signals") or []
+        if isinstance(s, dict)
+        and s.get("kind") in TONE_KINDS
+        and isinstance(s.get("quote"), str)
+        and s["quote"].strip()
+    ]
+    quoted = ", ".join(f"« {s.quote} »" for s in signals[:4])
     return FactOut(
         kind="tone",
         text=f"Ton {level} du message{(' : ' + quoted) if quoted else ''}.",
         source="Lexique du ton (sans IA)",
+        level=level,
+        signals=signals[:10],
     )
 
 

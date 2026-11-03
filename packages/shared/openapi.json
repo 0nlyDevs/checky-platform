@@ -14931,6 +14931,24 @@
             },
             "type": "array",
             "title": "Diff"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "signals": {
+            "items": {
+              "$ref": "#/components/schemas/ToneSignal"
+            },
+            "type": "array",
+            "title": "Signals"
           }
         },
         "type": "object",
@@ -21627,6 +21645,33 @@
           "verdict"
         ],
         "title": "TipStatusOut"
+      },
+      "ToneSignal": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "urgency",
+              "share",
+              "emotive",
+              "hidden",
+              "caps",
+              "exclamations",
+              "emoji"
+            ],
+            "title": "Kind"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "quote"
+        ],
+        "title": "ToneSignal"
       },
       "TrajetOut": {
         "properties": {

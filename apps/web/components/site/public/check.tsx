@@ -14,7 +14,8 @@ import { tidy } from "@/lib/typo";
 
 type Review = { publisher: string; url: string; rating: string | null; date: string | null; title: string };
 type Diff = { op: "equal" | "insert" | "delete" | "replace"; a?: string; b?: string };
-type Fact = { kind: string; text: string; source: string | null; date: string | null; url: string | null; diff: Diff[] };
+type Signal = { kind: string; quote: string };
+type Fact = { kind: string; text: string; source: string | null; date: string | null; url: string | null; diff: Diff[]; level?: string | null; signals?: Signal[] };
 type Verify = {
   status: "signed" | "external" | "facts" | "none";
   signed: SignedVerdict | null;
@@ -204,9 +205,12 @@ function Known({ result, asked }: { result: Verify; asked: string }) {
   const c = t.publicLayer.check;
   const f = c.facts;
   const moment = useMoment();
-  const known = result.known ?? [];
+  // The tone's signs get their own box, first: what the visitor can see for themselves.
+  const tone = (result.known ?? []).find((x) => x.kind === "tone" && x.signals?.length);
+  const known = (result.known ?? []).filter((x) => x !== tone);
   return (
     <div className="space-y-6">
+      {tone && <Alert fact={tone} />}
       {known.length ? (
         <section>
           <h2 className="font-display text-xl font-bold">{f.title}</h2>
@@ -235,6 +239,29 @@ function Known({ result, asked }: { result: Verify; asked: string }) {
       <AskNewsroom text={asked} />
       <Notify text={asked} />
     </div>
+  );
+}
+
+/** « Ce qui doit vous alerter »: each sign the tone lexicon found, named in the visitor's language,
+ * with the words of the message it rests on. Found in code, no model; it says nothing of truth. */
+function Alert({ fact }: { fact: Fact }) {
+  const a = useT().publicLayer.check.facts.alert;
+  return (
+    <section aria-labelledby="alert-title" className="rounded-md border-2 border-foreground bg-card p-4 md:p-5">
+      <h2 id="alert-title" className="font-display text-xl font-bold">
+        {a.title}
+      </h2>
+      {fact.level && <p className="mt-1 font-bold">{a.level[fact.level] ?? fact.level}</p>}
+      <ul className="mt-3 space-y-2">
+        {(fact.signals ?? []).map((sg, i) => (
+          <li key={`${sg.kind}-${i}`} className="flex flex-wrap items-baseline gap-x-2">
+            <span className="text-sm font-bold">{a.kinds[sg.kind] ?? sg.kind}</span>
+            <span className="quote text-lg">«&nbsp;{sg.quote}&nbsp;»</span>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-sm text-pretty text-muted-foreground">{a.lead}</p>
+    </section>
   );
 }
 
