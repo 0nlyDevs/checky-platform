@@ -11,9 +11,9 @@ from sqlalchemy import func, select, update
 from app.core import dates, storage
 from app.core.config import get_settings
 from app.core.db import SessionLocal
-from app.core.models import Item, Job, PublicQuestion, RadioClip, Route, Season, Signal, Source
+from app.core.models import Item, Job, PublicQuestion, Route, Season, Signal, Source
 from app.modules import veille
-from app.workers import queue, radio_capture, veille_poll
+from app.workers import queue, veille_poll
 from tests.test_public import _claim, _newsroom
 from tests.test_workspaces import _join, _workspace
 
@@ -502,34 +502,13 @@ def test_the_press_reader_stores_new_articles_once(as_user, monkeypatch):
     assert not asyncio.run(queue.run_once())
 
 
-def test_feed_and_stream_lists_are_parsed_leniently():
+def test_feed_lists_are_parsed_leniently():
     assert veille_poll.parse_feeds(
         "https://www.journal.test/rss,  Midi|https://m.test/feed , nope"
     ) == [
         veille_poll.Feed("journal.test", "https://www.journal.test/rss"),
         veille_poll.Feed("Midi", "https://m.test/feed"),
     ]
-    assert radio_capture.parse_streams(
-        "RDJ|https://s.test/rdj|Analamanga, Fanambarana|https://s.test/f|Atsinanana|mg,|x,Bad|ftp://x"
-    ) == [
-        radio_capture.Stream("RDJ", "https://s.test/rdj", "Analamanga", "fr"),
-        radio_capture.Stream("Fanambarana", "https://s.test/f", "Atsinanana", "mg"),
-    ]
-    assert radio_capture.parse_streams("") == []
-
-
-def test_radio_capture_skips_quietly_without_ffmpeg(as_user, monkeypatch):
-    monkeypatch.setattr(get_settings(), "radio_streams", "RDJ|https://s.test/rdj|Analamanga")
-    monkeypatch.setattr(radio_capture.shutil, "which", lambda name: None)
-    alice = as_user("alice")
-    ws = _workspace(alice)
-    assert alice.post(f"/api/v1/workspaces/{ws}/veille/refresh").json() == {
-        "queued": ["radio_capture"]
-    }
-    assert asyncio.run(queue.run_once())
-    job = _db(lambda db: db.scalar(select(Job).where(Job.kind == "radio_capture")))
-    assert job.status == "done" and job.result == {"skipped": "no_ffmpeg"}
-    assert _db(lambda db: db.scalar(select(func.count()).select_from(RadioClip))) == 0
 
 
 # --- demo

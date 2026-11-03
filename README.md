@@ -65,7 +65,7 @@ How the pieces talk:
   its authenticated analysis. It never confirms or publishes a verdict. Its README covers installation.
   Public text checks now prepare grounded queries with a bounded AI call, stream actual progress,
   distinguish search outages from empty results, and label source passages and possible reprises.
-  The optional pixel-detector contract and evaluation gate are in [`docs/IMAGE_DETECTOR.md`](docs/IMAGE_DETECTOR.md).
+  Image analysis reports metadata and provenance hints only; no pixel detector is offered.
 
 ## Access you need
 

@@ -8193,7 +8193,7 @@
           "veille"
         ],
         "summary": "Refresh",
-        "description": "Read the press feeds (and capture the radio streams) now.",
+        "description": "Read the press feeds now.",
         "operationId": "refresh_api_v1_workspaces__ws__veille_refresh_post",
         "security": [
           {
@@ -15674,57 +15674,6 @@
         "type": "object",
         "title": "CrewIn"
       },
-      "DetectorOut": {
-        "properties": {
-          "status": {
-            "type": "string",
-            "enum": [
-              "not_configured",
-              "not_validated",
-              "unavailable",
-              "assessed"
-            ],
-            "title": "Status"
-          },
-          "assessment": {
-            "type": "string",
-            "enum": [
-              "detected",
-              "none",
-              "inconclusive"
-            ],
-            "title": "Assessment",
-            "default": "inconclusive"
-          },
-          "model": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Model"
-          },
-          "score": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Score"
-          }
-        },
-        "type": "object",
-        "required": [
-          "status"
-        ],
-        "title": "DetectorOut"
-      },
       "DictationOut": {
         "properties": {
           "text": {
@@ -16471,10 +16420,6 @@
           "feeds_configured": {
             "type": "boolean",
             "title": "Feeds Configured"
-          },
-          "streams_configured": {
-            "type": "boolean",
-            "title": "Streams Configured"
           }
         },
         "type": "object",
@@ -16482,8 +16427,7 @@
           "entries",
           "counts",
           "since",
-          "feeds_configured",
-          "streams_configured"
+          "feeds_configured"
         ],
         "title": "FeedOut"
       },
@@ -17524,16 +17468,12 @@
             "type": "string",
             "enum": [
               "detected",
-              "none",
               "inconclusive"
             ],
             "title": "Assessment"
           },
           "image": {
             "$ref": "#/components/schemas/ImageFacts"
-          },
-          "detector": {
-            "$ref": "#/components/schemas/DetectorOut"
           },
           "reverse_search": {
             "items": {
@@ -17555,7 +17495,6 @@
           "url",
           "assessment",
           "image",
-          "detector",
           "reverse_search",
           "limitations"
         ],

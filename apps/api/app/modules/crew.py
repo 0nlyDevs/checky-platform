@@ -307,9 +307,7 @@ async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | Non
     if not meta and page.get("image_url"):
         try:
             async with asyncio.timeout(8):
-                seen = await imagecheck.inspect_image(
-                    imagecheck.ImageIn(url=page["image_url"]), allow_detector=False
-                )
+                seen = await imagecheck.inspect_image(imagecheck.ImageIn(url=page["image_url"]))
             meta = seen.image.model_dump()
         except Exception as exc:  # noqa: BLE001 - the picture stays to be checked by hand
             log.info("provenance image unreadable: %s", type(exc).__name__)

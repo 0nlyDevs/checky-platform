@@ -44,7 +44,7 @@ from app.core.models import (
 )
 from app.core.places import MG_REGIONS, fold, gazetteer
 from app.core.words import words
-from app.workers import radio_capture, veille_poll  # registers the press and capture jobs
+from app.workers import veille_poll  # registers the press reader job
 from app.workers.queue import enqueue
 
 log = logging.getLogger("checky.veille")
@@ -1134,7 +1134,6 @@ class FeedOut(BaseModel):
     counts: dict[str, int]
     since: datetime
     feeds_configured: bool
-    streams_configured: bool
 
 
 _POLLED: dict[uuid.UUID, float] = {}
@@ -1142,8 +1141,7 @@ POLL_EVERY = 20 * 60.0
 
 
 async def _maybe_poll(db: AsyncSession, member: Member, force: bool = False) -> list[str]:
-    """Queue the press reader (and, when asked, the radio capture) when they are configured, at
-    most every 20 minutes per newsroom: there is no scheduler, the desk's visits drive it."""
+    """Queue the press reader when configured, at most every 20 minutes per newsroom."""
     s = get_settings()
     if not force and time.monotonic() - _POLLED.get(member.workspace_id, -POLL_EVERY) < POLL_EVERY:
         return []
@@ -1152,9 +1150,6 @@ async def _maybe_poll(db: AsyncSession, member: Member, force: bool = False) -> 
     if veille_poll.parse_feeds(s.press_feeds):
         await enqueue(db, member.workspace_id, member.user.id, "veille_poll", {})
         queued.append("veille_poll")
-    if force and radio_capture.parse_streams(s.radio_streams):
-        await enqueue(db, member.workspace_id, member.user.id, "radio_capture", {})
-        queued.append("radio_capture")
     return queued
 
 
@@ -1182,13 +1177,12 @@ async def veille(
         counts=dict(counts),
         since=datetime.now(UTC) - timedelta(days=days),
         feeds_configured=bool(veille_poll.parse_feeds(s.press_feeds)),
-        streams_configured=bool(radio_capture.parse_streams(s.radio_streams)),
     )
 
 
 @router.post("/workspaces/{ws}/veille/refresh", status_code=202)
 async def refresh(member: AnyMember, db: Db) -> dict[str, list[str]]:
-    """Read the press feeds (and capture the radio streams) now."""
+    """Read the press feeds now."""
     return {"queued": await _maybe_poll(db, member, force=True)}
 
 

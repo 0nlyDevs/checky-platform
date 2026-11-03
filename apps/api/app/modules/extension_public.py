@@ -14,7 +14,6 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 from app.core import dates, evidence_search, query_plan
 from app.core.access import Db
-from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.public_checks import public_check_budget
 from app.modules import imagecheck, linkcheck, public
@@ -150,9 +149,7 @@ async def _pipeline(body: PublicCheckIn, db: Db):
 async def image_check(body: imagecheck.ImageIn) -> imagecheck.ImageOut:
     try:
         async with asyncio.timeout(35):
-            return await imagecheck.inspect_image(
-                body, allow_detector=get_settings().public_image_detector_enabled
-            )
+            return await imagecheck.inspect_image(body)
     except TimeoutError as exc:
         raise ApiError(
             503, "public_image_unavailable", "Public image examination timed out"
@@ -165,9 +162,7 @@ async def image_file_check(request: Request) -> imagecheck.ImageOut:
     try:
         async with asyncio.timeout(35):
             raw = await imagecheck.read_upload(request)
-            return await imagecheck.examine(
-                raw, url=None, allow_detector=get_settings().public_image_detector_enabled
-            )
+            return await imagecheck.examine(raw, url=None)
     except TimeoutError as exc:
         raise ApiError(
             503, "public_image_unavailable", "Public image examination timed out"

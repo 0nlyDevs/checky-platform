@@ -90,15 +90,6 @@ class Settings(BaseSettings):
     # How long a provider key is set aside after a 429 or repeated failures (seconds).
     ai_cooldown: float = 30.0
 
-    # Optional pixel detector. Off until an operator configures AND evaluates a service.
-    # Only this server holds its credential; selected image bytes never go to it by default.
-    image_detector_url: str = ""
-    image_detector_token: str = ""
-    image_detector_validated: bool = False
-    # Or Sightengine's `genai` model (https://sightengine.com, free plan): both keys set = configured.
-    # It takes precedence over IMAGE_DETECTOR_URL and still waits for IMAGE_DETECTOR_VALIDATED.
-    sightengine_api_user: str = ""
-    sightengine_api_secret: str = ""
     # Anonymous checks have no LLM verdict generation. Both routes share these per-process caps.
     public_checks_per_window: int = 12  # requests per address, per 10 minutes
     public_checks_per_day: int = 1000  # all addresses, per 24-hour budget period
@@ -106,8 +97,6 @@ class Settings(BaseSettings):
     # Query preparation only, never an anonymous truth verdict. Paid Claude is excluded in code.
     public_preparation_enabled: bool = True
     public_preparation_providers: str = "groq,gemini,nvidia"
-    # Separate opt-in: a validated private detector is not automatically offered anonymously.
-    public_image_detector_enabled: bool = False
     # Header holding the visitor's address, set by the edge proxy itself (rate limits key on it).
     # Empty = the socket peer; on Render (RENDER set) it defaults to Cloudflare's CF-Connecting-IP.
     client_ip_header: str = ""
@@ -129,8 +118,6 @@ class Settings(BaseSettings):
     # a valid X-Signature; otherwise they carry SMS_GATEWAY_SECRET (?secret= or the header).
     sms_gateway_signing_key: str = ""
     sms_gateway_sim: int = 0  # 1-3 to pick the phone's SIM, 0 = the phone's default
-    # Radio streams captured for « À l'antenne »: "Station|https://stream.url|Region,…" (empty = off).
-    radio_streams: str = ""
     # RSS feeds of the national press for Veille (comma list; empty = off).
     press_feeds: str = ""
 
