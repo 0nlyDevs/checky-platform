@@ -232,7 +232,7 @@ def test_formats_come_from_one_model_call_and_invented_numbers_fall_back(as_user
     out = alice.get(path).json()
     assert out["written_by"] == "ai" and len(model) == 1
     assert out["short_link"] == "https://checky.example/v/145"
-    assert out["permalink"] == f"https://checky.example/verifies/{item}"
+    assert out["permalink"] == f"https://checky.example/verdicts/{item}"
     assert out["sms"].endswith(" https://checky.example/v/145") and len(out["sms"]) <= 160
     assert out["radio_line"].startswith("La rédaction a vérifié")
     assert "300 000" not in out["text"] and out["text"].startswith("Faux · Rédaction démo")

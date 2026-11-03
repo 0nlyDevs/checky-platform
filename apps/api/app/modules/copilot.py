@@ -95,17 +95,17 @@ class DeskContext(AgentContext):
 
 # The desk's pages the copilot can open (key → path under /w/{ws}/, label).
 DESK_PAGES = {
-    "rubrique": ("rubrique", "Ma rubrique"),
-    "affirmations": ("affirmations", "Les dossiers"),
-    "tableau": ("affirmations?vue=tableau", "Le tableau de vérification"),
-    "verifier": ("verifier", "Vérifier"),
-    "sources_ask": ("verifier?mode=sources", "Interroger nos sources"),
+    "rubrique": ("beat", "Ma rubrique"),
+    "affirmations": ("claims", "Les dossiers"),
+    "tableau": ("claims?vue=tableau", "Le tableau de vérification"),
+    "verifier": ("verify", "Vérifier"),
+    "sources_ask": ("verify?mode=sources", "Interroger nos sources"),
     "sources": ("sources", "Les sources"),
     "enregistrements": ("sources?vue=enregistrements", "Les enregistrements"),
-    "veille": ("veille", "La veille"),
-    "annuaire": ("annuaire", "L'annuaire"),
-    "membres": ("parametres#equipe", "L'équipe"),
-    "parametres": ("parametres", "Réglages"),
+    "veille": ("watch", "La veille"),
+    "annuaire": ("directory", "L'annuaire"),
+    "membres": ("settings#equipe", "L'équipe"),
+    "parametres": ("settings", "Réglages"),
 }
 
 
@@ -241,7 +241,7 @@ async def propose_status(
 async def open_link_check(ctx: DeskContext, url: str) -> tuple[str, str]:
     if not re.match(r"https?://", url or ""):
         return "lien invalide", "The link must start with http:// or https://."
-    href = f"/w/{ctx.workspace_id}/verifier?lien={quote(url, safe='')}"
+    href = f"/w/{ctx.workspace_id}/verify?lien={quote(url, safe='')}"
     ctx.propose("navigate", href=href, label="Analyser ce lien")
     return "analyse du lien ouverte", "The link analysis page opens and runs on this link."
 
@@ -266,7 +266,7 @@ async def open_claim(ctx: DeskContext, claim: str) -> tuple[str, str]:
             f"{_target(item)['ref']} déjà ouverte",
             "The journalist is already on this claim's page: do not open it again.",
         )
-    href = f"/w/{ctx.workspace_id}/affirmations/{item.id}"
+    href = f"/w/{ctx.workspace_id}/claims/{item.id}"
     ctx.propose("navigate", href=href, label=f"{_target(item)['ref']} · {item.title}")
     return f"ouvre {_target(item)['ref']}", f"The claim opens ({href})."
 
@@ -389,7 +389,7 @@ COPILOT_TOOLS: Tools = {
 async def copilot(body: GuideIn, member: AnyMember) -> AsyncIterable[ServerSentEvent]:
     ctx = DeskContext(member.workspace_id, page=body.page)
     context = ""
-    if m := re.search(r"/affirmations/([0-9a-f-]{36})", body.page):
+    if m := re.search(r"/(?:claims|affirmations)/([0-9a-f-]{36})", body.page):
         ctx.page_claim = uuid.UUID(m[1])
         if item := await _claim(ctx, None):
             context = f" Le journaliste regarde l'affirmation : {_line(item)}."

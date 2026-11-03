@@ -95,7 +95,7 @@ async def names(db: AsyncSession, ids) -> dict[str, str]:
 
 
 def permalink(item: Item) -> str:
-    return f"{get_settings().public_web_url.rstrip('/')}/verifies/{item.id}"
+    return f"{get_settings().public_web_url.rstrip('/')}/verdicts/{item.id}"
 
 
 def may_sign(member: Member, item: Item) -> bool:

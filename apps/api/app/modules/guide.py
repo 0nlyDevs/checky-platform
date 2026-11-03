@@ -46,11 +46,11 @@ STATUS_FR = {
     "published": "verdict publié",
 }
 PAGES = {
-    "accueil": ("/accueil", "Vérifier un message (accueil)"),
-    "verifies": ("/verifies", "Les verdicts"),
-    "signaler": ("/signaler", "Signaler une rumeur"),
-    "connexion": ("/connexion", "Se connecter"),
-    "inscription": ("/inscription", "Inscrire sa rédaction"),
+    "accueil": ("/home", "Vérifier un message (accueil)"),
+    "verifies": ("/verdicts", "Les verdicts"),
+    "signaler": ("/report", "Signaler une rumeur"),
+    "connexion": ("/sign-in", "Se connecter"),
+    "inscription": ("/sign-up", "Inscrire sa rédaction"),
 }
 
 GUIDE_SYSTEM = (
@@ -111,7 +111,7 @@ async def search_verdicts(ctx: GuideContext, query: str) -> tuple[str, str]:
                 "id": str(v.id),
                 "title": v.title,
                 "verdict": v.verdict,
-                "url": f"/verifies/{v.id}",
+                "url": f"/verdicts/{v.id}",
                 "text": (v.reason or "")[:400],
             }
         )
@@ -182,7 +182,7 @@ async def my_tips(ctx: GuideContext) -> tuple[str, str]:
         lines.append(
             f"{d.get('ref')} « {i.title} » : {STATUS_FR.get(i.status, i.status)}"
             + (f", verdict {VERDICT_FR.get(verdict, verdict)}" if verdict else "")
-            + f" (suivi : /suivi/{d.get('tip_token')})"
+            + f" (suivi : /track/{d.get('tip_token')})"
         )
     return f"{len(items)} signalements", "\n".join(lines) or "No tip found for these links."
 
@@ -190,11 +190,11 @@ async def my_tips(ctx: GuideContext) -> tuple[str, str]:
 async def open_page(ctx: GuideContext, page: str, id: str | None = None) -> tuple[str, str]:
     if page == "verdict" and id:
         try:
-            href, label = f"/verifies/{uuid.UUID(id)}", "Le dossier"
+            href, label = f"/verdicts/{uuid.UUID(id)}", "Le dossier"
         except ValueError:
             return "dossier inconnu", "Unknown verdict id."
     elif page == "suivi" and id and id in ctx.tips:
-        href, label = f"/suivi/{id}", "Le suivi du signalement"
+        href, label = f"/track/{id}", "Le suivi du signalement"
     elif page in PAGES:
         href, label = PAGES[page]
     else:

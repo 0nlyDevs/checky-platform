@@ -169,7 +169,7 @@ def seal_url(communique_id: uuid.UUID, sealed: dict[str, Any]) -> str:
     QRs printed before 3 Nov 2026 carry only `#<signature>`; the page still reads them."""
     base = get_settings().public_web_url.rstrip("/")
     packed = b64u(canonical(sealed["payload"]).encode())
-    return f"{base}/sceau/{communique_id}#{packed}.{sealed['signature']}.{sealed['key_id']}"
+    return f"{base}/seal/{communique_id}#{packed}.{sealed['signature']}.{sealed['key_id']}"
 
 
 def read_communique_fragment(fragment: str) -> tuple[dict[str, Any], str, str, str] | None:
@@ -274,7 +274,7 @@ def verdict_seal_url(item_id: uuid.UUID, message: str, signature: str, key_id: s
     offline after `#` (the signed message, the signature, the key id), so the fragment never
     reaches a server; the page checks it against `/public/sceau/v/{id}`."""
     base = get_settings().public_web_url.rstrip("/")
-    return f"{base}/verifies/{item_id}#{b64u(message.encode())}.{signature}.{key_id}"
+    return f"{base}/verdicts/{item_id}#{b64u(message.encode())}.{signature}.{key_id}"
 
 
 async def sign_verdict(

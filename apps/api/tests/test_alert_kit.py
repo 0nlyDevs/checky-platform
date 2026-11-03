@@ -420,7 +420,7 @@ def test_live_notices_in_the_desk(as_user, model):
     notices = alice.get(base + "/live").json()
     kinds = {n["kind"]: n for n in notices}
     assert kinds["high_risk"]["id"] == f"alert:{alert['id']}"
-    assert kinds["high_risk"]["href"] == f"/veille#alerte-{alert['id']}"
+    assert kinds["high_risk"]["href"] == f"/watch#alerte-{alert['id']}"
     assert kinds["high_risk"]["ref"] == "ALR-0001"
     assert kinds["on_air"]["title"] == "fillette"
     assert "Radio Boeny" in kinds["on_air"]["detail"]

@@ -145,7 +145,7 @@ def test_partner_radios_with_a_token_link(as_user):
     assert r.status_code == 201
     radio = r.json()
     assert radio["location"]["region"] == "Atsinanana"
-    assert "/flashs?radio=" in radio["link"] and radio["broadcasts"] == 0
+    assert "/flashes?radio=" in radio["link"] and radio["broadcasts"] == 0
     assert radio["languages"] == ["mg", "fr"] and radio["last_broadcast_at"] is None
     # every journalist reads and manages the partners
     assert [x["name"] for x in bob.get(f"/api/v1/workspaces/{ws}/radios").json()] == [body["name"]]

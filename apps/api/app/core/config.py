@@ -115,7 +115,7 @@ class Settings(BaseSettings):
     # Empty = the socket peer; on Render (RENDER set) it defaults to Cloudflare's CF-Connecting-IP.
     client_ip_header: str = ""
 
-    # Where the public site lives (links in SMS, cards, posters, attestations: /verifies/{id}).
+    # Where the public site lives (links in SMS, cards, posters, attestations: /verdicts/{id}).
     public_web_url: str = "http://localhost:3000"
     # Encrypts issuers' private seal keys at rest and signs attestations; any long random string.
     seal_secret: str = ""

@@ -128,7 +128,7 @@ def short_link(v: public.VerdictOut) -> str:
     """`<site>/v/145` for FAN-0145: short enough for an SMS or to say on air."""
     base = get_settings().public_web_url.rstrip("/")
     m = re.search(r"(\d+)$", v.ref or "")
-    return f"{base}/v/{int(m[1])}" if m else f"{base}/verifies/{v.id}"
+    return f"{base}/v/{int(m[1])}" if m else f"{base}/verdicts/{v.id}"
 
 
 def _clip(text: str, n: int) -> str:

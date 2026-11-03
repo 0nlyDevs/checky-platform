@@ -267,7 +267,7 @@ class RadioOut(BaseModel):
 
 
 def radio_link(token: str) -> str:
-    return f"{get_settings().public_web_url.rstrip('/')}/flashs?radio={token}"
+    return f"{get_settings().public_web_url.rstrip('/')}/flashes?radio={token}"
 
 
 async def _radio_out(db: Db, radio: RadioPartner) -> RadioOut:
