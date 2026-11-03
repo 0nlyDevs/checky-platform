@@ -11,6 +11,7 @@ from app.core.errors import install_error_handlers
 from app.modules import (
     agent,
     ai,
+    alert_kit,
     alerts,
     card,
     checker,
@@ -27,6 +28,7 @@ from app.modules import (
     items,
     jobs,
     linkcheck,
+    live,
     me,
     media_api,
     official,
@@ -117,6 +119,8 @@ api.include_router(onair.router, prefix="/api/v1")
 api.include_router(verification.router, prefix="/api/v1")
 api.include_router(official.router, prefix="/api/v1")
 api.include_router(alerts.router, prefix="/api/v1")
+api.include_router(alert_kit.router, prefix="/api/v1")
+api.include_router(live.router, prefix="/api/v1")
 api.include_router(gestures.router, prefix="/api/v1")
 api.include_router(voicenote.router, prefix="/api/v1")
 
