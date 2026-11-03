@@ -834,6 +834,88 @@
               "default": 0,
               "title": "Offset"
             }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "newest",
+                    "oldest"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Sort by when the rumour was first seen and page with `after`",
+              "title": "Order"
+            },
+            "description": "Sort by when the rumour was first seen and page with `after`"
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The `next` cursor of the previous page",
+              "title": "After"
+            },
+            "description": "The `next` cursor of the previous page"
+          },
+          {
+            "name": "tab",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "all",
+                    "todo",
+                    "confirm",
+                    "done"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Dossier tab; the answer then carries every tab's count",
+              "title": "Tab"
+            },
+            "description": "Dossier tab; the answer then carries every tab's count"
+          },
+          {
+            "name": "assignee",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "`me`, `none` or a member's user id",
+              "title": "Assignee"
+            },
+            "description": "`me`, `none` or a member's user id"
           }
         ],
         "responses": {
@@ -18198,6 +18280,31 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "next": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next"
+          },
+          "counts": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "integer"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Counts"
           }
         },
         "type": "object",

@@ -5256,6 +5256,12 @@ export interface components {
             items: components["schemas"]["ItemOut"][];
             /** Total */
             total: number;
+            /** Next */
+            next?: string | null;
+            /** Counts */
+            counts?: {
+                [key: string]: number;
+            } | null;
         };
         /** ItemPatch */
         ItemPatch: {
@@ -8599,6 +8605,14 @@ export interface operations {
                 q?: string | null;
                 limit?: number;
                 offset?: number;
+                /** @description Sort by when the rumour was first seen and page with `after` */
+                order?: ("newest" | "oldest") | null;
+                /** @description The `next` cursor of the previous page */
+                after?: string | null;
+                /** @description Dossier tab; the answer then carries every tab's count */
+                tab?: ("all" | "todo" | "confirm" | "done") | null;
+                /** @description `me`, `none` or a member's user id */
+                assignee?: string | null;
             };
             header?: never;
             path: {
