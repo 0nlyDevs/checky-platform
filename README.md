@@ -52,8 +52,7 @@ How the pieces talk:
   EXIF-free copy with faces blurred (OpenCV, `apps/api/app/core/media.py`); only that copy is shown
   or sent to reverse image search. ffmpeg only reads plain video containers.
 - **Reading preferences:** A−/A+ and « Mode éco », per device (`apps/web/lib/prefs.ts`).
-- **In production:** web on Vercel, API on Render, database and file storage on **Neon**
-  (project `fanilo`, org 0nlydevs). Deployment is not set up yet.
+- **In production:** web on Vercel, API on Render, database and file storage on **Neon**.
 - **Phone app:** [`0nlyDevs/checky-mobile`](https://github.com/0nlyDevs/checky-mobile) (Expo,
   React Native). A video, photo or link shared to Checky from WhatsApp, Facebook or TikTok is
   uploaded, transcribed and checked through the same API. It signs in through Better Auth's Expo
