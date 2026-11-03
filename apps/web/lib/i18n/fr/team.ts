@@ -66,7 +66,7 @@ export const team = {
       log: "Derniers SMS de la ligne pour cette rédaction",
       logEmpty: "Aucun SMS pour l'instant.",
       direction: { in: "Reçu de", out: "Envoyé à" } as Record<string, string>,
-      status: { received: "reçu", queued: "en attente de la passerelle", sent: "remis à la passerelle", simulated: "simulé" } as Record<string, string>,
+      status: { received: "reçu", queued: "en attente de la passerelle", sending: "envoi au téléphone", sent: "remis à la passerelle", delivered: "reçu par le destinataire", failed: "échec de l'envoi", simulated: "simulé" } as Record<string, string>,
       actions: {
         verdict: "Verdict publié trouvé et renvoyé",
         received: "Transmis à une rédaction",

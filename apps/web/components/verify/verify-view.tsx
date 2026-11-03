@@ -15,8 +15,10 @@ import { PublicStrip, Reliability, RiskNote, ToneCard } from "@/components/crew/
 import { type AgentEvent, type CrewResult, frDate, hostOf, type Numbered } from "@/components/crew/types";
 import { claimSteps, type Step, StepLine, type StepState } from "@/components/flow/step-line";
 import { Button } from "@/components/ui/button";
+import { useDictation } from "@/components/verify/dictation";
+import { OnAir } from "@/components/verify/on-air";
 import { useStickyColumn } from "@/hooks/use-sticky-column";
-import { API_URL, api, ApiError, fetcher } from "@/lib/api";
+import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
 import { postStream } from "@/lib/sse";
 import { cn } from "@/lib/utils";
@@ -99,53 +101,6 @@ function Lit({ text, quotes }: { text: string; quotes: string[] }) {
   return <>{out}</>;
 }
 
-/** Record a short voice message and get its text back (the public transcription, French by default). */
-function useDictation(onText: (text: string) => void) {
-  const [state, setState] = useState<"idle" | "recording" | "transcribing">("idle");
-  const [error, setError] = useState<string | null>(null);
-  const rec = useRef<MediaRecorder | null>(null);
-  // Known only in the browser: decided after mount so the server and the first render agree.
-  const [can, setCan] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setCan("MediaRecorder" in window && !!navigator.mediaDevices?.getUserMedia));
-  }, []);
-
-  async function toggle() {
-    if (state === "recording") return rec.current?.stop();
-    if (state !== "idle") return;
-    setError(null);
-    let stream: MediaStream;
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-    } catch {
-      return setError(v.micDenied);
-    }
-    const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg", "audio/mp4"].find((m) => MediaRecorder.isTypeSupported?.(m)) ?? "";
-    const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-    const chunks: Blob[] = [];
-    mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
-    mr.onstop = async () => {
-      stream.getTracks().forEach((tr) => tr.stop());
-      setState("transcribing");
-      try {
-        const blob = new Blob(chunks, { type: (mr.mimeType || "audio/webm").split(";")[0] });
-        const res = await fetch(`${API_URL}/api/v1/public/transcribe?lang=fr`, { method: "POST", headers: { "Content-Type": blob.type }, body: blob });
-        if (!res.ok) throw new Error(String(res.status));
-        const { text } = (await res.json()) as { text: string };
-        if (text.trim()) onText(text.trim());
-      } catch {
-        setError(v.dictationFailed);
-      } finally {
-        setState("idle");
-      }
-    };
-    rec.current = mr;
-    mr.start(250);
-    setState("recording");
-  }
-  return { state, error, can, toggle };
-}
-
 /**
  * Vérifier: paste (or dictate) what came in and watch Checky work along the numbered line: it reads
  * the message and lights the phrases that should worry, brings what fact-checkers and the web say,
@@ -157,7 +112,8 @@ export function VerifyView() {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const mode = params.get("mode") === "sources" ? "sources" : "message";
+  const asked = params.get("mode");
+  const mode = asked === "sources" ? "sources" : asked === "antenne" ? "onAir" : "message";
   const [input, setInput] = useState(params.get("lien") ?? "");
   const [sent, setSent] = useState<{ url: string | null; text: string | null } | null>(null);
   const [running, setRunning] = useState(false);
@@ -264,7 +220,8 @@ export function VerifyView() {
       return next;
     });
 
-  const setMode = (m: "message" | "sources") => router.replace((m === "sources" ? `${pathname}?mode=sources` : pathname) as never, { scroll: false });
+  const setMode = (m: "message" | "onAir" | "sources") =>
+    router.replace((m === "sources" ? `${pathname}?mode=sources` : m === "onAir" ? `${pathname}?mode=antenne` : pathname) as never, { scroll: false });
   const touched = Boolean(sent);
 
   return (
@@ -272,7 +229,7 @@ export function VerifyView() {
       <div className="grid gap-10 @5xl:grid-cols-[minmax(0,1fr)_19rem] @5xl:gap-12">
         <div className="min-w-0">
           <div role="tablist" aria-label={v.modes.label} className="mb-6 inline-flex rounded-md border border-border bg-card p-1">
-            {(["message", "sources"] as const).map((m) => (
+            {(["message", "onAir", "sources"] as const).map((m) => (
               <button
                 key={m}
                 role="tab"
@@ -289,7 +246,9 @@ export function VerifyView() {
             ))}
           </div>
 
-          {mode === "sources" ? (
+          {mode === "onAir" ? (
+            <OnAir ws={ws} />
+          ) : mode === "sources" ? (
             <>
               <h1 className="page-title">{t.ask.title}</h1>
               <div className="mt-4 max-w-4xl">

@@ -69,7 +69,8 @@ export const team: Part<typeof fr> = {
       log: "SMS farany tamin'ny tsipika ho an'ity rédaction ity",
       logEmpty: "Mbola tsy misy SMS.",
       direction: { in: "Voaray avy amin'ny", out: "Nalefa any amin'ny" },
-      status: { received: "voaray", queued: "miandry ny vavahady", sent: "natolotra ny vavahady", simulated: "andrana" },
+      // relire (mg): sending, delivered, failed
+      status: { received: "voaray", queued: "miandry ny vavahady", sending: "alefa any amin'ny finday", sent: "natolotra ny vavahady", delivered: "tonga any amin'ny tompony", failed: "tsy lasa", simulated: "andrana" },
       actions: {
         verdict: "Hita sy naverina ny didy navoaka",
         received: "Nampitaina tamin'ny rédaction iray",
