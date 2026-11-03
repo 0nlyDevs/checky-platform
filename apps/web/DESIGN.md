@@ -232,6 +232,8 @@ No third face. Monospace only for `kbd` hints and IDs.
 
 **The Quote Rule.** `.quote` is for verbatim words (the verdict quote, a source's phrase, a transcript line), nothing else.
 
+**The Landing Word.** On the public pages and the sign-in doors a big title may set one word in Cormorant italic, as the landing does (`.pub-display`, `.pub-title`, `.pub-h2` with an `<em>`; the word is marked `*like this*` in `lib/i18n/*/look.ts` and drawn by `Em` in `components/site/public/kit.tsx`). One word per title, never on the desk.
+
 ## Shapes, depth and motion
 
 - `--radius` is 1.25rem (20 px): cards use `rounded-xl`-scale radii built from it, controls and chips are fully round, menus 18 px, small tags 6 px.
