@@ -178,7 +178,8 @@ The organising device is the **numbered line**: 1 L'affirmation, 2 Les élément
 
 ### Shared public footer
 
-The landing, every public page, sign-in and sign-up use `components/site/site-footer.tsx`.
+The landing and every public page use `components/site/site-footer.tsx`; sign-in and sign-up
+have none.
 Its escaped markup lives in `lib/public-footer.ts`, shared with the script-free `/flashes`
 bulletin. `public/site/public-footer.css` is the single scoped stylesheet. The footer
 keeps the landing's ink background in both themes; its full-width white wordmark is
