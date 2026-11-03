@@ -27,6 +27,20 @@ def _pages(c, ws, **params):
     raise AssertionError("the cursor never ended")
 
 
+def test_a_new_dossier_gets_the_next_fan_reference(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    first = _claim(alice, ws, "Un", "2026-11-01T08:00:00+03:00")
+    second = _claim(alice, ws, "Deux", "2026-11-01T09:00:00+03:00")
+    n1 = int(first["data"]["ref"].removeprefix("FAN-"))
+    assert second["data"]["ref"] == f"FAN-{n1 + 1:04d}"
+    # The browser still may not choose one.
+    r = alice.post(
+        f"/api/v1/workspaces/{ws}/items", json={"title": "x", "data": {"ref": "FAN-9999"}}
+    )
+    assert r.status_code == 422
+
+
 def test_cursor_pages_cover_every_dossier_once_in_both_orders(as_user):
     alice = as_user("alice")
     ws = _workspace(alice)

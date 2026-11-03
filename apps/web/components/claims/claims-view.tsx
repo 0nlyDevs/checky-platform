@@ -40,11 +40,6 @@ function useNow() {
   return now;
 }
 
-function nextRef(claims: ClaimView[]) {
-  const max = claims.reduce((n, c) => Math.max(n, Number(/^FAN-(\d+)$/.exec(c.ref)?.[1] ?? 0)), 136);
-  return `FAN-${String(max + 1).padStart(4, "0")}`;
-}
-
 function Empty({ title, lead, action }: { title: string; lead: string; action?: React.ReactNode }) {
   return (
     <div className="mx-4 rounded-md border border-dashed border-border px-6 py-14 text-center lg:mx-0">
@@ -167,7 +162,7 @@ export function ClaimsView() {
             )}
           </p>
         </div>
-        <NewClaimSheet ws={ws} nextRef={nextRef(all)} onCreated={upsert} />
+        <NewClaimSheet ws={ws} onCreated={upsert} />
       </header>
 
       {!online && (

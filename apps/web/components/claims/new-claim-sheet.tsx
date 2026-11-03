@@ -32,7 +32,7 @@ function localTimeValue(d: Date) {
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
 
-export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef: string; onCreated: (item: Item) => void }) {
+export function NewClaimSheet({ ws, onCreated }: { ws: string; onCreated: (item: Item) => void }) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,13 +78,15 @@ export function NewClaimSheet({ ws, nextRef, onCreated }: { ws: string; nextRef:
           body: String(form.get("context") ?? "").trim(),
           type: "claim",
           status: "to_check",
-          data: { ref: nextRef, first_seen_at: seen.toISOString(), origin, source_count: 0 },
+          // The server allocates the FAN reference (app/core/refs.py): the browser never picks one.
+          data: { first_seen_at: seen.toISOString(), origin, source_count: 0 },
         }),
       });
       onCreated(item);
       setTitle("");
       setSimilar([]);
-      toast.success(`${t.claims.form.added} · ${nextRef}`);
+      const ref = typeof item.data.ref === "string" ? item.data.ref : null;
+      toast.success(ref ? `${t.claims.form.added} · ${ref}` : t.claims.form.added);
       setOpen(false);
     } catch {
       setError(t.auth.errors.generic);

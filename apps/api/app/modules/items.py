@@ -12,6 +12,7 @@ from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
 from app.core.models import Activity, Comment, Item
+from app.core.refs import next_ref
 from app.core.words import words
 
 router = APIRouter(tags=["items"])
@@ -243,6 +244,11 @@ async def list_items(
 async def create_item(body: ItemIn, member: AnyMember, db: Db) -> ItemOut:
     if "ref" in body.data:
         raise ApiError(422, "protected_fields", "References are assigned by the server")
+    if body.type == "claim":
+        # A dossier gets the newsroom's next FAN reference, allocated atomically (app/core/refs.py).
+        body = body.model_copy(
+            update={"data": {**body.data, "ref": await next_ref(db, member.workspace_id)}}
+        )
     return await _create_item(body, member, db)
 
 
