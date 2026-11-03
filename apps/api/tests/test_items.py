@@ -28,7 +28,9 @@ def test_new_field_needs_no_migration(as_user):
     r = alice.patch(
         f"/api/v1/workspaces/{ws}/items/{item['id']}", json={"data": {"source_count": 3}}
     )
-    assert r.json()["data"] == {"verdict": "false", "source_count": 3}
+    data = r.json()["data"]
+    assert (data["verdict"], data["source_count"]) == ("false", 3)
+    assert data["ref"].startswith("FAN-")
 
 
 def test_workspace_isolation(as_user):
