@@ -894,10 +894,22 @@
                   "type": "null"
                 }
               ],
-              "description": "Dossier tab; the answer then carries every tab's count",
+              "description": "Dossier tab",
               "title": "Tab"
             },
-            "description": "Dossier tab; the answer then carries every tab's count"
+            "description": "Dossier tab"
+          },
+          {
+            "name": "counts",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Also count every tab (and demo rows) under the filters",
+              "default": false,
+              "title": "Counts"
+            },
+            "description": "Also count every tab (and demo rows) under the filters"
           },
           {
             "name": "assignee",

@@ -98,22 +98,25 @@ def test_tabs_filter_and_count_on_the_server(as_user):
     )
     _claim(alice, ws, "Mot inconnu", "2026-10-05T10:00:00+03:00", verdict="peut-être")
 
-    def page(tab, order="newest"):
+    def page(tab, order="newest", **extra):
         return alice.get(
-            f"/api/v1/workspaces/{ws}/items", params={"type": "claim", "tab": tab, "order": order}
+            f"/api/v1/workspaces/{ws}/items",
+            params={"type": "claim", "tab": tab, "order": order, **extra},
         ).json()
 
-    counts = {"all": 5, "todo": 2, "confirm": 1, "done": 2}
-    for tab, expected in counts.items():
-        p = page(tab)
+    counts = {"all": 5, "todo": 2, "confirm": 1, "done": 2, "demo": 0}
+    for tab in ("all", "todo", "confirm", "done"):
+        p = page(tab, counts="true")
         assert p["counts"] == counts
-        assert p["total"] == expected
+        assert p["total"] == counts[tab]
+        # Without `counts=true` the page carries none, and the same total.
+        bare = page(tab)
+        assert bare["counts"] is None and bare["total"] == counts[tab]
     assert [i["title"] for i in page("todo", "oldest")["items"]] == ["À traiter", "Mot inconnu"]
     assert [i["title"] for i in page("confirm")["items"]] == ["Suggestion"]
     assert [i["title"] for i in page("done")["items"]] == ["Vérifié aussi", "Vérifié"]
-    # Without `tab`, no counts are computed.
     plain = alice.get(f"/api/v1/workspaces/{ws}/items", params={"type": "claim"}).json()
-    assert plain["counts"] is None and plain["next"] is None
+    assert plain["counts"] is None and plain["next"] is None and plain["total"] == 5
 
 
 def test_search_reads_ref_title_and_tags_and_escapes_wildcards(as_user):
@@ -167,3 +170,50 @@ def test_a_bad_cursor_is_a_clear_422(as_user):
         )
         assert r.status_code == 422
         assert r.json()["error"]["code"] == "bad_cursor"
+
+
+def test_demo_rows_are_counted(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    _claim(alice, ws, "Exemple", "2026-10-01T10:00:00+03:00", demo=True)
+    _claim(alice, ws, "Réel", "2026-10-02T10:00:00+03:00")
+    r = alice.get(
+        f"/api/v1/workspaces/{ws}/items",
+        params={"type": "claim", "tab": "all", "counts": "true", "limit": 1},
+    ).json()
+    assert r["counts"]["demo"] == 1 and r["counts"]["all"] == 2 and len(r["items"]) == 1
+
+
+def test_words_postgres_reads_as_dates_do_not_move_the_order(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    for word in ("now", "today", "tomorrow", "infinity", "epoch"):
+        _claim(alice, ws, word, word)
+    _claim(alice, ws, "Datée", "2001-01-01T00:00:00+03:00")
+    first = [i["title"] for p in _pages(alice, ws, order="oldest", limit=2) for i in p["items"]]
+    again = [i["title"] for p in _pages(alice, ws, order="oldest", limit=2) for i in p["items"]]
+    # They fall back to their creation time: the dated one leads, then creation order, stable.
+    assert first == again == ["Datée", "now", "today", "tomorrow", "infinity", "epoch"]
+
+
+def test_a_cursor_without_an_order_is_refused(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    for i in range(3):
+        _claim(alice, ws, f"R{i}", f"2026-10-0{i + 1}T10:00:00+03:00")
+    nxt = alice.get(
+        f"/api/v1/workspaces/{ws}/items",
+        params={"type": "claim", "order": "newest", "limit": 1},
+    ).json()["next"]
+    r = alice.get(f"/api/v1/workspaces/{ws}/items", params={"type": "claim", "after": nxt})
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "cursor_needs_order"
+
+
+def test_a_refused_dossier_takes_no_reference(as_user):
+    alice = as_user("alice")
+    ws = _workspace(alice)
+    base = f"/api/v1/workspaces/{ws}/items"
+    refused = alice.post(base, json={"title": "x", "data": {"signed_by": "someone"}})
+    assert refused.status_code == 422
+    assert alice.post(base, json={"title": "ok"}).json()["data"]["ref"] == "FAN-0001"
