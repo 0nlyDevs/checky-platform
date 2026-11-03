@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { IconCircleNotch, IconEye, IconEyeSlash } from "@/lib/icons";
+import { IconCircleNotch, IconEye, IconEyeSlash, IconUploadSimple } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { clearApiToken } from "@/lib/api";
+import { ApiError, clearApiToken } from "@/lib/api";
 import { authClient } from "@/lib/auth-client";
+import { CARD_ACCEPT, cardProblem, saveProfile } from "@/lib/press-card";
 import { t } from "@/lib/i18n/live";
 
 type Mode = "signIn" | "signUp";
@@ -24,21 +25,49 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const isSignUp = mode === "signUp";
+  const [card, setCard] = useState<File | null>(null);
+  // The account exists but the card did not go through: retrying must not sign up again.
+  const [accountMade, setAccountMade] = useState(false);
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const email = String(form.get("email"));
     const password = String(form.get("password"));
-    setPending(true);
     setError(null);
+    if (isSignUp) {
+      const problem = cardProblem(card);
+      if (problem) return setError(errorMessage(problem));
+    }
+    setPending(true);
     try {
-      const { error } = isSignUp
-        ? await authClient.signUp.email({ email, password, name: String(form.get("name")) })
-        : await authClient.signIn.email({ email, password });
-      if (error) {
-        setError(errorMessage(error.code));
-        return;
+      if (isSignUp && !accountMade) {
+        const { error } = await authClient.signUp.email({ email, password, name: String(form.get("name")) });
+        if (error) {
+          setError(errorMessage(error.code));
+          return;
+        }
+        setAccountMade(true);
+      } else if (!isSignUp) {
+        const { error } = await authClient.signIn.email({ email, password });
+        if (error) {
+          setError(errorMessage(error.code));
+          return;
+        }
+      }
+      if (isSignUp && card) {
+        try {
+          await saveProfile({
+            phone: String(form.get("phone")),
+            outlet: String(form.get("outlet")),
+            card_number: String(form.get("card_number") ?? "").trim(),
+            file: card,
+          });
+        } catch (e) {
+          const code = e instanceof ApiError ? (e.status === 422 && e.code !== "invalid_card" ? "phone_invalid" : e.code) : "network";
+          setError(`${errorMessage(code)} ${t.auth.cardRetry}`);
+          return;
+        }
       }
       // Only follow same-site paths. A full page load, not a client navigation: the previous
       // account's /me, newsrooms and API token stayed in memory, and a new account was sent into
@@ -117,6 +146,46 @@ export function AuthForm({ mode }: { mode: Mode }) {
             </p>
           )}
         </div>
+
+        {isSignUp && (
+          <fieldset className="space-y-5 border-t border-border pt-5">
+            <legend className="font-display text-base font-semibold">{t.auth.proofTitle}</legend>
+            <div className="space-y-2">
+              <Label htmlFor="phone">{t.auth.phone}</Label>
+              <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" required minLength={7} aria-describedby="phone-hint" className="h-11" />
+              <p id="phone-hint" className="text-sm text-muted-foreground">{t.auth.phoneHint}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="outlet">{t.auth.outlet}</Label>
+              <Input id="outlet" name="outlet" autoComplete="organization" required minLength={2} maxLength={160} aria-describedby="outlet-hint" className="h-11" />
+              <p id="outlet-hint" className="text-sm text-muted-foreground">{t.auth.outletHint}</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="card_number">{t.auth.cardNumber}</Label>
+              <Input id="card_number" name="card_number" maxLength={60} className="h-11" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="card">{t.auth.card}</Label>
+              <input
+                id="card"
+                type="file"
+                accept={CARD_ACCEPT}
+                required
+                aria-describedby="card-hint"
+                onChange={(e) => setCard(e.target.files?.[0] ?? null)}
+                className="sr-only"
+              />
+              <Label
+                htmlFor="card"
+                className="flex h-11 cursor-pointer items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-medium has-[:focus-visible]:ring-2"
+              >
+                <IconUploadSimple aria-hidden />
+                <span className="truncate">{card ? card.name : t.auth.cardChoose}</span>
+              </Label>
+              <p id="card-hint" className="text-sm text-muted-foreground">{t.auth.cardHint}</p>
+            </div>
+          </fieldset>
+        )}
 
         {error && (
           <p role="alert" className="rounded-[16px] bg-verdict-false-soft px-4 py-3 text-sm text-verdict-false-ink">
