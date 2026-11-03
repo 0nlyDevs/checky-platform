@@ -78,6 +78,8 @@ def _no_paid_voice(monkeypatch):
     monkeypatch.setattr(get_settings(), "elevenlabs_api_key", "")
     # A developer's optional search key must never spend real credits in tests.
     monkeypatch.setattr(get_settings(), "tavily_api_key", "")
+    monkeypatch.setattr(get_settings(), "sightengine_api_user", "")
+    monkeypatch.setattr(get_settings(), "sightengine_api_secret", "")
     monkeypatch.setattr(get_settings(), "web_search_provider", "auto")
 
 

@@ -4,7 +4,7 @@ import pytest
 from app.core import evidence_search, query_plan
 from app.core.config import get_settings
 from app.core.public_checks import budget
-from app.modules import linkcheck
+from app.modules import imagecheck, linkcheck
 from app.workers import ingest
 from tests.test_agent import _events
 from tests.test_imagecheck import png
@@ -167,7 +167,13 @@ def test_unreadable_link_is_a_bounded_error_and_releases_its_slot(client, eviden
     assert budget.active == 0
 
 
-def test_public_image_works_without_auth_or_a_pixel_detector(client, monkeypatch):
+def test_public_image_works_without_auth_and_does_not_enable_a_private_detector(
+    client, monkeypatch
+):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "image_detector_url", "https://private-detector.example/check")
+    monkeypatch.setattr(settings, "image_detector_validated", True)
+    monkeypatch.setattr(settings, "public_image_detector_enabled", False)
     monkeypatch.setattr(ingest, "_resolve", lambda _: ["93.184.216.34"])
     monkeypatch.setattr(
         ingest,
@@ -178,14 +184,32 @@ def test_public_image_works_without_auth_or_a_pixel_detector(client, monkeypatch
             )
         ),
     )
+    monkeypatch.setattr(
+        imagecheck,
+        "_detector_transport",
+        httpx.MockTransport(
+            lambda _: pytest.fail("Public access must not enable private detector billing")
+        ),
+    )
     result = client.post("/api/v1/public/image-check", json={"url": "https://images.example/a.png"})
     assert result.status_code == 200
     assert result.json()["assessment"] == "detected"
-    assert "detector" not in result.json()
+    assert result.json()["detector"]["status"] == "not_configured"
     assert budget.active == 0
 
 
 def test_public_image_file_works_without_auth_or_storage(client, monkeypatch):
+    settings = get_settings()
+    monkeypatch.setattr(settings, "image_detector_url", "https://private-detector.example/check")
+    monkeypatch.setattr(settings, "image_detector_validated", True)
+    monkeypatch.setattr(settings, "public_image_detector_enabled", False)
+    monkeypatch.setattr(
+        imagecheck,
+        "_detector_transport",
+        httpx.MockTransport(
+            lambda _: pytest.fail("Public access must not enable private detector billing")
+        ),
+    )
     endpoint = "/api/v1/public/image-check/file"
     result = client.post(
         endpoint, content=png("Stable Diffusion"), headers={"Content-Type": "image/png"}
@@ -193,7 +217,7 @@ def test_public_image_file_works_without_auth_or_storage(client, monkeypatch):
     assert result.status_code == 200
     assert result.json()["source"] == "file" and result.json()["url"] is None
     assert result.json()["assessment"] == "detected"
-    assert "detector" not in result.json()
+    assert result.json()["detector"]["status"] == "not_configured"
     assert (
         client.post(
             endpoint, content=b"<svg/>", headers={"Content-Type": "image/svg+xml"}

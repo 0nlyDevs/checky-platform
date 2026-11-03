@@ -213,7 +213,7 @@ export type FeedEntry = {
   demo: boolean;
 };
 
-export type FeedOut = { entries: FeedEntry[]; counts: Partial<Record<FeedEntry["kind"], number>>; since: string; feeds_configured: boolean };
+export type FeedOut = { entries: FeedEntry[]; counts: Partial<Record<FeedEntry["kind"], number>>; since: string; feeds_configured: boolean; streams_configured: boolean };
 
 export type RegionCount = { region: string; country?: string | null; lat: number | null; lng: number | null; last_24h: number; last_7d: number; high_risk: number; kinds: Record<string, number> };
 export type MapOut = { regions: RegionCount[]; unplaced: number; total: number; country: string; home: string; countries: { country: string; last_7d: number }[] };

@@ -65,4 +65,6 @@ services:
         value: "true"
       # Optional, added by hand in the dashboard when wanted: CLAUDE_API_KEY, ELEVENLABS_API_KEY,
       # GOOGLE_FACTCHECK_API_KEY. For dedicated web search: TAVILY_API_KEY and WEB_SEARCH_PROVIDER=tavily.
+      # AI-image detector: SIGHTENGINE_API_USER, SIGHTENGINE_API_SECRET, IMAGE_DETECTOR_VALIDATED=true
+      # (after testing it), PUBLIC_IMAGE_DETECTOR_ENABLED=true for the extension's anonymous mode.
       # Tavily must use the free Researcher plan with pay-as-you-go disabled; see docs/WEB_SEARCH.md.

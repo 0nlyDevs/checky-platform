@@ -2205,7 +2205,7 @@ export interface paths {
         put?: never;
         /**
          * Refresh
-         * @description Read the press feeds now.
+         * @description Read the press feeds (and capture the radio streams) now.
          */
         post: operations["refresh_api_v1_workspaces__ws__veille_refresh_post"];
         delete?: never;
@@ -4388,6 +4388,24 @@ export interface components {
              */
             ai_enabled: boolean;
         };
+        /** DetectorOut */
+        DetectorOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "not_configured" | "not_validated" | "unavailable" | "assessed";
+            /**
+             * Assessment
+             * @default inconclusive
+             * @enum {string}
+             */
+            assessment: "detected" | "none" | "inconclusive";
+            /** Model */
+            model?: string | null;
+            /** Score */
+            score?: number | null;
+        };
         /** DictationOut */
         DictationOut: {
             /** Text */
@@ -4630,6 +4648,8 @@ export interface components {
             since: string;
             /** Feeds Configured */
             feeds_configured: boolean;
+            /** Streams Configured */
+            streams_configured: boolean;
         };
         /** FigureCard */
         FigureCard: {
@@ -4984,8 +5004,9 @@ export interface components {
              * Assessment
              * @enum {string}
              */
-            assessment: "detected" | "inconclusive";
+            assessment: "detected" | "none" | "inconclusive";
             image: components["schemas"]["ImageFacts"];
+            detector: components["schemas"]["DetectorOut"];
             /** Reverse Search */
             reverse_search: components["schemas"]["SearchLink"][];
             /** Limitations */

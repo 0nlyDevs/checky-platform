@@ -304,10 +304,12 @@ Checky (2 Nov) adds the newsroom's shelves and the road back, on the same base:
   Credentials presence, reverse-search links, a persistent fallibility warning, and no invented
   confidence percentage. An image caption can be checked as text, not inferred from its pixels.
 - `POST /workspaces/{ws}/image-check {url}` reads public raster images only (5 MB and 20 MP max).
-  No pixel detector is included: none has been evaluated on representative images.
+  An optional pixel-detector adapter remains disabled until configured and evaluated by an operator.
+  No external pixel detector is enabled or claimed to be reliable by default.
 - `POST /public/check {text?,url?}` and `/public/image-check {url}` require no JWT. They share
   per-process limits: 12 requests/IP/10 minutes, 1,000/24-hour budget period, 2 in flight. The public
-  `/check/stream` route exposes preparation/search/reading progress without a token.
+  `/check/stream` route exposes preparation/search/reading progress without a token. Public detector
+  use needs an additional operator opt-in.
 - Initial distribution is an unpacked Chromium extension. Browser-store publication, OCR,
   screenshots, private images and Firefox/Safari are not included. Production login and Edge/Brave
   behaviour require manual validation before distribution.
