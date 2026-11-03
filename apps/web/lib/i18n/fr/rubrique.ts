@@ -90,6 +90,12 @@ export const rubrique = {
     fromTranscript: "Transcription automatique",
     pending: "Transcription en cours…",
     mgNote: "En malagasy, le texte est celui du journaliste, jamais une transcription automatique.",
+    play: "Écouter",
+    filterRegion: "Région",
+    filterStation: "Station",
+    filterTopic: "Sujet",
+    filterTopicPlaceholder: "un mot de la rumeur",
+    filterAll: "Toutes",
   },
 
   alerts: {

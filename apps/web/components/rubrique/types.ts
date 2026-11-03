@@ -71,12 +71,16 @@ export type AntenneRow = {
   verdict: Verdict | null;
   reports: number;
   stations: string[];
+  regions: string[];
   regions_24h: string[];
   first_at: string;
   latest: AntenneClip;
   clip_ids: string[];
   demo: boolean;
   alert?: AlertRef | null;
+  /** « RNA, 07:42, 0:18 »: the station, the time and where the passage starts. */
+  credit?: string | null;
+  audio_url?: string | null;
 };
 
 /** The open alert a rumour's reports belong to (app/modules/alerts.py). */

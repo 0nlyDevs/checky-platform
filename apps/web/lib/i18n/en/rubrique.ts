@@ -91,6 +91,12 @@ export const rubrique: NonNullable<Overrides["rubrique"]> = {
     fromTranscript: "Automatic transcript",
     pending: "Transcribing…",
     mgNote: "In Malagasy, the text is the journalist's own, never an automatic transcript.",
+    play: "Listen",
+    filterRegion: "Region",
+    filterStation: "Station",
+    filterTopic: "Topic",
+    filterTopicPlaceholder: "a word from the rumour",
+    filterAll: "All",
   },
 
   alerts: {

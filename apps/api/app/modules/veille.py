@@ -22,7 +22,7 @@ from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -618,12 +618,18 @@ class AntenneRow(BaseModel):
     verdict: str | None
     reports: int
     stations: list[str]
+    # The regions the clips were heard in over the 7 days, then over the last 24 hours.
+    regions: list[str] = Field(default_factory=list)
     regions_24h: list[str]
     first_at: datetime
     latest: AntenneClip
     clip_ids: list[uuid.UUID]
     demo: bool
     alert: AlertRef | None = None
+    # « RNA, 07:42, 0:18 »: the station, the time it was heard and where the passage starts.
+    credit: str | None = None
+    # The clip's audio, when the station kept the recording: the desk plays it from `clip_at_s`.
+    audio_url: str | None = None
 
 
 def first_sentence(text: str, limit: int = 300) -> str:
@@ -645,8 +651,11 @@ def _row(group: ClipGroup, sources: dict[uuid.UUID, Source]) -> AntenneRow:
         status = "new"
     day_ago = datetime.now(UTC) - timedelta(hours=24)
     regions: list[str] = []
+    all_regions: list[str] = []
     for c in clips:
         region = canonical_region((clip_location(c) or {}).get("region"))
+        if region and region not in all_regions:
+            all_regions.append(region)
         if c.recorded_at >= day_ago and region and region not in regions:
             regions.append(region)
     stations: list[str] = []
@@ -663,6 +672,7 @@ def _row(group: ClipGroup, sources: dict[uuid.UUID, Source]) -> AntenneRow:
         verdict=d.get("verdict") if d.get("verdict") in VERDICTS else None,
         reports=len(clips),
         stations=stations,
+        regions=all_regions,
         regions_24h=regions,
         first_at=clips[0].recorded_at,
         latest=AntenneClip(
@@ -678,7 +688,25 @@ def _row(group: ClipGroup, sources: dict[uuid.UUID, Source]) -> AntenneRow:
         ),
         clip_ids=[c.id for c in clips],
         demo=any(_is_demo(c) for c in clips),
+        credit=credit_of(latest),
+        audio_url=(
+            storage.presign_download(source.file.storage_key, source.file.filename)
+            if (source := sources.get(latest.source_id)) and source.file and source.file.storage_key
+            else None
+        ),
     )
+
+
+def credit_of(clip: RadioClip) -> str:
+    """« RNA, 07:42, 0:18 »: who said it, when, and from where in the recording. Always credited, as
+    the rules ask; the offset is left out when the veilleur heard it live."""
+    at = clip.recorded_at.astimezone(UTC)
+    word = f"{clip.station}, {at.strftime('%H:%M')}"
+    if clip.clip_at_s is None:
+        return word
+    start = int(clip.clip_at_s)
+    length = (clip.duration_s or 0) - start
+    return f"{word}, {start // 60}:{start % 60:02d}" + (f" ({int(length)} s)" if length > 0 else "")
 
 
 async def recent_clips(
@@ -724,10 +752,26 @@ async def antenne_rows(db: AsyncSession, workspace_id: uuid.UUID) -> list[Antenn
 
 
 @router.get("/workspaces/{ws}/antenne")
-async def antenne(member: AnyMember, db: Db) -> list[AntenneRow]:
+async def antenne(
+    member: AnyMember,
+    db: Db,
+    region: str | None = Query(default=None, max_length=120),
+    station: str | None = Query(default=None, max_length=120),
+    topic: str | None = Query(default=None, max_length=160),
+) -> list[AntenneRow]:
     """What the partner radios heard in the last 7 days, one row per claim: new first, then the
-    ones the desk follows, then the ones it checked."""
-    return await antenne_rows(db, member.workspace_id)
+    ones the desk follows, then the ones it checked. Filters: region (as the map names it),
+    station and a word of the topic."""
+    rows = await antenne_rows(db, member.workspace_id)
+    want = canonical_region(region) if region else None
+    if want:
+        rows = [r for r in rows if want in r.regions]
+    if station:
+        rows = [r for r in rows if station in r.stations]
+    if topic:
+        needle = fold(topic)
+        rows = [r for r in rows if needle in fold(r.claim) or needle in fold(r.latest.heard_text)]
+    return rows
 
 
 class FollowIn(BaseModel):

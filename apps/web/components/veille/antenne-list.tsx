@@ -25,7 +25,7 @@ function Heard({ row }: { row: AntenneRow }) {
     <figure className="mt-2 text-sm">
       {c.heard_text ? <blockquote className="quote text-base text-pretty">{t.common.quote(c.heard_text)}</blockquote> : null}
       <figcaption className="mt-1 text-muted-foreground">
-        {c.station} · {when(c.recorded_at)} · {from}
+        {row.credit ?? `${c.station} · ${when(c.recorded_at)}`} · {from}
         {c.language === "mg" && c.text_from === "veilleur" && <span className="block">{a.mgNote}</span>}
       </figcaption>
     </figure>
@@ -51,7 +51,32 @@ export function AntenneList({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
-  const shown = limit ? rows.slice(0, limit) : rows;
+  const [region, setRegion] = useState("");
+  const [station, setStation] = useState("");
+  const [topic, setTopic] = useState("");
+  const regions = [...new Set(rows.flatMap((r) => r.regions ?? []))].sort();
+  const stations = [...new Set(rows.flatMap((r) => r.stations))].sort();
+  const needle = topic.trim().toLowerCase();
+  const filtered = rows.filter(
+    (r) =>
+      (!region || (r.regions ?? []).includes(region)) &&
+      (!station || r.stations.includes(station)) &&
+      (!needle || r.claim.toLowerCase().includes(needle) || r.latest.heard_text.toLowerCase().includes(needle)),
+  );
+  const shown = limit ? filtered.slice(0, limit) : filtered;
+
+  /** Plays the station's recording from the second the passage starts (first tap loads it). */
+  function play(row: AntenneRow) {
+    const c = row.latest;
+    if (!row.audio_url) return;
+    const audio = new Audio(row.audio_url);
+    audio.currentTime = Math.max(0, c.clip_at_s ?? 0);
+    void audio.play().catch(() => toast.error(a.failed));
+    setBusy(c.id);
+    audio.addEventListener("ended", () => setBusy(null), { once: true });
+    audio.addEventListener("error", () => setBusy(null), { once: true });
+    window.setTimeout(() => setBusy((now) => (now === c.id ? null : now)), 60_000);
+  }
 
   async function follow(row: AntenneRow) {
     setBusy(row.latest.id);
@@ -81,10 +106,62 @@ export function AntenneList({
     }
   }
 
-  if (shown.length === 0) return <p className="text-sm text-muted-foreground">{a.empty}</p>;
+  const filters = (
+    <div className="mb-3 flex flex-wrap items-end gap-2 text-sm">
+      <label className="flex flex-col gap-1">
+        <span className="text-muted-foreground">{a.filterRegion}</span>
+        <select
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          className="rounded-md border border-border bg-card px-2 py-1.5"
+        >
+          <option value="">{a.filterAll}</option>
+          {regions.map((r) => (
+            <option key={r} value={r}>
+              {r}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-muted-foreground">{a.filterStation}</span>
+        <select
+          value={station}
+          onChange={(e) => setStation(e.target.value)}
+          className="rounded-md border border-border bg-card px-2 py-1.5"
+        >
+          <option value="">{a.filterAll}</option>
+          {stations.map((s) => (
+            <option key={s} value={s}>
+              {s}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="text-muted-foreground">{a.filterTopic}</span>
+        <input
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          placeholder={a.filterTopicPlaceholder}
+          className="rounded-md border border-border bg-card px-2 py-1.5"
+        />
+      </label>
+    </div>
+  );
+
+  if (shown.length === 0)
+    return (
+      <>
+        {filters}
+        <p className="text-sm text-muted-foreground">{a.empty}</p>
+      </>
+    );
 
   return (
-    <ul className="divide-y divide-border">
+    <>
+      {filters}
+      <ul className="divide-y divide-border">
       {shown.map((row, i) => {
         const Status = STATUS_ICON[row.status];
         const working = busy === row.latest.id;
@@ -119,6 +196,11 @@ export function AntenneList({
                   </Link>
                 )}
                 {row.verdict && <VerdictChip verdict={row.verdict} />}
+                {row.audio_url && (
+                  <Button variant="ghost" size="lg" onClick={() => play(row)}>
+                    {a.play}
+                  </Button>
+                )}
                 {actions && row.status === "new" && (
                   <>
                     <Button variant="outline" size="lg" onClick={() => follow(row)} disabled={working}>
@@ -135,6 +217,7 @@ export function AntenneList({
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </>
   );
 }

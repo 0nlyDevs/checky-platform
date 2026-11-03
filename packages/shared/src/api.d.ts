@@ -2124,7 +2124,8 @@ export interface paths {
         /**
          * Antenne
          * @description What the partner radios heard in the last 7 days, one row per claim: new first, then the
-         *     ones the desk follows, then the ones it checked.
+         *     ones the desk follows, then the ones it checked. Filters: region (as the map names it),
+         *     station and a word of the topic.
          */
         get: operations["antenne_api_v1_workspaces__ws__antenne_get"];
         put?: never;
@@ -3622,6 +3623,8 @@ export interface components {
             reports: number;
             /** Stations */
             stations: string[];
+            /** Regions */
+            regions?: string[];
             /** Regions 24H */
             regions_24h: string[];
             /**
@@ -3635,6 +3638,10 @@ export interface components {
             /** Demo */
             demo: boolean;
             alert?: components["schemas"]["AlertRef"] | null;
+            /** Credit */
+            credit?: string | null;
+            /** Audio Url */
+            audio_url?: string | null;
         };
         /** AskOut */
         AskOut: {
@@ -12395,7 +12402,11 @@ export interface operations {
     };
     antenne_api_v1_workspaces__ws__antenne_get: {
         parameters: {
-            query?: never;
+            query?: {
+                region?: string | null;
+                station?: string | null;
+                topic?: string | null;
+            };
             header?: never;
             path: {
                 ws: string;

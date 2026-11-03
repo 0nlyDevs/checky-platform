@@ -90,6 +90,12 @@ export const rubrique: Part<typeof fr> = {
     fromTranscript: "Dika an-tsoratra nataon'ny milina",
     pending: "Eo am-pandikana an-tsoratra…",
     mgNote: "Amin'ny teny malagasy, ny soratry ny mpanao gazety no aseho, fa tsy dika an-tsoratra nataon'ny milina mihitsy.",
+    play: "Henoy", // relire (mg)
+    filterRegion: "Faritra", // relire (mg)
+    filterStation: "Fifandraisana", // relire (mg)
+    filterTopic: "Lohahevitra", // relire (mg)
+    filterTopicPlaceholder: "teny iray amin'ny tsaho", // relire (mg)
+    filterAll: "Daholo", // relire (mg)
   },
 
   alerts: {

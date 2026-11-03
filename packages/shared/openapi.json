@@ -7900,7 +7900,7 @@
           "veille"
         ],
         "summary": "Antenne",
-        "description": "What the partner radios heard in the last 7 days, one row per claim: new first, then the\nones the desk follows, then the ones it checked.",
+        "description": "What the partner radios heard in the last 7 days, one row per claim: new first, then the\nones the desk follows, then the ones it checked. Filters: region (as the map names it),\nstation and a word of the topic.",
         "operationId": "antenne_api_v1_workspaces__ws__antenne_get",
         "security": [
           {
@@ -7916,6 +7916,57 @@
               "type": "string",
               "format": "uuid",
               "title": "Ws"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Region"
+            }
+          },
+          {
+            "name": "station",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 120
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Station"
+            }
+          },
+          {
+            "name": "topic",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "maxLength": 160
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Topic"
             }
           }
         ],
@@ -13341,6 +13392,13 @@
             "type": "array",
             "title": "Stations"
           },
+          "regions": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Regions"
+          },
           "regions_24h": {
             "items": {
               "type": "string"
@@ -13377,6 +13435,28 @@
                 "type": "null"
               }
             ]
+          },
+          "credit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit"
+          },
+          "audio_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Audio Url"
           }
         },
         "type": "object",

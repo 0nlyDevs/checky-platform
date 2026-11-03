@@ -2,7 +2,7 @@
 
 import type { Item } from "@fanilo/shared";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -110,6 +110,17 @@ export function DiffusePanel({
   const [busy, setBusy] = useState(false);
   const [channel, setChannel] = useState<string>("whatsapp");
   const [place, setPlace] = useState("");
+
+  // The routes the rumour already took come ticked, as the brief asks: the truth goes back on the
+  // same roads. One draft per gap, once, and never over a list the journalist has already edited.
+  const prefilled = useRef(false);
+  useEffect(() => {
+    if (prefilled.current || !data?.gaps?.length || routes.length) return;
+    prefilled.current = true;
+    onRoutes(
+      data.gaps.slice(0, 12).map((gap) => ({ channel: gap.channel, place: gap.place, location: gap.location ?? null })),
+    );
+  }, [data, routes.length, onRoutes]);
 
   const tick = (id: string) => (on: boolean) =>
     setTicked((prev) => {
