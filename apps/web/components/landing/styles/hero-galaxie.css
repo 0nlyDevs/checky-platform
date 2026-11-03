@@ -1,0 +1,391 @@
+/* ---------- Hero galaxie (page « / ») ----------
+   Ink and paper, as in the Checky design system: one ground (#0a0a0b) shared
+   with every section, Bricolage Grotesque, Cormorant italic for the accent. */
+
+.landing .hero-galaxie {
+  --hg-bg: var(--color-ink);
+  --hg-ink: var(--color-paper);
+  --hg-ink-strong: #ffffff;
+  --hg-muted: var(--color-paper-2);
+  --hg-faint: rgb(243 242 238 / 0.5);
+  --hg-line: rgb(243 242 238 / 0.26);
+  --hg-display: var(--font-display);
+  --hg-serif: var(--font-serif);
+  --hg-mono: var(--font-mono);
+  --hg-gutter: var(--gutter);
+  position: relative;
+  background: var(--hg-bg);
+  color: var(--hg-ink);
+  font-family: var(--hg-display);
+}
+
+/* Pin: the stage holds still while the scene turns the galaxy into a tunnel. */
+
+.landing .hg-pin {
+  position: relative;
+  min-height: 100svh;
+}
+
+.landing.motion .hero-galaxie {
+  height: 300svh;
+}
+
+.landing.motion .hg-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+}
+
+/* The canvas is fixed so the picked card can carry on into « La rumeur ».
+   No frame, no clipping: the scene fades into the same black as the page. */
+
+.landing .hg-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.landing.motion .hg-canvas {
+  position: fixed;
+}
+
+/* Layout, after the reference room hero: the wordmark up top, the prompt bar
+   in the middle, the title low on the left. A flex column, so the three can
+   never overlap, even on short screens. */
+
+.landing .hg-layout {
+  pointer-events: none;
+  position: relative;
+  z-index: 40;
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: clamp(64px, 12svh, 150px) var(--hg-gutter) clamp(28px, 6svh, 56px);
+}
+
+.landing.motion .hg-layout {
+  height: 100svh;
+}
+
+.landing .hg-top {
+  display: flex;
+  justify-content: center;
+}
+
+.landing .hg-word-wrap {
+  position: relative;
+  width: min(30rem, 80vw, 52svh);
+}
+
+.landing .hg-mid {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.landing .hg-bar-wrap {
+  width: min(40rem, 100%);
+}
+
+.landing .hg-bottom {
+  position: relative;
+  max-width: 36rem;
+}
+
+.landing .hg-bottom::before {
+  content: "";
+  position: absolute;
+  inset: -96px -160px -64px -120px;
+  z-index: -1;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--hg-bg) 92%, transparent) 55%, transparent);
+}
+
+/* Tag and prompt bar (ink and paper: tag radius 6, controls fully round). */
+
+.landing .hg-tag {
+  padding: 4px 9px;
+  border: 1px solid var(--hg-line);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--hg-bg) 70%, transparent);
+  font-family: var(--hg-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hg-muted);
+}
+
+.landing .hg-bar {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 60px;
+  padding: 0 10px 0 14px;
+  border: 1px solid rgb(243 242 238 / 0.14);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-ink-2) 88%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.05) inset,
+    0 24px 60px -24px rgb(0 0 0 / 0.9);
+  transition: border-color 0.25s ease;
+}
+
+.landing .hg-bar {
+  cursor: text;
+}
+
+.landing .hg-bar:hover {
+  border-color: rgb(243 242 238 / 0.32);
+}
+
+.landing .hg-bar-plus {
+  display: flex;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--hg-muted);
+}
+
+.landing .hg-bar-plus svg,
+.landing .hg-bar-send svg {
+  width: 18px;
+  height: 18px;
+}
+
+.landing .hg-bar:focus-within {
+  border-color: rgb(243 242 238 / 0.42);
+}
+
+.landing .hg-bar-field {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  height: 100%;
+}
+
+.landing .hg-bar-input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: 0.9375rem;
+  color: var(--hg-ink);
+}
+
+.landing .hg-bar-input::placeholder {
+  color: var(--hg-muted);
+}
+
+/* The demo rumour types over the empty field; a click in the bar focuses the real input under it. */
+.landing .hg-bar-demo {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 0.9375rem;
+  color: var(--hg-ink);
+}
+
+.landing .hg-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--hg-ink);
+  animation: hg-blink 1s steps(1) infinite;
+}
+
+@keyframes hg-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.landing .hg-bar-send {
+  cursor: pointer;
+  display: flex;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--color-ink-4);
+  color: var(--hg-muted);
+  transition:
+    background-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.landing .hg-bar-send.is-sent {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  transform: scale(1.06);
+}
+
+/* Wordmark */
+
+.landing .hg-word-box {
+  pointer-events: none;
+  position: relative;
+  z-index: 40;
+  width: 100%;
+  container-type: inline-size;
+}
+
+.landing .hg-word-blur {
+  position: absolute;
+  inset: -34% -6%;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  mask-image: radial-gradient(closest-side, black 45%, transparent 100%);
+  -webkit-mask-image: radial-gradient(closest-side, black 45%, transparent 100%);
+}
+
+.landing .hg-word {
+  position: relative;
+  white-space: pre;
+  color: var(--hg-ink-strong);
+  font-family: var(--hg-display);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.landing .hg-letter {
+  display: inline-block;
+  text-align: center;
+  will-change: transform, opacity;
+  text-shadow:
+    0 0 0.6vw color-mix(in srgb, var(--hg-bg) 92%, transparent),
+    0 0.25vw 2.4vw color-mix(in srgb, var(--hg-bg) 78%, transparent);
+}
+
+.landing.motion .hg-letter {
+  opacity: 0;
+}
+
+/* Copy */
+
+.landing .hg-h1 {
+  position: relative;
+  margin: 0;
+  font-family: var(--hg-display);
+  font-size: min(clamp(2.4rem, 4.4vw, 4.6rem), 8.4svh);
+  font-weight: 800;
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  color: var(--hg-ink-strong);
+}
+
+.landing .hg-h1 em {
+  font-family: var(--hg-serif);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--hg-ink);
+}
+
+.landing .hg-lead {
+  position: relative;
+  margin: 18px 0 0;
+  max-width: 30rem;
+  font-size: 1.0625rem;
+  line-height: 1.55;
+  color: var(--hg-muted);
+}
+
+.landing .hg-actions {
+  pointer-events: auto;
+  position: relative;
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+@media (max-width: 639.98px) {
+.landing .hg-actions .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+}
+
+/* Partners beside the main button: a hairline, a small label, then each logo on its own. */
+
+.landing .hg-partners {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-left: 22px;
+  border-left: 1px solid var(--hg-line);
+}
+
+.landing .hg-partners-label {
+  font-family: var(--hg-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hg-muted);
+}
+
+.landing .hg-partners ul {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.landing .hg-partners a {
+  display: block;
+  border-radius: 4px;
+}
+
+.landing .hg-partners img {
+  display: block;
+  width: auto;
+  height: 40px;
+  opacity: 0.92;
+  transition: opacity 150ms;
+}
+
+.landing .hg-partners a:hover img {
+  opacity: 1;
+}
+
+.landing .hg-actions {
+  align-items: center;
+  gap: 22px;
+}
+
+@media (max-width: 639.98px) {
+  .landing .hg-partners {
+    width: 100%;
+    justify-content: center;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .landing .hg-partners img {
+    height: 34px;
+  }
+}

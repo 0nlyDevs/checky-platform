@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { HomeView } from "@/components/site/public/home";
+import { Landing } from "@/components/landing/Landing";
 import { brand } from "@/lib/brand";
 import { t } from "@/lib/i18n/fr";
 
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function HomePage() {
-  return <HomeView />;
+  return <Landing />;
 }
