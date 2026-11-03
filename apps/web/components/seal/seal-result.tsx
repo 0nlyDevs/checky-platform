@@ -54,7 +54,7 @@ export function SignedFields({ check }: { check: SealCheck }) {
     const verdict = isVerdict(p.verdict) ? p.verdict : null;
     const meta = verdict ? VERDICT_META[verdict] : null;
     const n = checkNumber(p.ref);
-    rows.push([s.titleField, `« ${str(p.title)} »`]);
+    rows.push([s.titleField, t.common.quote(str(p.title))]);
     if (meta && verdict) {
       const Glyph = meta.icon;
       rows.push([

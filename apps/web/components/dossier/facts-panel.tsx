@@ -249,7 +249,7 @@ export function FactsPanel({
                     <Out href={r.url}>{d.reviewedBy(r.publisher, fmtDay(r.date))}</Out>
                   </p>
                   {r.title && <p className="text-sm text-muted-foreground">{r.title}</p>}
-                  {r.rating && <p className="font-medium">« {r.rating} »</p>}
+                  {r.rating && <p className="font-medium">{t.common.quote(r.rating)}</p>}
                   {r.rating && canSign && !signed && <AdoptReview ws={ws} item={item} review={r} onSigned={onSigned} />}
                 </li>
               ))}
@@ -287,7 +287,7 @@ export function FactsPanel({
               <ul className="flex flex-wrap gap-1.5 text-sm">
                 {tone.signals.map((s, i) => (
                   <li key={i} className="rounded-sm border border-border px-2 py-0.5">
-                    <span className="text-muted-foreground">{d.toneKinds[s.kind] ?? s.kind} · </span>« {s.quote} »
+                    <span className="text-muted-foreground">{d.toneKinds[s.kind] ?? s.kind} · </span>{t.common.quote(s.quote)}
                   </li>
                 ))}
               </ul>

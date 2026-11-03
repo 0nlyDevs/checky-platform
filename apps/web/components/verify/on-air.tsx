@@ -310,7 +310,7 @@ function Signed({ v }: { v: OnAirVerdict }) {
         {o.by(v.own ? o.yours : v.newsroom, day(v.signed_at ?? v.published_at))}
         {v.check_label && <span className="ml-2 font-display font-bold tabular">· {v.check_label}</span>}
       </p>
-      <p className="mt-1 text-pretty text-muted-foreground">« {v.title} »</p>
+      <p className="mt-1 text-pretty text-muted-foreground">{T.common.quote(v.title)}</p>
       <a href={v.link} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-bold underline underline-offset-4">
         {o.openVerdict} <IconArrowSquareOut className="size-3.5" aria-hidden />
       </a>
@@ -383,7 +383,7 @@ function Checkers({ reviews }: { reviews: Reviews | null }) {
               {r.rating && (
                 <p className="mt-1">
                   <span className="text-muted-foreground">{o.theirWords} </span>
-                  <span className="font-bold">« {r.rating} »</span>
+                  <span className="font-bold">{T.common.quote(r.rating)}</span>
                 </p>
               )}
               <a href={r.url} target="_blank" rel="noreferrer" className="mt-1.5 inline-flex items-center gap-1 text-pretty underline underline-offset-4">

@@ -38,7 +38,7 @@ function Entry({ e, index }: { e: OfficialEntry; index: number }) {
       <h2 className="mt-1 font-display text-xl leading-snug font-bold text-pretty">
         {fake ? registre.entry.imitates(communiqueRef(e.original ?? e)) : e.title}
       </h2>
-      {fake && <p className="mt-1 text-muted-foreground">« {(e.original ?? e).title} »</p>}
+      {fake && <p className="mt-1 text-muted-foreground">{t.common.quote((e.original ?? e).title)}</p>}
       <div className="mt-2 flex flex-wrap gap-1.5">
         {e.is_demo && <Tag strong>{registre.entry.demo}</Tag>}
         {e.sealed && (

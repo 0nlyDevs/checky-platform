@@ -277,7 +277,7 @@ function HighlightsBlock({ ws, source, highlights, play, onRefresh }: { ws: stri
                   <li key={i}>
                     <button type="button" onClick={() => q.start != null && play(q.start)} className="group flex w-full gap-3 rounded-sm px-2 py-1 text-left hover:bg-accent">
                       <span className="w-12 shrink-0 font-display text-sm tracking-wide tabular text-muted-foreground">{q.start != null ? clock(q.start) : "—"}</span>
-                      <span className="quote text-pretty">« {q.text} »</span>
+                      <span className="quote text-pretty">{t.common.quote(q.text)}</span>
                     </button>
                   </li>
                 ))}

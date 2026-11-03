@@ -721,6 +721,7 @@ export const core: Overrides = {
   common: {
     loading: "Loading…",
     colon: ":",
+    quote: (text: string) => `“${text}”`,
     demoData: "Demo data",
   },
 };

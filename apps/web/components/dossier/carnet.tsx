@@ -88,7 +88,7 @@ function CarnetSheet({ ws, item, onClose }: { ws: string; item: Item; onClose: (
               <span className="font-display font-bold text-foreground tabular">{data.ref}</span>
             </p>
             <h1 className="mt-2 font-display text-2xl font-extrabold text-pretty">{c.title}</h1>
-            <p className="mt-1 text-lg text-pretty">« {data.title} »</p>
+            <p className="mt-1 text-lg text-pretty">{t.common.quote(data.title)}</p>
             <p className="mt-2 text-sm text-muted-foreground">
               {c.generated(fmtWhen(data.generated_at) ?? "")} · {c.summary(data.entries.length, data.sources.length, data.questions.length)}
             </p>

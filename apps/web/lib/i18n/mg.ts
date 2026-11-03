@@ -927,7 +927,7 @@ export const mg: Overrides = {
       return rest ? `${h} ora ${String(rest).padStart(2, "0")}` : `${h} ora`;
     },
   },
-  common: { loading: "Miandrasa…", demoData: "Angona fampisehoana", colon: ":" },
+  common: { loading: "Miandrasa…", demoData: "Angona fampisehoana", colon: ":", quote: (text: string) => `« ${text} »` },
   crew,
   dossier,
   registre,

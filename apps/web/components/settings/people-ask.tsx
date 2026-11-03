@@ -84,7 +84,7 @@ export function PeopleAsk({ ws }: { ws: string }) {
             <li key={`${g.text}-${i}`} className="flex flex-wrap items-start gap-x-4 gap-y-2 px-4 py-3">
               <IconChatCircle className="mt-1 size-4 shrink-0" aria-hidden />
               <div className="min-w-0 flex-1 basis-64">
-                <p className="text-pretty">«&nbsp;{g.text}&nbsp;»</p>
+                <p className="text-pretty">{t.common.quote(g.text)}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
                   <span className="font-display font-bold text-foreground tabular">{q.count(g.count)}</span>
                   {" · "}

@@ -234,7 +234,7 @@ function FakeRow({ c }: { c: Communique }) {
           {r.entry.fakeTitle} · {r.entry.caught(frenchDay(c.created_at))}
         </p>
         <h3 className="mt-1 text-lg leading-snug font-bold text-pretty">{r.entry.imitates(communiqueRef(c))}</h3>
-        <p className="mt-1 text-muted-foreground">« {c.title} »</p>
+        <p className="mt-1 text-muted-foreground">{t.common.quote(c.title)}</p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {c.is_demo && <Tag strong>{r.entry.demo}</Tag>}
           {!c.own && c.newsroom && <Tag>{r.entry.by(c.newsroom.name)}</Tag>}

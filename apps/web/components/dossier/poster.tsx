@@ -80,7 +80,7 @@ export function PosterView() {
           </header>
 
           <p className="mt-[5%] text-[clamp(0.85rem,2.2vw,1.2rem)] font-bold">{p.rumour}</p>
-          <p className="mt-[1.5%] font-display text-[clamp(1.2rem,4vw,2.3rem)] leading-tight font-extrabold text-balance">« {poster.title} »</p>
+          <p className="mt-[1.5%] font-display text-[clamp(1.2rem,4vw,2.3rem)] leading-tight font-extrabold text-balance">{t.common.quote(poster.title)}</p>
 
           <div className={cn("mt-[5%] rounded-md border-[3px] border-current px-[5%] py-[4%]", m.soft, m.ink)}>
             <p className="flex items-center gap-[3%] font-display text-[clamp(2.4rem,9vw,5.2rem)] leading-none font-extrabold tracking-tight">

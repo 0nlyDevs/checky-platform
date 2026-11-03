@@ -103,7 +103,7 @@ export function ReadingPanel({
                           {e.date && ` · ${fmtDay(e.date)}`}
                         </span>
                       </p>
-                      <blockquote className="mt-1 text-pretty">« {e.quote} »</blockquote>
+                      <blockquote className="mt-1 text-pretty">{t.common.quote(e.quote)}</blockquote>
                       {e.explanation && <p className="mt-0.5 text-sm text-muted-foreground">{e.explanation}</p>}
                     </li>
                   );

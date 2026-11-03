@@ -155,7 +155,7 @@ export function AnalysisPanel({ ws, item, sourceCount }: { ws: string; item: Ite
                           {dateLabel(e)}
                         </p>
                       )}
-                      <blockquote className="mt-2 border-l-2 border-border pl-3 quote text-pretty">« {e.quote} »</blockquote>
+                      <blockquote className="mt-2 border-l-2 border-border pl-3 quote text-pretty">{t.common.quote(e.quote)}</blockquote>
                       {e.explanation && <p className="mt-2 text-sm text-pretty text-muted-foreground">{e.explanation}</p>}
                     </li>
                   );

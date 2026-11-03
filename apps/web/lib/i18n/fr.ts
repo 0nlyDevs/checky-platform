@@ -936,6 +936,8 @@ export const fr = {
     loading: "Chargement…",
     /** After a label (« Sources : … »): French puts a space before the colon. */
     colon: " :",
+    /** Words quoted from a source or a post. */
+    quote: (text: string) => `« ${text} »`,
     demoData: "Données de démonstration",
   },
   // Checky sections, one file per Wave 1 agent (lib/i18n/fr/*.ts).
