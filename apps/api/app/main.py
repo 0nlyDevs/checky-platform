@@ -40,6 +40,7 @@ from app.modules import (
     sms,
     sms_gateway,
     sources,
+    studio,
     trajet,
     translate,
     veille,
@@ -111,6 +112,7 @@ api.include_router(veille.router, prefix="/api/v1")
 api.include_router(verify_public.router, prefix="/api/v1")
 api.include_router(sms.router, prefix="/api/v1")
 api.include_router(sms_gateway.router, prefix="/api/v1")
+api.include_router(studio.router, prefix="/api/v1")
 api.include_router(onair.router, prefix="/api/v1")
 api.include_router(verification.router, prefix="/api/v1")
 api.include_router(official.router, prefix="/api/v1")

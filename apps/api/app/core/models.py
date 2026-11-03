@@ -670,3 +670,58 @@ class OfficialSource(_Row):
         ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
     )
     added_by: Mapped[str] = mapped_column(Text)
+
+
+class Show(_Row):
+    """« Studio »: one live radio or TV show checked as it airs. The browser records 8–10 s
+    chunks; French is transcribed into `segments` ({start, end, text, chunk}), Malagasy never is
+    (the producer types what was said). `chunks` lists the stored audio ({seq, start_s,
+    duration_s, key, mime, size, transcribed}); `settings` holds the sound input, the speakers
+    ({id, name, camp}) and who speaks when (`turns`: {at_s, speaker_id})."""
+
+    __tablename__ = "show"
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    created_by: Mapped[str] = mapped_column(Text)
+    title: Mapped[str] = mapped_column(String(200))
+    topics: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    language: Mapped[str] = mapped_column(String(5), default="fr")  # fr|mg
+    status: Mapped[str] = mapped_column(String(20), default="draft")  # draft|live|ended
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ended_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    settings: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict, server_default="{}")
+    segments: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    chunks: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+
+
+class ShowClaim(_Row):
+    """A checkable sentence heard during a show (spotted by code, by the one cheap model call, or
+    typed by the producer), with its flag (« Conforme à… », « Contredit par… », « Aucune source
+    trouvée », never a verdict) and what the producer did with it."""
+
+    __tablename__ = "show_claim"
+
+    show_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.show.id", ondelete="CASCADE"), index=True
+    )
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    at_s: Mapped[float] = mapped_column(default=0.0)
+    end_s: Mapped[float | None]
+    text: Mapped[str] = mapped_column(Text)
+    speaker_id: Mapped[str | None] = mapped_column(String(40))
+    origin: Mapped[str] = mapped_column(String(10), default="code")  # code|model|typed
+    spotted: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    # {kind: consistent|contradicted|no_source, evidence: [...]} — computed from sources, no model
+    flag: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    status: Mapped[str] = mapped_column(String(12), default="pending")  # pending|sent|dismissed
+    question: Mapped[str | None] = mapped_column(Text)
+    decided_by: Mapped[str | None] = mapped_column(Text)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    item_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.item.id", ondelete="SET NULL")
+    )

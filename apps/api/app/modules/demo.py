@@ -207,6 +207,7 @@ SEED_MODULES = (
     "veille",
     "rubrique",
     "sms",
+    "studio",
 )
 
 
