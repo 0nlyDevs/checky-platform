@@ -1,11 +1,21 @@
 import Link from "next/link";
 import { IconArrowRight, IconCalendarDots } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
-import { t } from "@/lib/i18n/live";
+import { getLang, locale, t } from "@/lib/i18n/live";
 import { DemoTag, Section, type SectionTone } from "./bits";
 import type { Meteo } from "./types";
 
 const m = t.rubrique.meteo;
+
+const FR_MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+
+/** The API says « décembre 2026 » in French; other languages spell the month themselves. */
+function untilLabel(until: string) {
+  const [word, year] = until.split(" ");
+  const month = FR_MONTHS.indexOf(word);
+  if (getLang() === "fr" || month < 0 || !year) return until;
+  return `${new Date(Date.UTC(Number(year), month, 1)).toLocaleDateString(locale(), { month: "long", year: "numeric", timeZone: "UTC" })}`;
+}
 
 /** Météo des rumeurs: the seasons in effect (from a calendar written by hand) and « Déjà vérifié les années passées »,
  *  the verdicts signed around this date in earlier years. */
@@ -36,7 +46,7 @@ export function MeteoPanel({
                   <IconCalendarDots className="size-4 shrink-0" aria-hidden />
                   {s.name}
                 </span>
-                <span className="text-sm text-muted-foreground tabular">{s.days_to != null ? m.electionIn(s.days_to) : m.until(s.until)}</span>
+                <span className="text-sm text-muted-foreground tabular">{s.days_to != null ? m.electionIn(s.days_to) : m.until(untilLabel(s.until))}</span>
               </p>
               <p className="mt-0.5 text-sm text-pretty text-muted-foreground">{s.note}</p>
               {angleHref && (
