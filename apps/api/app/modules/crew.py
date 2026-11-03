@@ -1277,7 +1277,7 @@ async def public_facts(db, text: str | None, url: str | None = None) -> dict[str
         from app.modules.registry import match_text
 
         for ws_id in rooms:
-            found = await match_text(db, ws_id, full, with_contacts=False)
+            found = await match_text(db, ws_id, full, with_contacts=False, channel="public")
             if isinstance(found, dict):
                 out["registry"] = found  # kept even at « none »: the registry was asked
                 if found.get("status") not in (None, "none"):

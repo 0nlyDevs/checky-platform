@@ -160,7 +160,8 @@ def out(c: Communique, ws: Workspace | None, viewer: uuid.UUID, fakes: int = 0) 
         own=c.workspace_id == viewer,
         newsroom=NewsroomOut(slug=ws.slug, name=ws.name) if ws and ws.publishes else None,
         confirmations=confirmations,
-        confirmed=confirmations >= CONFIRMED_AT,
+        # Signed by the issuer itself (an institution's portal) counts as verified at once.
+        confirmed=confirmations >= CONFIRMED_AT or (c.sealed or {}).get("role") == "issuer",
         confirmed_by_us=str(viewer) in (c.confirmed_by or []),
         sealed=sealed,
         original_id=uuid.UUID(original_id) if original_id else None,
@@ -426,6 +427,19 @@ async def record_fake(cid: uuid.UUID, body: FakeIn, member: AnyMember, db: Db) -
     await db.commit()
     await db.refresh(fake)
     await broadcast(member.workspace_id, "registry.changed", {"id": str(fake.id)})
+    from app.modules import institution
+
+    await institution.raise_alerts(
+        {
+            **found,
+            "status": "fake_caught",
+            "issuer": original.issuer,
+            "number": original.number,
+            "communique": {"id": str(original.id)},
+        },
+        body.text,
+        url=str(body.url) if body.url else None,
+    )
     ws = await db.get(Workspace, member.workspace_id)
     return out(fake, ws, member.workspace_id)
 
@@ -789,7 +803,8 @@ async def official_feed(
                 is_demo=c.is_demo,
                 created_at=c.created_at,
                 newsroom=NewsroomOut(slug=w.slug, name=w.name),
-                confirmed=1 + len(c.confirmed_by or []) >= CONFIRMED_AT,
+                confirmed=1 + len(c.confirmed_by or []) >= CONFIRMED_AT
+                or (c.sealed or {}).get("role") == "issuer",
                 sealed=bool(signature),
                 seal_url=seal_url(c.id, c.sealed) if signature else None,
                 fakes=counts.get(str(c.id), 0),
@@ -1133,6 +1148,24 @@ async def match_text(
     text: str,
     *,
     with_contacts: bool = True,
+    channel: str = "desk",
+) -> dict[str, Any]:
+    """See `_match_text`; a result that is not Authentique and names a verified institution also
+    reaches that institution's « Alerte faux » (institution.py)."""
+    found = await _match_text(db, workspace_id, text, with_contacts=with_contacts)
+    if found.get("status") in ("modified", "not_found", "inconsistent"):
+        from app.modules import institution
+
+        await institution.raise_alerts(found, text, channel=channel)
+    return found
+
+
+async def _match_text(
+    db: AsyncSession,
+    workspace_id: uuid.UUID,
+    text: str,
+    *,
+    with_contacts: bool = True,
 ) -> dict[str, Any]:
     """Which registered original a circulating text quotes, from this newsroom's registry and every
     public newsroom's, and how it differs: `authentic` (same words), `modified` (the number exists,
@@ -1148,7 +1181,10 @@ async def match_text(
     cited = quoted_numbers(text)
     registered_issuers = sorted({c.issuer for c, _ in rows})
     annuaire = await institution_names(db, workspace_id)
-    issuers = quoted_issuers(text, [*registered_issuers, *annuaire, *INSTITUTIONS])
+    from app.modules import institution
+
+    portal = await institution.institution_names(db)
+    issuers = quoted_issuers(text, [*registered_issuers, *annuaire, *portal, *INSTITUTIONS])
 
     # 1. The number cited, from the issuer cited (or any issuer when none is named).
     for number in cited:

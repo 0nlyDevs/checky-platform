@@ -69,6 +69,10 @@ class Workspace(_Row):
     # Set by the Checky team (PLATFORM_ADMINS), never by the newsroom: none | pending | approved |
     # refused. Until it is approved the newsroom works privately and nothing of it leaves.
     verification: Mapped[str] = mapped_column(String(16), default="none", server_default="none")
+    # newsroom | institution. An institution (a ministry, a utility…) holds the portal: it seals
+    # its own communiqués, declares its pages and numbers, and sees the fakes that use its name.
+    # It is verified by the Checky team like a newsroom; there are no roles inside either.
+    kind: Mapped[str] = mapped_column(String(16), default="newsroom", server_default="newsroom")
 
     @hybrid_property
     def publishes(self) -> bool:
@@ -426,6 +430,45 @@ class SealKey(_Row):
     public_key: Mapped[str] = mapped_column(Text)  # base64 raw 32 bytes
     private_key_enc: Mapped[str] = mapped_column(Text)
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class InstitutionAlert(_Row):
+    """« Alerte faux »: a check somewhere (desk, public page, extension, phone) met a text that uses
+    a verified institution's name and does not match its registered communiqués (Modifié,
+    Introuvable, Incohérent, or a fake a newsroom caught). The institution's press office sees it
+    in its portal and may publish a denial. One row per distinct text: seen again, `count` grows.
+    Which newsroom checked it is never kept."""
+
+    __tablename__ = "institution_alert"
+    __table_args__ = (UniqueConstraint("workspace_id", "fingerprint"), {"schema": "app"})
+
+    workspace_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("app.workspace.id", ondelete="CASCADE"), index=True
+    )
+    # modified | not_found | inconsistent | fake_caught
+    status: Mapped[str] = mapped_column(String(20))
+    # desk | public | extension | phone | sms: where the check was made
+    channel: Mapped[str] = mapped_column(String(20), default="desk")
+    text: Mapped[str] = mapped_column(Text, default="")
+    fingerprint: Mapped[str] = mapped_column(String(64))
+    # Where it circulated (the link checked), and a picture of it when the check had one.
+    url: Mapped[str | None] = mapped_column(Text)
+    image_url: Mapped[str | None] = mapped_column(Text)
+    summary: Mapped[str | None] = mapped_column(Text)
+    number: Mapped[str | None] = mapped_column(String(60))
+    original_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.communique.id", ondelete="SET NULL")
+    )
+    count: Mapped[int] = mapped_column(default=1, server_default="1")
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    # The denial the institution sealed in answer, or the moment it set the alert aside.
+    denial_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("app.communique.id", ondelete="SET NULL")
+    )
+    dismissed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
 
 class Figure(_Row):

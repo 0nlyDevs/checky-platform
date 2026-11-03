@@ -209,6 +209,7 @@ SEED_MODULES = (
     "rubrique",
     "sms",
     "studio",
+    "institution",
 )
 
 

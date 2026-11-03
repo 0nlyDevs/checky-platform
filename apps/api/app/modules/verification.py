@@ -22,10 +22,11 @@ from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.models import Membership, NewsroomRequest, Workspace
 from app.core.security import CurrentUser, User
+from app.modules import institution
 
 router = APIRouter(tags=["verification"])
 
-Kind = Literal["radio", "tv", "press", "online"]
+Kind = Literal["radio", "tv", "press", "online", "institution"]
 Status = Literal["none", "pending", "approved", "refused"]
 
 
@@ -264,6 +265,7 @@ async def approve(ws: uuid.UUID, user: User, db: Db) -> VerificationOut:
     workspace, r = await _review(db, user, ws)
     workspace.verification = "approved"
     r.reason = None
+    await institution.sync_shared(db, workspace)
     await db.commit()
     await db.refresh(r)
     return _out(workspace, r)
@@ -274,6 +276,7 @@ async def refuse(ws: uuid.UUID, body: RefuseIn, user: User, db: Db) -> Verificat
     workspace, r = await _review(db, user, ws)
     workspace.verification = "refused"
     r.reason = body.reason.strip()
+    await institution.sync_shared(db, workspace)
     await db.commit()
     await db.refresh(r)
     return _out(workspace, r)

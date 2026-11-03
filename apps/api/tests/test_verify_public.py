@@ -133,7 +133,7 @@ def test_facts_alone_from_the_registry(as_user, no_reviews, monkeypatch):
     from app.modules import registry
 
     async def match_text(db, workspace_id, text, **kw):
-        assert kw == {"with_contacts": False}
+        assert kw == {"with_contacts": False, "channel": "public"}
         assert workspace_id is not None
         return {
             "status": "modified",
@@ -324,7 +324,7 @@ def test_a_desk_agents_private_fields_never_leave_the_newsroom(as_user, no_revie
     from app.modules import registry
 
     async def match_text(db, workspace_id, text, **kw):
-        assert kw == {"with_contacts": False}
+        assert kw == {"with_contacts": False, "channel": "public"}
         return {
             "status": "not_found",
             "issuer": "JIRAMA",

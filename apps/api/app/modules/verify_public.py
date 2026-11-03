@@ -339,7 +339,7 @@ async def _fallback_facts(db: Db, text: str, newsrooms: list[uuid.UUID | None]) 
 
         for ws_id in newsrooms:
             # the public never needs the desk's Annuaire contacts: not even loaded
-            found = await match_text(db, ws_id, text, with_contacts=False)
+            found = await match_text(db, ws_id, text, with_contacts=False, channel="public")
             if isinstance(found, dict) and found.get("status") not in (None, "none"):
                 out["registry"] = found
                 break

@@ -42,6 +42,7 @@ def test_creator_is_a_member_listed_in_me(as_user):
             "name": "Desk",
             "slug": me["memberships"][0]["slug"],
             "verification": "none",
+            "kind": "newsroom",
         }
     ]
 

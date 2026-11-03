@@ -17,6 +17,8 @@ class MembershipOut(BaseModel):
     name: str
     slug: str
     verification: str
+    # newsroom (the desk) | institution (the portal)
+    kind: str = "newsroom"
 
 
 class MeOut(BaseModel):
@@ -37,7 +39,9 @@ async def me(user: User, db: Db) -> MeOut:
         .order_by(Workspace.created_at)
     )
     memberships = [
-        MembershipOut(workspace_id=w.id, name=w.name, slug=w.slug, verification=w.verification)
+        MembershipOut(
+            workspace_id=w.id, name=w.name, slug=w.slug, verification=w.verification, kind=w.kind
+        )
         for w in rows.scalars()
     ]
     return MeOut(

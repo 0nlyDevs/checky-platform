@@ -29,12 +29,15 @@ router = APIRouter(tags=["workspaces"])
 
 class WorkspaceIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
+    # « Je représente une institution »: the portal instead of the desk (see institution.py).
+    kind: Literal["newsroom", "institution"] = "newsroom"
 
 
 class WorkspaceOut(BaseModel):
     id: uuid.UUID
     name: str
     slug: str
+    kind: str = "newsroom"
 
 
 class MemberOut(BaseModel):
@@ -107,6 +110,7 @@ class WorkspaceSettingsOut(BaseModel):
     is_public: bool
     # none | pending | approved | refused (set by the Checky team, see verification.py)
     verification: str = "none"
+    kind: str = "newsroom"
     settings: NewsroomSettings = Field(default_factory=NewsroomSettings)
 
 
@@ -123,12 +127,19 @@ def _slugify(name: str) -> str:
 
 @router.post("/workspaces", status_code=201)
 async def create_workspace(body: WorkspaceIn, user: User, db: Db) -> WorkspaceOut:
-    ws = Workspace(name=body.name, slug=_slugify(body.name))
+    # An institution exists to publish its communiqués: it opts in at once, and nothing of it
+    # leaves until the Checky team has verified it (`Workspace.publishes`).
+    ws = Workspace(
+        name=body.name,
+        slug=_slugify(body.name),
+        kind=body.kind,
+        is_public=body.kind == "institution",
+    )
     db.add(ws)
     await db.flush()
     db.add(Membership(workspace_id=ws.id, user_id=user.id))
     await db.commit()
-    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug)
+    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug, kind=ws.kind)
 
 
 @router.get("/workspaces/{ws}")
@@ -140,6 +151,7 @@ async def get_workspace(member: AnyMember, db: Db) -> WorkspaceSettingsOut:
         slug=ws.slug,
         is_public=ws.is_public,
         verification=ws.verification,
+        kind=ws.kind,
         settings=newsroom_settings(ws),
     )
 
@@ -164,6 +176,7 @@ async def update_workspace(body: WorkspacePatch, member: AnyMember, db: Db) -> W
         slug=ws.slug,
         is_public=ws.is_public,
         verification=ws.verification,
+        kind=ws.kind,
         settings=newsroom_settings(ws),
     )
 
@@ -202,7 +215,7 @@ async def accept_invitation(token: str, user: User, db: Db) -> WorkspaceOut:
         db.add(Membership(workspace_id=inv.workspace_id, user_id=user.id))
     inv.used_at = datetime.now(UTC)
     await db.commit()
-    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug)
+    return WorkspaceOut(id=ws.id, name=ws.name, slug=ws.slug, kind=ws.kind)
 
 
 @router.delete("/workspaces/{ws}/members/{user_id}", status_code=204)

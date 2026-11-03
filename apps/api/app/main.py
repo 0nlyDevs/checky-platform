@@ -25,6 +25,7 @@ from app.modules import (
     guide,
     health,
     imagecheck,
+    institution,
     items,
     jobs,
     linkcheck,
@@ -122,6 +123,7 @@ api.include_router(alerts.router, prefix="/api/v1")
 api.include_router(alert_kit.router, prefix="/api/v1")
 api.include_router(live.router, prefix="/api/v1")
 api.include_router(gestures.router, prefix="/api/v1")
+api.include_router(institution.router, prefix="/api/v1")
 api.include_router(voicenote.router, prefix="/api/v1")
 
 # Socket.IO shares the process and port with the API; uvicorn serves `app.main:app`.
