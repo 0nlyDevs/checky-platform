@@ -54,16 +54,25 @@ export function AuthForm({ mode }: { mode: Mode }) {
 
   return (
     <div>
-      <h1 className="page-title text-foreground">
-        {isSignUp ? t.auth.signUpTitle : t.auth.signInTitle}
-      </h1>
-      <p className="mt-1.5 text-muted-foreground">{isSignUp ? t.auth.signUpLead : t.auth.signInLead}</p>
+      {isSignUp && (
+        // Sign-up is the first of three steps: the newsroom and its verification follow at onboarding.
+        <ol className="auth-steps" aria-label={t.look.auth.stepsLabel}>
+          {t.look.auth.steps.map((step, i) => (
+            <li key={step} aria-current={i === 0 ? "step" : undefined}>
+              <span className="disc">{i + 1}</span>
+              {step}
+            </li>
+          ))}
+        </ol>
+      )}
+      <h1 className="pub-h2 text-foreground">{isSignUp ? t.auth.signUpTitle : t.auth.signInTitle}</h1>
+      <p className="mt-3 text-muted-foreground">{isSignUp ? t.auth.signUpLead : t.auth.signInLead}</p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5" noValidate={false}>
         {isSignUp && (
           <div className="space-y-2">
             <Label htmlFor="name">{t.auth.name}</Label>
-            <Input id="name" name="name" autoComplete="name" required className="h-11" />
+            <Input id="name" name="name" autoComplete="name" required className="h-12 rounded-full px-5" />
           </div>
         )}
         <div className="space-y-2">
@@ -75,7 +84,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
             inputMode="email"
             autoComplete="email"
             required
-            className="h-11"
+            className="h-12 rounded-full px-5"
           />
         </div>
         <div className="space-y-2">
@@ -89,7 +98,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               minLength={8}
               required
               aria-describedby={isSignUp ? "password-hint" : undefined}
-              className="h-11 pr-12"
+              className="h-12 rounded-full pr-14 pl-5"
             />
             <button
               type="button"
@@ -97,7 +106,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               aria-label={showPassword ? t.auth.hidePassword : t.auth.showPassword}
               aria-pressed={showPassword}
               aria-controls="password"
-              className="absolute inset-y-0 right-1 my-auto inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+              className="absolute inset-y-0 right-1.5 my-auto inline-flex size-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
             >
               {showPassword ? <IconEyeSlash aria-hidden /> : <IconEye aria-hidden />}
             </button>
@@ -110,12 +119,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
         </div>
 
         {error && (
-          <p role="alert" className="rounded-md bg-verdict-false-soft px-3 py-2.5 text-sm text-verdict-false-ink">
+          <p role="alert" className="rounded-[16px] bg-verdict-false-soft px-4 py-3 text-sm text-verdict-false-ink">
             {error}
           </p>
         )}
 
-        <Button type="submit" variant="action" size="xl" className="w-full" disabled={pending}>
+        <Button type="submit" variant="action" size="xl" className="h-13 w-full rounded-full" disabled={pending}>
           {pending && <IconCircleNotch className="animate-spin" aria-hidden />}
           {isSignUp ? t.auth.signUp : t.auth.signIn}
         </Button>

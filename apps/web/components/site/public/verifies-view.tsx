@@ -1,13 +1,12 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useSyncExternalStore } from "react";
+import { Suspense } from "react";
 import { CheckForm } from "@/components/site/public/check";
-import { Doodle, DoodleNote, Em, Lines } from "@/components/site/public/kit";
+import { Doodle, DoodleNote, Em, Lines, useStill } from "@/components/site/public/kit";
 import { VerdictList } from "@/components/site/public/verdicts";
 import { VERDICT_META } from "@/components/claims/verdict";
 import { useT } from "@/lib/i18n";
-import { reducedMotion } from "@/lib/prefs";
 import { cn } from "@/lib/utils";
 
 /** « Est-ce déjà vérifié ? »: the check first, under the landing's rising title, then every
@@ -69,11 +68,7 @@ const REELS = [
 function Reels() {
   const t = useT();
   const l = t.look.verifies;
-  const still = useSyncExternalStore(
-    () => () => {},
-    () => reducedMotion(),
-    () => true,
-  );
+  const still = useStill();
   if (still) return <div className="hidden lg:block" aria-hidden />;
   return (
     <figure className="reels rise hidden lg:block" style={{ "--d": "0.3s" } as React.CSSProperties}>

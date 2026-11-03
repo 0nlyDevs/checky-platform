@@ -17,6 +17,15 @@ export const look: Part<typeof fr> = {
   report: { hero: ["Hampahafantatra", "*tsaho*"], note: "Toy izao ihany, na misy diso aza" },
   follow: { hero: ["Fanarahana ny", "*tatitra*"] },
   reponse: { hero: ["Misy mpanao gazety", "*manontany* anao"] },
+  auth: {
+    hero: ["Ny fitaovan'ny", "*mpanao gazety* anao."],
+    heroUp: ["Manamarina *haingana*", "kokoa ny ekipanao."],
+    back: "Hanamarina tsy misy kaonty",
+    doors: "Fidirana ho an'ny mpanao gazety",
+    steps: ["Ianao", "Ny ekipa", "Fanamarinana"],
+    stepsLabel: "Ireo dingana fisoratana anarana",
+    credits: "Horonan-tsary: Wikimedia Commons",
+  },
   verdict: {
     seal: "Mpanao gazety nohamarinin'i Checky",
   },

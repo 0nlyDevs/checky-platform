@@ -15,6 +15,15 @@ export const look = {
   report: { hero: ["Signaler", "une *rumeur*"], note: "Tel quel, fautes comprises" },
   follow: { hero: ["Suivi du", "*signalement*"] },
   reponse: { hero: ["Une rédaction vous", "pose une *question*"] },
+  auth: {
+    hero: ["L'outil de", "votre *rédaction*."],
+    heroUp: ["Votre rédaction", "vérifie plus *vite*."],
+    back: "Vérifier sans compte",
+    doors: "Accès des rédactions",
+    steps: ["Vous", "La rédaction", "Vérification"],
+    stepsLabel: "Les étapes de l'inscription",
+    credits: "Vidéo : Wikimedia Commons",
+  },
   verdict: {
     seal: "Rédaction vérifiée par Checky",
   },

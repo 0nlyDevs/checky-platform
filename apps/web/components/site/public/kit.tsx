@@ -1,7 +1,7 @@
 "use client";
 
 import { Select as SelectPrimitive } from "radix-ui";
-import type { CSSProperties, ReactNode } from "react";
+import { type CSSProperties, type ReactNode, useSyncExternalStore } from "react";
 import {
   IconCaretDown,
   IconCheck,
@@ -13,8 +13,18 @@ import {
   IconWhatsappLogo,
   type Icon,
 } from "@/lib/icons";
+import { reducedMotion } from "@/lib/prefs";
 import { useSlidingPill } from "@/lib/use-sliding-pill";
 import { cn } from "@/lib/utils";
+
+/** True in Mode éco, with reduced motion, and on the server: decorative clips then stay off. */
+export function useStill(): boolean {
+  return useSyncExternalStore(
+    () => () => {},
+    () => reducedMotion(),
+    () => true,
+  );
+}
 
 /** Where a rumour was seen, as the platform's own logo (ink, in the theme's text colour). */
 export const ORIGIN_ICON: Record<string, Icon> = {
