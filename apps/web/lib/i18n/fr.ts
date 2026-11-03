@@ -4,6 +4,7 @@ import { crew } from "./fr/crew";
 import { dossier } from "./fr/dossier";
 import { alertKit } from "./fr/alertKit";
 import { offline } from "./fr/offline";
+import { pages } from "./fr/pages";
 import { palette } from "./fr/palette";
 import { publication } from "./fr/publication";
 import { publicLayer } from "./fr/publicLayer";
@@ -952,6 +953,7 @@ export const fr = {
   reach,
   offline,
   alertKit,
+  pages,
   palette,
   publication,
   resources,
