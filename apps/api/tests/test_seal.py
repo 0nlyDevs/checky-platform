@@ -75,7 +75,7 @@ def test_issuer_key_is_created_once_and_kept_encrypted(as_user, secret):
     assert seal.verify(key.public_key, first["payload"], first["signature"])
     url = seal.seal_url(c.id, first)
     packed = seal.b64u(seal.canonical(first["payload"]).encode())
-    assert url.endswith(f"/sceau/{c.id}#{packed}.{first['signature']}.{key.key_id}")
+    assert url.endswith(f"/seal/{c.id}#{packed}.{first['signature']}.{key.key_id}")
     # The QR alone is enough to check the paper offline: payload, signature and key id.
     payload, message, signature, key_id = seal.read_communique_fragment(url.split("#")[1])
     assert payload == first["payload"] and key_id == key.key_id
@@ -104,7 +104,7 @@ def test_seal_routes_qr_public_check_and_revocation(as_user, monkeypatch):
 
     sealed = carol.post(f"{base}/{cid}/seal").json()
     signature = sealed["sealed"]["signature"]
-    fragment = sealed["sealed"]["url"].split(f"/sceau/{cid}#")[1]
+    fragment = sealed["sealed"]["url"].split(f"/seal/{cid}#")[1]
     packed, printed, key_id = fragment.split(".")
     assert printed == signature and key_id == sealed["sealed"]["key_id"]
     message = seal.unb64u(packed).decode()

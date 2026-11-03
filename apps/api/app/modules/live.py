@@ -92,7 +92,7 @@ async def notices(db: AsyncSession, ws: uuid.UUID, hours: int = 24) -> list[Noti
                     title=a.title,
                     detail=", ".join(regions),
                     ref=d.get("ref"),
-                    href=f"/veille#alerte-{a.id}",
+                    href=f"/watch#alerte-{a.id}",
                     demo=bool(d.get("demo")),
                 )
             )
@@ -107,7 +107,7 @@ async def notices(db: AsyncSession, ws: uuid.UUID, hours: int = 24) -> list[Noti
                         title=a.title,
                         detail=((d.get("kit") or {}).get("script") or {}).get("fr") or "",
                         ref=d.get("ref"),
-                        href=f"/veille#alerte-{a.id}",
+                        href=f"/watch#alerte-{a.id}",
                         demo=bool(d.get("demo")),
                     )
                 )
@@ -127,7 +127,7 @@ async def notices(db: AsyncSession, ws: uuid.UUID, hours: int = 24) -> list[Noti
                     title=item.title,
                     detail=region or "",
                     ref=d.get("ref"),
-                    href=f"/affirmations/{item.id}",
+                    href=f"/claims/{item.id}",
                     demo=bool(d.get("demo")),
                 )
             )
@@ -149,7 +149,7 @@ async def notices(db: AsyncSession, ws: uuid.UUID, hours: int = 24) -> list[Noti
                             at=clip.recorded_at,
                             title=s.word,
                             detail=f"{clip.station} · {(clip.heard_text or '')[:160]}",
-                            href="/veille?type=clip",
+                            href="/watch?type=clip",
                             demo="démo" in (clip.station or "").lower(),
                         )
                     )
@@ -187,7 +187,7 @@ async def notices(db: AsyncSession, ws: uuid.UUID, hours: int = 24) -> list[Noti
                 title=item.title,
                 detail=r.place,
                 ref=(item.data or {}).get("ref"),
-                href=f"/affirmations/{item.id}#trajet",
+                href=f"/claims/{item.id}#trajet",
                 demo=bool((item.data or {}).get("demo")),
             )
         )

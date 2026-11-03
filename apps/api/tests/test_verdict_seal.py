@@ -64,7 +64,7 @@ def test_sealed_verdict_round_trips_through_the_qr_fragment(as_user, secret):
     p = out["payload"]
     assert p["signed_at"] == "2026-11-02T05:15Z" and p["digest"] == "ab" * 16
     assert len(p["title"]) <= seal.TITLE_MAX and p["title"].endswith("…")
-    assert out["url"].startswith(f"https://checky.example/verifies/{item_id}#")
+    assert out["url"].startswith(f"https://checky.example/verdicts/{item_id}#")
     payload, message, signature, key_id = seal.read_fragment(out["url"].split("#", 1)[1])
     assert payload == p and key_id == out["key_id"]
     assert seal.verify_message(out["public_key"], message, signature)
@@ -105,7 +105,7 @@ def test_card_seal_is_checked_offline_and_fails_once_the_verdict_changes(as_user
 
     pub = client.get(f"/api/v1/public/sceau/v/{item}").json()
     assert pub["message"] == message and pub["check_label"] == "vérification 145"
-    assert pub["newsroom"]["name"] and pub["published_url"].endswith(f"/verifies/{item}")
+    assert pub["newsroom"]["name"] and pub["published_url"].endswith(f"/verdicts/{item}")
     body = {"message": message, "signature": signature, "key_id": key_id}
     check = client.post(f"/api/v1/public/sceau/v/{item}/verify", json=body).json()
     assert check == {**check, "valid": True, "current": True, "revoked": False}
@@ -126,7 +126,7 @@ def test_card_seal_is_checked_offline_and_fails_once_the_verdict_changes(as_user
     assert check["valid"] is True and check["current"] is False
     # The diffusion's poster carries the seal, not just the page.
     formats = alice.get(f"/api/v1/workspaces/{ws}/items/{item}/diffusion").json()
-    assert formats["poster"]["qr_url"].startswith(f"https://checky.example/verifies/{item}#")
+    assert formats["poster"]["qr_url"].startswith(f"https://checky.example/verdicts/{item}#")
     assert (
         formats["seal"]["number"] == 145 and formats["poster"]["check_label"] == "vérification 145"
     )

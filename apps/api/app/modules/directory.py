@@ -8,7 +8,7 @@ it; `official_hosts` returns only checked ones (the crew's credibility grid read
 For a dossier, `GET …/items/{id}/who` takes each point the reading says is missing and the claim's
 beats and places, and proposes the 1–3 people best placed to settle it, with why and a question
 ready to send. `POST …/items/{id}/questions` logs the question and returns ready links (WhatsApp,
-SMS, e-mail); the contact answers at `/reponse/{token}` without an account, and the answer becomes
+SMS, e-mail); the contact answers at `/reply/{token}` without an account, and the answer becomes
 a dated source of the dossier, read again by the checker. Never scraped personal numbers.
 """
 
@@ -510,7 +510,7 @@ async def who(item_id: uuid.UUID, member: AnyMember, db: Db) -> WhoOut:
 
 
 def answer_url(token: str) -> str:
-    return f"{get_settings().public_web_url.rstrip('/')}/reponse/{token}"
+    return f"{get_settings().public_web_url.rstrip('/')}/reply/{token}"
 
 
 def _digits(phone: str | None) -> str:

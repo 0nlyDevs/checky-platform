@@ -53,7 +53,7 @@ def test_guide_finds_verdicts_and_prepares_a_tip_without_sending_it(as_user, scr
     assert nav == {
         "id": 2,
         "kind": "navigate",
-        "href": "/verifies",
+        "href": "/verdicts",
         "label": "Les verdicts",
     }
     assert "malagasy" in seen[0]["messages"][0]["content"]
@@ -110,7 +110,7 @@ def test_copilot_reads_the_desk_and_only_proposes(as_user, scripted):
         alice,
         f"/api/v1/workspaces/{ws}/copilot",
         "Qu'est-ce qui traîne ?",
-        page=f"/w/{ws}/affirmations/{claim}",
+        page=f"/w/{ws}/claims/{claim}",
     )
     assert "Le bac de Mahajanga" in seen[0]["messages"][0]["content"]  # the page's claim
     assert "1 affirmations, 1 ouvertes" in [d["summary"] for e, d in events if e == "step"]

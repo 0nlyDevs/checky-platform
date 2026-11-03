@@ -117,7 +117,7 @@ def test_a_question_goes_out_as_links_and_comes_back_as_a_dated_source(
     q = sent.json()
     assert q["links"]["whatsapp"].startswith("https://wa.me/261340000001?text=Confirmez-vous")
     assert q["links"]["mailto"].startswith("mailto:contact01@example.org?subject=")
-    assert "/reponse/" in q["message"]
+    assert "/reply/" in q["message"]
     token = q["answer_url"].rsplit("/", 1)[1]
 
     page = client.get(f"/api/v1/public/reponse/{token}").json()
