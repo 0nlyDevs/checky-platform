@@ -108,7 +108,7 @@ export const rubrique = {
     select: (title: string) => `Choisir « ${title} »`,
   },
 
-  mineList: { title: "Mes dossiers", empty: "Aucun dossier ne vous est attribué." },
+  mineList: { title: "Mes dossiers", empty: "Aucun dossier ne vous est attribué.", allToSign: "Les vôtres attendent une signature : ils sont dans « À signer »." },
   toSign: { title: "À signer", lead: "Une suggestion attend la confirmation d'un journaliste.", empty: "Rien à signer." },
 
   figures: {

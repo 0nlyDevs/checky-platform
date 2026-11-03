@@ -18,7 +18,6 @@ import { useMe } from "@/components/rubrique/use-me";
 import { useWorkspaceSocket } from "@/hooks/use-workspace-socket";
 import { api, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/fr";
-import { cn } from "@/lib/utils";
 import { BeatPicker } from "./beat-picker";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "./bits";
 import { MeteoPanel } from "./meteo-panel";
@@ -37,12 +36,12 @@ function CirculatingRow({ ws, c, i }: { ws: string; c: Circulating; i: number })
   const go = target(ws, c);
   const claim = c.item ? toClaim(c.item) : null;
   const linkClass =
-    "block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset md:text-[1.05rem]";
+    "block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset md:text-lg md:leading-snug";
   return (
     <li className="arrive relative border-b border-border" style={{ "--i": Math.min(i, 12) } as React.CSSProperties}>
       <div className="grid gap-x-5 gap-y-2 py-3.5 transition-colors hover:bg-card sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:px-2 @4xl:grid-cols-[5.5rem_minmax(0,1fr)_13rem]">
         <p className="flex items-baseline gap-3 sm:block">
-          <time dateTime={c.at} className="block font-display font-bold tabular">
+          <time dateTime={c.at} className="block text-sm font-medium tabular">
             {when(c.at)}
           </time>
           <KindLabel kind={c.kind} className="font-normal text-muted-foreground sm:mt-0.5" />
@@ -60,7 +59,7 @@ function CirculatingRow({ ws, c, i }: { ws: string; c: Circulating; i: number })
           )}
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             {claim && <StatusLabel status={claim.status} />}
-            {claim && <span className="font-bold text-foreground tabular">{claim.ref}</span>}
+            {claim && <span className="text-foreground tabular">{claim.ref}</span>}
             {c.place?.name && (
               <span className="inline-flex items-center gap-1">
                 <IconMapPin className="size-3.5" aria-hidden />
@@ -82,7 +81,7 @@ function CirculatingRow({ ws, c, i }: { ws: string; c: Circulating; i: number })
         </div>
         {claim && (
           <div className="flex items-center gap-3 sm:col-start-2 @4xl:col-start-auto @4xl:flex-col @4xl:items-end @4xl:justify-center">
-            <StepLine variant="mini" states={claimSteps(claim)} />
+            <StepLine variant="mini" labels={false} states={claimSteps(claim)} />
             <VerdictBadge claim={claim} compact />
           </div>
         )}
@@ -94,16 +93,16 @@ function CirculatingRow({ ws, c, i }: { ws: string; c: Circulating; i: number })
 function DossierShort({ ws, items, empty }: { ws: string; items: Item[]; empty: string }) {
   if (items.length === 0) return <p className="text-sm text-muted-foreground">{empty}</p>;
   return (
-    <ul className="divide-y divide-border">
+    <ul className="space-y-4">
       {items.map((item) => {
         const c = toClaim(item);
         return (
-          <li key={item.id} className="relative py-2.5 first:pt-0">
+          <li key={item.id} className="relative">
             <Link href={`/w/${ws}/affirmations/${item.id}` as never} className="block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring">
               {item.title}
             </Link>
             <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-              <span className="font-display font-bold tabular">{c.ref}</span>
+              <span className="tabular">{c.ref}</span>
               <StatusLabel status={c.status} />
               <VerdictBadge claim={c} />
             </p>
@@ -117,14 +116,14 @@ function DossierShort({ ws, items, empty }: { ws: string; items: Item[]; empty: 
 function Figures({ figures }: { figures: FigureCard[] }) {
   if (figures.length === 0) return <p className="text-sm text-muted-foreground">{r.figures.empty}</p>;
   return (
-    <ul className="divide-y divide-border">
+    <ul className="space-y-5">
       {figures.map((f) => (
-        <li key={f.id} className="py-2.5 first:pt-0">
+        <li key={f.id}>
           <p className="flex items-baseline gap-2">
             <span className="font-display text-2xl leading-none font-bold tabular">{f.value}</span>
-            {f.unit && <span className="font-bold">{f.unit}</span>}
+            {f.unit && <span className="font-medium">{f.unit}</span>}
           </p>
-          <p className="mt-1 text-sm font-bold text-pretty">{f.label}</p>
+          <p className="mt-1 text-sm font-medium text-pretty">{f.label}</p>
           <p className="text-sm text-muted-foreground">
             {f.as_of && <span className="tabular">{r.figures.asOf(f.as_of)} · </span>}
             {f.source_url ? (
@@ -152,9 +151,9 @@ function Contacts({ contacts }: { contacts: ContactCard[] }) {
   if (contacts.length === 0) return <p className="text-sm text-muted-foreground">{r.contacts.empty}</p>;
   return (
     <>
-      <ul className="divide-y divide-border">
+      <ul className="space-y-5">
         {contacts.map((c) => (
-          <li key={c.id} className="py-2.5 first:pt-0">
+          <li key={c.id}>
             <p className="font-bold">
               {c.name}
               {c.is_demo && <DemoTag className="ml-2 align-[0.1em]" />}
@@ -162,12 +161,12 @@ function Contacts({ contacts }: { contacts: ContactCard[] }) {
             <p className="text-sm text-muted-foreground">{[c.role, c.institution].filter(Boolean).join(" · ")}</p>
             <p className="mt-1 flex flex-wrap gap-x-4 text-sm">
               {c.phone && (
-                <a href={`tel:${c.phone.replace(/\s+/g, "")}`} className="font-bold underline underline-offset-4">
+                <a href={`tel:${c.phone.replace(/\s+/g, "")}`} className="font-medium underline underline-offset-4">
                   {r.contacts.call} <span className="font-normal tabular">{c.phone}</span>
                 </a>
               )}
               {c.email && (
-                <a href={`mailto:${c.email}`} className="font-bold underline underline-offset-4">
+                <a href={`mailto:${c.email}`} className="font-medium underline underline-offset-4">
                   {r.contacts.write}
                 </a>
               )}
@@ -175,7 +174,7 @@ function Contacts({ contacts }: { contacts: ContactCard[] }) {
           </li>
         ))}
       </ul>
-      <p className="mt-2 text-xs text-muted-foreground">{r.contacts.declared}</p>
+      <p className="mt-4 text-xs text-muted-foreground">{r.contacts.declared}</p>
     </>
   );
 }
@@ -184,25 +183,30 @@ function Angles({ ws, angles }: { ws: string; angles: AngleCard[] }) {
   return (
     <ul className="grid gap-3 @3xl:grid-cols-3">
       {angles.map((a) => (
-        <li key={`${a.kind}-${a.title}`} className="flex flex-col rounded-md border border-border bg-card p-4">
+        <li
+          key={`${a.kind}-${a.title}`}
+          className="relative flex flex-col rounded-md border border-border bg-card p-4 transition-colors hover:border-input hover:bg-raised"
+        >
           <p className="text-sm text-muted-foreground">
             {a.kind === "kept" && a.item_id ? (
-              <Link href={`/w/${ws}/affirmations/${a.item_id}` as never} className="font-bold text-foreground underline underline-offset-4">
+              <Link href={`/w/${ws}/affirmations/${a.item_id}` as never} className="relative z-10 font-bold text-foreground underline underline-offset-4">
                 {r.anglesBox.kept(a.ref ?? "")}
               </Link>
             ) : (
               r.anglesBox.piste
             )}
           </p>
-          <p className="mt-1 font-display text-lg leading-snug font-bold text-pretty">{a.title}</p>
-          {a.why && <p className="mt-1 text-sm text-pretty text-muted-foreground">{a.why}</p>}
+          {/* The whole card opens the angle: one link per card, named by its title. */}
           <Link
             href={`/w/${ws}/angles?sujet=${encodeURIComponent(a.title)}` as never}
-            className="mt-auto inline-flex items-center gap-1.5 pt-3 text-sm font-bold underline underline-offset-4"
+            className="mt-1 font-display text-lg leading-snug font-bold text-pretty outline-none after:absolute after:inset-0 after:rounded-md focus-visible:after:ring-2 focus-visible:after:ring-ring"
           >
-            {r.anglesBox.explore}
-            <IconArrowRight className="size-4" aria-hidden />
+            {a.title}
           </Link>
+          {a.why && <p className="mt-1 text-sm text-pretty text-muted-foreground">{a.why}</p>}
+          <span className="mt-auto flex justify-end pt-3 text-muted-foreground">
+            <IconArrowRight className="size-4" aria-hidden />
+          </span>
         </li>
       ))}
     </ul>
@@ -322,57 +326,49 @@ export function RubriqueView() {
         </div>
       )}
 
-      <div className="pt-6">
+      <div className="pt-8">
         {error ? (
           <LoadFailed onRetry={refresh} />
         ) : !data ? (
           <PageSkeleton />
         ) : (
-          <div className="grid gap-x-10 gap-y-10 px-4 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_22rem]">
-            <div className="min-w-0 space-y-10">
-              <Section id="circule" title={r.circulating.title} lead={r.circulating.lead}>
-                {data.circulating.length === 0 ? (
-                  <div className="rounded-md border border-dashed border-border px-4 py-6 text-center">
-                    <p className="font-bold">{r.circulating.empty}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">{r.circulating.emptyHint}</p>
-                  </div>
-                ) : (
-                  <ul className="border-t border-border">
-                    {data.circulating.map((c, i) => (
-                      <CirculatingRow key={`${c.kind}-${c.id}`} ws={ws} c={c} i={i} />
-                    ))}
-                  </ul>
-                )}
-              </Section>
-
-              <div className="grid gap-x-8 gap-y-10 @3xl:grid-cols-2">
-                <Section id="mes-dossiers" title={r.mineList.title}>
-                  <DossierShort ws={ws} items={data.mine} empty={r.mineList.empty} />
-                </Section>
-                <Section id="a-signer" title={r.toSign.title} lead={data.to_sign.length > 0 ? r.toSign.lead : undefined}>
-                  <DossierShort ws={ws} items={data.to_sign} empty={r.toSign.empty} />
-                </Section>
-              </div>
-
-              {data.angles.length > 0 && (
-                <Section
-                  id="angles"
-                  title={r.anglesBox.title}
-                  action={
-                    <Link href={`/w/${ws}/angles` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
-                      {r.anglesBox.explore}
-                    </Link>
-                  }
-                >
-                  <Angles ws={ws} angles={data.angles} />
-                </Section>
+          // Phone order (DOM): what circulates, my dossiers, the context, the references, the angles.
+          // From @5xl the context column stands on the right beside the first four rows.
+          <div className="grid gap-x-10 gap-y-10 px-4 sm:gap-y-14 lg:px-0 @5xl:grid-cols-[minmax(0,1fr)_22rem] @5xl:grid-rows-[auto_auto_auto_1fr]">
+            <Section id="circule" tone="lead" title={r.circulating.title} lead={r.circulating.lead} className="min-w-0 @5xl:col-start-1 @5xl:row-start-1">
+              {data.circulating.length === 0 ? (
+                <div className="rounded-md border border-dashed border-border px-4 py-6 text-center">
+                  <p className="font-bold">{r.circulating.empty}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{r.circulating.emptyHint}</p>
+                </div>
+              ) : (
+                <ul className="border-t border-border">
+                  {data.circulating.map((c, i) => (
+                    <CirculatingRow key={`${c.kind}-${c.id}`} ws={ws} c={c} i={i} />
+                  ))}
+                </ul>
               )}
+            </Section>
+
+            <div className="grid min-w-0 gap-x-8 gap-y-10 sm:gap-y-14 @3xl:grid-cols-2 @5xl:col-start-1 @5xl:row-start-2">
+              <Section id="a-signer" title={r.toSign.title} lead={data.to_sign.length > 0 ? r.toSign.lead : undefined}>
+                <DossierShort ws={ws} items={data.to_sign} empty={r.toSign.empty} />
+              </Section>
+              <Section id="mes-dossiers" title={r.mineList.title}>
+                {/* A dossier waiting for a signature is listed once, under « À signer ». */}
+                <DossierShort
+                  ws={ws}
+                  items={data.mine.filter((m) => !data.to_sign.some((s) => s.id === m.id))}
+                  empty={data.mine.length > 0 ? r.mineList.allToSign : r.mineList.empty}
+                />
+              </Section>
             </div>
 
-            <aside className={cn("min-w-0 space-y-10")}>
+            <aside className="min-w-0 space-y-10 sm:space-y-12 @5xl:col-start-2 @5xl:row-span-4 @5xl:row-start-1">
               {alerts.data && alerts.data.length > 0 && (
                 <Section
                   id="alertes"
+                  tone="aside"
                   title={t.rubrique.alerts.title}
                   lead={t.rubrique.alerts.leadShort}
                   action={
@@ -384,9 +380,10 @@ export function RubriqueView() {
                   <AlertsList ws={ws} alerts={alerts.data} limit={3} />
                 </Section>
               )}
-              <MeteoPanel ws={ws} meteo={data.meteo} />
+              <MeteoPanel ws={ws} meteo={data.meteo} tone="aside" />
               <Section
                 id="antenne"
+                tone="aside"
                 title={r.antenne.title}
                 action={
                   <Link href={`/w/${ws}/veille?type=clip` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
@@ -396,13 +393,31 @@ export function RubriqueView() {
               >
                 <AntenneList ws={ws} rows={data.antenne} limit={3} />
               </Section>
+            </aside>
+
+            <div className="grid min-w-0 gap-x-8 gap-y-10 sm:gap-y-14 @3xl:grid-cols-2 @5xl:col-start-1 @5xl:row-start-3">
               <Section id="chiffres" title={r.figures.title}>
                 <Figures figures={data.figures} />
               </Section>
               <Section id="contacts" title={r.contacts.title}>
                 <Contacts contacts={data.contacts} />
               </Section>
-            </aside>
+            </div>
+
+            {data.angles.length > 0 && (
+              <Section
+                id="angles"
+                title={r.anglesBox.title}
+                className="min-w-0 self-start @5xl:col-start-1 @5xl:row-start-4"
+                action={
+                  <Link href={`/w/${ws}/angles` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
+                    {r.anglesBox.explore}
+                  </Link>
+                }
+              >
+                <Angles ws={ws} angles={data.angles} />
+              </Section>
+            )}
           </div>
         )}
       </div>
