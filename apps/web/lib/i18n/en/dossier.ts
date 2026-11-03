@@ -36,6 +36,8 @@ export const dossier: NonNullable<Overrides["dossier"]> = {
     provenance: "First appearance",
     firstSeen: (when: string) => `First seen on ${when}`,
     firstPage: (when: string, host: string) => `Already online on ${when} (${host})`,
+    pageCorroborated: "At least two sites agree: this date is solid.",
+    pageAlone: "Only one page says so, on its own word: confirm before concluding.",
     reverse: "Reverse search",
     registry: "Registry of originals",
     registryStatus: {

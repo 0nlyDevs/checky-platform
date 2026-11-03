@@ -177,6 +177,14 @@ export function FactsPanel({
               <p className="text-sm">
                 {d.firstPage(fmtDay(provenance.firstPage.date) ?? provenance.firstPage.date, provenance.firstPage.host)}{" "}
                 <Out href={provenance.firstPage.url}>{d.open}</Out>
+                {provenance.firstPage.pages.length > 1 && (
+                  <span className="block text-muted-foreground">
+                    {provenance.firstPage.pages.map((q) => `${fmtDay(q.date) ?? q.date} (${q.host})`).join(" · ")}
+                  </span>
+                )}
+                <span className="block text-muted-foreground">
+                  {provenance.firstPage.corroborated ? d.pageCorroborated : d.pageAlone}
+                </span>
               </p>
             )}
             {provenance.signals.length > 0 && (

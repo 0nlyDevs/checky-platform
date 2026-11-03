@@ -36,6 +36,8 @@ export const dossier: Part<typeof fr> = {
     firstSeen: (when: string) => `Hita voalohany ny ${when}`,
     // relire (mg)
     firstPage: (when: string, host: string) => `Efa tao amin'ny aterineto tamin'ny ${when} (${host})`,
+    pageCorroborated: "Roa farafahakeliny ny tranokala mitovy hevitra: azo ianteherana io daty io.",
+    pageAlone: "Pejy iray ihany no milaza izany, araka ny tenany: hamafisina aloha vao mamarana.",
     reverse: "Fikarohana mivadika",
     registry: "Rejisitry ny dika voalohany",
     registryStatus: {

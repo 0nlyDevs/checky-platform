@@ -43,6 +43,7 @@ def _provider(monkeypatch, sent):
 def test_the_earliest_dated_page_is_found_and_cached(monkeypatch):
     sent: list[dict] = []
     _provider(monkeypatch, sent)
+    monkeypatch.setattr(get_settings(), "storage_endpoint", "https://s3.test")
     found = asyncio.run(reverse_search.earliest("https://s3.test/b/blurred.jpg?X-Sig=1"))
     assert found["first"] == {
         "date": "2023-03-14",
@@ -51,6 +52,8 @@ def test_the_earliest_dated_page_is_found_and_cached(monkeypatch):
         "title": "Page 0",
     }
     assert found["matches"] == 3 and found["dated"] == 2
+    assert [p["host"] for p in found["pages"]] == ["tvm.test", "blog.test"]
+    assert found["corroborated"] is True
     assert sent[0]["engine"] == "google_lens" and sent[0]["api_key"] in ("k1", "k2")
     # Same picture, new signature in the URL: answered from memory.
     asyncio.run(reverse_search.earliest("https://s3.test/b/blurred.jpg?X-Sig=2"))
@@ -78,7 +81,9 @@ def test_a_refused_key_moves_to_the_next_and_a_dead_provider_gives_nothing(monke
     monkeypatch.setattr(reverse_search, "_transport", httpx.MockTransport(handler))
     found = asyncio.run(reverse_search.earliest("https://s3.test/c.jpg"))
     assert (
-        len(seen) == 2 and seen[0] != seen[1] and found == {"first": None, "matches": 0, "dated": 0}
+        len(seen) == 2
+        and seen[0] != seen[1]
+        and found == {"first": None, "pages": [], "corroborated": False, "matches": 0, "dated": 0}
     )
     monkeypatch.setattr(
         reverse_search, "_transport", httpx.MockTransport(lambda r: httpx.Response(500))
@@ -99,3 +104,35 @@ def test_provenance_uses_the_earliest_page_for_the_old_picture_flag(monkeypatch)
     assert found["first_page"]["host"] == "tvm.test"
     assert found["verdict_hint"] == "old_media_new_caption"
     json.dumps(found)
+
+
+def test_one_self_declared_date_is_shown_but_does_not_date_the_picture(monkeypatch):
+    _provider(monkeypatch, [])
+    monkeypatch.setitem(PAGES, "https://blog.test/post", "<p>pas de date</p>")
+    page = {
+        "kind": "image",
+        "final_url": "https://s3.test/f.jpg",
+        "image_url": "https://s3.test/f.jpg",
+        "image": {"ai_markers": []},
+    }
+    found = asyncio.run(crew.provenance_of(page, "Ce soir tout Tana est dans le noir"))
+    assert (
+        found["first_page"]["host"] == "tvm.test" and found["first_page"]["corroborated"] is False
+    )
+    assert found["first_seen"] is None and found["verdict_hint"] is None
+
+
+def test_anonymous_checks_have_their_own_small_budget(monkeypatch):
+    sent: list[dict] = []
+    _provider(monkeypatch, sent)
+    for i in range(reverse_search.DAILY_CAP["public"]):
+        assert asyncio.run(reverse_search.earliest(f"https://img.test/{i}.jpg", "public"))
+    assert asyncio.run(reverse_search.earliest("https://img.test/over.jpg", "public")) is None
+    assert asyncio.run(reverse_search.earliest("https://img.test/desk.jpg", "desk"))
+
+
+def test_only_our_own_signed_urls_share_a_cache_entry(monkeypatch):
+    monkeypatch.setattr(get_settings(), "storage_endpoint", "https://s3.test")
+    key = reverse_search._cache_key
+    assert key("https://s3.test/b/x.jpg?sig=1") == key("https://s3.test/b/x.jpg?sig=2")
+    assert key("https://cdn.test/img?id=1") != key("https://cdn.test/img?id=2")

@@ -28,10 +28,11 @@ SERVICE = "serpapi"
 MAX_PAGES = 8  # candidate pages whose date is read
 FIRST_YEAR = 1995
 CACHE_SECONDS = 6 * 3600
-DAILY_CAP = 60
+# Separate daily budgets: anonymous checks must not spend what the newsrooms rely on.
+DAILY_CAP = {"desk": 60, "public": 8}
 _transport: httpx.AsyncBaseTransport | None = None  # tests mock the provider here
 _cache: dict[str, tuple[float, dict[str, Any] | None]] = {}
-_spent: dict[str, int] = {}
+_spent: dict[tuple[str, str], int] = {}
 
 
 def configured() -> bool:
@@ -39,9 +40,13 @@ def configured() -> bool:
 
 
 def _cache_key(image_url: str) -> str:
-    """A signed storage URL changes at every call: the picture is its host and path."""
+    """Our own storage signs its URLs anew at every call: there the picture is its host and path. Any
+    other URL (a page's image) can serve different pictures under one path, so it keys on the whole."""
     parts = urlsplit(image_url)
-    return f"{parts.netloc}{parts.path}"
+    ours = urlsplit(get_settings().storage_endpoint or "").netloc
+    if ours and parts.netloc == ours:
+        return f"{parts.netloc}{parts.path}"
+    return image_url
 
 
 def _host(url: str) -> str:
@@ -96,18 +101,21 @@ async def _dated(page: dict[str, Any], gate: asyncio.Semaphore) -> dict[str, Any
     }
 
 
-async def earliest(image_url: str) -> dict[str, Any] | None:
-    """{first: {date, host, url, title} | None, matches, dated} or None (not configured, over the
-    daily cap, provider down)."""
+async def earliest(image_url: str, scope: str = "desk") -> dict[str, Any] | None:
+    """{first, pages, corroborated, matches, dated} or None (not configured, over the scope's daily
+    cap, provider down). `first` is the earliest dated page {date, host, url, title}; `pages` every
+    dated host (earliest first, five at most). The dates are the pages' own word: `corroborated` is
+    true only when two different sites date the picture older than STALE_DAYS, and only then may the
+    date drive anything beyond being shown."""
     if not configured():
         return None
     key = _cache_key(image_url)
     if (hit := _cache.get(key)) and time.monotonic() - hit[0] < CACHE_SECONDS:
         return hit[1]
-    today = dates.today().isoformat()
-    if _spent.get(today, 0) >= DAILY_CAP:
+    day = (scope, dates.today().isoformat())
+    if _spent.get(day, 0) >= DAILY_CAP.get(scope, DAILY_CAP["public"]):
         return None
-    _spent[today] = _spent.get(today, 0) + 1
+    _spent[day] = _spent.get(day, 0) + 1
     try:
         pages = await _matches(image_url)
     except (httpx.HTTPError, ValueError) as exc:
@@ -125,8 +133,12 @@ async def earliest(image_url: str) -> dict[str, Any] | None:
     read = [
         r for r in await asyncio.gather(*(_dated(p, gate) for p in candidates[:MAX_PAGES])) if r
     ]
+    read.sort(key=lambda r: r["date"])
+    old = [r for r in read if (dates.today() - dates.parse(r["date"])).days > dates.STALE_DAYS]
     result = {
-        "first": min(read, key=lambda r: r["date"]) if read else None,
+        "first": read[0] if read else None,
+        "pages": read[:5],
+        "corroborated": len({r["host"] for r in old}) >= 2,
         "matches": len(pages),
         "dated": len(read),
     }

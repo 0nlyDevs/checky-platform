@@ -357,7 +357,9 @@ def _credential_signals(credentials: dict[str, Any]) -> list[dict[str, str]]:
     return out
 
 
-async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | None:
+async def provenance_of(
+    page: dict[str, Any], text: str, scope: str = "desk"
+) -> dict[str, Any] | None:
     """When a picture, a video or a page first appears, from its own metadata.
 
     {first_seen, first_seen_basis, days_old, signals: [{kind, detail}], reverse_links,
@@ -419,10 +421,17 @@ async def provenance_of(page: dict[str, Any], text: str) -> dict[str, Any] | Non
     if (
         image_url
         and reverse_search.configured()
-        and (hit := await reverse_search.earliest(image_url))
+        and (hit := await reverse_search.earliest(image_url, scope))
+        and hit.get("first")
     ):
-        earliest_page = hit.get("first")
-        if earliest_page and (day := dates.parse(earliest_page["date"])):
+        # Every date is the page's own word: shown with its host, and trusted to date the picture
+        # (and to flag it as old) only once two different sites agree it is old.
+        earliest_page = {
+            **hit["first"],
+            "corroborated": hit["corroborated"],
+            "pages": hit["pages"],
+        }
+        if hit["corroborated"] and (day := dates.parse(hit["first"]["date"])):
             found.append((day, "reverse"))
     if (
         credentials
@@ -1341,7 +1350,7 @@ async def public_facts(db, text: str | None, url: str | None = None) -> dict[str
     plan = query_plan.fallback(full, "disabled")
 
     async def provenance(state):
-        found = await provenance_of(page, full)
+        found = await provenance_of(page, full, scope="public")
         if found is None:
             raise Skip("Rien à dater")
         return {"provenance": found}

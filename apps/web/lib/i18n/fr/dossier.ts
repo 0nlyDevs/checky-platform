@@ -36,6 +36,8 @@ export const dossier = {
     provenance: "Première apparition",
     firstSeen: (when: string) => `Vu pour la première fois le ${when}`,
     firstPage: (when: string, host: string) => `Déjà en ligne le ${when} (${host})`,
+    pageCorroborated: "Au moins deux sites concordent : cette date est solide.",
+    pageAlone: "Une seule page l'affirme, de sa propre main : à confirmer avant de conclure.",
     reverse: "Recherche inversée",
     registry: "Registre des originaux",
     registryStatus: {

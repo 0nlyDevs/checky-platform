@@ -19,7 +19,7 @@ export type Link = { name: string; url: string };
 
 export type Provenance = {
   firstSeen: string | null;
-  firstPage: { date: string; host: string; url: string } | null;
+  firstPage: { date: string; host: string; url: string; corroborated: boolean; pages: { date: string; host: string }[] } | null;
   daysOld: number | null;
   signals: string[];
   reverse: Link[];
@@ -68,7 +68,15 @@ function provenance(v: unknown): Provenance | null {
     firstSeen: str(p.first_seen),
     firstPage:
       page && str(page.date) && str(page.host) && /^https?:\/\//.test(str(page.url) ?? "")
-        ? { date: str(page.date) as string, host: str(page.host) as string, url: str(page.url) as string }
+        ? {
+            date: str(page.date) as string,
+            host: str(page.host) as string,
+            url: str(page.url) as string,
+            corroborated: page.corroborated === true,
+            pages: objs(page.pages)
+              .map((q) => ({ date: str(q.date) ?? "", host: str(q.host) ?? "" }))
+              .filter((q) => q.date && q.host),
+          }
         : null,
     daysOld: num(p.days_old),
     signals,
