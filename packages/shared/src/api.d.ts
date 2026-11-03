@@ -2402,6 +2402,281 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/studio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Shows */
+        get: operations["list_shows_api_v1_workspaces__ws__studio_get"];
+        put?: never;
+        /** Create Show */
+        post: operations["create_show_api_v1_workspaces__ws__studio_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Show */
+        get: operations["get_show_api_v1_workspaces__ws__studio__show_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Show */
+        delete: operations["delete_show_api_v1_workspaces__ws__studio__show_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Show */
+        patch: operations["update_show_api_v1_workspaces__ws__studio__show_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start Show */
+        post: operations["start_show_api_v1_workspaces__ws__studio__show_id__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** End Show */
+        post: operations["end_show_api_v1_workspaces__ws__studio__show_id__end_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/speaker": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set Speaker
+         * @description Mode débat: the producer marks who speaks from now on (None: nobody in particular).
+         */
+        post: operations["set_speaker_api_v1_workspaces__ws__studio__show_id__speaker_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/pack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Pack
+         * @description What the browser keeps for the show (memory + IndexedDB): signed verdicts, official figures
+         *     and registered originals on its topics, so a weak connection does not stop the producer.
+         */
+        get: operations["pack_api_v1_workspaces__ws__studio__show_id__pack_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/chunk": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Post Chunk
+         * @description One 8–10 s piece of the show's sound (raw `audio/*` body). Stored for the bilan's clips;
+         *     French is transcribed and its claims flagged at once; Malagasy is kept, never transcribed.
+         */
+        post: operations["post_chunk_api_v1_workspaces__ws__studio__show_id__chunk_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/claims": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Type Claim
+         * @description What the producer heard, typed or dictated in one sentence (a Malagasy show, or a sentence
+         *     the transcription missed). Flagged like the others.
+         */
+        post: operations["type_claim_api_v1_workspaces__ws__studio__show_id__claims_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/claims/{claim_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Claim
+         * @description Mode débat: give a claim to another speaker (or to nobody).
+         */
+        patch: operations["update_claim_api_v1_workspaces__ws__studio__show_id__claims__claim_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/claims/{claim_id}/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Claim
+         * @description « Envoyer au présentateur »: Mode prudent, only the producer's gesture reaches the screen.
+         */
+        post: operations["send_claim_api_v1_workspaces__ws__studio__show_id__claims__claim_id__send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/claims/{claim_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss Claim
+         * @description « Écarter »: the flag stays in the bilan, never on the presenter's screen.
+         */
+        post: operations["dismiss_claim_api_v1_workspaces__ws__studio__show_id__claims__claim_id__dismiss_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/presenter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Presenter
+         * @description The presenter's screen: the last three flags the producer sent, newest first.
+         */
+        get: operations["presenter_api_v1_workspaces__ws__studio__show_id__presenter_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/bilan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bilan
+         * @description « Bilan de l'émission »: every claim with its clip at the second, its evidence and flag.
+         */
+        get: operations["bilan_api_v1_workspaces__ws__studio__show_id__bilan_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/studio/{show_id}/claims/{claim_id}/follow": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Follow
+         * @description « Suivre dans le desk »: a dossier through the ordinary item route, the clip as its first
+         *     source, and a radio stop on Le trajet.
+         */
+        post: operations["follow_api_v1_workspaces__ws__studio__show_id__claims__claim_id__follow_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/avant-antenne": {
         parameters: {
             query?: never;
@@ -3334,6 +3609,60 @@ export interface components {
              */
             demo: boolean;
         };
+        /** ClaimIn */
+        ClaimIn: {
+            /** Text */
+            text: string;
+            /** At S */
+            at_s?: number | null;
+            /** Speaker Id */
+            speaker_id?: string | null;
+        };
+        /** ClaimOut */
+        ClaimOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** At S */
+            at_s: number;
+            /** End S */
+            end_s: number | null;
+            /** Text */
+            text: string;
+            /** Speaker Id */
+            speaker_id: string | null;
+            /** Origin */
+            origin: string;
+            /** Spotted */
+            spotted: {
+                [key: string]: unknown;
+            };
+            /** Flag */
+            flag: {
+                [key: string]: unknown;
+            };
+            /** Status */
+            status: string;
+            /** Question */
+            question: string | null;
+            /** Sent At */
+            sent_at: string | null;
+            /** Item Id */
+            item_id: string | null;
+            /** Ref */
+            ref?: string | null;
+            /** Clip */
+            clip?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** ClaimPatch */
+        ClaimPatch: {
+            /** Speaker Id */
+            speaker_id?: string | null;
+        };
         /** ClipIn */
         ClipIn: {
             /** Station */
@@ -4128,20 +4457,6 @@ export interface components {
         FollowIn: {
             /** Item Id */
             item_id?: string | null;
-        };
-        /** FollowOut */
-        FollowOut: {
-            /**
-             * Item Id
-             * Format: uuid
-             */
-            item_id: string;
-            /** Ref */
-            ref: string | null;
-            /** Created */
-            created: boolean;
-            /** Clip Ids */
-            clip_ids: string[];
         };
         /** FormatsOut */
         FormatsOut: {
@@ -5788,6 +6103,14 @@ export interface components {
             /** Text */
             text: string;
         };
+        /** SendIn */
+        SendIn: {
+            /**
+             * Question
+             * @default
+             */
+            question: string;
+        };
         /**
          * ServedOut
          * @description « Votre signalement a servi »: the dossier the clip fed, its signed verdict, the routes the
@@ -5811,6 +6134,136 @@ export interface components {
             signed_at: string | null;
             /** Truth Routes */
             truth_routes: number;
+        };
+        /** ShowBrief */
+        ShowBrief: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Station */
+            station: string | null;
+            /** Topics */
+            topics: string[];
+            /** Language */
+            language: string;
+            /** Status */
+            status: string;
+            /** Started At */
+            started_at: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Claims */
+            claims: number;
+            /** Sent */
+            sent: number;
+            /** Is Demo */
+            is_demo: boolean;
+        };
+        /** ShowIn */
+        ShowIn: {
+            /** Title */
+            title: string;
+            /** Station */
+            station?: string | null;
+            /** Topics */
+            topics?: string[];
+            /**
+             * Language
+             * @default fr
+             * @enum {string}
+             */
+            language: "fr" | "mg";
+            /**
+             * Input
+             * @default microphone
+             * @enum {string}
+             */
+            input: "microphone" | "stream";
+            /** Speakers */
+            speakers?: components["schemas"]["Speaker"][];
+        };
+        /** ShowOut */
+        ShowOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Title */
+            title: string;
+            /** Station */
+            station: string | null;
+            /** Topics */
+            topics: string[];
+            /** Language */
+            language: string;
+            /** Status */
+            status: string;
+            /** Started At */
+            started_at: string | null;
+            /** Ended At */
+            ended_at: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Claims */
+            claims: number;
+            /** Sent */
+            sent: number;
+            /** Is Demo */
+            is_demo: boolean;
+            /** Input */
+            input: string;
+            /** Mode */
+            mode: string;
+            /** Speakers */
+            speakers: components["schemas"]["Speaker"][];
+            /** Turns */
+            turns: {
+                [key: string]: unknown;
+            }[];
+            /** Current Speaker Id */
+            current_speaker_id: string | null;
+            /** Camps */
+            camps: string[];
+            /** Ai Enabled */
+            ai_enabled: boolean;
+            /** Segments */
+            segments: {
+                [key: string]: unknown;
+            }[];
+            /** Chunks */
+            chunks: number;
+            /** Duration S */
+            duration_s: number;
+            /** Claim List */
+            claim_list: components["schemas"]["ClaimOut"][];
+            /** By Speaker */
+            by_speaker: components["schemas"]["SpeakerCount"][];
+        };
+        /** ShowPatch */
+        ShowPatch: {
+            /** Title */
+            title?: string | null;
+            /** Station */
+            station?: string | null;
+            /** Topics */
+            topics?: string[] | null;
+            /** Input */
+            input?: ("microphone" | "stream") | null;
+            /** Speakers */
+            speakers?: components["schemas"]["Speaker"][] | null;
         };
         /** SignIn */
         SignIn: {
@@ -5985,6 +6438,41 @@ export interface components {
              * @enum {string}
              */
             lang: "fr" | "mg";
+        };
+        /** Speaker */
+        Speaker: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Camp */
+            camp?: string | null;
+        };
+        /** SpeakerCount */
+        SpeakerCount: {
+            /** Speaker Id */
+            speaker_id: string | null;
+            /** Name */
+            name: string | null;
+            /** Camp */
+            camp: string | null;
+            /** Claims */
+            claims: number;
+            /** Contradicted */
+            contradicted: number;
+            /** Contradicted Official */
+            contradicted_official: number;
+            /** Consistent */
+            consistent: number;
+            /** No Source */
+            no_source: number;
+        };
+        /** SpeakerIn */
+        SpeakerIn: {
+            /** Speaker Id */
+            speaker_id?: string | null;
+            /** At S */
+            at_s?: number | null;
         };
         /** SplitIn */
         SplitIn: {
@@ -6477,6 +6965,10 @@ export interface components {
         app__modules__registry__VerifyIn: {
             /** Signature */
             signature?: string | null;
+            /** Message */
+            message?: string | null;
+            /** Key Id */
+            key_id?: string | null;
         };
         /** VerifyOut */
         app__modules__registry__VerifyOut: {
@@ -6508,6 +7000,35 @@ export interface components {
             sha256: string;
             /** Summary */
             summary: string | null;
+        };
+        /** FollowOut */
+        app__modules__studio__FollowOut: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ref */
+            ref: string | null;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+        };
+        /** FollowOut */
+        app__modules__veille__FollowOut: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ref */
+            ref: string | null;
+            /** Created */
+            created: boolean;
+            /** Clip Ids */
+            clip_ids: string[];
         };
         /** VerifyIn */
         app__modules__verify_public__VerifyIn: {
@@ -11035,7 +11556,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["FollowOut"];
+                    "application/json": components["schemas"]["app__modules__veille__FollowOut"];
                 };
             };
             /** @description Validation Error */
@@ -11476,6 +11997,584 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WebhookOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_shows_api_v1_workspaces__ws__studio_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowBrief"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_show_api_v1_workspaces__ws__studio_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShowIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_show_api_v1_workspaces__ws__studio__show_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_show_api_v1_workspaces__ws__studio__show_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_show_api_v1_workspaces__ws__studio__show_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShowPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_show_api_v1_workspaces__ws__studio__show_id__start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    end_show_api_v1_workspaces__ws__studio__show_id__end_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_speaker_api_v1_workspaces__ws__studio__show_id__speaker_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpeakerIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pack_api_v1_workspaces__ws__studio__show_id__pack_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_chunk_api_v1_workspaces__ws__studio__show_id__chunk_post: {
+        parameters: {
+            query: {
+                seq: number;
+                start_s: number;
+                duration_s?: number;
+            };
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    type_claim_api_v1_workspaces__ws__studio__show_id__claims_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_claim_api_v1_workspaces__ws__studio__show_id__claims__claim_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                claim_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClaimPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_claim_api_v1_workspaces__ws__studio__show_id__claims__claim_id__send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                claim_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_claim_api_v1_workspaces__ws__studio__show_id__claims__claim_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                claim_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClaimOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    presenter_api_v1_workspaces__ws__studio__show_id__presenter_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bilan_api_v1_workspaces__ws__studio__show_id__bilan_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShowOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    follow_api_v1_workspaces__ws__studio__show_id__claims__claim_id__follow_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                show_id: string;
+                claim_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__studio__FollowOut"];
                 };
             };
             /** @description Validation Error */

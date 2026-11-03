@@ -15,6 +15,12 @@ export type Comment = Schemas["CommentOut"];
 export type Activity = Schemas["ActivityOut"];
 export type AiCompleteIn = Schemas["CompleteIn"];
 export type AiCompletion = Schemas["CompleteOut"];
+// Studio: a live show, its claims (each with a flag, never a verdict) and the débat counts.
+export type Show = Schemas["ShowOut"];
+export type ShowBrief = Schemas["ShowBrief"];
+export type ShowClaim = Schemas["ClaimOut"];
+export type ShowSpeaker = Schemas["Speaker"];
+export type SpeakerCount = Schemas["SpeakerCount"];
 
 export const STATUSES = ["to_check", "in_progress", "verified", "published"] as const;
 export type Status = (typeof STATUSES)[number];
