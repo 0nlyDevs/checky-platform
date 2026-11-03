@@ -786,3 +786,19 @@
   opacity: 1;
   translate: -50% 0;
 }
+
+/* A choice drawn as a round logo (« Où l'avez-vous vu ? »): ink once chosen, its name in the tooltip. */
+.pub-choice:has(:checked) {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+.pub-choice:has(:focus-visible) {
+  outline: 2px solid var(--foreground);
+  outline-offset: 3px;
+}
+.pub-choice:not(:has(:checked)):hover {
+  border-color: var(--foreground);
+  background: var(--raised);
+  color: var(--foreground);
+}
