@@ -3136,6 +3136,150 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/institution/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Alerts
+         * @description The fakes that use the institution's name, newest first. Open = neither denied nor set
+         *     aside.
+         */
+        get: operations["alerts_api_v1_workspaces__ws__institution_alerts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/institution/alerts/{alert_id}/dismiss": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Dismiss Alert
+         * @description « Ce n'est pas un faux » or already handled: set aside, kept in « Toutes ».
+         */
+        post: operations["dismiss_alert_api_v1_workspaces__ws__institution_alerts__alert_id__dismiss_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/institution/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Read Pdf
+         * @description The fields of an uploaded communiqué PDF, read without a model, for the press office to
+         *     correct before sealing. A scanned PDF with no text layer gives an empty text to type in.
+         */
+        post: operations["read_pdf_api_v1_workspaces__ws__institution_read_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/institution/sequence": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sequence
+         * @description The number checked against the series as the press office types it (or the next one).
+         */
+        post: operations["sequence_api_v1_workspaces__ws__institution_sequence_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/institution/communiques": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Communiques */
+        get: operations["communiques_api_v1_workspaces__ws__institution_communiques_get"];
+        put?: never;
+        /**
+         * Publish
+         * @description Register and seal a communiqué in the institution's name: the number is assigned or checked
+         *     (an « Incohérent » or repeated number is refused), the entry is signed with the institution's
+         *     own key and counts as verified in the registry.
+         */
+        post: operations["publish_api_v1_workspaces__ws__institution_communiques_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/institution/communiques/{cid}/pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sealed Pdf
+         * @description The communiqué's PDF stamped with its seal QR, to publish and print. Made again on every
+         *     download: Ed25519 is deterministic, so the QR is always the same.
+         */
+        get: operations["sealed_pdf_api_v1_workspaces__ws__institution_communiques__cid__pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/institution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Profile */
+        get: operations["profile_api_v1_workspaces__ws__institution_get"];
+        /** Update Profile */
+        put: operations["update_profile_api_v1_workspaces__ws__institution_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/items/{item_id}/voice-note": {
         parameters: {
             query?: never;
@@ -3337,57 +3481,6 @@ export interface components {
              * @default false
              */
             demo: boolean;
-        };
-        /** AlertOut */
-        AlertOut: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Ref */
-            ref: string | null;
-            /** Title */
-            title: string;
-            /**
-             * State
-             * @enum {string}
-             */
-            state: "open" | "closed";
-            /** Level */
-            level: string;
-            /** Code Level */
-            code_level: string | null;
-            /** Override */
-            override: {
-                [key: string]: unknown;
-            } | null;
-            /** Reasons */
-            reasons: {
-                [key: string]: unknown;
-            }[];
-            facts: components["schemas"]["AlertFacts"];
-            /** Members */
-            members: components["schemas"]["AlertMember"][];
-            /** Excluded */
-            excluded: string[];
-            /** Closed */
-            closed: {
-                [key: string]: unknown;
-            } | null;
-            /**
-             * Created At
-             * Format: date-time
-             */
-            created_at: string;
-            /**
-             * Updated At
-             * Format: date-time
-             */
-            updated_at: string;
-            /** Demo */
-            demo: boolean;
-            kit?: components["schemas"]["KitBrief"] | null;
         };
         /** AlertRadios */
         AlertRadios: {
@@ -4002,6 +4095,21 @@ export interface components {
              */
             created_at: string;
         };
+        /** CommuniqueIn */
+        CommuniqueIn: {
+            /** File Id */
+            file_id?: string | null;
+            /** Number */
+            number?: string | null;
+            /** Issued On */
+            issued_on: string;
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+            /** Denies */
+            denies?: string | null;
+        };
         /** CommuniqueOut */
         CommuniqueOut: {
             /**
@@ -4402,6 +4510,33 @@ export interface components {
              * @default true
              */
             ai: boolean;
+        };
+        /** DraftOut */
+        DraftOut: {
+            /**
+             * File Id
+             * Format: uuid
+             */
+            file_id: string;
+            /** Filename */
+            filename: string;
+            /** Pages */
+            pages: number;
+            /** Sha256 */
+            sha256: string;
+            /** Issuer */
+            issuer: string;
+            /** Issuer Read */
+            issuer_read: string | null;
+            /** Number */
+            number: string | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Title */
+            title: string;
+            /** Text */
+            text: string;
+            sequence: components["schemas"]["SequenceOut"];
         };
         /** EvidenceOut */
         EvidenceOut: {
@@ -5139,7 +5274,7 @@ export interface components {
         };
         /** KitState */
         KitState: {
-            alert: components["schemas"]["AlertOut"];
+            alert: components["schemas"]["app__modules__alerts__AlertOut"];
             kit: components["schemas"]["KitOut"] | null;
             /** Radios */
             radios: components["schemas"]["RadioChoice"][];
@@ -5220,6 +5355,11 @@ export interface components {
             slug: string;
             /** Verification */
             verification: string;
+            /**
+             * Kind
+             * @default newsroom
+             */
+            kind: string;
         };
         /** MemoryMatch */
         MemoryMatch: {
@@ -5356,6 +5496,24 @@ export interface components {
             /** Followed */
             followed: boolean;
         };
+        /** OfficerIn */
+        OfficerIn: {
+            /** Name */
+            name: string;
+            /**
+             * Role
+             * @default
+             */
+            role: string;
+            /** Phone */
+            phone?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Hours */
+            hours?: string | null;
+        };
         /** OfficialIn */
         OfficialIn: {
             /** Url */
@@ -5468,22 +5626,6 @@ export interface components {
              */
             is_demo: boolean;
         };
-        /** OriginalRef */
-        OriginalRef: {
-            /**
-             * Id
-             * Format: uuid
-             */
-            id: string;
-            /** Issuer */
-            issuer: string;
-            /** Number */
-            number: string | null;
-            /** Issued On */
-            issued_on: string | null;
-            /** Title */
-            title: string;
-        };
         /** OwnClaim */
         OwnClaim: {
             /**
@@ -5497,6 +5639,15 @@ export interface components {
             title: string;
             /** Status */
             status: string;
+        };
+        /** PageOut */
+        PageOut: {
+            /** Kind */
+            kind: string;
+            /** Url */
+            url: string;
+            /** Display */
+            display: string;
         };
         /** Passage */
         Passage: {
@@ -5647,6 +5798,53 @@ export interface components {
              * @default false
              */
             cached: boolean;
+        };
+        /** ProfileIn */
+        ProfileIn: {
+            /** Aliases */
+            aliases?: string[];
+            /** Website */
+            website?: string | null;
+            /** Pages */
+            pages?: string[];
+            /** Phones */
+            phones?: string[];
+            /** Topics */
+            topics?: string[];
+            officer?: components["schemas"]["OfficerIn"] | null;
+        };
+        /** ProfileOut */
+        ProfileOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Verification */
+            verification: string;
+            /** Publishes */
+            publishes: boolean;
+            /** Is Demo */
+            is_demo: boolean;
+            /** Aliases */
+            aliases: string[];
+            /** Website */
+            website: string | null;
+            /** Pages */
+            pages: components["schemas"]["PageOut"][];
+            /** Phones */
+            phones: components["schemas"]["PageOut"][];
+            /** Topics */
+            topics: string[];
+            officer: components["schemas"]["OfficerIn"] | null;
+            /** Declared At */
+            declared_at: string | null;
+            /** Communiques */
+            communiques: number;
+            /** Open Alerts */
+            open_alerts: number;
         };
         /** ProposedRoute */
         ProposedRoute: {
@@ -6102,6 +6300,14 @@ export interface components {
             /** Verdict */
             verdict: string | null;
         };
+        /** ReadIn */
+        ReadIn: {
+            /**
+             * File Id
+             * Format: uuid
+             */
+            file_id: string;
+        };
         /** RefuseIn */
         RefuseIn: {
             /** Reason */
@@ -6208,7 +6414,7 @@ export interface components {
              * Kind
              * @enum {string}
              */
-            kind: "radio" | "tv" | "press" | "online";
+            kind: "radio" | "tv" | "press" | "online" | "institution";
             /** City */
             city: string;
             /** Region */
@@ -6502,6 +6708,13 @@ export interface components {
             /** Public */
             public: boolean;
         };
+        /** SealedOut */
+        SealedOut: {
+            communique: components["schemas"]["CommuniqueOut"];
+            seal: components["schemas"]["SealResult"];
+            /** Pdf */
+            pdf: boolean;
+        };
         /** SearchAttempt */
         SearchAttempt: {
             /**
@@ -6582,6 +6795,27 @@ export interface components {
             mg: boolean;
             /** Desks */
             desks: boolean;
+        };
+        /** SequenceIn */
+        SequenceIn: {
+            /** Number */
+            number?: string | null;
+            /** Issued On */
+            issued_on?: string | null;
+        };
+        /** SequenceOut */
+        SequenceOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "assigned" | "ok" | "inconsistent" | "duplicate";
+            /** Number */
+            number: string;
+            /** Expected */
+            expected: string;
+            /** Reason */
+            reason?: string | null;
         };
         /**
          * ServedOut
@@ -7317,6 +7551,12 @@ export interface components {
         WorkspaceIn: {
             /** Name */
             name: string;
+            /**
+             * Kind
+             * @default newsroom
+             * @enum {string}
+             */
+            kind: "newsroom" | "institution";
         };
         /** WorkspaceOut */
         WorkspaceOut: {
@@ -7329,6 +7569,11 @@ export interface components {
             name: string;
             /** Slug */
             slug: string;
+            /**
+             * Kind
+             * @default newsroom
+             */
+            kind: string;
         };
         /** WorkspacePatch */
         WorkspacePatch: {
@@ -7356,6 +7601,11 @@ export interface components {
              * @default none
              */
             verification: string;
+            /**
+             * Kind
+             * @default newsroom
+             */
+            kind: string;
             settings?: components["schemas"]["NewsroomSettings"];
         };
         /** SendIn */
@@ -7367,6 +7617,111 @@ export interface components {
              * @default true
              */
             desks: boolean;
+        };
+        /** AlertOut */
+        app__modules__alerts__AlertOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /**
+             * State
+             * @enum {string}
+             */
+            state: "open" | "closed";
+            /** Level */
+            level: string;
+            /** Code Level */
+            code_level: string | null;
+            /** Override */
+            override: {
+                [key: string]: unknown;
+            } | null;
+            /** Reasons */
+            reasons: {
+                [key: string]: unknown;
+            }[];
+            facts: components["schemas"]["AlertFacts"];
+            /** Members */
+            members: components["schemas"]["AlertMember"][];
+            /** Excluded */
+            excluded: string[];
+            /** Closed */
+            closed: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Demo */
+            demo: boolean;
+            kit?: components["schemas"]["KitBrief"] | null;
+        };
+        /** AlertOut */
+        app__modules__institution__AlertOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Status */
+            status: string;
+            /** Channel */
+            channel: string;
+            /** Text */
+            text: string;
+            /** Url */
+            url: string | null;
+            /** Image Url */
+            image_url: string | null;
+            /** Summary */
+            summary: string | null;
+            /** Number */
+            number: string | null;
+            original: components["schemas"]["app__modules__institution__OriginalRef"] | null;
+            /** Count */
+            count: number;
+            /**
+             * First Seen At
+             * Format: date-time
+             */
+            first_seen_at: string;
+            /**
+             * Last Seen At
+             * Format: date-time
+             */
+            last_seen_at: string;
+            denial: components["schemas"]["app__modules__institution__OriginalRef"] | null;
+            /** Dismissed At */
+            dismissed_at: string | null;
+            /** Is Demo */
+            is_demo: boolean;
+        };
+        /** OriginalRef */
+        app__modules__institution__OriginalRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Number */
+            number: string | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Title */
+            title: string;
         };
         /** OfficialOut */
         app__modules__official__OfficialOut: {
@@ -7458,7 +7813,7 @@ export interface components {
              * @default 0
              */
             fakes: number;
-            original?: components["schemas"]["OriginalRef"] | null;
+            original?: components["schemas"]["app__modules__registry__OriginalRef"] | null;
             /**
              * Diff
              * @default []
@@ -7471,6 +7826,22 @@ export interface components {
             changed_numbers: components["schemas"]["ChangedNumber"][];
             /** Summary */
             summary?: string | null;
+        };
+        /** OriginalRef */
+        app__modules__registry__OriginalRef: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Issuer */
+            issuer: string;
+            /** Number */
+            number: string | null;
+            /** Issued On */
+            issued_on: string | null;
+            /** Title */
+            title: string;
         };
         /** VerifyIn */
         app__modules__registry__VerifyIn: {
@@ -13546,7 +13917,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AlertOut"][];
+                    "application/json": components["schemas"]["app__modules__alerts__AlertOut"][];
                 };
             };
             /** @description Validation Error */
@@ -13611,7 +13982,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AlertOut"];
+                    "application/json": components["schemas"]["app__modules__alerts__AlertOut"];
                 };
             };
             /** @description Validation Error */
@@ -13647,7 +14018,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AlertOut"];
+                    "application/json": components["schemas"]["app__modules__alerts__AlertOut"];
                 };
             };
             /** @description Validation Error */
@@ -13683,7 +14054,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AlertOut"];
+                    "application/json": components["schemas"]["app__modules__alerts__AlertOut"];
                 };
             };
             /** @description Validation Error */
@@ -13719,7 +14090,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AlertOut"];
+                    "application/json": components["schemas"]["app__modules__alerts__AlertOut"];
                 };
             };
             /** @description Validation Error */
@@ -14060,6 +14431,305 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["GestureOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    alerts_api_v1_workspaces__ws__institution_alerts_get: {
+        parameters: {
+            query?: {
+                state?: "open" | "all";
+            };
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__institution__AlertOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dismiss_alert_api_v1_workspaces__ws__institution_alerts__alert_id__dismiss_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["app__modules__institution__AlertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_pdf_api_v1_workspaces__ws__institution_read_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReadIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sequence_api_v1_workspaces__ws__institution_sequence_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SequenceIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SequenceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    communiques_api_v1_workspaces__ws__institution_communiques_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SealedOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    publish_api_v1_workspaces__ws__institution_communiques_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CommuniqueIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SealedOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sealed_pdf_api_v1_workspaces__ws__institution_communiques__cid__pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cid: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    profile_api_v1_workspaces__ws__institution_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_profile_api_v1_workspaces__ws__institution_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProfileOut"];
                 };
             };
             /** @description Validation Error */

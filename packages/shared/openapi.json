@@ -10784,7 +10784,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AlertOut"
+                    "$ref": "#/components/schemas/app__modules__alerts__AlertOut"
                   },
                   "title": "Response List Alerts Api V1 Workspaces  Ws  Alerts Get"
                 }
@@ -10897,7 +10897,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlertOut"
+                  "$ref": "#/components/schemas/app__modules__alerts__AlertOut"
                 }
               }
             }
@@ -10966,7 +10966,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlertOut"
+                  "$ref": "#/components/schemas/app__modules__alerts__AlertOut"
                 }
               }
             }
@@ -11035,7 +11035,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlertOut"
+                  "$ref": "#/components/schemas/app__modules__alerts__AlertOut"
                 }
               }
             }
@@ -11104,7 +11104,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AlertOut"
+                  "$ref": "#/components/schemas/app__modules__alerts__AlertOut"
                 }
               }
             }
@@ -11732,6 +11732,518 @@
                     "$ref": "#/components/schemas/GestureOut"
                   },
                   "title": "Response Check Gestures Api V1 Workspaces  Ws  Gestures Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/institution/alerts": {
+      "get": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Alerts",
+        "description": "The fakes that use the institution's name, newest first. Open = neither denied nor set\naside.",
+        "operationId": "alerts_api_v1_workspaces__ws__institution_alerts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "open",
+                "all"
+              ],
+              "type": "string",
+              "default": "open",
+              "title": "State"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/app__modules__institution__AlertOut"
+                  },
+                  "title": "Response Alerts Api V1 Workspaces  Ws  Institution Alerts Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/institution/alerts/{alert_id}/dismiss": {
+      "post": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Dismiss Alert",
+        "description": "« Ce n'est pas un faux » or already handled: set aside, kept in « Toutes ».",
+        "operationId": "dismiss_alert_api_v1_workspaces__ws__institution_alerts__alert_id__dismiss_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__modules__institution__AlertOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/institution/read": {
+      "post": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Read Pdf",
+        "description": "The fields of an uploaded communiqué PDF, read without a model, for the press office to\ncorrect before sealing. A scanned PDF with no text layer gives an empty text to type in.",
+        "operationId": "read_pdf_api_v1_workspaces__ws__institution_read_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/institution/sequence": {
+      "post": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Sequence",
+        "description": "The number checked against the series as the press office types it (or the next one).",
+        "operationId": "sequence_api_v1_workspaces__ws__institution_sequence_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SequenceIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SequenceOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/institution/communiques": {
+      "post": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Publish",
+        "description": "Register and seal a communiqué in the institution's name: the number is assigned or checked\n(an « Incohérent » or repeated number is refused), the entry is signed with the institution's\nown key and counts as verified in the registry.",
+        "operationId": "publish_api_v1_workspaces__ws__institution_communiques_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommuniqueIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SealedOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Communiques",
+        "operationId": "communiques_api_v1_workspaces__ws__institution_communiques_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SealedOut"
+                  },
+                  "title": "Response Communiques Api V1 Workspaces  Ws  Institution Communiques Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/institution/communiques/{cid}/pdf": {
+      "get": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Sealed Pdf",
+        "description": "The communiqué's PDF stamped with its seal QR, to publish and print. Made again on every\ndownload: Ed25519 is deterministic, so the QR is always the same.",
+        "operationId": "sealed_pdf_api_v1_workspaces__ws__institution_communiques__cid__pdf_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cid"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/pdf": {}
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/institution": {
+      "get": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Profile",
+        "operationId": "profile_api_v1_workspaces__ws__institution_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "institution"
+        ],
+        "summary": "Update Profile",
+        "operationId": "update_profile_api_v1_workspaces__ws__institution_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileOut"
                 }
               }
             }
@@ -12406,145 +12918,6 @@
           "at"
         ],
         "title": "AlertMember"
-      },
-      "AlertOut": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "ref": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ref"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "state": {
-            "type": "string",
-            "enum": [
-              "open",
-              "closed"
-            ],
-            "title": "State"
-          },
-          "level": {
-            "type": "string",
-            "title": "Level"
-          },
-          "code_level": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Code Level"
-          },
-          "override": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Override"
-          },
-          "reasons": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Reasons"
-          },
-          "facts": {
-            "$ref": "#/components/schemas/AlertFacts"
-          },
-          "members": {
-            "items": {
-              "$ref": "#/components/schemas/AlertMember"
-            },
-            "type": "array",
-            "title": "Members"
-          },
-          "excluded": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Excluded"
-          },
-          "closed": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Closed"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Updated At"
-          },
-          "demo": {
-            "type": "boolean",
-            "title": "Demo"
-          },
-          "kit": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/KitBrief"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "ref",
-          "title",
-          "state",
-          "level",
-          "code_level",
-          "override",
-          "reasons",
-          "facts",
-          "members",
-          "excluded",
-          "closed",
-          "created_at",
-          "updated_at",
-          "demo"
-        ],
-        "title": "AlertOut"
       },
       "AlertRadios": {
         "properties": {
@@ -14345,6 +14718,72 @@
         ],
         "title": "CommentOut"
       },
+      "CommuniqueIn": {
+        "properties": {
+          "file_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Id"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 8,
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 30000,
+            "minLength": 20,
+            "title": "Text"
+          },
+          "denies": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Denies"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "issued_on",
+          "title",
+          "text"
+        ],
+        "title": "CommuniqueIn"
+      },
       "CommuniqueOut": {
         "properties": {
           "id": {
@@ -15604,6 +16043,90 @@
         "additionalProperties": false,
         "type": "object",
         "title": "DraftIn"
+      },
+      "DraftOut": {
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "issuer_read": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issuer Read"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "sequence": {
+            "$ref": "#/components/schemas/SequenceOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file_id",
+          "filename",
+          "pages",
+          "sha256",
+          "issuer",
+          "issuer_read",
+          "number",
+          "issued_on",
+          "title",
+          "text",
+          "sequence"
+        ],
+        "title": "DraftOut"
       },
       "EvidenceOut": {
         "properties": {
@@ -17743,7 +18266,7 @@
       "KitState": {
         "properties": {
           "alert": {
-            "$ref": "#/components/schemas/AlertOut"
+            "$ref": "#/components/schemas/app__modules__alerts__AlertOut"
           },
           "kit": {
             "anyOf": [
@@ -17984,6 +18507,11 @@
           "verification": {
             "type": "string",
             "title": "Verification"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "newsroom"
           }
         },
         "type": "object",
@@ -18346,6 +18874,79 @@
         ],
         "title": "NotifyOut"
       },
+      "OfficerIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Role",
+            "default": ""
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60,
+                "pattern": "^\\+?[0-9 ()-]{3,60}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60,
+                "pattern": "^\\+?[0-9 ()-]{3,60}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "hours": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hours"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "OfficerIn"
+      },
       "OfficialIn": {
         "properties": {
           "url": {
@@ -18694,54 +19295,6 @@
         ],
         "title": "OriginalIn"
       },
-      "OriginalRef": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "issuer": {
-            "type": "string",
-            "title": "Issuer"
-          },
-          "number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Number"
-          },
-          "issued_on": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Issued On"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "issuer",
-          "number",
-          "issued_on",
-          "title"
-        ],
-        "title": "OriginalRef"
-      },
       "OwnClaim": {
         "properties": {
           "item_id": {
@@ -18777,6 +19330,29 @@
           "status"
         ],
         "title": "OwnClaim"
+      },
+      "PageOut": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "display": {
+            "type": "string",
+            "title": "Display"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "url",
+          "display"
+        ],
+        "title": "PageOut"
       },
       "Passage": {
         "properties": {
@@ -19223,6 +19799,181 @@
           "method"
         ],
         "title": "Preparation"
+      },
+      "ProfileIn": {
+        "properties": {
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 8,
+            "title": "Aliases"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2083,
+                "minLength": 1,
+                "format": "uri"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          },
+          "pages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 10,
+            "title": "Pages"
+          },
+          "phones": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 6,
+            "title": "Phones"
+          },
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "maxItems": 12,
+            "title": "Topics"
+          },
+          "officer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfficerIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ProfileIn"
+      },
+      "ProfileOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "verification": {
+            "type": "string",
+            "title": "Verification"
+          },
+          "publishes": {
+            "type": "boolean",
+            "title": "Publishes"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          },
+          "aliases": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Aliases"
+          },
+          "website": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Website"
+          },
+          "pages": {
+            "items": {
+              "$ref": "#/components/schemas/PageOut"
+            },
+            "type": "array",
+            "title": "Pages"
+          },
+          "phones": {
+            "items": {
+              "$ref": "#/components/schemas/PageOut"
+            },
+            "type": "array",
+            "title": "Phones"
+          },
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Topics"
+          },
+          "officer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OfficerIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "declared_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Declared At"
+          },
+          "communiques": {
+            "type": "integer",
+            "title": "Communiques"
+          },
+          "open_alerts": {
+            "type": "integer",
+            "title": "Open Alerts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "verification",
+          "publishes",
+          "is_demo",
+          "aliases",
+          "website",
+          "pages",
+          "phones",
+          "topics",
+          "officer",
+          "declared_at",
+          "communiques",
+          "open_alerts"
+        ],
+        "title": "ProfileOut"
       },
       "ProposedRoute": {
         "properties": {
@@ -20517,6 +21268,21 @@
         ],
         "title": "RatingOut"
       },
+      "ReadIn": {
+        "properties": {
+          "file_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "File Id"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "file_id"
+        ],
+        "title": "ReadIn"
+      },
       "RefuseIn": {
         "properties": {
           "reason": {
@@ -20850,7 +21616,8 @@
               "radio",
               "tv",
               "press",
-              "online"
+              "online",
+              "institution"
             ],
             "title": "Kind"
           },
@@ -21656,6 +22423,27 @@
         ],
         "title": "SealResult"
       },
+      "SealedOut": {
+        "properties": {
+          "communique": {
+            "$ref": "#/components/schemas/CommuniqueOut"
+          },
+          "seal": {
+            "$ref": "#/components/schemas/SealResult"
+          },
+          "pdf": {
+            "type": "boolean",
+            "title": "Pdf"
+          }
+        },
+        "type": "object",
+        "required": [
+          "communique",
+          "seal",
+          "pdf"
+        ],
+        "title": "SealedOut"
+      },
       "SearchAttempt": {
         "properties": {
           "kind": {
@@ -21843,6 +22631,77 @@
           "desks"
         ],
         "title": "SentOut"
+      },
+      "SequenceIn": {
+        "properties": {
+          "number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SequenceIn"
+      },
+      "SequenceOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "assigned",
+              "ok",
+              "inconsistent",
+              "duplicate"
+            ],
+            "title": "Status"
+          },
+          "number": {
+            "type": "string",
+            "title": "Number"
+          },
+          "expected": {
+            "type": "string",
+            "title": "Expected"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "number",
+          "expected"
+        ],
+        "title": "SequenceOut"
       },
       "ServedOut": {
         "properties": {
@@ -24039,6 +24898,15 @@
             "maxLength": 120,
             "minLength": 1,
             "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "newsroom",
+              "institution"
+            ],
+            "title": "Kind",
+            "default": "newsroom"
           }
         },
         "type": "object",
@@ -24061,6 +24929,11 @@
           "slug": {
             "type": "string",
             "title": "Slug"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "newsroom"
           }
         },
         "type": "object",
@@ -24135,6 +25008,11 @@
             "title": "Verification",
             "default": "none"
           },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "newsroom"
+          },
           "settings": {
             "$ref": "#/components/schemas/NewsroomSettings"
           }
@@ -24168,6 +25046,322 @@
         "additionalProperties": false,
         "type": "object",
         "title": "SendIn"
+      },
+      "app__modules__alerts__AlertOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "title": "State"
+          },
+          "level": {
+            "type": "string",
+            "title": "Level"
+          },
+          "code_level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Code Level"
+          },
+          "override": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override"
+          },
+          "reasons": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Reasons"
+          },
+          "facts": {
+            "$ref": "#/components/schemas/AlertFacts"
+          },
+          "members": {
+            "items": {
+              "$ref": "#/components/schemas/AlertMember"
+            },
+            "type": "array",
+            "title": "Members"
+          },
+          "excluded": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded"
+          },
+          "closed": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo"
+          },
+          "kit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KitBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "ref",
+          "title",
+          "state",
+          "level",
+          "code_level",
+          "override",
+          "reasons",
+          "facts",
+          "members",
+          "excluded",
+          "closed",
+          "created_at",
+          "updated_at",
+          "demo"
+        ],
+        "title": "AlertOut"
+      },
+      "app__modules__institution__AlertOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Image Url"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "original": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__institution__OriginalRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "first_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "First Seen At"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen At"
+          },
+          "denial": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/app__modules__institution__OriginalRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dismissed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dismissed At"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "channel",
+          "text",
+          "url",
+          "image_url",
+          "summary",
+          "number",
+          "original",
+          "count",
+          "first_seen_at",
+          "last_seen_at",
+          "denial",
+          "dismissed_at",
+          "is_demo"
+        ],
+        "title": "AlertOut"
+      },
+      "app__modules__institution__OriginalRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "number",
+          "issued_on",
+          "title"
+        ],
+        "title": "OriginalRef"
       },
       "app__modules__official__OfficialOut": {
         "properties": {
@@ -24399,7 +25593,7 @@
           "original": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/OriginalRef"
+                "$ref": "#/components/schemas/app__modules__registry__OriginalRef"
               },
               {
                 "type": "null"
@@ -24452,6 +25646,54 @@
           "seal_url"
         ],
         "title": "OfficialOut"
+      },
+      "app__modules__registry__OriginalRef": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "issuer": {
+            "type": "string",
+            "title": "Issuer"
+          },
+          "number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Number"
+          },
+          "issued_on": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued On"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "issuer",
+          "number",
+          "issued_on",
+          "title"
+        ],
+        "title": "OriginalRef"
       },
       "app__modules__registry__VerifyIn": {
         "properties": {
