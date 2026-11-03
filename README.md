@@ -361,7 +361,7 @@ Next.js 16 is newer than most tutorials and AI training data: read
 
 ## Web app on Vercel
 
-Project **fanilo-mg** → https://fanilo-mg.vercel.app (`fanilo.vercel.app` belongs to someone
+Project **checky-mg** → https://checky-mg.vercel.app (the old `fanilo-mg.vercel.app` is gone since 3 Nov; `fanilo.vercel.app` belongs to someone
 else), in the team *tsioryjonathan's projects*, Root Directory `apps/web`, Node 26.
 `apps/web/vercel.json` runs the server code in Frankfurt (`fra1`), next to Neon.
 
@@ -381,7 +381,7 @@ In the project's **Settings → Environment Variables** (Production):
 |---|---|
 | `DATABASE_URL` | the Neon **direct** connection string (as `PROD_DATABASE_URL`, without quotes). Not the pooled one: `lib/auth.ts` sets `search_path` at connection start, which Neon's pooler refuses |
 | `BETTER_AUTH_SECRET` | a new one: `openssl rand -base64 32` |
-| `BETTER_AUTH_URL` | `https://fanilo-mg.vercel.app` |
+| `BETTER_AUTH_URL` | `https://checky-mg.vercel.app` |
 | `NEXT_PUBLIC_API_URL` | `https://fanilo-api.onrender.com` (built into the page: redeploy after changing it) |
 
 Before the first sign-in, in Neon's SQL editor: `DELETE FROM better_auth.jwks;`. Better Auth

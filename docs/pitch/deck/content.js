@@ -33,7 +33,7 @@ const team = {
 const product = {
   name: "Checky", // lib/brand.ts says the same; change both if the name changes
   claim: "Les autres détectent. Checky prouve.",
-  url: "fanilo-mg.vercel.app",
+  url: "checky-mg.vercel.app",
   caseRef: "FAN-0145",
 };
 
