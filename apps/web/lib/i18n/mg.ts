@@ -39,6 +39,7 @@ import { publicLayer } from "./mg/publicLayer";
 import { reach } from "./mg/reach";
 import { registre } from "./mg/registre";
 import { rubrique } from "./mg/rubrique";
+import { studio } from "./mg/studio";
 import { team } from "./mg/team";
 import { verification } from "./mg/verification";
 
@@ -911,6 +912,7 @@ export const mg: Overrides = {
   dossier,
   registre,
   rubrique,
+  studio,
   publicLayer,
   team,
   verification,

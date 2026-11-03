@@ -17,7 +17,7 @@ export const NAV: NavItem[] = [
   { label: t.nav.rubrique, short: t.nav.rubriqueShort, icon: IconNewspaper, path: "rubrique", also: ["angles"] },
   { label: t.nav.check, icon: IconScan, path: "verifier", also: ["analyser", "scanner"] },
   { label: t.nav.claims, icon: IconFolderOpen, path: "affirmations", also: ["sources", "transcriptions"] },
-  { label: t.nav.veille, icon: IconRadio, path: "veille" },
+  { label: t.nav.veille, icon: IconRadio, path: "veille", also: ["studio"] },
   { label: t.nav.annuaire, icon: IconAddressBook, path: "annuaire", also: ["documents", "registre", "chiffres"] },
 ];
 
@@ -38,5 +38,10 @@ export const SECTIONS: Record<string, { path: string; label: string }[]> = {
   affirmations: [
     { path: "affirmations", label: t.nav.claims },
     { path: "sources", label: t.nav.sources },
+  ],
+  // Studio lives inside Veille: a show is checked while it airs, then its claims join the watching.
+  veille: [
+    { path: "veille", label: t.nav.veille },
+    { path: "studio", label: t.studio.nav },
   ],
 };

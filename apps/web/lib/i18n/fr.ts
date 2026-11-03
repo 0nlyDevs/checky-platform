@@ -7,6 +7,7 @@ import { publicLayer } from "./fr/publicLayer";
 import { reach } from "./fr/reach";
 import { registre } from "./fr/registre";
 import { rubrique } from "./fr/rubrique";
+import { studio } from "./fr/studio";
 import { team } from "./fr/team";
 import { verification } from "./fr/verification";
 
@@ -933,6 +934,7 @@ export const fr = {
   dossier,
   registre,
   rubrique,
+  studio,
   publicLayer,
   team,
   verification,

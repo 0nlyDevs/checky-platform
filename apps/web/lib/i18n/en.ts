@@ -2,9 +2,11 @@
 // à relire par un locuteur. Any key missing here falls back to French (lib/i18n/index.ts).
 import type { Overrides } from "./index";
 import { offline } from "./en/offline";
+import { studio } from "./en/studio";
 
 export const en: Overrides = {
   offline,
+  studio,
   nav: { skip: "Skip to content" },
   site: {
     metaTitle: "In doubt? Let's check.",
