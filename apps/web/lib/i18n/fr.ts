@@ -335,7 +335,7 @@ export const fr = {
         by: (desk: string) => `Nohamarinin'ny ${desk}`,
         // Needs a native speaker's check, like the other Malagasy card labels.
         verified: "Voamarin'i Checky",
-        verdicts: { true: "Marina", misleading: "Mamitaka", false: "Diso", unverifiable: "Tsy hay antoka" },
+        verdicts: { true: "Marina", misleading: "Mamitaka", false: "Diso", unverifiable: "Tsy voamarina" },
       },
     },
   },

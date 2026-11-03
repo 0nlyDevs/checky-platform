@@ -417,7 +417,7 @@ VERDICT_MG = {
     "true": "Marina",
     "misleading": "Mamitaka",
     "false": "Diso",
-    "unverifiable": "Tsy hay antoka",
+    "unverifiable": "Tsy voamarina",
 }
 FORMAT_KEYS = ("radio_line", "flash", "sms", "text", "institution_alert")
 MG_KEYS = ("radio_line", "sms", "text")

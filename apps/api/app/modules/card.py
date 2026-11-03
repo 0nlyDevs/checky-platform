@@ -31,7 +31,7 @@ VERDICT_WORDS = {
         "true": "MARINA",
         "misleading": "MAMITAKA",
         "false": "DISO",
-        "unverifiable": "TSY HAY ANTOKA",
+        "unverifiable": "TSY VOAMARINA",
     },
 }
 LANGUAGE = {"fr": "français", "mg": "malgache (teny malagasy)"}
