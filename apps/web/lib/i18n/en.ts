@@ -1,5 +1,16 @@
 // English for the public site, its navigation and the verdict words. Machine-drafted from fr.ts,
 // à relire par un locuteur. Any key missing here falls back to French (lib/i18n/index.ts).
+import { core } from "./en/core";
+import { crew } from "./en/crew";
+import { dossier } from "./en/dossier";
+import { palette } from "./en/palette";
+import { publication } from "./en/publication";
+import { reach } from "./en/reach";
+import { registre } from "./en/registre";
+import { resources } from "./en/resources";
+import { rubrique } from "./en/rubrique";
+import { team } from "./en/team";
+import { verification } from "./en/verification";
 import type { Overrides } from "./index";
 import { alertKit } from "./en/alertKit";
 import { offline } from "./en/offline";
@@ -9,7 +20,32 @@ export const en: Overrides = {
   alertKit,
   offline,
   studio,
-  nav: { skip: "Skip to content" },
+  // The desk (en/core.ts mirrors the sections that live in fr.ts; en/*.ts mirror fr/*.ts).
+  ...core,
+  when: {
+    justNow: "just now",
+    minutesAgo: (n: number) => `${n} min ago`,
+    hoursAgo: (n: number) => `${n} h ago`,
+    yesterday: "yesterday",
+    at: "at",
+    duration: (min: number) => {
+      if (min < 60) return `${min} min`;
+      const h = Math.floor(min / 60);
+      if (h >= 48) return `${Math.floor(h / 24)} d`;
+      const rest = min % 60;
+      return rest ? `${h} h ${String(rest).padStart(2, "0")}` : `${h} h`;
+    },
+  },
+  crew,
+  dossier,
+  registre,
+  rubrique,
+  team,
+  verification,
+  reach,
+  palette,
+  publication,
+  resources,
   site: {
     metaTitle: "In doubt? Let's check.",
     metaDescription:
@@ -48,7 +84,7 @@ export const en: Overrides = {
         busy: "The service is busy: here are the matching files.",
         tooMany: "Too many questions from this device. Try again in a few minutes.",
         notChecked: "No newsroom has published a verdict on this yet.",
-        placeholder: "E.g. « Analakely under water this morning, share! »",
+        placeholder: "E.g. “Analakely under water this morning, share!”",
         submit: "Check",
         searching: "Searching…",
         found: (n: number) => (n === 1 ? "1 file matches" : `${n} files match`),
@@ -81,7 +117,7 @@ export const en: Overrides = {
         newsroomVoiceLead: (s: number | null) => `The correction, read by one of the newsroom's journalists in their own voice${s ? ` (${s} s)` : ""}.`,
         number: (n: number) => `verification ${n}`,
         whatsapp: "Share on WhatsApp",
-        whatsappText: (title: string, verdict: string, url: string) => `« ${title} »: ${verdict}. Checked by a newsroom, with sources: ${url}`,
+        whatsappText: (title: string, verdict: string, url: string) => `“${title}”: ${verdict}. Checked by a newsroom, with sources: ${url}`,
         post: "The newsroom's published text",
         seenOn: (when: string, where: string | null) => `First seen on ${when}${where ? ` on ${where}` : ""}.`,
         sourcesSeen: (n: number) => (n === 1 ? "1 source read by the newsroom." : `${n} sources read by the newsroom.`),
@@ -98,7 +134,7 @@ export const en: Overrides = {
       },
       report: {
         title: "Report a rumour",
-        lead: "Received a doubtful message? Send it to a newsroom: it lands in its « to check » list. You get a link to follow the check. No account, no personal data asked.",
+        lead: "Received a doubtful message? Send it to a newsroom: it lands in its “to check” list. You get a link to follow the check. No account, no personal data asked.",
         newsroom: "Newsroom",
         auto: "I don't know: Checky picks",
         place: "Where is it going around? (town or region, optional)",
@@ -148,6 +184,7 @@ export const en: Overrides = {
     label: "The steps of a check",
     steps: { claim: "The claim", evidence: "The evidence", conclusion: "The conclusion" },
     short: { claim: "Claim", evidence: "Evidence", conclusion: "Conclusion" },
+    state: { waiting: "Coming up", active: "In progress", done: "Done", suggested: "AI suggestion to confirm", failed: "Interrupted" },
     notes: {
       claim: "What was shared, and what it claims.",
       evidence: "The sources: what confirms, what contradicts, what is missing.",
@@ -157,58 +194,19 @@ export const en: Overrides = {
   origins: { facebook: "Facebook", whatsapp: "WhatsApp", tiktok: "TikTok", radio: "Radio", press: "Press", other: "Other" },
   status: { to_check: "To check", in_progress: "In progress", verified: "Checked", published: "Published" },
   verdict: { true: "True", misleading: "Misleading", false: "False", unverifiable: "Unverifiable", none: "No verdict", suggested: "suggested" },
-  common: { loading: "Loading…" },
-  // Stop 5 « Retour »: the card's formats, the newsroom's voice note, the carnet as a PDF.
-  card: {
-    format: "Card format",
-    formats: { square: "Card 1080 × 1080", story: "Status 9:16", communique: "Doctored communiqué" },
-    downloadAs: { square: "Download the card", story: "Download the status", communique: "Download the communiqué card" },
-    sealed: "Every format carries the newsroom's sealed QR: a fake « Checky says » card fails the scan.",
-    unsealed: "The seal is unavailable: the card goes out without a QR. Check that the newsroom publishes its verdicts.",
-    notPublished: "Publish the signed verdict so the card carries its sealed QR.",
-    qrAlt: "The newsroom's seal QR: opens the verdict's public page and checks the card",
-  },
-  dossier: {
-    diffuse: {
-      cardTitle: "Card and status",
-      cardLead: "The 1080 × 1080 card and the 9:16 status for WhatsApp and Facebook, in French and Malagasy, each with its sealed QR.",
-      cardOpen: "Prepare the card",
-      voiceTicked: "Voice note sent: counted with the routes noted",
-    },
-    voice: {
-      title: "The newsroom's voice note",
-      lead: "The correction in Malagasy, 30 seconds, in your own voice: for groups that listen more than they read. Never transcribed by a machine.",
-      record: (max: number) => `Record (${max} s at most)`,
-      stop: "Stop",
-      listen: "Play the recording back",
-      takeLength: (s: number) => `${s} s recorded. Listen before keeping it.`,
-      keep: "Keep",
-      redo: "Record again",
-      saving: "Saving…",
-      saved: "Voice note kept: the public page plays it.",
-      player: "The newsroom's voice note",
-      kept: (s: number | null) => (s ? `Voice note kept · ${s} s · played on the public page` : "Voice note kept · played on the public page"),
-      share: "Share on WhatsApp",
-      shareTitle: (ref: string) => `Correction ${ref}`,
-      download: "Download",
-      again: "Record a new one",
-      remove: "Remove",
-      micDenied: "The microphone is not available. Allow it in the browser.",
-      noMic: "This browser cannot record: use a phone or Chrome.",
-      notSigned: "Sign the verdict first.",
-      failed: "The voice note could not be saved. Try again.",
-    },
-    carnet: { pdf: "Save as PDF", pdfBusy: "Preparing the PDF…", pdfFailed: "The PDF could not be made. Try again." },
-  },
-  reach: { eco: { showAudio: "Load the voice note" } },
   publicLayer: {
-    lang: { label: "Site language", at: "at" },
+    lang: {
+      label: "Site language",
+      names: { fr: "Français", mg: "Malagasy", en: "English" },
+      short: { fr: "FR", mg: "MG", en: "EN" },
+      at: "at",
+    },
     home: { top: "In doubt?", mark: "Let's check." },
     check: {
       title: "Already checked?",
       lead: "Paste the message you received or a link, in French or Malagasy. Checky first looks for a verdict signed by a newsroom, then for checks published by fact-checkers, then for what is already known. No machine decides in a newsroom's place.",
       label: "The message received, or a link",
-      placeholder: "E.g. « URGENT: 72 hours of power cuts in Tana, share! »",
+      placeholder: "E.g. “URGENT: 72 hours of power cuts in Tana, share!”",
       submit: "Check",
       searching: "Searching…",
       layers: ["Signed verdicts", "Fact-checkers", "What is known"],
@@ -239,7 +237,7 @@ export const en: Overrides = {
       external: {
         title: "Already checked by a fact-checker",
         by: (publisher: string, date: string | null) => (date ? `Checked by ${publisher}, on ${date}` : `Checked by ${publisher}`),
-        rating: (rating: string) => `Their conclusion: « ${rating} »`,
+        rating: (rating: string) => `Their conclusion: “${rating}”`,
         read: "Read their check",
         relayed: "This verdict is theirs: Checky relays it as it is.",
         noNeed: "No Malagasy newsroom needs to confirm it.",
@@ -280,6 +278,7 @@ export const en: Overrides = {
       notify: {
         title: "Tell me",
         lead: "Leave a phone number: the verdict will be sent to you by SMS as soon as a newsroom signs it.",
+        placeholder: "034 00 000 00",
         label: "Phone number or e-mail",
         submit: "Tell me",
         sending: "Sending…",
@@ -295,7 +294,17 @@ export const en: Overrides = {
     verdict: {
       trajet: "Where the correction went",
       trajetLead: "The places where the newsroom sent this verdict back.",
-      channels: { web: "Website", poster: "Poster", press: "Press", other: "Other" },
+      channels: {
+        web: "Website",
+        whatsapp: "WhatsApp",
+        facebook: "Facebook",
+        tiktok: "TikTok",
+        radio: "Radio",
+        sms: "SMS",
+        press: "Press",
+        poster: "Poster",
+        other: "Other",
+      },
       states: { sent: "sent", broadcast: "aired", seen: "seen", planned: "planned" },
     },
     flashs: {
@@ -309,7 +318,7 @@ export const en: Overrides = {
       language: "Language of the flashes",
       mgNote: "The verdict word is in Malagasy; the newsroom's text stays as written.",
       radio: (name: string) => `For ${name}`,
-      radioLead: "After reading on air, mark each flash « Aired »: the newsroom sees it on the verdict's road.",
+      radioLead: "After reading on air, mark each flash “Aired”: the newsroom sees it on the verdict's road.",
       markAired: "Aired",
       aired: "Aired",
       airFailed: "Marking did not work. Try again.",
@@ -318,59 +327,5 @@ export const en: Overrides = {
     },
     short: { finding: "Opening the verdict…", notFound: "No published verdict has this number.", all: "All verdicts" },
     footer: { flashs: "Today's flashes" },
-  },
-  verify: {
-    modes: { label: "What do you want to do?", message: "Check a message", onAir: "Before air", sources: "Ask our sources" },
-    onAir: {
-      title: "Before air",
-      lead: "A listener claims something live? Repeat it in one sentence or paste the post: Checky first looks for the signed verdicts of every newsroom, then the fact-checkers.",
-      field: "What the listener claims",
-      placeholder: "e.g. kidnappers are said to be in Antsirabe since this morning",
-      dictate: "Dictate in French",
-      langs: { fr: "French", mg: "Malagasy" },
-      submit: "Check before air",
-      running: "Searching…",
-      already: "Already checked",
-      by: (newsroom: string, date: string) => `by ${newsroom}, on ${date}`,
-      yours: "your newsroom",
-      openVerdict: "See the verdict",
-      line: "Radio line",
-      lineHelp: "Two sentences to read on air, written from the signed verdict.",
-      lineLang: "Line language",
-      copy: "Copy the radio line",
-      copied: "Line copied",
-      mgMissing: "This line has not been reread in Malagasy yet. Read it in French, or ask the newsroom that signed to tick « Relu en malgache ».",
-      others: "Other close verdicts",
-      notYet: "Not checked yet",
-      notYetLead: "No newsroom has published a verdict on this claim. Do not repeat it as a fact.",
-      careful: "Careful line",
-      carefulHelp: "To read if the claim was already heard on air: it gives no verdict.",
-      carefulLine: {
-        new: "At this stage, no newsroom has published a check of this information. Before repeating or sharing it, let us wait to learn more.",
-        followed: "A newsroom is checking this information now. Before repeating or sharing it, let us wait for its conclusion.",
-      },
-      copyCareful: "Copy the careful line",
-      ownFollows: (ref: string) => `Your newsroom already follows this rumour${ref ? ` (${ref})` : ""}.`,
-      otherFollows: (name: string) => `${name} already follows this rumour.`,
-      openDossier: "Open the dossier",
-      track: "Follow in the desk",
-      tracking: "Creating the dossier…",
-      trackFailed: "The dossier was not created. Try again.",
-      checkers: "What fact-checkers say",
-      checkersLoading: "Searching the fact-checkers…",
-      checkersNone: "No fact-checker has published on this claim.",
-      checkersDown: "The fact-checkers are not answering right now.",
-      checkedBy: (publisher: string, date: string) => (date ? `Checked by ${publisher}, on ${date}` : `Checked by ${publisher}`),
-      theirWords: "Their conclusion, in their words:",
-      failed: "The search did not finish. Check the connection and try again.",
-      again: "New claim",
-    },
-  },
-  team: {
-    settings: {
-      sms: {
-        status: { received: "received", queued: "waiting for the gateway", sending: "sending to the phone", sent: "handed to the gateway", delivered: "delivered", failed: "sending failed", simulated: "simulated" },
-      },
-    },
   },
 };
