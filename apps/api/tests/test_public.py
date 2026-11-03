@@ -259,6 +259,7 @@ def test_flashes_of_the_day_and_short_links(as_user, monkeypatch):
     )
     assert "(fanamarinana 142)" in line["mg"]
     assert line["mg"].startswith("1. Diso — ") and line["link"] == "https://checky.example/v/142"
+    assert line["has_audio"] is False
     assert anon.get("/api/v1/public/flashs").json()["items"][0]["id"] == first
     assert anon.get("/api/v1/public/flashs?newsroom=nope").status_code == 404
     assert anon.get("/api/v1/public/v/142").json()["id"] == first

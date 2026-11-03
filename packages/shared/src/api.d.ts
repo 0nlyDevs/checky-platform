@@ -4665,6 +4665,11 @@ export interface components {
             fr: string;
             /** Mg */
             mg: string;
+            /**
+             * Has Audio
+             * @default false
+             */
+            has_audio: boolean;
         };
         /** FlashsOut */
         FlashsOut: {

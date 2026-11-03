@@ -160,9 +160,9 @@ export function SiteFooter() {
               </li>
             ))}
             <li>
-              <Link href="/flashs" className="underline-offset-4 hover:underline">
+              <a href="/flashs" className="underline-offset-4 hover:underline">
                 {t.publicLayer.footer.flashs}
-              </Link>
+              </a>
             </li>
           </ul>
         </nav>

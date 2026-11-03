@@ -131,6 +131,7 @@ export const publicLayer = {
     airFailed: "Le marquage n'a pas fonctionné. Réessayez.",
     badRadio: "Ce lien de radio n'est pas valable ; les flashs restent lisibles.",
     failed: "Les flashs n'ont pas pu être chargés.",
+    audio: "Écouter la rédaction",
   },
   short: {
     finding: "Ouverture du verdict…",

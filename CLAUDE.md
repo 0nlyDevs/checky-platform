@@ -249,6 +249,7 @@ Done, on `dev`, CI green:
   - Browser-checked: A−/A+ and Mode éco, sign-up → invite → the colleague can do everything, the Annuaire check, Veille alerts, the Malagasy reread lock. Not yet driven: the Sources panel with a real upload (local storage unreachable) and the full demo journey with a live model (local Groq key answers 401).
 
 - **Malagasy desk (3 Nov)**: `mg.ts` + `mg/*.ts` (one per `fr/*.ts`, typed `Part<typeof fr>` from `mg/part.ts`, glossary at the top of `mg.ts`) give every French key; machine-drafted, each file marked `// relire (mg)`, not yet reread by a native speaker. `lib/i18n.test.ts` (in `npm test`) fails on any French key without Malagasy, or a function whose parameters differ.
+- **Flashs du jour (3 Nov)**: `/flashs` is a script-free, printable HTML route under 20 KB for 20 daily lines. It keeps the partner radio's « Diffusé » form, verification number and optional journalist voice-note link; interface labels are in fr/mg/en.
 
 - **Alert kit (3 Nov)**: a dangerous alert can draft a guarded, evidence-based kit, be edited and approved by a journalist, and send a live desk notice plus SMS through the existing gateway outbox to selected partner radios. Its call list uses only that newsroom's contacts. Malagasy radio text is held behind an exact-text reread. WhatsApp is a short-lived opaque link for manual sending. Closing requires a reason or follows a published verdict on a linked dossier.
 

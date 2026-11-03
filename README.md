@@ -213,6 +213,12 @@ the journalist opens manually. Radio numbers are masked in the desk's SMS list, 
 WhatsApp link in the kit response hides the number and expires after ten minutes. A journalist
 may close an alert only with a reason; a published verdict on a linked case also closes it.
 
+`/flashs` serves today's signed verdicts as a printable, script-free HTML page under 20 KB,
+with French and Malagasy radio lines and an English interface option. A partner radio's link
+keeps its one-tap « Diffusé » form; a recorded newsroom voice note is linked when available.
+The line uses the same verification number as the card, SMS and short link. No operator SMS or
+voice-line provider is configured by this application.
+
 ## Everyday commands
 
 Run these before pushing. CI runs the same checks and fails otherwise.

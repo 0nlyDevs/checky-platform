@@ -16420,6 +16420,11 @@
           "mg": {
             "type": "string",
             "title": "Mg"
+          },
+          "has_audio": {
+            "type": "boolean",
+            "title": "Has Audio",
+            "default": false
           }
         },
         "type": "object",

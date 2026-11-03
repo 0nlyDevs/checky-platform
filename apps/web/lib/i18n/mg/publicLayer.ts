@@ -132,6 +132,7 @@ export const publicLayer: Part<typeof fr> = {
     airFailed: "Tsy nety ny fanamarihana. Andramo indray.",
     badRadio: "Tsy manan-kery ity rohy radio ity; mbola azo vakiana ireo vaovao fohy.",
     failed: "Tsy azo nalaina ireo vaovao fohy.",
+    audio: "Henoy ny mpanao gazety", // relire (mg)
   },
   short: { finding: "Manokatra ny didy…", notFound: "Tsy misy didy navoaka mitondra io laharana io.", all: "Ireo didy rehetra" },
   footer: { flashs: "Vaovao fohy androany" },

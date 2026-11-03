@@ -25,7 +25,7 @@ from app.core.http import shared as shared_http
 from app.core.models import Item, RadioPartner, Source, Workspace
 from app.core.places import fold
 from app.core.words import words
-from app.modules.voicenote import PublicVoiceNote, public_voice_note
+from app.modules.voicenote import PublicVoiceNote, public_voice_note, voice_file
 
 router = APIRouter(prefix="/public", tags=["public"])
 
@@ -424,6 +424,7 @@ class FlashLine(BaseModel):
     link: str
     fr: str
     mg: str  # the verdict word in Malagasy; the newsroom's own words stay as written
+    has_audio: bool = False
 
 
 class FlashsOut(BaseModel):
@@ -479,6 +480,7 @@ async def flashs(db: Db, newsroom: str | None = None) -> FlashsOut:
                 link=short_link(v),
                 fr=f"{n}. {verdict_line(v, 'fr')}",
                 mg=f"{n}. {verdict_line(v, 'mg')}",
+                has_audio=bool(await voice_file(db, item)),
             )
         )
     return FlashsOut(date=today.isoformat(), newsroom=room, items=items)
