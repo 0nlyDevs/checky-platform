@@ -1,4 +1,5 @@
 import { AssistantProvider } from "@/components/assistant/assistant-context";
+import { LangScope } from "@/components/prefs/lang-scope";
 import { SiteFooter, SiteHeader } from "@/components/site/site-chrome";
 import { t } from "@/lib/i18n/fr";
 import "@/components/site/site.css";
@@ -16,7 +17,9 @@ export default function SiteLayout({ children }: LayoutProps<"/">) {
       <div className="flex min-h-dvh flex-col">
         <SiteHeader />
         <main id="contenu" className="flex-1">
-          {children}
+          {/* Some views read the live `t` (the official feed, the reply page, the numbered line):
+              LangScope remounts them on a language switch, as on the desk and the sign-in pages. */}
+          <LangScope>{children}</LangScope>
         </main>
         <SiteFooter />
       </div>
