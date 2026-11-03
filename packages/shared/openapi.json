@@ -9703,7 +9703,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SendIn"
+                "$ref": "#/components/schemas/app__modules__studio__SendIn"
               }
             }
           }
@@ -11053,6 +11053,588 @@
         }
       }
     },
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/close": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Close Alert",
+        "description": "A journalist closes an alert before any verdict, and says why (required, kept in the\nactivity). « Diffuser » then proposes the radios the kit went to, on the linked dossiers.",
+        "operationId": "close_alert_api_v1_workspaces__ws__alerts__alert_id__close_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/kit": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Get Kit",
+        "operationId": "get_kit_api_v1_workspaces__ws__alerts__alert_id__kit_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Prepare Kit",
+        "description": "« Préparer le kit d'alerte »: a new reading (dashed), replacing an earlier one. What was\nalready sent stays on record.",
+        "operationId": "prepare_kit_api_v1_workspaces__ws__alerts__alert_id__kit_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Approve Kit",
+        "description": "A journalist's edit, or a plain approval (empty body): the kit becomes theirs (solid).\nThe accused's name still never stays in it; a changed Malagasy script needs a new reread.",
+        "operationId": "approve_kit_api_v1_workspaces__ws__alerts__alert_id__kit_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KitEdit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/kit/relu-mg": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Kit Relu",
+        "description": "« Relu en malgache »: vouches for the exact Malagasy script on screen.",
+        "operationId": "kit_relu_api_v1_workspaces__ws__alerts__alert_id__kit_relu_mg_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReluIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Kit Unrelu",
+        "operationId": "kit_unrelu_api_v1_workspaces__ws__alerts__alert_id__kit_relu_mg_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/KitState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/kit/send": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Send Kit",
+        "description": "« Envoyer »: the approved kit goes to the desk (live event, Ma rubrique) and to the chosen\npartner radios. Each radio is a truth stop of the alert on « Le trajet » (sent from the\njournalist's own phone through the ready links). Malagasy only once reread, exactly.",
+        "operationId": "send_kit_api_v1_workspaces__ws__alerts__alert_id__kit_send_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/app__modules__alert_kit__SendIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SendOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/items/{item_id}/alert-radios": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Alert Radios",
+        "description": "The radios « Diffuser » proposes on a dossier: those the kit of its alerts went to, or else\nthe partner radios of those alerts' regions.",
+        "operationId": "alert_radios_api_v1_workspaces__ws__items__item_id__alert_radios_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertRadios"
+                  },
+                  "title": "Response Alert Radios Api V1 Workspaces  Ws  Items  Item Id  Alert Radios Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{ws}/live": {
+      "get": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Live",
+        "operationId": "live_api_v1_workspaces__ws__live_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ws",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Ws"
+            }
+          },
+          {
+            "name": "hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 168,
+              "minimum": 1,
+              "default": 24,
+              "title": "Hours"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Notice"
+                  },
+                  "title": "Response Live Api V1 Workspaces  Ws  Live Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{ws}/gestures": {
       "post": {
         "tags": [
@@ -11881,6 +12463,16 @@
           "demo": {
             "type": "boolean",
             "title": "Demo"
+          },
+          "kit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KitBrief"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -11902,6 +12494,58 @@
           "demo"
         ],
         "title": "AlertOut"
+      },
+      "AlertRadios": {
+        "properties": {
+          "alert_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Alert Id"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "closed": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed"
+          },
+          "routes": {
+            "items": {
+              "$ref": "#/components/schemas/ProposedRoute"
+            },
+            "type": "array",
+            "title": "Routes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alert_id",
+          "ref",
+          "state",
+          "closed",
+          "routes"
+        ],
+        "title": "AlertRadios"
       },
       "AlertRef": {
         "properties": {
@@ -12452,6 +13096,82 @@
           "skipped"
         ],
         "title": "BatchOut"
+      },
+      "CallOut": {
+        "properties": {
+          "contact_id": {
+            "type": "string",
+            "title": "Contact Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "institution": {
+            "type": "string",
+            "title": "Institution",
+            "default": ""
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "default": ""
+          },
+          "office": {
+            "type": "string",
+            "title": "Office"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why",
+            "default": ""
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "contact_id",
+          "name",
+          "office"
+        ],
+        "title": "CallOut"
       },
       "CarnetEntry": {
         "properties": {
@@ -13507,6 +14227,22 @@
           "expires_in"
         ],
         "title": "ClipUploadOut"
+      },
+      "CloseIn": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "CloseIn"
       },
       "CommentIn": {
         "properties": {
@@ -14805,6 +15541,18 @@
           "demo"
         ],
         "title": "DocumentOut"
+      },
+      "DraftIn": {
+        "properties": {
+          "ai": {
+            "type": "boolean",
+            "title": "Ai",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DraftIn"
       },
       "EvidenceOut": {
         "properties": {
@@ -16618,6 +17366,363 @@
         ],
         "title": "KeyOut"
       },
+      "KitBrief": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "approved"
+            ],
+            "title": "Status"
+          },
+          "written_by": {
+            "type": "string",
+            "title": "Written By"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "sent_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sent At"
+          },
+          "radios": {
+            "type": "integer",
+            "title": "Radios",
+            "default": 0
+          },
+          "script_fr": {
+            "type": "string",
+            "title": "Script Fr",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "written_by"
+        ],
+        "title": "KitBrief",
+        "description": "Where the « Kit d'alerte » stands, for lists (the kit itself: `GET …/alerts/{id}/kit`)."
+      },
+      "KitEdit": {
+        "properties": {
+          "known": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 12
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Known"
+          },
+          "unknown": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 12
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unknown"
+          },
+          "script_fr": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Fr"
+          },
+          "script_mg": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Script Mg"
+          },
+          "dont_say": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 12
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dont Say"
+          },
+          "call_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array",
+                "maxItems": 10
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Call Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "KitEdit"
+      },
+      "KitOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "approved"
+            ],
+            "title": "Status"
+          },
+          "written_by": {
+            "type": "string",
+            "title": "Written By"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "fallback": {
+            "type": "boolean",
+            "title": "Fallback",
+            "default": false
+          },
+          "known": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Known"
+          },
+          "unknown": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unknown"
+          },
+          "script": {
+            "$ref": "#/components/schemas/Script"
+          },
+          "call": {
+            "items": {
+              "$ref": "#/components/schemas/CallOut"
+            },
+            "type": "array",
+            "title": "Call"
+          },
+          "dont_say": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Dont Say"
+          },
+          "guards": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Guards"
+          },
+          "drafted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Drafted At"
+          },
+          "approved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved By"
+          },
+          "approved_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Name"
+          },
+          "approved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved At"
+          },
+          "edited": {
+            "type": "boolean",
+            "title": "Edited",
+            "default": false
+          },
+          "stale": {
+            "type": "boolean",
+            "title": "Stale",
+            "default": false
+          },
+          "relu_mg": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Relu"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mg_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mg Hash"
+          },
+          "sent": {
+            "items": {
+              "$ref": "#/components/schemas/SentOut"
+            },
+            "type": "array",
+            "title": "Sent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "written_by",
+          "known",
+          "unknown",
+          "script",
+          "call",
+          "dont_say",
+          "drafted_at"
+        ],
+        "title": "KitOut"
+      },
+      "KitState": {
+        "properties": {
+          "alert": {
+            "$ref": "#/components/schemas/AlertOut"
+          },
+          "kit": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/KitOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "radios": {
+            "items": {
+              "$ref": "#/components/schemas/RadioChoice"
+            },
+            "type": "array",
+            "title": "Radios"
+          },
+          "trajet": {
+            "items": {
+              "$ref": "#/components/schemas/StopOut"
+            },
+            "type": "array",
+            "title": "Trajet"
+          }
+        },
+        "type": "object",
+        "required": [
+          "alert",
+          "kit",
+          "radios",
+          "trajet"
+        ],
+        "title": "KitState"
+      },
       "LinkIn": {
         "properties": {
           "url": {
@@ -17052,6 +18157,67 @@
         "type": "object",
         "title": "NewsroomSettings",
         "description": "A newsroom's own rules, kept in `workspace.settings` (JSONB): a field left out of a PATCH\nkeeps its value, and a newsroom that never set one reads the default."
+      },
+      "Notice": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "high_risk",
+              "on_air",
+              "truth_late",
+              "kit_sent"
+            ],
+            "title": "Kind"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "default": ""
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "href": {
+            "type": "string",
+            "title": "Href"
+          },
+          "demo": {
+            "type": "boolean",
+            "title": "Demo",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "at",
+          "title",
+          "href"
+        ],
+        "title": "Notice"
       },
       "NotifyIn": {
         "properties": {
@@ -18002,6 +19168,30 @@
         ],
         "title": "Preparation"
       },
+      "ProposedRoute": {
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "place": {
+            "type": "string",
+            "title": "Place"
+          },
+          "location": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Location"
+          }
+        },
+        "type": "object",
+        "required": [
+          "channel",
+          "place",
+          "location"
+        ],
+        "title": "ProposedRoute"
+      },
       "PublicCheckIn": {
         "properties": {
           "text": {
@@ -18817,6 +20007,70 @@
         ],
         "title": "QuestionOut"
       },
+      "RadioChoice": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "station": {
+            "type": "string",
+            "title": "Station"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Region"
+          },
+          "languages": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Languages"
+          },
+          "in_region": {
+            "type": "boolean",
+            "title": "In Region"
+          },
+          "sent": {
+            "type": "boolean",
+            "title": "Sent"
+          },
+          "has_contact": {
+            "type": "boolean",
+            "title": "Has Contact"
+          },
+          "is_demo": {
+            "type": "boolean",
+            "title": "Is Demo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "station",
+          "region",
+          "languages",
+          "in_region",
+          "sent",
+          "has_contact",
+          "is_demo"
+        ],
+        "title": "RadioChoice"
+      },
       "RadioDiffuseIn": {
         "properties": {
           "item_id": {
@@ -18962,6 +20216,47 @@
           "name"
         ],
         "title": "RadioIn"
+      },
+      "RadioLink": {
+        "properties": {
+          "radio_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Radio Id"
+          },
+          "station": {
+            "type": "string",
+            "title": "Station"
+          },
+          "whatsapp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Whatsapp"
+          },
+          "sms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "radio_id",
+          "station"
+        ],
+        "title": "RadioLink"
       },
       "RadioOut": {
         "properties": {
@@ -19241,6 +20536,35 @@
           "kinds"
         ],
         "title": "RegionCount"
+      },
+      "Relu": {
+        "properties": {
+          "by": {
+            "type": "string",
+            "title": "By"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "current": {
+            "type": "boolean",
+            "title": "Current"
+          }
+        },
+        "type": "object",
+        "required": [
+          "by",
+          "name",
+          "at",
+          "current"
+        ],
+        "title": "Relu"
       },
       "ReluIn": {
         "properties": {
@@ -20097,6 +21421,22 @@
         ],
         "title": "RubriqueOut"
       },
+      "Script": {
+        "properties": {
+          "fr": {
+            "type": "string",
+            "title": "Fr",
+            "default": ""
+          },
+          "mg": {
+            "type": "string",
+            "title": "Mg",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Script"
+      },
       "SealCheckIn": {
         "properties": {
           "message": {
@@ -20370,18 +21710,73 @@
         ],
         "title": "Segment"
       },
-      "SendIn": {
+      "SendOut": {
         "properties": {
-          "question": {
+          "state": {
+            "$ref": "#/components/schemas/KitState"
+          },
+          "links": {
+            "items": {
+              "$ref": "#/components/schemas/RadioLink"
+            },
+            "type": "array",
+            "title": "Links"
+          },
+          "message": {
             "type": "string",
-            "maxLength": 400,
-            "title": "Question",
-            "default": ""
+            "title": "Message"
+          },
+          "mg": {
+            "type": "boolean",
+            "title": "Mg"
           }
         },
-        "additionalProperties": false,
         "type": "object",
-        "title": "SendIn"
+        "required": [
+          "state",
+          "links",
+          "message",
+          "mg"
+        ],
+        "title": "SendOut"
+      },
+      "SentOut": {
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          },
+          "by": {
+            "type": "string",
+            "title": "By"
+          },
+          "radios": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Radios"
+          },
+          "mg": {
+            "type": "boolean",
+            "title": "Mg"
+          },
+          "desks": {
+            "type": "boolean",
+            "title": "Desks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "at",
+          "by",
+          "radios",
+          "mg",
+          "desks"
+        ],
+        "title": "SentOut"
       },
       "ServedOut": {
         "properties": {
@@ -21483,6 +22878,41 @@
           "keys"
         ],
         "title": "SplitIn"
+      },
+      "StopOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "channel": {
+            "type": "string",
+            "title": "Channel"
+          },
+          "place": {
+            "type": "string",
+            "title": "Place"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "channel",
+          "place",
+          "status",
+          "at"
+        ],
+        "title": "StopOut"
       },
       "TipIn": {
         "properties": {
@@ -22652,6 +24082,27 @@
         ],
         "title": "WorkspaceSettingsOut"
       },
+      "app__modules__alert_kit__SendIn": {
+        "properties": {
+          "radio_ids": {
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "type": "array",
+            "maxItems": 40,
+            "title": "Radio Ids"
+          },
+          "desks": {
+            "type": "boolean",
+            "title": "Desks",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SendIn"
+      },
       "app__modules__official__OfficialOut": {
         "properties": {
           "id": {
@@ -23094,6 +24545,19 @@
           "source_id"
         ],
         "title": "FollowOut"
+      },
+      "app__modules__studio__SendIn": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 400,
+            "title": "Question",
+            "default": ""
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SendIn"
       },
       "app__modules__veille__FollowOut": {
         "properties": {

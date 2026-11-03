@@ -2966,6 +2966,135 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/close": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Close Alert
+         * @description A journalist closes an alert before any verdict, and says why (required, kept in the
+         *     activity). « Diffuser » then proposes the radios the kit went to, on the linked dossiers.
+         */
+        post: operations["close_alert_api_v1_workspaces__ws__alerts__alert_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/kit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Kit */
+        get: operations["get_kit_api_v1_workspaces__ws__alerts__alert_id__kit_get"];
+        /**
+         * Approve Kit
+         * @description A journalist's edit, or a plain approval (empty body): the kit becomes theirs (solid).
+         *     The accused's name still never stays in it; a changed Malagasy script needs a new reread.
+         */
+        put: operations["approve_kit_api_v1_workspaces__ws__alerts__alert_id__kit_put"];
+        /**
+         * Prepare Kit
+         * @description « Préparer le kit d'alerte »: a new reading (dashed), replacing an earlier one. What was
+         *     already sent stays on record.
+         */
+        post: operations["prepare_kit_api_v1_workspaces__ws__alerts__alert_id__kit_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/kit/relu-mg": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Kit Relu
+         * @description « Relu en malgache »: vouches for the exact Malagasy script on screen.
+         */
+        post: operations["kit_relu_api_v1_workspaces__ws__alerts__alert_id__kit_relu_mg_post"];
+        /** Kit Unrelu */
+        delete: operations["kit_unrelu_api_v1_workspaces__ws__alerts__alert_id__kit_relu_mg_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/alerts/{alert_id}/kit/send": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send Kit
+         * @description « Envoyer »: the approved kit goes to the desk (live event, Ma rubrique) and to the chosen
+         *     partner radios. Each radio is a truth stop of the alert on « Le trajet » (sent from the
+         *     journalist's own phone through the ready links). Malagasy only once reread, exactly.
+         */
+        post: operations["send_kit_api_v1_workspaces__ws__alerts__alert_id__kit_send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/items/{item_id}/alert-radios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Alert Radios
+         * @description The radios « Diffuser » proposes on a dossier: those the kit of its alerts went to, or else
+         *     the partner radios of those alerts' regions.
+         */
+        get: operations["alert_radios_api_v1_workspaces__ws__items__item_id__alert_radios_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/live": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Live */
+        get: operations["live_api_v1_workspaces__ws__live_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/gestures": {
         parameters: {
             query?: never;
@@ -3237,6 +3366,25 @@ export interface components {
             updated_at: string;
             /** Demo */
             demo: boolean;
+            kit?: components["schemas"]["KitBrief"] | null;
+        };
+        /** AlertRadios */
+        AlertRadios: {
+            /**
+             * Alert Id
+             * Format: uuid
+             */
+            alert_id: string;
+            /** Ref */
+            ref: string | null;
+            /** State */
+            state: string;
+            /** Closed */
+            closed: {
+                [key: string]: unknown;
+            } | null;
+            /** Routes */
+            routes: components["schemas"]["ProposedRoute"][];
         };
         /**
          * AlertRef
@@ -3418,6 +3566,41 @@ export interface components {
             signed: components["schemas"]["ItemOut"][];
             /** Skipped */
             skipped: components["schemas"]["Skipped"][];
+        };
+        /** CallOut */
+        CallOut: {
+            /** Contact Id */
+            contact_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Institution
+             * @default
+             */
+            institution: string;
+            /**
+             * Role
+             * @default
+             */
+            role: string;
+            /** Office */
+            office: string;
+            /** Region */
+            region?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Whatsapp */
+            whatsapp?: string | null;
+            /**
+             * Why
+             * @default
+             */
+            why: string;
+            /**
+             * Is Demo
+             * @default false
+             */
+            is_demo: boolean;
         };
         /** CarnetEntry */
         CarnetEntry: {
@@ -3765,6 +3948,11 @@ export interface components {
             };
             /** Expires In */
             expires_in: number;
+        };
+        /** CloseIn */
+        CloseIn: {
+            /** Reason */
+            reason: string;
         };
         /** CommentIn */
         CommentIn: {
@@ -4185,6 +4373,14 @@ export interface components {
             communique: components["schemas"]["CommuniqueRef"] | null;
             /** Demo */
             demo: boolean;
+        };
+        /** DraftIn */
+        DraftIn: {
+            /**
+             * Ai
+             * @default true
+             */
+            ai: boolean;
         };
         /** EvidenceOut */
         EvidenceOut: {
@@ -4815,6 +5011,115 @@ export interface components {
             /** Seals */
             seals: number;
         };
+        /**
+         * KitBrief
+         * @description Where the « Kit d'alerte » stands, for lists (the kit itself: `GET …/alerts/{id}/kit`).
+         */
+        KitBrief: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "approved";
+            /** Written By */
+            written_by: string;
+            /** Approved At */
+            approved_at?: string | null;
+            /** Sent At */
+            sent_at?: string | null;
+            /**
+             * Radios
+             * @default 0
+             */
+            radios: number;
+            /**
+             * Script Fr
+             * @default
+             */
+            script_fr: string;
+        };
+        /** KitEdit */
+        KitEdit: {
+            /** Known */
+            known?: string[] | null;
+            /** Unknown */
+            unknown?: string[] | null;
+            /** Script Fr */
+            script_fr?: string | null;
+            /** Script Mg */
+            script_mg?: string | null;
+            /** Dont Say */
+            dont_say?: string[] | null;
+            /** Call Ids */
+            call_ids?: string[] | null;
+        };
+        /** KitOut */
+        KitOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "draft" | "approved";
+            /** Written By */
+            written_by: string;
+            /** Provider */
+            provider?: string | null;
+            /** Model */
+            model?: string | null;
+            /**
+             * Fallback
+             * @default false
+             */
+            fallback: boolean;
+            /** Known */
+            known: string[];
+            /** Unknown */
+            unknown: string[];
+            script: components["schemas"]["Script"];
+            /** Call */
+            call: components["schemas"]["CallOut"][];
+            /** Dont Say */
+            dont_say: string[];
+            /** Guards */
+            guards?: {
+                [key: string]: number;
+            };
+            /**
+             * Drafted At
+             * Format: date-time
+             */
+            drafted_at: string;
+            /** Approved By */
+            approved_by?: string | null;
+            /** Approved Name */
+            approved_name?: string | null;
+            /** Approved At */
+            approved_at?: string | null;
+            /**
+             * Edited
+             * @default false
+             */
+            edited: boolean;
+            /**
+             * Stale
+             * @default false
+             */
+            stale: boolean;
+            relu_mg?: components["schemas"]["Relu"] | null;
+            /** Mg Hash */
+            mg_hash?: string | null;
+            /** Sent */
+            sent?: components["schemas"]["SentOut"][];
+        };
+        /** KitState */
+        KitState: {
+            alert: components["schemas"]["AlertOut"];
+            kit: components["schemas"]["KitOut"] | null;
+            /** Radios */
+            radios: components["schemas"]["RadioChoice"][];
+            /** Trajet */
+            trajet: components["schemas"]["StopOut"][];
+        };
         /** LinkIn */
         LinkIn: {
             /** Url */
@@ -4966,6 +5271,37 @@ export interface components {
             country: string;
             /** Region */
             region?: string | null;
+        };
+        /** Notice */
+        Notice: {
+            /** Id */
+            id: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "high_risk" | "on_air" | "truth_late" | "kit_sent";
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Title */
+            title: string;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
+            /** Ref */
+            ref?: string | null;
+            /** Href */
+            href: string;
+            /**
+             * Demo
+             * @default false
+             */
+            demo: boolean;
         };
         /** NotifyIn */
         NotifyIn: {
@@ -5286,6 +5622,17 @@ export interface components {
              */
             cached: boolean;
         };
+        /** ProposedRoute */
+        ProposedRoute: {
+            /** Channel */
+            channel: string;
+            /** Place */
+            place: string;
+            /** Location */
+            location: {
+                [key: string]: unknown;
+            };
+        };
         /** PublicCheckIn */
         PublicCheckIn: {
             /** Text */
@@ -5581,6 +5928,30 @@ export interface components {
             /** Source Id */
             source_id: string | null;
         };
+        /** RadioChoice */
+        RadioChoice: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /** Station */
+            station: string;
+            /** Region */
+            region: string | null;
+            /** Languages */
+            languages: string[];
+            /** In Region */
+            in_region: boolean;
+            /** Sent */
+            sent: boolean;
+            /** Has Contact */
+            has_contact: boolean;
+            /** Is Demo */
+            is_demo: boolean;
+        };
         /** RadioDiffuseIn */
         RadioDiffuseIn: {
             /**
@@ -5625,6 +5996,20 @@ export interface components {
             format_pref: "script" | "audio";
             /** Hours */
             hours?: string | null;
+        };
+        /** RadioLink */
+        RadioLink: {
+            /**
+             * Radio Id
+             * Format: uuid
+             */
+            radio_id: string;
+            /** Station */
+            station: string;
+            /** Whatsapp */
+            whatsapp?: string | null;
+            /** Sms */
+            sms?: string | null;
         };
         /** RadioOut */
         RadioOut: {
@@ -5706,6 +6091,20 @@ export interface components {
             kinds: {
                 [key: string]: number;
             };
+        };
+        /** Relu */
+        Relu: {
+            /** By */
+            by: string;
+            /** Name */
+            name: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
+            /** Current */
+            current: boolean;
         };
         /** ReluIn */
         ReluIn: {
@@ -6000,6 +6399,19 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        /** Script */
+        Script: {
+            /**
+             * Fr
+             * @default
+             */
+            fr: string;
+            /**
+             * Mg
+             * @default
+             */
+            mg: string;
+        };
         /** SealCheckIn */
         SealCheckIn: {
             /** Message */
@@ -6107,13 +6519,33 @@ export interface components {
             /** Text */
             text: string;
         };
-        /** SendIn */
-        SendIn: {
+        /** SendOut */
+        SendOut: {
+            state: components["schemas"]["KitState"];
+            /** Links */
+            links: components["schemas"]["RadioLink"][];
+            /** Message */
+            message: string;
+            /** Mg */
+            mg: boolean;
+        };
+        /** SentOut */
+        SentOut: {
             /**
-             * Question
-             * @default
+             * At
+             * Format: date-time
              */
-            question: string;
+            at: string;
+            /** By */
+            by: string;
+            /** Radios */
+            radios: {
+                [key: string]: unknown;
+            }[];
+            /** Mg */
+            mg: boolean;
+            /** Desks */
+            desks: boolean;
         };
         /**
          * ServedOut
@@ -6482,6 +6914,25 @@ export interface components {
         SplitIn: {
             /** Keys */
             keys: string[];
+        };
+        /** StopOut */
+        StopOut: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Channel */
+            channel: string;
+            /** Place */
+            place: string;
+            /** Status */
+            status: string;
+            /**
+             * At
+             * Format: date-time
+             */
+            at: string;
         };
         /** TipIn */
         TipIn: {
@@ -6871,6 +7322,16 @@ export interface components {
             verification: string;
             settings?: components["schemas"]["NewsroomSettings"];
         };
+        /** SendIn */
+        app__modules__alert_kit__SendIn: {
+            /** Radio Ids */
+            radio_ids?: string[];
+            /**
+             * Desks
+             * @default true
+             */
+            desks: boolean;
+        };
         /** OfficialOut */
         app__modules__official__OfficialOut: {
             /**
@@ -7029,6 +7490,14 @@ export interface components {
              * Format: uuid
              */
             source_id: string;
+        };
+        /** SendIn */
+        app__modules__studio__SendIn: {
+            /**
+             * Question
+             * @default
+             */
+            question: string;
         };
         /** FollowOut */
         app__modules__veille__FollowOut: {
@@ -12446,7 +12915,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["SendIn"];
+                "application/json": components["schemas"]["app__modules__studio__SendIn"];
             };
         };
         responses: {
@@ -13179,6 +13648,315 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AlertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    close_alert_api_v1_workspaces__ws__alerts__alert_id__close_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_kit_api_v1_workspaces__ws__alerts__alert_id__kit_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    approve_kit_api_v1_workspaces__ws__alerts__alert_id__kit_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["KitEdit"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    prepare_kit_api_v1_workspaces__ws__alerts__alert_id__kit_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    kit_relu_api_v1_workspaces__ws__alerts__alert_id__kit_relu_mg_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReluIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    kit_unrelu_api_v1_workspaces__ws__alerts__alert_id__kit_relu_mg_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["KitState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_kit_api_v1_workspaces__ws__alerts__alert_id__kit_send_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["app__modules__alert_kit__SendIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SendOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    alert_radios_api_v1_workspaces__ws__items__item_id__alert_radios_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                item_id: string;
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AlertRadios"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    live_api_v1_workspaces__ws__live_get: {
+        parameters: {
+            query?: {
+                hours?: number;
+            };
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notice"][];
                 };
             };
             /** @description Validation Error */
