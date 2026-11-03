@@ -36,6 +36,7 @@ import { crew } from "./mg/crew";
 import { dossier } from "./mg/dossier";
 import { alertKit } from "./mg/alertKit";
 import { offline } from "./mg/offline";
+import { pages } from "./mg/pages";
 import { palette } from "./mg/palette";
 import { publication } from "./mg/publication";
 import { publicLayer } from "./mg/publicLayer";
@@ -938,6 +939,7 @@ export const mg: Overrides = {
   verification,
   reach,
   offline,
+  pages,
   alertKit,
   palette,
   publication,

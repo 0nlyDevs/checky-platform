@@ -14,11 +14,13 @@ import { verification } from "./en/verification";
 import type { Overrides } from "./index";
 import { alertKit } from "./en/alertKit";
 import { offline } from "./en/offline";
+import { pages } from "./en/pages";
 import { studio } from "./en/studio";
 
 export const en: Overrides = {
   alertKit,
   offline,
+  pages,
   studio,
   // The desk (en/core.ts mirrors the sections that live in fr.ts; en/*.ts mirror fr/*.ts).
   ...core,
