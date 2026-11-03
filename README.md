@@ -201,6 +201,18 @@ verdicts of public newsrooms appear first, with a two-sentence radio line and th
 number. A Malagasy radio line appears only after a journalist has reread and attested it;
 Malagasy input can be typed. Fact-checkers' published reviews follow under their own names.
 
+### Alert kit
+
+In **Veille → Alertes**, open a high-risk alert and prepare its kit from the reports already
+attached to it. The draft is dashed until a journalist reviews and approves it. The call list
+uses only contacts belonging to that newsroom, even when another newsroom has shared a contact
+in the directory. The Malagasy radio script is held until a journalist marks its exact text
+as reread. Sending to the desk creates a live notice; partner radios with an SMS number enter
+the existing gateway outbox, and fictional demo numbers are simulated. WhatsApp remains a link
+the journalist opens manually. Radio numbers are masked in the desk's SMS list, and the short
+WhatsApp link in the kit response hides the number and expires after ten minutes. A journalist
+may close an alert only with a reason; a published verdict on a linked case also closes it.
+
 ## Everyday commands
 
 Run these before pushing. CI runs the same checks and fails otherwise.

@@ -11445,7 +11445,7 @@
           "alerts"
         ],
         "summary": "Send Kit",
-        "description": "« Envoyer »: the approved kit goes to the desk (live event, Ma rubrique) and to the chosen\npartner radios. Each radio is a truth stop of the alert on « Le trajet » (sent from the\njournalist's own phone through the ready links). Malagasy only once reread, exactly.",
+        "description": "« Envoyer »: the approved kit goes to the desk (live event, Ma rubrique) and to the chosen\npartner radios. SMS uses the existing gateway outbox; WhatsApp stays a ready link for the\njournalist to open. Malagasy only once reread, exactly.",
         "operationId": "send_kit_api_v1_workspaces__ws__alerts__alert_id__kit_send_post",
         "security": [
           {
@@ -11492,6 +11492,57 @@
                 "schema": {
                   "$ref": "#/components/schemas/SendOut"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/public/alert-kit/whatsapp/{alert_id}/{token}": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Open Radio Whatsapp",
+        "description": "A short-lived opaque link keeps the radio's number out of the kit response. Only a\njournalist who just chose this partner radio gets the link.",
+        "operationId": "open_radio_whatsapp_api_v1_public_alert_kit_whatsapp__alert_id___token__get",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Alert Id"
+            }
+          },
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -20249,6 +20300,16 @@
               }
             ],
             "title": "Sms"
+          },
+          "sms_queued": {
+            "type": "boolean",
+            "title": "Sms Queued",
+            "default": false
+          },
+          "sms_simulated": {
+            "type": "boolean",
+            "title": "Sms Simulated",
+            "default": false
           }
         },
         "type": "object",

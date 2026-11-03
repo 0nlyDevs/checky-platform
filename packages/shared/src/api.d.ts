@@ -3047,10 +3047,31 @@ export interface paths {
         /**
          * Send Kit
          * @description « Envoyer »: the approved kit goes to the desk (live event, Ma rubrique) and to the chosen
-         *     partner radios. Each radio is a truth stop of the alert on « Le trajet » (sent from the
-         *     journalist's own phone through the ready links). Malagasy only once reread, exactly.
+         *     partner radios. SMS uses the existing gateway outbox; WhatsApp stays a ready link for the
+         *     journalist to open. Malagasy only once reread, exactly.
          */
         post: operations["send_kit_api_v1_workspaces__ws__alerts__alert_id__kit_send_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/alert-kit/whatsapp/{alert_id}/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open Radio Whatsapp
+         * @description A short-lived opaque link keeps the radio's number out of the kit response. Only a
+         *     journalist who just chose this partner radio gets the link.
+         */
+        get: operations["open_radio_whatsapp_api_v1_public_alert_kit_whatsapp__alert_id___token__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -6010,6 +6031,16 @@ export interface components {
             whatsapp?: string | null;
             /** Sms */
             sms?: string | null;
+            /**
+             * Sms Queued
+             * @default false
+             */
+            sms_queued: boolean;
+            /**
+             * Sms Simulated
+             * @default false
+             */
+            sms_simulated: boolean;
         };
         /** RadioOut */
         RadioOut: {
@@ -13892,6 +13923,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SendOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_radio_whatsapp_api_v1_public_alert_kit_whatsapp__alert_id___token__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                alert_id: string;
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

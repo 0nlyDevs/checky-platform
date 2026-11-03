@@ -250,6 +250,8 @@ Done, on `dev`, CI green:
 
 - **Malagasy desk (3 Nov)**: `mg.ts` + `mg/*.ts` (one per `fr/*.ts`, typed `Part<typeof fr>` from `mg/part.ts`, glossary at the top of `mg.ts`) give every French key; machine-drafted, each file marked `// relire (mg)`, not yet reread by a native speaker. `lib/i18n.test.ts` (in `npm test`) fails on any French key without Malagasy, or a function whose parameters differ.
 
+- **Alert kit (3 Nov)**: a dangerous alert can draft a guarded, evidence-based kit, be edited and approved by a journalist, and send a live desk notice plus SMS through the existing gateway outbox to selected partner radios. Its call list uses only that newsroom's contacts. Malagasy radio text is held behind an exact-text reread. WhatsApp is a short-lived opaque link for manual sending. Closing requires a reason or follows a published verdict on a linked dossier.
+
 ## Next steps (in order)
 
 Not blocked:

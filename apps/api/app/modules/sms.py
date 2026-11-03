@@ -415,21 +415,36 @@ def _sms_out(m: SmsMessage, to: str | None = None) -> SmsOut:
 
 
 async def _reach(db: Db, phone_hash: str) -> str | None:
-    """The number itself, unsealed: from the last SMS it sent, else from a number left on the
-    site; None when only the gateway's own book knows it."""
-    sealed = await db.scalar(
-        select(SmsMessage.phone_sealed)
-        .where(
-            SmsMessage.phone_hash == phone_hash,
-            SmsMessage.direction == "in",
-            SmsMessage.phone_sealed.is_not(None),
+    """The number itself, unsealed: a sealed outbound radio destination, the last inbound
+    SMS, or a number left on the site; None when only the gateway's own book knows it."""
+    sealed = (
+        await db.scalar(
+            select(SmsMessage.phone_sealed)
+            .where(
+                SmsMessage.phone_hash == phone_hash,
+                SmsMessage.direction == "out",
+                SmsMessage.phone_sealed.is_not(None),
+            )
+            .order_by(SmsMessage.created_at.desc())
+            .limit(1)
         )
-        .order_by(SmsMessage.created_at.desc())
-        .limit(1)
-    ) or await db.scalar(
-        select(PublicQuestion.location["reach"].astext)
-        .where(PublicQuestion.contact_hash == phone_hash, PublicQuestion.location.has_key("reach"))
-        .limit(1)
+        or await db.scalar(
+            select(SmsMessage.phone_sealed)
+            .where(
+                SmsMessage.phone_hash == phone_hash,
+                SmsMessage.direction == "in",
+                SmsMessage.phone_sealed.is_not(None),
+            )
+            .order_by(SmsMessage.created_at.desc())
+            .limit(1)
+        )
+        or await db.scalar(
+            select(PublicQuestion.location["reach"].astext)
+            .where(
+                PublicQuestion.contact_hash == phone_hash, PublicQuestion.location.has_key("reach")
+            )
+            .limit(1)
+        )
     )
     return contact.unseal(sealed)
 

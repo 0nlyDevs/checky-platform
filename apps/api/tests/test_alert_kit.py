@@ -2,6 +2,7 @@
 journalist, sent to the desk and the partner radios of its regions; the closing rules; live
 alerts in the desk (8.4)."""
 
+import asyncio
 import json
 
 import httpx
@@ -9,6 +10,8 @@ import pytest
 
 from app.core import ai
 from app.core.config import get_settings
+from app.core.db import SessionLocal
+from app.modules.sms import _reach
 from tests.test_alerts import KIDNAP_FR, KIDNAP_MG, _clip, _dossier, _scan
 from tests.test_public import _newsroom
 from tests.test_veille import _ago
@@ -150,11 +153,41 @@ def test_without_ai_the_kit_is_a_template_from_the_facts(as_user, model):
     assert "Rien ne confirme à ce stade" in kit["script"]["fr"]
     assert "Boeny" in kit["script"]["fr"] and "Sofia" in kit["script"]["fr"]
     assert kit["call"] == []  # an empty Annuaire: nobody is invented
-
     # the newsroom's own « Mode sans IA » wins over the button
     alice.patch(f"/api/v1/workspaces/{ws}", json={"settings": {"ai_enabled": False}})
     assert alice.post(url, json={}).json()["kit"]["written_by"] == "template"
     assert model == []
+
+
+def test_emergency_kit_never_copies_another_newsrooms_shared_contact(as_user):
+    alice, bob = as_user("alice"), as_user("bob")
+    ws, _ = _newsroom(alice)
+    other, _ = _newsroom(bob)
+    alert, _ = _alert(alice, ws)
+    shared = bob.post(
+        f"/api/v1/workspaces/{other}/contacts",
+        json={
+            "kind": "institution",
+            "name": "Commissariat partagé (démo)",
+            "institution": "Police nationale",
+            "place": "Mahajanga",
+            "phone": "+261 34 00 000 98",
+            "whatsapp": "+261 34 00 000 99",
+            "languages": ["fr"],
+            "shared": True,
+        },
+    )
+    assert shared.status_code == 201, shared.text
+    assert any(
+        c["id"] == shared.json()["id"]
+        for c in alice.get(f"/api/v1/workspaces/{ws}/contacts").json()
+    )
+    kit = alice.post(
+        f"/api/v1/workspaces/{ws}/alerts/{alert['id']}/kit", json={"ai": False}
+    ).json()["kit"]
+    assert kit["call"] == []
+    assert "+261 34 00 000 98" not in json.dumps(kit)
+    assert "+261 34 00 000 99" not in json.dumps(kit)
 
 
 def test_with_no_model_answering_the_template_takes_over(as_user, monkeypatch):
@@ -206,7 +239,11 @@ def test_approve_send_and_the_malagasy_reread(as_user, model):
     assert out["mg"] is False and "Amin'ny teny malagasy" not in out["message"]
     assert "ALR-0001 · Kit d'alerte" in out["message"]
     [link] = out["links"]
-    assert link["whatsapp"].startswith("https://wa.me/261340000021?text=")
+    assert link["whatsapp"].startswith(f"/public/alert-kit/whatsapp/{alert['id']}/")
+    opened = alice.get("/api/v1" + link["whatsapp"], follow_redirects=False)
+    assert opened.status_code == 302
+    assert opened.headers["location"].startswith("https://wa.me/261340000021?text=")
+    assert opened.headers["cache-control"] == "no-store"
     assert link["sms"] is None
     [stop] = out["state"]["trajet"]
     assert stop["channel"] == "radio" and stop["status"] == "sent"
@@ -232,6 +269,48 @@ def test_approve_send_and_the_malagasy_reread(as_user, model):
     ]
     assert {"kit_draft", "kit_approve", "kit_send", "kit_relu_mg"} <= set(actions)
     assert alice.get(f"/api/v1/workspaces/{ws}/alerts").json()[0]["kit"]["radios"] == 2
+
+
+def test_radio_sms_is_queued_once_with_a_masked_number(as_user):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    alert, _ = _alert(alice, ws)
+    radio = _radio(alice, ws, "Radio SMS (démo)", "Mahajanga", sms="+261 34 00 000 22")
+    base = f"/api/v1/workspaces/{ws}/alerts/{alert['id']}/kit"
+    alice.post(base, json={"ai": False})
+    alice.put(base, json={})
+    first = alice.post(base + "/send", json={"radio_ids": [radio]}).json()
+    assert first["links"][0]["sms"] is None
+    assert first["links"][0]["sms_queued"] is True
+    assert "+261340000022" not in json.dumps(first)
+    assert "+261 34 00 000 22" not in json.dumps(first)
+    alice.post(base + "/send", json={"radio_ids": [radio]})
+    messages = alice.get(f"/api/v1/workspaces/{ws}/sms/messages").json()
+    assert len(messages) == 1
+    assert messages[0]["status"] == "simulated"
+    assert "••" in messages[0]["masked"]
+    assert messages[0]["to"] is None
+
+
+def test_radio_sms_gateway_can_read_sealed_outbound_destination(as_user):
+    alice = as_user("alice")
+    ws, _ = _newsroom(alice)
+    alert, _ = _alert(alice, ws)
+    radio = _radio(alice, ws, "Radio test", "Mahajanga", sms="+261 34 12 345 67")
+    base = f"/api/v1/workspaces/{ws}/alerts/{alert['id']}/kit"
+    alice.post(base, json={"ai": False})
+    alice.put(base, json={})
+    out = alice.post(base + "/send", json={"radio_ids": [radio]}).json()
+    assert out["links"][0]["sms_queued"] is True
+    assert "+261341234567" not in json.dumps(out)
+    [message] = alice.get(f"/api/v1/workspaces/{ws}/sms/messages").json()
+    assert message["status"] == "queued"
+
+    async def destination():
+        async with SessionLocal() as db:
+            return await _reach(db, message["phone_hash"])
+
+    assert asyncio.run(destination()) == "+261341234567"
 
 
 def test_a_journalist_closes_an_alert_with_a_reason_and_diffuser_proposes_its_radios(

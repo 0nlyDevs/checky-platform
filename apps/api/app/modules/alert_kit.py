@@ -24,21 +24,23 @@ bound to the exact text.
 import json
 import logging
 import re
+import secrets
 import urllib.parse
 import uuid
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core import ai, places, tone
+from app.core import ai, contact, places, tone
 from app.core.access import AnyMember, Db, Member
 from app.core.activity import broadcast, record
 from app.core.errors import ApiError
-from app.core.models import Contact, Item, RadioPartner, Route, Workspace
+from app.core.models import Contact, Item, RadioPartner, Route, SmsMessage, Workspace
 from app.modules.alerts import AlertOut, _get_alert, _members, alert_out
 from app.modules.veille import canonical_region
 
@@ -310,10 +312,14 @@ def template(alert: Item, ev: dict[str, Any]) -> dict[str, Any]:
 async def who_to_call(db: AsyncSession, ws: uuid.UUID, regions: list[str]) -> list[dict[str, Any]]:
     """Police, gendarmerie, local authorities, BNGRC, health… from the Annuaire: those of the
     alert's regions first, then national ones. Numbers exactly as the newsroom entered them."""
-    from app.modules.directory import NOT_ASKED, _visible
+    from app.modules.directory import NOT_ASKED
 
     wanted = {places.fold(canonical_region(r) or r) for r in regions}
-    rows = await db.scalars(select(Contact).where(_visible(ws), Contact.kind.notin_(NOT_ASKED)))
+    # A shared contact may be visible in the directory without this newsroom having verified
+    # its phone number. The emergency kit must use only contacts this newsroom owns.
+    rows = await db.scalars(
+        select(Contact).where(Contact.workspace_id == ws, Contact.kind.notin_(NOT_ASKED))
+    )
     found = []
     for c in rows:
         about = places.fold(
@@ -761,6 +767,8 @@ class RadioLink(BaseModel):
     station: str
     whatsapp: str | None = None
     sms: str | None = None
+    sms_queued: bool = False
+    sms_simulated: bool = False
 
 
 class SendOut(BaseModel):
@@ -791,8 +799,8 @@ def _digits(phone: str | None) -> str:
 @router.post("/workspaces/{ws}/alerts/{alert_id}/kit/send")
 async def send_kit(alert_id: uuid.UUID, body: SendIn, member: AnyMember, db: Db) -> SendOut:
     """« Envoyer »: the approved kit goes to the desk (live event, Ma rubrique) and to the chosen
-    partner radios. Each radio is a truth stop of the alert on « Le trajet » (sent from the
-    journalist's own phone through the ready links). Malagasy only once reread, exactly."""
+    partner radios. SMS uses the existing gateway outbox; WhatsApp stays a ready link for the
+    journalist to open. Malagasy only once reread, exactly."""
     from app.modules import trajet
 
     alert = await _get_alert(db, member, alert_id)
@@ -818,8 +826,64 @@ async def send_kit(alert_id: uuid.UUID, body: SendIn, member: AnyMember, db: Db)
     mg = bool(relu and h and relu.get("mg_hash") == h)
     workspace = await db.get(Workspace, member.workspace_id)
     text = message(alert, kit, workspace.name if workspace else "", mg)
-    links = []
+    sms_text = text[:480]
+    # Validate every SMS destination before recording any truth stop or queuing a message.
+    numbers: dict[uuid.UUID, tuple[str, str, str, str]] = {}
     for r in radios:
+        if r.sms:
+            try:
+                kind, number = contact.normalise(r.sms)
+            except ValueError:
+                raise ApiError(
+                    422, "invalid_radio_number", "Correct the radio's SMS number"
+                ) from None
+            if kind != "phone":
+                raise ApiError(422, "invalid_radio_number", "Correct the radio's SMS number")
+            numbers[r.id] = (
+                number,
+                contact.digest("phone", number),
+                contact.mask("phone", number),
+                contact.seal(number),
+            )
+    links = []
+    whatsapp_tokens: dict[uuid.UUID, str] = {}
+    for r in radios:
+        queued = False
+        simulated = False
+        if r.id in numbers:
+            number, phone_hash, masked, sealed = numbers[r.id]
+            prior = await db.scalar(
+                select(SmsMessage.id)
+                .where(
+                    SmsMessage.workspace_id == member.workspace_id,
+                    SmsMessage.item_id == alert.id,
+                    SmsMessage.direction == "out",
+                    SmsMessage.phone_hash == phone_hash,
+                    SmsMessage.text == sms_text,
+                )
+                .limit(1)
+            )
+            if prior is None:
+                from app.modules.sms import fictional_hashes
+
+                simulated = phone_hash in fictional_hashes()
+                db.add(
+                    SmsMessage(
+                        workspace_id=member.workspace_id,
+                        item_id=alert.id,
+                        direction="out",
+                        phone_hash=phone_hash,
+                        phone_masked=masked,
+                        phone_sealed=None if simulated else sealed,
+                        text=sms_text,
+                        status="simulated" if simulated else "queued",
+                    )
+                )
+            else:
+                from app.modules.sms import fictional_hashes
+
+                simulated = phone_hash in fictional_hashes()
+            queued = True
         await trajet.add_stop(
             db,
             member.workspace_id,
@@ -838,14 +902,18 @@ async def send_kit(alert_id: uuid.UUID, body: SendIn, member: AnyMember, db: Db)
             added_by=member.user.id,
             auto=False,
         )
-        quoted = urllib.parse.quote(text)
-        wa, sms = _digits(r.whatsapp), _digits(r.sms)
+        wa = _digits(r.whatsapp)
+        if wa:
+            whatsapp_tokens[r.id] = secrets.token_urlsafe(24)
         links.append(
             RadioLink(
                 radio_id=r.id,
                 station=station_of(r),
-                whatsapp=f"https://wa.me/{wa}?text={quoted}" if wa else None,
-                sms=f"sms:+{sms}?body={quoted}" if sms else None,
+                whatsapp=(
+                    f"/public/alert-kit/whatsapp/{alert.id}/{whatsapp_tokens[r.id]}" if wa else None
+                ),
+                sms_queued=queued,
+                sms_simulated=simulated,
             )
         )
     now = datetime.now(UTC).isoformat()
@@ -854,7 +922,14 @@ async def send_kit(alert_id: uuid.UUID, body: SendIn, member: AnyMember, db: Db)
         {
             "at": now,
             "by": member.user.id,
-            "radios": [{"id": str(r.id), "station": station_of(r)} for r in radios],
+            "radios": [
+                {
+                    "id": str(r.id),
+                    "station": station_of(r),
+                    "whatsapp_token": whatsapp_tokens.get(r.id),
+                }
+                for r in radios
+            ],
             "mg": mg,
             "desks": body.desks,
         },
@@ -877,7 +952,45 @@ async def send_kit(alert_id: uuid.UUID, body: SendIn, member: AnyMember, db: Db)
         )
     if radios:
         await broadcast(member.workspace_id, "route.added", {"item_id": str(alert.id)})
+    if any(link.sms_queued for link in links):
+        from app.modules.sms_gateway import push_soon
+
+        await push_soon(db, member.workspace_id)
     return SendOut(state=state, links=links, message=text, mg=mg)
+
+
+@router.get("/public/alert-kit/whatsapp/{alert_id}/{token}")
+async def open_radio_whatsapp(alert_id: uuid.UUID, token: str, db: Db) -> RedirectResponse:
+    """A short-lived opaque link keeps the radio's number out of the kit response. Only a
+    journalist who just chose this partner radio gets the link."""
+    alert = await db.get(Item, alert_id)
+    if alert is None or alert.type != "alert":
+        raise ApiError(404, "not_found", "Link not found")
+    kit = (alert.data or {}).get("kit") or {}
+    for sending in reversed(kit.get("sent") or []):
+        try:
+            fresh = datetime.now(UTC) - datetime.fromisoformat(sending["at"]) < timedelta(
+                minutes=10
+            )
+        except (KeyError, ValueError, TypeError):
+            continue
+        if not fresh:
+            continue
+        for chosen in sending.get("radios") or []:
+            if chosen.get("whatsapp_token") != token:
+                continue
+            radio = await db.get(RadioPartner, uuid.UUID(chosen["id"]))
+            if radio is None or radio.workspace_id != alert.workspace_id or not radio.whatsapp:
+                break
+            workspace = await db.get(Workspace, alert.workspace_id)
+            number = _digits(radio.whatsapp)
+            body = message(alert, kit, workspace.name if workspace else "", bool(sending.get("mg")))
+            response = RedirectResponse(
+                f"https://wa.me/{number}?text={urllib.parse.quote(body)}", status_code=302
+            )
+            response.headers["Cache-Control"] = "no-store"
+            return response
+    raise ApiError(404, "not_found", "Link not found")
 
 
 # ------------------------------------------------------------ « Diffuser » proposes the radios
