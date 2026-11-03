@@ -8,13 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetcher } from "@/lib/api";
 import { dateFormat, t } from "@/lib/i18n/live";
 import { IconArrowRight, IconChatCircle } from "@/lib/icons";
+import { ThemedSelect } from "@/components/ui/select";
 
 const q = t.team.settings.questions;
 const day = dateFormat({ day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
 const PERIODS = [1, 7, 30] as const;
-const select =
-  "mt-1 h-9 rounded-md border border-input bg-background px-2.5 text-sm outline-none focus-visible:border-foreground focus-visible:ring-2 focus-visible:ring-foreground/15";
-
 type Group = {
   text: string;
   count: number;
@@ -47,27 +45,28 @@ export function PeopleAsk({ ws }: { ws: string }) {
           <p className="mt-1 max-w-prose text-sm text-muted-foreground">{q.lead}</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <label className="block text-sm font-medium">
+          <div className="block text-sm font-medium">
             {q.region}
-            <select value={region} onChange={(e) => setRegion(e.target.value)} className={`block ${select}`}>
-              <option value="">{q.allRegions}</option>
-              {MG_REGIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="block text-sm font-medium">
+            <ThemedSelect
+              size="sm"
+              className="mt-1 flex"
+              label={q.region}
+              value={region}
+              onValueChange={setRegion}
+              options={[{ value: "", label: q.allRegions }, ...MG_REGIONS.map((r) => ({ value: r, label: r }))]}
+            />
+          </div>
+          <div className="block text-sm font-medium">
             {q.period}
-            <select value={days} onChange={(e) => setDays(Number(e.target.value) as (typeof PERIODS)[number])} className={`block ${select}`}>
-              {PERIODS.map((d) => (
-                <option key={d} value={d}>
-                  {q.days(d)}
-                </option>
-              ))}
-            </select>
-          </label>
+            <ThemedSelect
+              size="sm"
+              className="mt-1 flex"
+              label={q.period}
+              value={String(days)}
+              onValueChange={(x) => setDays(Number(x) as (typeof PERIODS)[number])}
+              options={PERIODS.map((d) => ({ value: String(d), label: q.days(d) }))}
+            />
+          </div>
         </div>
       </div>
       {error ? (

@@ -14,14 +14,12 @@ import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { IconAddressBook, IconArrowSquareOut, IconCircleNotch, IconMagnifyingGlass, IconPhone, IconPlus, IconSealCheck, IconX } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { ThemedSelect } from "@/components/ui/select";
 
 const a = t.dossier.annuaire;
 const KINDS = ["institution", "officer", "expert", "journalist", "person", "media", "page"] as const;
 const LANGS = ["fr", "mg", "en"] as const;
 const ALL = "";
-
-const fieldClass =
-  "h-10 w-full rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30";
 
 function regionOf(c: Contact): string | null {
   const l = c.location ?? {};
@@ -187,13 +185,14 @@ function AddContact({ ws, onSaved, onCancel }: { ws: string; onSaved: () => void
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="c-kind">{f.kind}</Label>
-        <select id="c-kind" name="kind" className={fieldClass} defaultValue="institution">
-          {KINDS.map((k) => (
-            <option key={k} value={k}>
-              {a.kinds[k]}
-            </option>
-          ))}
-        </select>
+        <ThemedSelect
+          id="c-kind"
+          size="sm"
+          className="flex w-full"
+          name="kind"
+          defaultValue="institution"
+          options={KINDS.map((k) => ({ value: k, label: a.kinds[k] }))}
+        />
       </div>
       <div className="space-y-1.5">
         <Label htmlFor="c-institution">{f.institution}</Label>
@@ -352,27 +351,25 @@ export function AnnuaireView() {
           <Label htmlFor="annuaire-topic" className="sr-only">
             {a.allBeats}
           </Label>
-          <select id="annuaire-topic" value={topic} onChange={(e) => setTopic(e.target.value)} className={cn(fieldClass, "w-auto")}>
-            <option value={ALL}>{a.allBeats}</option>
-            {topics.map((x) => (
-              <option key={x} value={x}>
-                {x}
-              </option>
-            ))}
-          </select>
+          <ThemedSelect
+            id="annuaire-topic"
+            size="sm"
+            value={topic}
+            onValueChange={setTopic}
+            options={[{ value: ALL, label: a.allBeats }, ...topics.map((x) => ({ value: x, label: x }))]}
+          />
         </div>
         <div>
           <Label htmlFor="annuaire-region" className="sr-only">
             {a.allRegions}
           </Label>
-          <select id="annuaire-region" value={region} onChange={(e) => setRegion(e.target.value)} className={cn(fieldClass, "w-auto")}>
-            <option value={ALL}>{a.allRegions}</option>
-            {regions.map((x) => (
-              <option key={x} value={x}>
-                {x}
-              </option>
-            ))}
-          </select>
+          <ThemedSelect
+            id="annuaire-region"
+            size="sm"
+            value={region}
+            onValueChange={setRegion}
+            options={[{ value: ALL, label: a.allRegions }, ...regions.map((x) => ({ value: x, label: x }))]}
+          />
         </div>
         {data && <p className="pb-2 text-sm text-muted-foreground tabular">{a.count(shown.length)}</p>}
       </div>

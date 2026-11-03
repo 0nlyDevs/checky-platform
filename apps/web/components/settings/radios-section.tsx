@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { api, fetcher } from "@/lib/api";
 import { dateFormat, t } from "@/lib/i18n/live";
 import { IconBroadcast, IconCheck, IconCircleNotch, IconCopy, IconPlus, IconX } from "@/lib/icons";
+import { ThemedSelect } from "@/components/ui/select";
 
 const r = t.team.settings.radios;
 const day = dateFormat({ day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
@@ -136,17 +137,16 @@ export function RadiosSection({ ws, canEdit }: { ws: string; canEdit: boolean })
             <span className="text-sm font-medium">{r.frequency}</span>
             <input name="frequency" maxLength={40} placeholder={r.frequencyPlaceholder} className={field} />
           </label>
-          <label className="block">
-            <span className="text-sm font-medium">{r.region}</span>
-            <select name="region" defaultValue="" className={field}>
-              <option value="">—</option>
-              {MG_REGIONS.map((x) => (
-                <option key={x} value={x}>
-                  {x}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="block">
+            <span className="block text-sm font-medium">{r.region}</span>
+            <ThemedSelect
+              size="sm"
+              className="w-full"
+              label={r.region}
+              name="region"
+              options={[{ value: "", label: "—" }, ...MG_REGIONS.map((x) => ({ value: x, label: x }))]}
+            />
+          </div>
           <Button type="submit" variant="outline" className="h-10" disabled={busy}>
             {busy ? <IconCircleNotch className="animate-spin" aria-hidden /> : <IconPlus aria-hidden />}
             {busy ? r.adding : r.add}

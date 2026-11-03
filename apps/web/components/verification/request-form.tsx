@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError, fetcher } from "@/lib/api";
 import { t } from "@/lib/i18n/live";
 import { IconCircleNotch, IconLockSimple } from "@/lib/icons";
+import { ThemedSelect } from "@/components/ui/select";
 
 export type Verification = components["schemas"]["VerificationOut"];
 type Country = components["schemas"]["CountryOut"];
@@ -84,28 +85,30 @@ export function RequestForm({ ws, outlet, onSent, onLater }: { ws: string; outle
       <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-3 font-display text-lg font-bold">{v.form.outletBlock}</legend>
         <Field name="outlet" label={v.form.outlet} required minLength={2} maxLength={160} defaultValue={r?.outlet ?? outlet} />
-        <label className="block">
-          <span className="text-sm font-bold">{v.form.kind}</span>
-          <select name="kind" required defaultValue={r?.kind ?? "radio"} className={field}>
-            {KINDS.map((k) => (
-              <option key={k} value={k}>
-                {v.kinds[k]}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="block">
+          <span className="block text-sm font-bold">{v.form.kind}</span>
+          <ThemedSelect
+            size="sm"
+            className="mt-1 w-full"
+            label={v.form.kind}
+            name="kind"
+            defaultValue={r?.kind ?? "radio"}
+            options={KINDS.map((k) => ({ value: k, label: v.kinds[k] }))}
+          />
+        </div>
         <Field name="city" label={v.form.city} required minLength={2} maxLength={120} defaultValue={r?.city} autoComplete="address-level2" />
         <Field name="region" label={v.form.region} maxLength={120} defaultValue={r?.region ?? ""} autoComplete="address-level1" />
-        <label className="block">
-          <span className="text-sm font-bold">{v.form.country}</span>
-          <select name="country" required defaultValue={r?.country ?? "MG"} className={field}>
-            {(countries.data ?? [{ code: "MG", name: "Madagascar" }]).map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="block">
+          <span className="block text-sm font-bold">{v.form.country}</span>
+          <ThemedSelect
+            size="sm"
+            className="mt-1 w-full"
+            label={v.form.country}
+            name="country"
+            defaultValue={r?.country ?? "MG"}
+            options={(countries.data ?? [{ code: "MG", name: "Madagascar" }]).map((c) => ({ value: c.code, label: c.name }))}
+          />
+        </div>
         <Field
           name="website"
           label={v.form.website}

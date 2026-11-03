@@ -400,17 +400,6 @@
   outline: 2px solid var(--foreground);
   outline-offset: 3px;
 }
-/* The themed dropdown arrives from its button. */
-.pub-menu[data-state="open"] {
-  animation: pub-menu-in 0.24s var(--ease-out);
-}
-@keyframes pub-menu-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.98);
-  }
-}
-
 /* ---------- a published verdict as a card ---------- */
 .vcard-grid {
   display: grid;

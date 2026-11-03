@@ -227,7 +227,7 @@ function RiskLine({ ws, item, nameOf, onSaved }: { ws: string; item: Item; nameO
           <div className="grid gap-1.5">
             <Label htmlFor="risk-level">{tr.levelLabel}</Label>
             <Select value={level} onValueChange={setLevel}>
-              <SelectTrigger id="risk-level" className="h-10 w-full bg-background sm:w-60">
+              <SelectTrigger size="sm" id="risk-level" className="w-full sm:w-60">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -510,7 +510,7 @@ export function ClaimDetail() {
                       {t.detail.status}
                     </Label>
                     <Select value={claim.status} disabled={!canEdit} onValueChange={(status) => void changeStatus(status as Status)}>
-                      <SelectTrigger id="claim-status" aria-label={t.detail.status} className="h-10 min-w-40 bg-card">
+                      <SelectTrigger size="sm" id="claim-status" aria-label={t.detail.status} className="min-w-40">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -576,7 +576,7 @@ export function ClaimDetail() {
                     patch({ data: { assignee_id } }, { data: { ...item.data, assignee_id } });
                   }}
                 >
-                  <SelectTrigger id="claim-assignee" className="h-8 w-full bg-card">
+                  <SelectTrigger size="sm" id="claim-assignee" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>

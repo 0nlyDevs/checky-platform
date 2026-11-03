@@ -92,7 +92,7 @@ export function DocumentsView() {
               <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={d.search} aria-label={d.search} className="h-10 bg-card pl-9" />
             </div>
             <Select value={topic} onValueChange={setTopic}>
-              <SelectTrigger aria-label={d.topic} className="h-10 w-auto min-w-40 bg-card">
+              <SelectTrigger size="sm" aria-label={d.topic} className="w-auto min-w-40">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

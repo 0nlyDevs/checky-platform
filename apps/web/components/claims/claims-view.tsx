@@ -219,7 +219,7 @@ export function ClaimsView() {
           <Input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={t.claims.search} aria-label={t.claims.search} className="h-10 bg-card pl-9" />
         </div>
         <Select value={assignee} onValueChange={setAssignee}>
-          <SelectTrigger aria-label={t.detail.assignee} className="h-10 w-auto min-w-40 bg-card">
+          <SelectTrigger size="sm" aria-label={t.detail.assignee} className="w-auto min-w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
