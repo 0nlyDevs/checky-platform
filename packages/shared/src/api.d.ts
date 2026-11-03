@@ -2362,6 +2362,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/workspaces/{ws}/avant-antenne": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Before Air */
+        post: operations["before_air_api_v1_workspaces__ws__avant_antenne_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workspaces/{ws}/avant-antenne/fact-checks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fact Checks
+         * @description The fact-checkers' reviews of this claim, in their own words (never mapped onto ours).
+         */
+        post: operations["fact_checks_api_v1_workspaces__ws__avant_antenne_fact_checks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/workspaces/{ws}/verification": {
         parameters: {
             query?: never;
@@ -4603,6 +4640,66 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** OnAirIn */
+        OnAirIn: {
+            /** Text */
+            text: string;
+        };
+        /** OnAirOut */
+        OnAirOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "signed" | "followed" | "new";
+            /** Signed */
+            signed: components["schemas"]["OnAirVerdict"][];
+            own?: components["schemas"]["OwnClaim"] | null;
+            /** Followed By */
+            followed_by?: string | null;
+            /** Careful Line */
+            careful_line?: string | null;
+        };
+        /** OnAirVerdict */
+        OnAirVerdict: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /** Verdict */
+            verdict: string;
+            /** Newsroom */
+            newsroom: string;
+            /** Own */
+            own: boolean;
+            /**
+             * Published At
+             * Format: date-time
+             */
+            published_at: string;
+            /** Signed At */
+            signed_at: string | null;
+            /** Check Label */
+            check_label: string | null;
+            /** Link */
+            link: string;
+            /** Radio Line */
+            radio_line: string;
+            /** Radio Line Mg */
+            radio_line_mg: string | null;
+            /**
+             * Mg Status
+             * @enum {string}
+             */
+            mg_status: "relu" | "not_reread";
+            /** Score */
+            score: number;
+        };
         /** OriginalIn */
         OriginalIn: {
             /** Issuer */
@@ -4642,6 +4739,20 @@ export interface components {
             issued_on: string | null;
             /** Title */
             title: string;
+        };
+        /** OwnClaim */
+        OwnClaim: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ref */
+            ref: string | null;
+            /** Title */
+            title: string;
+            /** Status */
+            status: string;
         };
         /** Passage */
         Passage: {
@@ -5359,6 +5470,16 @@ export interface components {
             date: string | null;
             /** Title */
             title: string;
+        };
+        /** ReviewsOut */
+        ReviewsOut: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "done" | "unavailable";
+            /** Reviews */
+            reviews: components["schemas"]["ReviewOut"][];
         };
         /** RevokedKeyOut */
         RevokedKeyOut: {
@@ -11173,6 +11294,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WebhookOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    before_air_api_v1_workspaces__ws__avant_antenne_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnAirIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OnAirOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    fact_checks_api_v1_workspaces__ws__avant_antenne_fact_checks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ws: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OnAirIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewsOut"];
                 };
             };
             /** @description Validation Error */

@@ -30,6 +30,7 @@ from app.modules import (
     me,
     media_api,
     official,
+    onair,
     public,
     quotes,
     rag,
@@ -107,6 +108,7 @@ api.include_router(veille.router, prefix="/api/v1")
 api.include_router(verify_public.router, prefix="/api/v1")
 api.include_router(sms.router, prefix="/api/v1")
 api.include_router(sms_gateway.router, prefix="/api/v1")
+api.include_router(onair.router, prefix="/api/v1")
 api.include_router(verification.router, prefix="/api/v1")
 api.include_router(official.router, prefix="/api/v1")
 api.include_router(alerts.router, prefix="/api/v1")
