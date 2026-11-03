@@ -6,12 +6,11 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { IconArrowRight, IconArrowSquareOut, IconCopy, IconMapPin, IconPencilSimple, IconScan, IconWarning } from "@/lib/icons";
+import { IconArrowRight, IconArrowSquareOut, IconCopy, IconMapPin, IconPencilSimple, IconRadio, IconScan, IconWarning } from "@/lib/icons";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { claimSteps, StepLine } from "@/components/flow/step-line";
 import { StatusLabel, toClaim, VerdictBadge } from "@/components/claims/verdict";
-import { AlertsList } from "@/components/veille/alerts-panel";
+import { AlertLevel, AlertsList } from "@/components/veille/alerts-panel";
 import { AntenneList } from "@/components/veille/antenne-list";
 import { useSignalToasts } from "@/components/veille/signals-panel";
 import { useMe } from "@/components/rubrique/use-me";
@@ -21,7 +20,7 @@ import { t } from "@/lib/i18n/fr";
 import { BeatPicker } from "./beat-picker";
 import { CheckedLine, DemoTag, KindLabel, LoadFailed, Section, when } from "./bits";
 import { MeteoPanel } from "./meteo-panel";
-import type { Alert, AngleCard, Circulating, ContactCard, FigureCard, Rubrique } from "./types";
+import type { Alert, AngleCard, AntenneRow, Circulating, ContactCard, FigureCard, Rubrique } from "./types";
 
 const r = t.rubrique;
 
@@ -32,14 +31,46 @@ function target(ws: string, c: Circulating): { href: string; external: boolean }
   return { href: `/w/${ws}/veille?type=${c.kind}`, external: false };
 }
 
-function CirculatingRow({ ws, c, i }: { ws: string; c: Circulating; i: number }) {
+/** What else Checky gathered about the rumour of a row: its alert, or what the radio said. */
+type Echo = { alert: Alert | null; antenne: AntenneRow | null };
+
+/** One rumour, one line: a dossier and the radio, SMS or tips that repeat it share their first row. */
+function oneRowPerRumour(list: Circulating[]): Circulating[] {
+  const best = new Map<string, Circulating>();
+  for (const c of list) {
+    if (!c.item_id) continue;
+    const kept = best.get(c.item_id);
+    if (!kept || (!kept.item && c.item)) best.set(c.item_id, c);
+  }
+  const out: Circulating[] = [];
+  const placed = new Set<string>();
+  for (const c of list) {
+    if (!c.item_id) out.push(c);
+    else if (!placed.has(c.item_id)) {
+      placed.add(c.item_id);
+      out.push(best.get(c.item_id) ?? c);
+    }
+  }
+  return out;
+}
+
+function channels(kinds: Record<string, number>): string {
+  return Object.keys(kinds)
+    .map((k) => r.circulating.channel[k as keyof typeof r.circulating.channel] ?? k)
+    .join(", ");
+}
+
+function CirculatingRow({ ws, c, i, echo }: { ws: string; c: Circulating; i: number; echo: Echo }) {
   const go = target(ws, c);
   const claim = c.item ? toClaim(c.item) : null;
   const linkClass =
     "block font-bold text-pretty outline-none after:absolute after:inset-0 hover:underline focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset md:text-lg md:leading-snug";
+  const { alert, antenne } = echo;
+  // One state per row: the workflow word on the left; on the right only a verdict, when there is one.
+  const verdict = claim && (claim.verdict || claim.suggested);
   return (
     <li className="arrive relative border-b border-border" style={{ "--i": Math.min(i, 12) } as React.CSSProperties}>
-      <div className="grid gap-x-5 gap-y-2 py-3.5 transition-colors hover:bg-card sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:px-2 @4xl:grid-cols-[5.5rem_minmax(0,1fr)_13rem]">
+      <div className="grid gap-x-5 gap-y-2 py-3.5 transition-colors hover:bg-card sm:grid-cols-[5.5rem_minmax(0,1fr)] sm:px-2 @4xl:grid-cols-[5.5rem_minmax(0,1fr)_auto]">
         <p className="flex items-baseline gap-3 sm:block">
           <time dateTime={c.at} className="block text-sm font-medium tabular">
             {when(c.at)}
@@ -59,7 +90,7 @@ function CirculatingRow({ ws, c, i }: { ws: string; c: Circulating; i: number })
           )}
           <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
             {claim && <StatusLabel status={claim.status} />}
-            {claim && <span className="text-foreground tabular">{claim.ref}</span>}
+            {claim && <span className="text-foreground tabular">{r.circulating.dossier(claim.ref)}</span>}
             {c.place?.name && (
               <span className="inline-flex items-center gap-1">
                 <IconMapPin className="size-3.5" aria-hidden />
@@ -73,16 +104,36 @@ function CirculatingRow({ ws, c, i }: { ws: string; c: Circulating; i: number })
             ))}
             {c.demo && <DemoTag />}
           </p>
+          {alert ? (
+            <Link
+              href={`/w/${ws}/veille#alerte-${alert.id}` as never}
+              className="relative z-10 mt-2 inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-sm hover:underline"
+            >
+              <span className="font-medium">{r.circulating.alert}</span>
+              <AlertLevel level={alert.level} adjusted={Boolean(alert.override)} />
+              <span className="text-muted-foreground">{r.circulating.alertSeen(alert.facts.reports, channels(alert.facts.kinds))}</span>
+            </Link>
+          ) : (
+            antenne &&
+            c.kind !== "clip" && (
+              <Link
+                href={`/w/${ws}/veille?type=clip` as never}
+                className="relative z-10 mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:underline"
+              >
+                <IconRadio className="size-4" aria-hidden />
+                {r.circulating.heard(antenne.stations.length)}
+              </Link>
+            )
+          )}
           {c.already_checked && (
             <div className="mt-1.5">
               <CheckedLine checked={c.already_checked} ws={ws} />
             </div>
           )}
         </div>
-        {claim && (
-          <div className="flex items-center gap-3 sm:col-start-2 @4xl:col-start-auto @4xl:flex-col @4xl:items-end @4xl:justify-center">
-            <StepLine variant="mini" labels={false} states={claimSteps(claim)} />
-            <VerdictBadge claim={claim} compact />
+        {verdict && (
+          <div className="flex items-center sm:col-start-2 @4xl:col-start-auto @4xl:justify-end">
+            <VerdictBadge claim={claim} />
           </div>
         )}
       </div>
@@ -266,8 +317,40 @@ export function RubriqueView() {
     }
   }
 
-  const beats = data?.beats.length ? data.beats.join(", ") : r.page.allBeats;
-  const places = data?.regions.length ? data.regions.join(", ") : r.page.allPlaces;
+  const beats = data?.beats.length ? data.beats.join(", ") : null;
+  const places = data?.regions.length ? data.regions.join(", ") : null;
+
+  // One rumour, one place on the page: a dossier's alert and radio passages go on its row, and the
+  // context column keeps only what « Ce qui circule » does not already show.
+  const rows = data ? oneRowPerRumour(data.circulating) : [];
+  // A row is known by its dossier (`item_id`) and by its feed key (`clip:<id>`, `sms:<id>`), the
+  // same keys the alerts and the radio groups use.
+  const onPage = new Set(rows.map((c) => c.item_id).filter((id): id is string => Boolean(id)));
+  const onPageKeys = new Set(rows.map((c) => c.id));
+  const openAlerts = (alerts.data ?? []).filter((a) => a.state === "open");
+  // An alert sits on the row of its own dossier (the one it is titled after), else on the row of a
+  // report it gathered: never on every row it touches.
+  const homeOf = (a: Alert) =>
+    a.members.find((m) => m.kind === "item" && m.item_id && m.title === a.title)?.item_id ??
+    a.members.find((m) => m.kind === "item" && m.item_id)?.item_id ??
+    null;
+  const alertOn = (a: Alert, c: Circulating) => {
+    const home = homeOf(a);
+    return home ? c.item_id === home : a.members.some((m) => m.key === c.id);
+  };
+  const echo = (c: Circulating): Echo => ({
+    alert: openAlerts.find((a) => alertOn(a, c)) ?? null,
+    antenne: data?.antenne.find((x) => (c.item_id !== null && x.item_id === c.item_id) || x.clip_ids.some((id) => `clip:${id}` === c.id)) ?? null,
+  });
+  const otherAlerts = openAlerts.filter((a) => !rows.some((c) => alertOn(a, c)));
+  const otherRadio = (data?.antenne ?? []).filter((x) => !((x.item_id && onPage.has(x.item_id)) || x.clip_ids.some((id) => onPageKeys.has(`clip:${id}`))));
+  // The calendar's angles belong to their season in the Météo; the Angles block keeps the rest.
+  const seasonOf = (a: AngleCard) => (a.kind === "piste" ? data?.meteo.seasons.find((s) => a.title.startsWith(s.name)) : undefined);
+  const angleHref = (season: string) => {
+    const a = data?.angles.find((x) => seasonOf(x)?.name === season);
+    return `/w/${ws}/angles?sujet=${encodeURIComponent(a?.title ?? season)}`;
+  };
+  const otherAngles = (data?.angles ?? []).filter((a) => !seasonOf(a));
 
   return (
     <div className="@container mx-auto max-w-[90rem] pb-12 lg:px-8">
@@ -279,9 +362,21 @@ export function RubriqueView() {
             {data && (
               <>
                 {" · "}
-                <span className="font-bold text-foreground">{beats}</span>
+                {beats ? (
+                  <>
+                    {r.page.themes} <span className="font-bold text-foreground">{beats}</span>
+                  </>
+                ) : (
+                  r.page.allBeats
+                )}
                 {" · "}
-                <span className="font-bold text-foreground">{places}</span>
+                {places ? (
+                  <>
+                    {r.page.places} <span className="font-bold text-foreground">{places}</span>
+                  </>
+                ) : (
+                  r.page.allPlaces
+                )}
               </>
             )}
           </p>
@@ -298,7 +393,7 @@ export function RubriqueView() {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="xl" onClick={copyBrief} disabled={!data}>
+          <Button variant="outline" size="xl" onClick={copyBrief} disabled={!data} title={r.page.briefHint}>
             <IconCopy aria-hidden />
             {r.page.brief}
           </Button>
@@ -343,8 +438,8 @@ export function RubriqueView() {
                 </div>
               ) : (
                 <ul className="border-t border-border">
-                  {data.circulating.map((c, i) => (
-                    <CirculatingRow key={`${c.kind}-${c.id}`} ws={ws} c={c} i={i} />
+                  {rows.map((c, i) => (
+                    <CirculatingRow key={`${c.kind}-${c.id}`} ws={ws} c={c} i={i} echo={echo(c)} />
                   ))}
                 </ul>
               )}
@@ -365,34 +460,37 @@ export function RubriqueView() {
             </div>
 
             <aside className="min-w-0 space-y-10 sm:space-y-12 @5xl:col-start-2 @5xl:row-span-4 @5xl:row-start-1">
-              {alerts.data && alerts.data.length > 0 && (
+              {otherAlerts.length > 0 && (
                 <Section
                   id="alertes"
                   tone="aside"
                   title={t.rubrique.alerts.title}
-                  lead={t.rubrique.alerts.leadShort}
+                  lead={r.alerts.leadRubrique}
                   action={
                     <Link href={`/w/${ws}/veille#alertes` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
                       {t.rubrique.alerts.all}
                     </Link>
                   }
                 >
-                  <AlertsList ws={ws} alerts={alerts.data} limit={3} />
+                  <AlertsList ws={ws} alerts={otherAlerts} limit={3} />
                 </Section>
               )}
-              <MeteoPanel ws={ws} meteo={data.meteo} tone="aside" />
-              <Section
-                id="antenne"
-                tone="aside"
-                title={r.antenne.title}
-                action={
-                  <Link href={`/w/${ws}/veille?type=clip` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
-                    {r.antenne.all}
-                  </Link>
-                }
-              >
-                <AntenneList ws={ws} rows={data.antenne} limit={3} />
-              </Section>
+              <MeteoPanel ws={ws} meteo={data.meteo} tone="aside" angleHref={angleHref} />
+              {otherRadio.length > 0 && (
+                <Section
+                  id="antenne"
+                  tone="aside"
+                  title={r.antenne.title}
+                  lead={r.antenne.leadRubrique}
+                  action={
+                    <Link href={`/w/${ws}/veille?type=clip` as never} className="shrink-0 text-sm font-bold underline underline-offset-4">
+                      {r.antenne.all}
+                    </Link>
+                  }
+                >
+                  <AntenneList ws={ws} rows={otherRadio} limit={3} />
+                </Section>
+              )}
             </aside>
 
             <div className="grid min-w-0 gap-x-8 gap-y-10 sm:gap-y-14 @3xl:grid-cols-2 @5xl:col-start-1 @5xl:row-start-3">
@@ -404,7 +502,7 @@ export function RubriqueView() {
               </Section>
             </div>
 
-            {data.angles.length > 0 && (
+            {otherAngles.length > 0 && (
               <Section
                 id="angles"
                 title={r.anglesBox.title}
@@ -415,7 +513,7 @@ export function RubriqueView() {
                   </Link>
                 }
               >
-                <Angles ws={ws} angles={data.angles} />
+                <Angles ws={ws} angles={otherAngles} />
               </Section>
             )}
           </div>

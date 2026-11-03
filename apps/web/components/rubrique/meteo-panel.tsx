@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { IconCalendarDots } from "@/lib/icons";
+import { IconArrowRight, IconCalendarDots } from "@/lib/icons";
 import { VerdictChip } from "@/components/claims/verdict";
 import { t } from "@/lib/i18n/fr";
 import { DemoTag, Section, type SectionTone } from "./bits";
@@ -7,9 +7,22 @@ import type { Meteo } from "./types";
 
 const m = t.rubrique.meteo;
 
-/** Météo des rumeurs: the seasons in effect (from a calendar written by hand) and « Ça revient »,
+/** Météo des rumeurs: the seasons in effect (from a calendar written by hand) and « Déjà vérifié les années passées »,
  *  the verdicts signed around this date in earlier years. */
-export function MeteoPanel({ ws, meteo, id = "meteo", tone }: { ws: string; meteo: Meteo; id?: string; tone?: SectionTone }) {
+export function MeteoPanel({
+  ws,
+  meteo,
+  id = "meteo",
+  tone,
+  angleHref,
+}: {
+  ws: string;
+  meteo: Meteo;
+  id?: string;
+  tone?: SectionTone;
+  /** Where « Trouver un angle » leads for a season; no link without it. */
+  angleHref?: (season: string) => string;
+}) {
   return (
     <Section id={id} title={m.title} lead={m.lead} tone={tone}>
       {meteo.seasons.length === 0 ? (
@@ -26,6 +39,12 @@ export function MeteoPanel({ ws, meteo, id = "meteo", tone }: { ws: string; mete
                 <span className="text-sm text-muted-foreground tabular">{s.days_to != null ? m.electionIn(s.days_to) : m.until(s.until)}</span>
               </p>
               <p className="mt-0.5 text-sm text-pretty text-muted-foreground">{s.note}</p>
+              {angleHref && (
+                <Link href={angleHref(s.name) as never} className="mt-1 inline-flex items-center gap-1 text-sm font-medium underline underline-offset-4">
+                  {m.angle}
+                  <IconArrowRight className="size-3.5" aria-hidden />
+                </Link>
+              )}
             </li>
           ))}
         </ul>
