@@ -1,6 +1,7 @@
 import { AssistantProvider } from "@/components/assistant/assistant-context";
 import { SiteFooter, SiteHeader } from "@/components/site/site-chrome";
 import { t } from "@/lib/i18n/fr";
+import "@/components/site/site.css";
 
 // Public pages: the visitor's three places under one bar; the guide docks beside the page.
 export default function SiteLayout({ children }: LayoutProps<"/">) {

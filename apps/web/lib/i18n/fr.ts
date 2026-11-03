@@ -665,6 +665,7 @@ export const fr = {
       lead: "Les rumeurs de la nuit, leurs sources et leurs verdicts, partagés avec votre équipe.",
     },
     footer: {
+      cols: { public: "Sans compte", newsrooms: "Rédactions" },
       what: "Checky aide les rédactions de Madagascar à vérifier les rumeurs avant de les partager, et publie leurs verdicts pour tous.",
       made: "Checky, né au Hackathon FANILO · Institut français de Madagascar et Ambassade de France · novembre 2026.",
       fictional: "Les rumeurs données en exemple sur ce site sont fictives.",
